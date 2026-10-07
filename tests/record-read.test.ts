@@ -19,7 +19,7 @@
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { readAccount, secondRecordFor, type RecordNote } from "../src/lib/record/read";
 import { declaredHomeSide, readFromStores } from "../src/lib/record/stores";
 import { whoseMove } from "../src/lib/record/whose-move";
@@ -31,7 +31,8 @@ import { orgInboundKey } from "../src/lib/activity/read";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { renderSeatBody } from "../src/lib/act/lane";
 import { inboundDates, recordSends, warmDates, whoChipNames } from "../src/lib/sendbook/read";
-import { extractDealIntel } from "../src/lib/intel/extract";
+import { extractDealIntel, factAnswer } from "../src/lib/intel/extract";
+import { suggestChecks } from "../src/lib/intel/evidence";
 import { buildDocs } from "../src/lib/record/docs";
 import { digestFor, digestForCardName } from "../src/lib/intel/digest";
 import { lastTouchRead } from "../src/lib/room/touch";
@@ -46,6 +47,8 @@ import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
 import { buildPipelineReport, type PipelineAccount } from "../src/lib/pipeline/build";
 import { evidenceRung } from "../src/lib/record/docs";
 import { liveLines } from "../src/lib/ask/live";
+import { HIDE_NOTE_PREFIX, hideNoteKey } from "../src/lib/record/hide";
+import { touchCiteOf, unparked } from "../src/app/accounts/rules";
 
 const NOW = new Date("2026-09-05T17:00:00Z");
 
@@ -436,6 +439,50 @@ describe("the hide filter (hide:note:) runs inside the read", () => {
       dispositions: new Map([["hide:acct:l1", { status: "parked" }]]),
     });
     assert.equal(read.hidden.size, 0);
+  });
+
+  test("the note grammar has one spelling, and the read and the sheet rules park by it (S-11)", () => {
+    // The prefix had two spellings, the second record's export and a
+    // private copy in the read; it lives in src/lib/record/hide.ts. The three
+    // copies left below sit in files another seam owns, and the coordinator
+    // folds them; nothing else in src spells the prefix in code.
+    const OTHER_SEAMS = new Set([
+      "src/app/room/actions.ts",
+      "src/app/room/room-reads.ts",
+      "src/app/partners/visible.ts",
+    ]);
+    const spellers = new Set<string>();
+    const walk = (dir: string): void => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = `${dir}/${e.name}`;
+        if (e.isDirectory()) {
+          if (e.name !== "generated") walk(p);
+          continue;
+        }
+        if (!/\.tsx?$/.test(e.name)) continue;
+        const code = readFileSync(p, "utf8")
+          .split("\n")
+          .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l));
+        if (code.some((l) => l.includes("hide:note:"))) spellers.add(p);
+      }
+    };
+    walk("src");
+    assert.deepEqual(
+      [...spellers].filter((p) => !OTHER_SEAMS.has(p)),
+      ["src/lib/record/hide.ts"],
+    );
+    assert.equal(HIDE_NOTE_PREFIX, "hide:note:");
+    const dispositions = new Map([[hideNoteKey("l1"), { status: "parked" }]]);
+    const { read } = both("SIMPLOY01", "Simploy", {
+      homeSide: [],
+      notes: LESHA,
+      dispositions,
+    });
+    assert.deepEqual([...read.hidden], ["l1"]);
+    assert.deepEqual(
+      unparked(LESHA, dispositions).map((n) => n.id),
+      ["l3", "l2"],
+    );
   });
 });
 
@@ -1025,10 +1072,22 @@ describe("countries, products and headcounts carry the tape flag", () => {
       read.headcounts.map((h) => [h.value, h.tape]),
       [[{ n: 10, country: "mx" }, false]],
     );
-    // The regex extractor saw nothing in the body: intel stays the old
-    // answer, parity held, and the facts field is where the model's read
-    // lands.
-    assert.deepEqual(read.intel.countries, []);
+    // Rewritten in pass 9's seam round (S-20): the intel reads the same one
+    // facts reader as field 18, so the Filing's facts land in both and every
+    // surface that reads intel says what the model read. It used to stay
+    // empty here, a second answer beside the field.
+    assert.deepEqual(
+      read.intel.countries.map((c) => c.value),
+      ["mx"],
+    );
+    assert.deepEqual(
+      read.intel.products.map((p) => p.value),
+      ["eor"],
+    );
+    assert.deepEqual(
+      read.intel.headcounts.map((h) => h.value),
+      [{ n: 10, country: "mx" }],
+    );
   });
 
   test("a row without facts is regex-mined, and the tape carries its flag", () => {
@@ -1068,6 +1127,140 @@ describe("countries, products and headcounts carry the tape flag", () => {
 });
 
 // ── slice 12 · the drawer, the asks and intake read the one read ────────────
+
+// ── countries and products: one answer on every surface (pass 9 seam, S-20) ─
+// Pass 8 X3: the extractor ranked the tape behind the reads for countries but
+// counted it for products, the meter's countries-known rule re-scanned any
+// doc, tape included, and the drawer filtered rows by source. Every surface
+// now reads the account read's field 18 under the one tape rule. These run
+// each surface's own reader over one fixture: the read's answer, the intel
+// the HomeRoom meta and shape, intake, the minter and Groundwork's file read,
+// the meter's suggestion, and the drawer's products line and country rows.
+
+describe("countries and products give one answer across surfaces (S-20)", () => {
+  const PRODUCT_NAME: Record<string, string> = {
+    eor: "EOR",
+    contractor: "Contractor Mgmt",
+  };
+  const surfaces = (notes: RecordNote[]) => {
+    const read = readAccount({
+      account: { id: "FACTS01", name: "Facts Co" },
+      notes,
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      homeSide: ["Shane Jacobs"],
+      now: new Date("2026-09-15T17:00:00Z"),
+    });
+    const [rec] = buildPipelineReport({
+      accounts: [
+        {
+          id: "FACTS01",
+          name: "Facts Co",
+          csm: "",
+          stageLabel: "",
+          notes: notes.map((n) => ({
+            id: n.id,
+            createdAt: n.createdAt,
+            body: n.body,
+            lane: n.lane,
+            actors: n.actors,
+            source: n.source,
+          })),
+          todos: [],
+          gaps: [],
+          support: null,
+          actors: [],
+          read,
+        },
+      ],
+      csms: [],
+      me: "Antaeus Coe",
+      now: new Date("2026-09-15T17:00:00Z"),
+    });
+    const meter = suggestChecks(
+      read.docs.filter((d) => !d.hidden),
+      { checks: {} },
+      new Set(),
+      new Date("2026-09-15T17:00:00Z"),
+    ).find((s) => s.node === "needs_analysis");
+    return { read, rec, meter };
+  };
+  const READ = row({
+    id: "r1",
+    body: "✉ OL Sep 10 — Re: Mexico · Dana Ellis → Antaeus Coe\nWe need to hire 5 workers in Mexico through an employer of record.",
+    actors: "Dana Ellis → Antaeus Coe",
+    recipients: "Antaeus Coe",
+    source: "outlook-ai",
+    createdAt: "2026-09-10T15:00:00Z",
+  });
+  const DEMO = row({
+    id: "t1",
+    body: "☰ Call transcript — demo\nCALL TRANSCRIPT\nShane Jacobs: the countries on screen include Brazil, and contractor payments for workers in Brazil run here.\nDana Ellis: got it.",
+    source: "transcript",
+    createdAt: "2026-09-12T15:00:00Z",
+  });
+
+  test("a read and a demo tape: every surface names the read's country and product", () => {
+    const { read, rec, meter } = surfaces([DEMO, READ]);
+    const countries = factAnswer(read.countries).map((c) => c.value);
+    const products = factAnswer(read.products).map((p) => p.value);
+    assert.deepEqual(countries, ["mx"]);
+    assert.deepEqual(products, ["eor"]);
+    // The intel every intel-reading surface takes.
+    assert.deepEqual(
+      read.intel.countries.map((c) => c.value),
+      countries,
+    );
+    assert.deepEqual(
+      read.intel.products.map((p) => p.value),
+      products,
+      "the tape's contractor no longer rides the products",
+    );
+    // The meter cites the fact the answer stands on, never the tape's Brazil.
+    assert.equal(meter?.reason, `countries named · ${factAnswer(read.countries)[0].src}`);
+    // The drawer: the products line and every country row agree.
+    assert.deepEqual(
+      rec.products,
+      products.map((p) => PRODUCT_NAME[p]),
+    );
+    assert.deepEqual(
+      rec.opportunities.map((o) => [o.country, o.product, o.headcount]),
+      [["Mexico", "EOR", "5 workers"]],
+    );
+  });
+
+  test("the tape alone: the tape speaks on every surface, the drawer's row included", () => {
+    const tapeOnly = row({
+      id: "t2",
+      body: "☰ Call transcript — intro\nCALL TRANSCRIPT\nDana Ellis: we want an employer of record for 3 workers in Brazil.\nAntaeus Coe: understood.",
+      source: "transcript",
+      createdAt: "2026-09-12T15:00:00Z",
+    });
+    const { read, rec, meter } = surfaces([tapeOnly]);
+    assert.deepEqual(
+      factAnswer(read.countries).map((c) => [c.value, c.tape]),
+      [["br", true]],
+    );
+    assert.deepEqual(
+      read.intel.countries.map((c) => c.value),
+      ["br"],
+    );
+    assert.deepEqual(
+      read.intel.products.map((p) => p.value),
+      ["eor"],
+    );
+    assert.equal(meter?.reason, `countries named · ${read.countries[0].src}`);
+    assert.deepEqual(rec.products, ["EOR"]);
+    // The row's product reads the same rung the answer came from: the tape,
+    // because nothing else names one. It read "Unknown" beside a products
+    // line of EOR.
+    assert.deepEqual(
+      rec.opportunities.map((o) => [o.country, o.product, o.headcount]),
+      [["Brazil", "EOR", "3 workers"]],
+    );
+  });
+});
 
 describe("the drawer's record reads the room's read on the same rows (§2.2, the third migration)", () => {
   const CSMS = ["Lesha Cyphers"];
@@ -1491,6 +1684,30 @@ const DANA_WROTE = stagedRow({
   c: "To: lesha.cyphers@prismhr.com\nSubject: Re: global payroll\nBody: Thanks for the intro. Can we talk about Canada next week?\nBest regards,\nDana Reyes",
 });
 
+describe("LAST HUMAN TOUCH carries the export row's key (S-17)", () => {
+  test("the rollup keeps the row's key, the store round-trips it, and the cite hands it on", () => {
+    const r = rollupOf([DANA_WROTE], "");
+    assert.equal(r.lastHuman?.k, "dana");
+    const back = parseRollupBody(renderRollupBody(r));
+    assert.equal(back?.lastHuman?.k, "dana");
+    // A rollup written before the key rode reads with none.
+    const old = parseRollupBody(
+      renderRollupBody(r)
+        .split("\n")
+        .filter((l) => !l.startsWith("LAST HUMAN ROW"))
+        .join("\n"),
+    );
+    assert.equal(old?.lastHuman?.k, undefined);
+    assert.equal(old?.lastHuman?.subject, r.lastHuman?.subject);
+    const { read } = both("A1", "Acme", { homeSide: [], notes: [] });
+    const second = { rollup: back, gems: [], support: null, intent: null };
+    const touch = lastHumanTouch(read, second);
+    assert.equal(touch?.record, "salesforce");
+    const cite = touchCiteOf(read, touch, back?.lastHuman ?? null);
+    assert.equal(cite?.from === "salesforce" ? cite.k : null, "dana");
+  });
+});
+
 describe("the exclusion reads the second record's attributed inbound, never its datetime (D19)", () => {
   test("an export row with an attributed inbound body excludes for 21 days", () => {
     const second = new Map([["A1", secondOf([DANA_WROTE], "2026-08-25 09:00")]]);
@@ -1538,7 +1755,8 @@ describe("the exclusion reads the second record's attributed inbound, never its 
       "account",
       "the To line names her — not enough",
     );
-    // The datetime still reads where the drumbeat reads it; it just never excludes.
+    // The datetime is still carried as a key, and no rule reads it: it
+    // never excludes, and since pass 8 call 4 it never quiets the drumbeat.
     assert.equal(orgInboundKey(sr), "2026-09-04T09:00:00");
     const ids = liveMotionIds(
       new Map(),
@@ -1892,6 +2110,34 @@ describe("an inbound with no send reads engaged", () => {
     assert.equal(signOff.read.conversationExists, false);
     assert.equal(
       both("A1", "Acme", { homeSide: [], notes: [] }).read.conversationExists,
+      false,
+    );
+  });
+
+  test("a meeting held is a conversation: the ☰ archive of a call engages (S-15)", () => {
+    // A dropped recording files as the ☰ transcript archive with no actors
+    // line, so the doc carries no direction; the meeting read (field 6) still
+    // reads it as a meeting held, and a meeting held is a conversation.
+    const archive = row({
+      id: "m1",
+      body: "☰ Call transcript — intro call\nCALL TRANSCRIPT\nDana Ellis: we have two clients in Canada.\nAntaeus Coe: let me walk you through it.",
+      source: "transcript",
+      createdAt: "2026-09-18T15:00:00Z",
+    });
+    const { read } = both("A1", "Acme", { homeSide: [], notes: [archive] });
+    assert.equal(read.docs[0]?.direction, undefined, "no direction on the archive");
+    assert.equal(read.lastMeeting?.noteId, "m1");
+    assert.equal(read.conversationExists, true);
+    // A typed line filed under the tape's source is no call and engages nothing
+    // (isCallArchive; evidence or nothing, pass 8 X3).
+    const typed = row({
+      id: "t1",
+      body: "☰ transcript — filed from the room\ni did not meet with them today",
+      source: "transcript",
+      createdAt: "2026-09-18T15:00:00Z",
+    });
+    assert.equal(
+      both("A1", "Acme", { homeSide: [], notes: [typed] }).read.conversationExists,
       false,
     );
   });

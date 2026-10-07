@@ -186,7 +186,13 @@ test("hostile fixture: BOM, fake header in comment, dupe, money, unmatched — a
 test("loud-fail: a csv without the anchors is refused at the first row", () => {
   const ingest = createIngest(BOOK);
   const v = ingest.takeRow(["Name", "Email", "Phone"]);
-  assert.match(v.stop ?? "", /18 Digit ID \/ Subject missing/);
+  // Rewritten in pass 9's seam round (S-23): the refusal is said flat, with
+  // no em-dash aside, and names the two columns the export is known by.
+  assert.equal(
+    v.stop,
+    "Nothing filed. This isn't the activity report. Check the export for the 18 Digit ID and Subject columns.",
+  );
+  assert.doesNotMatch(v.stop ?? "", /[—–]/);
 });
 
 test("header order does not change the drop identity", async () => {

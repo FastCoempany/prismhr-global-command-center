@@ -16,7 +16,14 @@ import {
   countryNear,
 } from "./lexicon";
 import type { DigestEntry } from "./digest";
-import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
+import {
+  EMPTY_INTEL,
+  type DealIntel,
+  type EntryFacts,
+  type ProductKey,
+  type SourcedFact,
+  type TapedFact,
+} from "./types";
 
 const MONTHS: Record<string, number> = {
   jan: 1,
@@ -80,17 +87,131 @@ export type CorpusDoc = {
    *  speech rather than a deal fact — the same line the outcomes reader
    *  already draws between the tape and the read's distillation of it. */
   tape?: boolean;
+  /** The deal facts the row's Filing stated, when the read handed them; the
+   *  regex is not run on a row the model already read (§2.1). */
+  facts?: EntryFacts | null;
 };
 
-function push<T>(
-  list: SourcedFact<T>[],
-  value: T,
-  doc: CorpusDoc,
-  eq: (a: T, b: T) => boolean,
-) {
-  if (!list.some((f) => eq(f.value, value)))
-    list.push({ value, src: doc.src, at: doc.at });
+// ── countries, products, headcounts: one reader (pass 9 seam, S-20) ────────
+// The deal facts gave three answers for countries and two for products across
+// surfaces (pass 8 X3): the extractor ranked the tape behind the reads for
+// countries and headcounts but counted it for products; the account read's
+// field 18 carried the tape flagged and the seed last; the meter's
+// countries-known rule re-scanned any doc, tape included; the drawer filtered
+// to rows whose source was not a transcript. One reader now, and every
+// surface reads it through the account read: dealFacts states every fact the
+// record holds with the tape flag (field 18), and factAnswer is the one tape
+// rule — the facts the reads state, the seed among them, and the tape's only
+// when no read states one. A country spoken only on a demo is usually our own
+// product narration (XCEL HR's Brazil and the Netherlands, Infiniti HR's
+// Canada, 2026-09-08), and a number said out loud is as often a hypothetical
+// as a fact (Infiniti HR's "50 workers" was Javier walking through an if,
+// where the reads hold one worker in Puerto Rico and about three in Mexico);
+// a product named on a demo is the suite being walked through. The tape
+// still speaks when nothing else does, ranked behind, never dropped. The record outranks the seed (the Ted doctrine), so
+// the seed's facts come after every doc's.
+
+/** The product key a Playbook product name reads as, through the lexicon:
+ *  "contractor plus" before "contractor", as the docs' own scan orders them. */
+function productKeyOf(name: string): ProductKey | null {
+  for (const key of Object.keys(PRODUCT_TERMS) as ProductKey[]) {
+    if (key === "contractor" && PRODUCT_TERMS.contractor_plus.test(name)) continue;
+    if (PRODUCT_TERMS[key].test(name)) return key;
+  }
+  return null;
 }
+
+function pushFact<T>(
+  list: TapedFact<T>[],
+  value: T,
+  doc: { src: string; at: string },
+  tape: boolean,
+  eq: (a: T, b: T) => boolean,
+): void {
+  if (!list.some((f) => eq(f.value, value)))
+    list.push({ value, src: doc.src, at: doc.at, tape });
+}
+
+const sameHc = (a: { n: number; country?: string }, b: { n: number; country?: string }) =>
+  a.n === b.n && a.country === b.country;
+const same = <T>(a: T, b: T) => a === b;
+
+export type DealFacts = {
+  countries: TapedFact<string>[];
+  products: TapedFact<ProductKey>[];
+  headcounts: TapedFact<{ n: number; country?: string }>[];
+};
+
+/** Every country, product and headcount the docs state, with the tape flag:
+ *  a row's Filing facts when it has them, the lexicon's regex otherwise, the
+ *  reads first and the tape after (so a fact both state is credited to the
+ *  read), then the seed. Docs run newest first. */
+export function dealFacts(
+  docs: readonly CorpusDoc[],
+  seed?: Partial<Pick<DealIntel, "countries" | "products" | "headcounts">> | null,
+): DealFacts {
+  const countries: DealFacts["countries"] = [];
+  const products: DealFacts["products"] = [];
+  const headcounts: DealFacts["headcounts"] = [];
+  const ordered = [...docs.filter((d) => !d.tape), ...docs.filter((d) => d.tape)];
+  for (const doc of ordered) {
+    const tape = !!doc.tape;
+    if (doc.facts) {
+      // The Filing's own facts: the model named them per entry and the
+      // sanitizer clamped them to the lexicon (§2.1). The model's read of an
+      // entry is a read, never raw speech, whichever row carries it.
+      for (const name of doc.facts.countries ?? [])
+        for (const c of countriesIn(name)) pushFact(countries, c, doc, false, same);
+      for (const name of doc.facts.products ?? []) {
+        const key = productKeyOf(name);
+        if (key) pushFact(products, key, doc, false, same);
+      }
+      for (const hc of doc.facts.headcounts ?? []) {
+        const country = countryNear(hc.what, 0) || undefined;
+        pushFact(headcounts, { n: hc.count, country }, doc, false, sameHc);
+      }
+      continue;
+    }
+    for (const c of countriesIn(doc.text)) pushFact(countries, c, doc, tape, same);
+    // Every headcount in the doc, each bound to the country NEAREST it. The
+    // first-match read filed XCEL HR's ten Canadian workers against Mexico,
+    // whose headcount the record says is unknown, and lost every count after
+    // the first (2026-09-08).
+    for (const hc of doc.text.matchAll(new RegExp(HEADCOUNT.source, "gi")))
+      pushFact(
+        headcounts,
+        { n: Number(hc[1]), country: countryNear(doc.text, hc.index ?? 0) },
+        doc,
+        tape,
+        sameHc,
+      );
+    // Every product the doc names — "contractor plus" before "contractor".
+    for (const k of Object.keys(PRODUCT_TERMS) as ProductKey[]) {
+      if (k === "contractor" && PRODUCT_TERMS.contractor_plus.test(doc.text)) continue;
+      if (PRODUCT_TERMS[k].test(doc.text)) pushFact(products, k, doc, tape, same);
+    }
+  }
+  // The seed fills what no doc decided — a fallback, never a lock.
+  for (const f of seed?.countries ?? []) pushFact(countries, f.value, f, false, same);
+  for (const f of seed?.products ?? []) pushFact(products, f.value, f, false, same);
+  for (const f of seed?.headcounts ?? []) pushFact(headcounts, f.value, f, false, sameHc);
+  return { countries, products, headcounts };
+}
+
+/** The one tape rule: the facts the reads (and the seed) state, and the
+ *  tape's only when none does. Every surface's countries, products and
+ *  headcounts are this, over the account read's field 18. */
+export function factAnswer<T>(facts: readonly TapedFact<T>[]): TapedFact<T>[] {
+  const read = facts.filter((f) => !f.tape);
+  return read.length ? read : [...facts];
+}
+
+/** A fact without its flag, as DealIntel carries it. */
+const sourced = <T>(f: TapedFact<T>): SourcedFact<T> => ({
+  value: f.value,
+  src: f.src,
+  at: f.at,
+});
 
 // The relayed-or-direct shapes of "they owe you the next move". Exported for
 // the single read (src/lib/record/read.ts), which names the promise's own
@@ -102,69 +223,25 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
   const intel: DealIntel = structuredClone(EMPTY_INTEL);
   const seed = seedEntry?.intelSeed;
   if (seed) {
-    // Additive facts seed up front (pushes dedupe). The SINGLE-VALUE facts —
-    // chair, incumbent, timing — seed AFTER the doc loop instead: the seed is
-    // a research-time snapshot, and a fresher pasted doc must be able to
-    // revise it. Seeding first made those facts immutable forever.
-    intel.countries = [...(seed.countries ?? [])];
-    intel.headcounts = [...(seed.headcounts ?? [])];
-    intel.products = [...(seed.products ?? [])];
+    // The thread roster seeds up front (pushes dedupe). The SINGLE-VALUE facts
+    // — chair, incumbent, timing — seed AFTER the doc loop instead: the seed
+    // is a research-time snapshot, and a fresher pasted doc must be able to
+    // revise it. Seeding first made those facts immutable forever. The
+    // countries, products and headcounts take the seed last, in dealFacts.
     intel.threads = seed.threads
       ? { ...seed.threads, people: [...seed.threads.people] }
       : intel.threads;
   }
 
-  // Countries the READS name — the distilled entries, filed mail, sheet lines
-  // and notes. A country that appears only in a raw transcript is speech, and
-  // on a demo call it is usually OUR OWN product narration: XCEL HR's report
-  // carried Brazil and the Netherlands because Shane walked them through the
-  // platform ("here's the Netherlands is going to show all the public
-  // holidays"), and Infiniti HR carried Canada off "if I go in here to Nina in
-  // Canada". Meanwhile Spain, which the read flags as the next country, was
-  // nowhere (2026-09-08). The tape still speaks when nothing else does — it is
-  // ranked behind, never dropped.
-  const spokenOnly: CorpusDoc[] = [];
+  // Countries, products and headcounts: the one reader and the one tape rule
+  // (S-20), so the account read's field 18 and this answer agree by
+  // construction.
+  const facts = dealFacts(docs, seed);
+  intel.countries = factAnswer(facts.countries).map(sourced);
+  intel.products = factAnswer(facts.products).map(sourced);
+  intel.headcounts = factAnswer(facts.headcounts).map(sourced);
+
   for (const doc of docs) {
-    // countries
-    if (doc.tape) spokenOnly.push(doc);
-    else
-      for (const c of countriesIn(doc.text))
-        push(intel.countries, c, doc, (a, b) => a === b);
-    // headcounts — every one in the doc, each bound to the country NEAREST it
-    //
-    // This used to read the FIRST headcount in a document and the FIRST country
-    // in that same document, two independent scans bolted together. On XCEL
-    // HR's 8/13 read both countries share one sentence:
-    //
-    //   Immediate: Mexico (headcount TBD, must call client) and Canada —
-    //   10 workers already live on payroll…
-    //
-    // so Canada's ten workers were filed against Mexico, whose headcount the
-    // record says outright is unknown (2026-09-08). Reading only the first
-    // match also lost every count after it: Infiniti HR names Puerto Rico,
-    // Germany, Brazil and Mexico in one line apiece.
-    // …and, like countries, only from the READS. A number said out loud on a
-    // call is as often a hypothetical as a fact: Infiniti HR's Mexico row read
-    // "50 workers" off Javier walking through a scenario — "if the client
-    // comes in, has 50 employees in the US, 20 in Mexico" — where the fifty
-    // are in the US and the whole sentence is an if. The reads hold the real
-    // numbers: one worker in Puerto Rico, about three in Mexico (2026-09-08).
-    if (!doc.tape)
-      for (const hc of doc.text.matchAll(new RegExp(HEADCOUNT.source, "gi"))) {
-        const country = countryNear(doc.text, hc.index ?? 0);
-        push(
-          intel.headcounts,
-          { n: Number(hc[1]), country },
-          doc,
-          (a, b) => a.n === b.n && a.country === b.country,
-        );
-      }
-    // products — contractor_plus checked before contractor (lexicon order)
-    for (const key of Object.keys(PRODUCT_TERMS) as ProductKey[]) {
-      if (key === "contractor" && PRODUCT_TERMS.contractor_plus.test(doc.text)) continue;
-      if (PRODUCT_TERMS[key].test(doc.text))
-        push(intel.products, key, doc, (a, b) => a === b);
-    }
     // commercial chair — docs run newest-first, so first hit = newest doc
     if (intel.chair === "undecided") {
       const ref = COMMERCIAL_TERMS.referral.test(doc.text);
@@ -220,24 +297,6 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
     if (doc.direction === "out" && (!intel.lastOutbound || doc.at > intel.lastOutbound))
       intel.lastOutbound = doc.at;
   }
-
-  // Nothing but the tape ever named these here, so the tape stands — a record
-  // with only a transcript is still a record. This sits OUTSIDE the seed
-  // branch: an account with no digest entry is exactly the one most likely to
-  // have nothing but a transcript.
-  if (!intel.countries.length)
-    for (const doc of spokenOnly)
-      for (const c of countriesIn(doc.text))
-        push(intel.countries, c, doc, (a, b) => a === b);
-  if (!intel.headcounts.length)
-    for (const doc of spokenOnly)
-      for (const hc of doc.text.matchAll(new RegExp(HEADCOUNT.source, "gi")))
-        push(
-          intel.headcounts,
-          { n: Number(hc[1]), country: countryNear(doc.text, hc.index ?? 0) },
-          doc,
-          (a, b) => a.n === b.n && a.country === b.country,
-        );
 
   // The seed fills what no doc decided — a fallback, never a lock.
   if (seed) {

@@ -26,6 +26,7 @@ import { isCloser, isMachinery } from "@/lib/intel/closer";
 import { isCallArchive } from "@/lib/intel/meeting";
 import { effectiveAt } from "@/lib/intel/clock";
 import type { DigestEntry } from "@/lib/intel/digest";
+import type { EntryFacts } from "@/lib/intel/types";
 import {
   MINE_RE,
   inferActors,
@@ -46,6 +47,10 @@ export type RecordRow = {
   source?: string;
   /** Every recipient the capture kept, comma-joined; "" before the column. */
   recipients?: string | null;
+  /** The deal facts the row's Filing stated, when the caller has them; they
+   *  ride onto the doc, where the one facts reader takes them over the regex
+   *  (dealFacts, src/lib/intel/extract.ts; §2.1). */
+  facts?: EntryFacts | null;
 };
 
 export type TouchRow = {
@@ -221,6 +226,7 @@ export function docOf(
     actors,
     recipients: splitRecipients(n.recipients),
     hidden: hidden.has(n.id),
+    ...(n.facts ? { facts: n.facts } : {}),
   };
 }
 

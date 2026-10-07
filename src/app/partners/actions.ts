@@ -70,6 +70,7 @@ export async function deletePartnerNote(formData: FormData) {
 // configured. With no key, the desk falls back to copy-prompt + claude.ai.
 
 import { accountIntel, partnerKickoff, partnerOutreachKey } from "@/lib/today/build";
+import { ownPassesFrom } from "@/lib/intel/deep-research";
 import { partnerRole } from "@/lib/book/partners";
 import {
   loadAccountNotes,
@@ -93,8 +94,11 @@ export async function getFollowUpPrompt(
     loadPartnerNotes(),
     loadDispositions(),
   ]);
+  // Both research stores speak, as the page reads them (pass 9 seam, S-12).
   const kickoff = partnerKickoff(
-    accountIntel().filter((a) => dispositions.get(a.id)?.status !== "not-mine"),
+    accountIntel(ownPassesFrom(accountNotes)).filter(
+      (a) => dispositions.get(a.id)?.status !== "not-mine",
+    ),
     new Set(),
   );
   const accounts = kickoff.find((k) => k.partner === p)?.accounts ?? [];

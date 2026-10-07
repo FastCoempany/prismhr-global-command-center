@@ -3,12 +3,13 @@
 // lane run it and the suite calls it (the codebase's plan-then-execute idiom:
 // the server action or the component carries out what a rule returns).
 
-import type { collisionFor } from "@/lib/activity/read";
+import { csmThreadFlagOf, quietFlagOf, type Collision } from "@/lib/activity/quiet-flag";
 import type { Rollup } from "@/lib/activity/rollup";
 import type { Gem } from "@/lib/activity/stores";
 import { ACT_DRAFT_NS } from "@/lib/act/lane";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import type { AccountRead } from "@/lib/record/read";
+import { hideNoteKey } from "@/lib/record/hide";
 import type { LastHumanTouch } from "@/lib/record/accounts";
 import { userDayKey } from "@/lib/tz";
 
@@ -86,7 +87,7 @@ export function unparked<T extends { id: string }>(
   rows: readonly T[],
   dispositions: { has(key: string): boolean },
 ): T[] {
-  return rows.filter((r) => !dispositions.has(`hide:note:${r.id}`));
+  return rows.filter((r) => !dispositions.has(hideNoteKey(r.id)));
 }
 
 // ── LAST HUMAN TOUCH opens to its evidence (pass 8 A5, the click-depth law) ──
@@ -98,7 +99,16 @@ export function unparked<T extends { id: string }>(
 
 export type TouchCite =
   | { from: "record"; day: string; who: string; how: string; text: string }
-  | { from: "salesforce"; day: string; who: string; how: string; subject: string };
+  | {
+      from: "salesforce";
+      day: string;
+      who: string;
+      how: string;
+      subject: string;
+      /** The staged row's key, when the rollup carried it: the fold fetches
+       *  the excerpt by it (S-17). "" on a rollup written before it rode. */
+      k: string;
+    };
 
 export function touchCiteOf(
   read: Pick<AccountRead, "lastTouch" | "docs">,
@@ -113,6 +123,7 @@ export function touchCiteOf(
       who: touch.who,
       how: (lastHuman?.how ?? "").toUpperCase(),
       subject: lastHuman?.subject ?? "",
+      k: lastHuman?.k ?? "",
     };
   const lt = read.lastTouch;
   const fromLog = lt?.source === "log";
@@ -136,31 +147,13 @@ export function touchCiteOf(
 
 // ── the quiet flag (the direct doctrine; pass 8 A7, A8) ──────────────────────
 // When a send crosses live motion, the composed thing carries a quiet flag so
-// the operator knows. It informs and never blocks. The words are Groundwork's
-// file card's (src/lib/groundwork/file.ts, collisionLine), read off the same
-// collision guard (collisionFor), so the two surfaces say one thing.
+// the operator knows. It informs and never blocks. The words have one writer,
+// src/lib/activity/quiet-flag.ts, which Groundwork's file card reads too, off
+// the same collision guard (collisionFor), so the two surfaces say one thing
+// (pass 9 seam, S-6). The Act Lane's send is the composed thing's flag.
 
-export type Collision = NonNullable<ReturnType<typeof collisionFor>>;
-
-const mmdd = (day: string) => (day ?? "").slice(5, 10).replace("-", "/");
-
-const threadFlag = (who: string | undefined, day: string | undefined) =>
-  `${(who || "A COLLEAGUE").toUpperCase()}'S THREAD · ${mmdd(day ?? "")}`;
-
-/** The Act Lane's send: a live marketing cadence or a colleague's thread
- *  inside seven days. "" when clear. */
-export function sendFlagOf(col: Collision | null | undefined): string {
-  if (!col) return "";
-  if (col.mktgSends7 > 0)
-    return `MKTG CADENCE LIVE · ${col.mktgSends7} SEND${col.mktgSends7 === 1 ? "" : "S"} THIS WEEK`;
-  return threadFlag(col.colleague?.who, col.colleague?.day);
-}
-
-/** The CSM play, the alternative to the direct play (C19): it carries the
- *  flag when the CSM's own thread is live. "" when no colleague thread is. */
-export function csmThreadFlagOf(col: Collision | null | undefined): string {
-  return col?.colleague ? threadFlag(col.colleague.who, col.colleague.day) : "";
-}
+export type { Collision };
+export { csmThreadFlagOf, quietFlagOf as sendFlagOf };
 
 // ── Send consumes it (pass 8 A2, A3; the Act Lane, A8.12) ────────────────────
 // A touched draft saves when the lane closes or the operator hops chips,

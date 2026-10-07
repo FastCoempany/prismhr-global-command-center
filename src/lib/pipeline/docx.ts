@@ -17,6 +17,7 @@ import {
   LevelFormat,
   PageOrientation,
   Paragraph,
+  ShadingType,
   Table,
   TableCell,
   TableRow,
@@ -39,7 +40,13 @@ const VALUE_W = CONTENT - LABEL_W;
 
 const INK = "0A1C40";
 const QUIET = "6B7A99";
-const AMBER = "B45309";
+// Caution is the brand's amber by role (#F59E0B), the pattern the room uses
+// for a held file and a quiet-days chip: the amber is a rule and a soft fill,
+// and the words stay ink, because amber text on white is too faint to read
+// in print (pass 9 seam, S-24). AMBER_SOFT is the brand's amber at 12% over
+// white (--ds-amber-soft, flattened for Word, which has no alpha).
+const AMBER = "F59E0B";
+const AMBER_SOFT = "FEF3E2";
 
 const md = (iso: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(iso ?? "")
@@ -262,12 +269,14 @@ export function reportSection(
       children.push(
         new Paragraph({
           spacing: { after: 100 },
+          border: { left: { style: "single", size: 18, color: AMBER, space: 6 } },
+          shading: { type: ShadingType.CLEAR, color: "auto", fill: AMBER_SOFT },
           children: [
             new TextRun({
               text: "PROMISED, AND THE DAY PASSED",
               size: 15,
               bold: true,
-              color: AMBER,
+              color: INK,
               font: "Consolas",
             }),
           ],

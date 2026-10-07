@@ -380,3 +380,50 @@ export function caseNumberOf(subject: string): string {
   const m = /PrismHR Case\s*(\d{6,10})/i.exec(subject ?? "");
   return m ? m[1] : "";
 }
+
+// ── the case drill's keys (the meat law) ────────────────────────────────────
+// The theme's case list groups support rows by case number, and a support row
+// with no case number groups under one key, drawn "uncased traffic". Every
+// key the list hands out is a door to a timeline, so the timeline reads the
+// same grouping: a case number opens its rows, and the uncased key opens the
+// support rows that carry none. The route once matched "no-case" against case
+// numbers and the door opened an empty timeline (pass 9 seam, S-13).
+
+/** The key the uncased support rows group under, on the list and the door. */
+export const NO_CASE = "no-case";
+
+type CaseRow = { s: string; lane: string };
+
+/** A support row's case key: its case number, or NO_CASE. */
+export const caseKeyOf = (r: CaseRow): string => caseNumberOf(r.s) || NO_CASE;
+
+/** The theme's support rows by case key, in the rows' own order. An empty
+ *  theme is every support case; a theme keeps the rows whose cleaned subject
+ *  holds it. */
+export function themeCaseGroups<T extends CaseRow>(
+  rows: readonly T[],
+  theme: string,
+): Map<string, T[]> {
+  const wanted = theme.trim().toLowerCase();
+  const out = new Map<string, T[]>();
+  for (const r of rows) {
+    if (r.lane !== "support") continue;
+    if (wanted && !cleanSubject(r.s).toLowerCase().includes(wanted)) continue;
+    const key = caseKeyOf(r);
+    out.set(key, [...(out.get(key) ?? []), r]);
+  }
+  return out;
+}
+
+/** The rows a case key opens to. A case number reads every row that carries
+ *  it, whatever its lane, as the timeline always has; the uncased key reads
+ *  the uncased support rows, narrowed by the theme when the door carries one,
+ *  so the door opens exactly the rows the list counted under it. */
+export function caseRows<T extends CaseRow>(
+  rows: readonly T[],
+  caseNo: string,
+  theme = "",
+): T[] {
+  if (caseNo === NO_CASE) return themeCaseGroups(rows, theme).get(NO_CASE) ?? [];
+  return rows.filter((r) => caseNumberOf(r.s) === caseNo);
+}

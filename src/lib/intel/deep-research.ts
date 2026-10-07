@@ -11,6 +11,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { MODEL_RESEARCH } from "@/lib/intranet/doctrine";
+import { DEMAND_GATE, getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { normPerson } from "@/lib/intel/provenance";
 
@@ -32,6 +33,84 @@ export function latestResearchAt(deep?: string, sweep?: string): string | undefi
   if (!hasDeep && !hasSweep) return undefined;
   if (hasDeep && (!hasSweep || d >= s)) return deep;
   return sweep;
+}
+
+// ── the demand both stores speak (pass 8 G7; pass 9 seam, S-12) ─────────────
+// The book-wide sweep scores demand; the account's own pass names the signals
+// it found and carries no score. The later of the two speaks, as the research
+// chip reads the date: a later pass that found a signal reads as real demand
+// and clears the gate on its own; a later pass that found none is silent, and
+// the sweep stands in. The sweep's number still ranks where it agrees; below
+// the gate it is an older read the pass overturned, and the composite rests on
+// the desk score alone. One spelling: Groundwork's queue and the room's
+// account intel (/partners, the sheet's signals) both read it, so the two
+// never disagree on whether an account's demand is real.
+
+/** The book-wide sweep's moment for one account, "" when the sweep never
+ *  researched it — the same reading the Spring's research chip takes. */
+export function sweepAtFor(accountId: string): string {
+  return getDemand(accountId)?.researched && researchGeneratedAt
+    ? `${researchGeneratedAt}T12:00:00Z`
+    : "";
+}
+
+/** The account's own newest research pass (research:<account>): its moment
+ *  and what it found. */
+export type OwnPass = {
+  at: string;
+  signals: number;
+  countries?: readonly string[];
+  summary?: string;
+};
+
+export type ResearchDemand = {
+  /** Demand clears the gate, by the sweep's score or a later pass's signal. */
+  real: boolean;
+  /** The score the composite reads; null when no sweep scored the account,
+   *  or a later pass overturned a score below the gate. */
+  score: number | null;
+  confidence: "high" | "medium" | "low";
+  /** The account's own pass is the later store and found a signal. */
+  ownSpeaks: boolean;
+};
+
+export function researchDemand(
+  accountId: string,
+  own?: Pick<OwnPass, "at" | "signals"> | null,
+): ResearchDemand {
+  const sweep = getDemand(accountId);
+  const score = sweep?.researched ? sweep.demandScore : null;
+  const swept = (score ?? 0) >= DEMAND_GATE;
+  const confidence = sweep?.confidence ?? "low";
+  const ownAt = own?.at ?? "";
+  const ownSpeaks =
+    !!ownAt &&
+    (own?.signals ?? 0) > 0 &&
+    latestResearchAt(ownAt, sweepAtFor(accountId)) === ownAt;
+  if (!ownSpeaks) return { real: swept, score, confidence, ownSpeaks };
+  return { real: true, score: swept ? score : null, confidence, ownSpeaks };
+}
+
+/** Every account's newest research pass, from the notes the wide loader
+ *  hands back (research:<account>, newest first). */
+export function ownPassesFrom(
+  notesById: ReadonlyMap<string, readonly { body: string; createdAt: string }[]>,
+): Map<string, OwnPass> {
+  const out = new Map<string, OwnPass>();
+  for (const [id, notes] of notesById) {
+    if (!id.startsWith(RESEARCH_NS)) continue;
+    const accountId = id.slice(RESEARCH_NS.length);
+    const newest = notes[0];
+    if (!accountId || !newest) continue;
+    const f = parseResearchBody(newest.body);
+    out.set(accountId, {
+      at: newest.createdAt,
+      signals: f?.signals.length ?? 0,
+      countries: f?.countries ?? [],
+      summary: f?.summary ?? "",
+    });
+  }
+  return out;
 }
 
 type ResearchFinding = {

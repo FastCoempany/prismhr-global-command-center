@@ -5,8 +5,8 @@
 
 import type { DashNodeKey } from "@/lib/dashboard/stages";
 import { DASH_NODES } from "@/lib/dashboard/stages";
-import { countriesIn } from "./lexicon";
-import type { CorpusDoc } from "./extract";
+import { dealFacts, factAnswer, type CorpusDoc } from "./extract";
+import type { TapedFact } from "./types";
 
 export type CheckSuggestion = {
   node: DashNodeKey;
@@ -19,7 +19,9 @@ type Rule = {
   id: string;
   node: DashNodeKey;
   itemIdx: number;
-  re: RegExp;
+  /** The event's words. The countries rule has none: it reads the countries
+   *  every surface reads (S-20). */
+  re?: RegExp;
   /** Set only on a rule reading a standing FACT rather than an event that
    *  happened. Every other rule here points at a gate worded as a thing
    *  already done — "delivered", "sent", "briefed", "cleared" — so the date
@@ -82,10 +84,13 @@ const RULES: Rule[] = [
     id: "countries-known",
     node: "needs_analysis",
     itemIdx: 0,
-    re: /countr(y|ies)|we're in [A-Z]|workers? in [A-Z]/,
     // The gate asks which countries they hire in, and a country named is
     // named — a reminder's due date does not un-name Brazil. The only rule
-    // here reading a fact instead of an event.
+    // here reading a fact instead of an event. It reads the account's
+    // countries as every surface does, through the one facts reader and the
+    // one tape rule (pass 9 seam, S-20), and cites the fact it stands on: a
+    // re-scan of its own once cited a demo tape's Brazil while the room's
+    // meta named the read's Mexico.
     standingFact: true,
     label: (d) => `countries named · ${d.src}`,
   },
@@ -96,17 +101,25 @@ export function suggestChecks(
   card: { checks: Partial<Record<DashNodeKey, boolean[]>> },
   dismissed: Set<string>, // "node:itemIdx" pairs already dismissed
   now: Date = new Date(),
+  /** The account read's countries (field 18), when the caller holds the
+   *  read; absent, the same reader runs over these docs. */
+  countries?: readonly TapedFact<string>[],
 ): CheckSuggestion[] {
   const out: CheckSuggestion[] = [];
+  const named = factAnswer(countries ?? dealFacts(docs).countries)[0];
   for (const rule of RULES) {
     if (card.checks[rule.node]?.[rule.itemIdx]) continue; // already checked
     if (dismissed.has(`${rule.node}:${rule.itemIdx}`)) continue;
-    const doc = docs.find((d) => {
-      if (!rule.re.test(d.text)) return false;
-      if (rule.id === "countries-known" && countriesIn(d.text).length === 0) return false;
-      if (!rule.standingFact && futureDated(d.at, now)) return false;
-      return true;
-    });
+    const re = rule.re;
+    const doc: CorpusDoc | undefined = !re
+      ? named
+        ? { text: "", src: named.src, at: named.at }
+        : undefined
+      : docs.find((d) => {
+          if (!re.test(d.text)) return false;
+          if (!rule.standingFact && futureDated(d.at, now)) return false;
+          return true;
+        });
     if (doc)
       out.push({
         node: rule.node,

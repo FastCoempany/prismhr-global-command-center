@@ -82,6 +82,9 @@ export function renderRollupBody(r: Rollup): string {
       // empty slot would collapse the line past its own parser (2026-08-28).
       `LAST HUMAN · ${r.lastHuman.day} · ${sv(r.lastHuman.how)} · ${sv(r.lastHuman.who) || NO_ONE} (${r.lastHuman.kind}) · ${sv(r.lastHuman.subject)}`,
     );
+  // The row's key rides on its own line, so a rollup written before it reads
+  // exactly as it always has (S-17).
+  if (r.lastHuman?.k) lines.push(`LAST HUMAN ROW · ${sv(r.lastHuman.k)}`);
   // Rows are the file's truth; emails are how many sends are behind them. The
   // line carries both only when they differ, so an account with no collapsed
   // repeats reads exactly as it always has.
@@ -161,6 +164,8 @@ export function parseRollupBody(body: string): Rollup | null {
         kind: m[4],
         subject: m[5].trim(),
       };
+    } else if ((m = /^LAST HUMAN ROW · (\S+)$/.exec(line))) {
+      if (out.lastHuman) out.lastHuman.k = m[1];
     } else if ((m = /^LAST ORG INBOUND · (.+)$/.exec(line))) {
       out.lastOrgInbound = m[1].trim();
     } else if ((m = /^LAST THEIRS · (\S+) · ([^·]+) · (.*)$/.exec(line))) {

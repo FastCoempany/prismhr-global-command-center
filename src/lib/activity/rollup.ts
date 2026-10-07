@@ -37,11 +37,17 @@ export type Rollup = {
     who: string;
     kind: string;
     subject: string;
+    /** The staged row's own key, so LAST HUMAN TOUCH opens that row's
+     *  excerpt by key instead of matching a day and a subject (pass 9 seam,
+     *  S-17). Absent on a rollup written before it rode. */
+    k?: string;
   } | null;
   /** The account's newest org-wide inbound (Last Email Received) — a
    *  calendar/datetime fact from the export's account-level column. A
-   *  datetime, never their voice (ruled 2026-09-25, D19): it silences the
-   *  drumbeat and nothing else. */
+   *  datetime, never their voice (ruled 2026-09-25, D19): it warms nothing,
+   *  excludes nothing and no longer quiets the drumbeat, which reads only an
+   *  attributed inbound row, lastTheirs (ruled 2026-10-07, pass 8 call 4).
+   *  It is stored and carried, and no rule reads it. */
   lastOrgInbound: string;
   /** Their newest word in the export (D19): the newest human-motion row whose
    *  writer, read from the body's own signature, is on their side, and whose
@@ -165,6 +171,7 @@ export function buildRollup(inp: {
       who,
       kind,
       subject: stripThreadTokens(r.s).slice(0, 90),
+      k: r.k,
     };
   }
 

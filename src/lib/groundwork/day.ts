@@ -13,10 +13,10 @@ import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { isMeetingNote } from "@/lib/intel/meeting";
-import { latestResearchAt } from "@/lib/intel/deep-research";
+import { latestResearchAt, researchDemand, sweepAtFor } from "@/lib/intel/deep-research";
 import type { AccountRead } from "@/lib/record/read";
 import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
-import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
+import { researchGeneratedAt } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
 import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
 import {
@@ -279,12 +279,9 @@ export function moveKey(item: Pick<QueueItem, "accountId" | "ruleId">): string {
 
 // The book-wide sweep's moment for one account, "" when the sweep never
 // researched it — the same reading the Spring's research chip takes. The
-// wing's stamp reads it too, so the stamp names the age the move spoke.
-export function sweepAtFor(accountId: string): string {
-  return getDemand(accountId)?.researched && researchGeneratedAt
-    ? `${researchGeneratedAt}T12:00:00Z`
-    : "";
-}
+// wing's stamp reads it too, so the stamp names the age the move spoke. It
+// lives beside the demand both stores speak (src/lib/intel/deep-research.ts).
+export { sweepAtFor };
 
 // Research staleness in days for an account with its own pass — null when
 // the account has never had one. The book-wide stamp is handled once,
@@ -305,28 +302,14 @@ function perAccountResearchAge(
 
 // The demand the queue reads, the latest of both research stores (pass 8
 // G7; the record outranks every seed, and a fact's two stores merge by
-// latest). The book-wide sweep scores demand; the account's own pass names
-// the signals it found and carries no score. The later of the two speaks, as
-// the Spring's research chip reads the date. A later pass that found a
-// signal reads as real demand and clears the gate on its own; a later pass
-// that found none is silent, and the sweep stands in, as Accounts merges the
-// research fields. The sweep's number still ranks where it agrees; below the
-// gate it is an older read the pass overturned, and the composite rests on
-// the desk score alone.
-function demandFor(
-  inp: QueueInput,
-  accountId: string,
-): { real: boolean; score: number | null; confidence?: "high" | "medium" | "low" } {
-  const sweep = getDemand(accountId);
-  const score = sweep?.demandScore ?? null;
-  const swept = (score ?? 0) >= DEMAND_GATE;
-  const own = inp.researchAtById?.get(accountId) ?? "";
-  const ownSpeaks =
-    !!own &&
-    (inp.researchSignalsById?.get(accountId) ?? 0) > 0 &&
-    latestResearchAt(own, sweepAtFor(accountId)) === own;
-  if (!ownSpeaks) return { real: swept, score, confidence: sweep?.confidence };
-  return { real: true, score: swept ? score : null, confidence: sweep?.confidence };
+// latest). The one spelling is researchDemand (src/lib/intel/deep-research.ts),
+// which the room's account intel reads too (pass 9 seam, S-12).
+function demandFor(inp: QueueInput, accountId: string) {
+  const at = inp.researchAtById?.get(accountId) ?? "";
+  return researchDemand(
+    accountId,
+    at ? { at, signals: inp.researchSignalsById?.get(accountId) ?? 0 } : null,
+  );
 }
 
 const compositeOf = (inp: QueueInput, p: Peo): number => {

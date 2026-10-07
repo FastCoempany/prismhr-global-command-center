@@ -18,6 +18,13 @@ import {
 import { DASH_NODES, type DashNodeKey } from "@/lib/dashboard/stages";
 import type { DashCardRow } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
+import {
+  latestResearchAt,
+  researchDemand,
+  sweepAtFor,
+  type OwnPass,
+} from "@/lib/intel/deep-research";
+import { hideNoteKey } from "@/lib/record/hide";
 import { chicagoDay } from "@/lib/tz";
 
 // Which lead stream an account funnels through. The PEO channel is CSM-owned
@@ -80,6 +87,11 @@ export type AccountIntel = {
   score: number; // composite Global-fit
   tier: "high" | "medium" | "low";
   demand: number | null;
+  /** Demand clears the gate, read from the newer of the two research stores
+   *  the way Groundwork's queue reads it (researchDemand; pass 8 G7, pass 9
+   *  seam S-12): the sweep's score, or a later pass of the account's own that
+   *  found a signal. `demand` stays the sweep's number, for the prose. */
+  realDemand: boolean;
   confidence: "high" | "medium" | "low";
   researched: boolean;
   play: "displacement" | "greenfield" | null;
@@ -91,14 +103,24 @@ export type AccountIntel = {
 
 // Slim intel for every channel account, highest composite fit first. Mirrors the
 // Account Room's own mapping so Today and Accounts never disagree on a score.
-export function accountIntel(): AccountIntel[] {
+// Both research stores speak (pass 9 seam, S-12; the Ted doctrine's merge by
+// latest): the book-wide sweep and the account's own newest pass, which the
+// caller hands in from the research:<account> notes (ownPassesFrom). Demand
+// reads them as Groundwork's queue does (researchDemand), the composite rests
+// on the score that reading keeps, and the summary and countries come from
+// the newer pass with the other standing in, as Accounts merges them. With no
+// passes handed in, the sweep alone speaks.
+export function accountIntel(own?: ReadonlyMap<string, OwnPass>): AccountIntel[] {
   return peos
     .map((p) => {
       const d = deskScore(p);
       const dem = getDemand(p.id);
+      const pass = own?.get(p.id);
       const demand = dem?.researched ? dem.demandScore : null;
-      const c = compositeScore(d.score, demand, dem?.confidence ?? "low");
+      const read = researchDemand(p.id, pass);
+      const c = compositeScore(d.score, read.score, read.confidence);
       const pl = analyzePlay(dem);
+      const passNewer = !!pass && latestResearchAt(pass.at, sweepAtFor(p.id)) === pass.at;
       return {
         id: p.id,
         name: p.name,
@@ -109,12 +131,13 @@ export function accountIntel(): AccountIntel[] {
         score: c.score,
         tier: c.tier,
         demand,
+        realDemand: read.real,
         confidence: dem?.confidence ?? "low",
-        researched: dem?.researched ?? false,
+        researched: (dem?.researched ?? false) || !!pass,
         play: pl.play,
         competitors: pl.competitors,
-        countries: extractCountries(dem),
-        summary: dem?.summary ?? "",
+        countries: [...new Set([...extractCountries(dem), ...(pass?.countries ?? [])])],
+        summary: (passNewer ? pass?.summary : "") || dem?.summary || pass?.summary || "",
       };
     })
     .sort((a, b) => b.score - a.score);
@@ -148,7 +171,16 @@ export function applyValidations(
             ? "displacement"
             : "greenfield"
           : null;
-      return { ...a, demand, score: c.score, tier: c.tier, play, validation: v };
+      // The owner's adjusted demand outranks both research stores.
+      return {
+        ...a,
+        demand,
+        realDemand: demand >= DEMAND_GATE,
+        score: c.score,
+        tier: c.tier,
+        play,
+        validation: v,
+      };
     }
     return { ...a, validation: v };
   });
@@ -168,7 +200,7 @@ export function isStrongSignal(a: Pick<AccountIntel, "demand" | "confidence">): 
 // Band 1 — Signal in. Accounts where research surfaced real, actionable
 // global-hiring demand (the play gate). These are the base talking.
 export function signals(intel: AccountIntel[], limit = 6): AccountIntel[] {
-  const real = intel.filter((a) => a.demand != null && a.demand >= DEMAND_GATE);
+  const real = intel.filter((a) => a.realDemand);
   const pool = real.length
     ? real
     : intel.filter((a) => a.researched && a.demand != null).slice(0, limit);
@@ -621,7 +653,7 @@ export function latestLineByAccount(
 ): Map<string, { line: string; date: string }> {
   const out = new Map<string, { line: string; date: string }>();
   for (const [acctId, ns] of notesById) {
-    const newest = ns.find((n) => n.lane === "mine" && !hidden.has(`hide:note:${n.id}`));
+    const newest = ns.find((n) => n.lane === "mine" && !hidden.has(hideNoteKey(n.id)));
     if (!newest) continue;
     const line = newest.body
       .split("\n")[0]
@@ -707,9 +739,7 @@ export type Narrative = {
 // carried up to Aleks — no spin, just what the data says.
 export function narrative(intel: AccountIntel[]): Narrative {
   const researched = intel.filter((a) => a.researched).length;
-  const realDemand = intel.filter(
-    (a) => a.demand != null && a.demand >= DEMAND_GATE,
-  ).length;
+  const realDemand = intel.filter((a) => a.realDemand).length;
   const strongDemand = intel.filter((a) => isStrongSignal(a) && isTrusted(a)).length;
   const emerging = realDemand - strongDemand;
   const displacement = intel.filter((a) => a.play === "displacement").length;

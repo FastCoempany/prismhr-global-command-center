@@ -7,10 +7,14 @@
 
 import { accountIdsOf, canonicalAccountId } from "@/lib/book/merge";
 import { getPrisma } from "@/lib/db";
-import { MINE_RE } from "@/lib/intel/provenance";
+import { redactMoney } from "@/lib/intel/lexicon";
+import { MINE_RE, isHomeSideName, normPerson } from "@/lib/intel/provenance";
+import { HIDE_NOTE_PREFIX } from "@/lib/record/hide";
 import { LOADED_DISPOSITION_STATUSES } from "@/lib/today/overlay";
+import { chicagoDay } from "@/lib/tz";
 import { rowPerson } from "./classify";
-import { cleanSubject } from "./excerpt";
+import { cleanExcerpt, cleanSubject } from "./excerpt";
+import type { Collision } from "./quiet-flag";
 import { isHumanMotion } from "./rollup";
 import type { Gem } from "./stores";
 import {
@@ -305,7 +309,10 @@ export async function fetchStageRows(accountId: string): Promise<StagedRow[]> {
 // mirror, drop it the same way. A marker counts exactly when the page's
 // disposition load would keep it.
 
-export const HIDE_NOTE_PREFIX = "hide:note:";
+// The note prefix has one spelling, src/lib/record/hide.ts (pass 9 seam,
+// S-11); it is re-exported here for the readers that import it from this
+// layer.
+export { HIDE_NOTE_PREFIX };
 export const HIDE_TODO_PREFIX = "hide:todo:";
 
 /** The row ids a set of hide markers parks, for one prefix. Pure. */
@@ -466,11 +473,12 @@ export function verifiedCold(sr: SecondRecord | undefined): boolean {
   return true;
 }
 
-// ── the org-wide answered check (silence-bump / cold-revival hardening) ─────
-// The widest inbound the app holds: the rollup's LAST ORG INBOUND, as a
-// sortable ISO-ish key. "" when the second record holds none. It silences
-// the drumbeat and nothing else: a datetime is never their voice (D19), and
-// who caught the reply is nobody's move (C6, amended 2026-10-05).
+// ── the account-level datetime, as a key ────────────────────────────────────
+// The rollup's LAST ORG INBOUND, as a sortable ISO-ish key. "" when the second
+// record holds none. A datetime is never their voice (D19): it warms nothing,
+// excludes nothing, and since pass 8 call 4 (ruled 2026-10-07) it no longer
+// quiets the drumbeat either, which answers only to an attributed inbound
+// row (the rollup's lastTheirs). No rule reads this key.
 
 export function orgInboundKey(sr: SecondRecord | undefined): string {
   const v = sr?.rollup?.lastOrgInbound ?? "";
@@ -484,21 +492,81 @@ export function orgInboundKey(sr: SecondRecord | undefined): string {
 // inside 7 days flags the composed thing. Informs, never blocks (the direct
 // doctrine). The 7-day send window rides the intent grammar's 7D row; slices
 // staged before that row existed read as no-cadence rather than guessing.
+//
+// The colleague's thread reads both records (pass 9 seam, S-18; the Ted
+// doctrine): the export's newest human row when a colleague's, and the
+// operator's own record, where a CSM's live thread arrives as a filed entry
+// a colleague wrote, or an account person's mail addressed to one. The two
+// merge by latest, inside the same seven days, and the record wins a tie, as
+// LAST HUMAN TOUCH reads them (C1). The words are written once, in
+// quiet-flag.ts.
 
-type Collision = {
-  mktgSends7: number;
-  colleague: { who: string; day: string } | null;
+const COLLISION_DAYS = 7;
+
+/** The first record's half: the newest visible entry inside seven days that
+ *  a colleague wrote, or that an account person addressed to a colleague.
+ *  The operator's own send is never a colleague's thread (your own thread
+ *  never collides with your own outreach), machinery is nobody's thread, and
+ *  a colleague merely copied is not the thread's. */
+function recordColleague(
+  record: { docs: readonly CollisionDoc[]; homeSide: readonly string[] },
+  now: Date,
+): NonNullable<Collision["colleague"]> | null {
+  const colleague = (name: string): string => {
+    const n = normPerson(name.replace(/\+\d+\s*$/, "")).trim();
+    return n && isHomeSideName(n, record.homeSide) && !MINE_RE.test(n) ? n : "";
+  };
+  let best: { at: number; hit: NonNullable<Collision["colleague"]> } | null = null;
+  for (const d of record.docs) {
+    if (d.hidden || !d.noteId || d.machinery) continue;
+    const day = chicagoDay(d.at);
+    const age = ageDays(day, now);
+    if (age == null || age < 0 || age > COLLISION_DAYS) continue;
+    const [from = "", to = ""] = (d.actors ?? "").split("→");
+    if (!from.trim() || MINE_RE.test(normPerson(from))) continue;
+    const who = colleague(from) || colleague(to.split(/[;,]/)[0] ?? "");
+    if (!who) continue;
+    const at = Date.parse(d.at);
+    if (!best || at > best.at)
+      best = {
+        at,
+        // The entry's own words, cleaned as an excerpt and money-redacted,
+        // so the flag opens to its evidence (the click-depth law).
+        hit: { who, day, noteId: d.noteId, text: redactMoney(cleanExcerpt(d.text, 600)) },
+      };
+  }
+  return best?.hit ?? null;
+}
+
+/** The record doc fields the guard reads (RecordDoc, src/lib/record/docs.ts). */
+type CollisionDoc = {
+  at: string;
+  text: string;
+  actors: string;
+  noteId: string;
+  hidden: boolean;
+  machinery: boolean;
 };
 
-export function collisionFor(sr: SecondRecord | undefined, now: Date): Collision | null {
+export function collisionFor(
+  sr: SecondRecord | null | undefined,
+  now: Date,
+  /** The account read's docs and declared roster (fields 1 and 9), when the
+   *  caller holds the read: the first record's half of the colleague's
+   *  thread. Absent, the export alone speaks. */
+  record?: { docs: readonly CollisionDoc[]; homeSide: readonly string[] } | null,
+): Collision | null {
   const mktgSends7 = sr?.intent?.windows.w7?.s ?? 0;
   let colleague: Collision["colleague"] = null;
   const lh = sr?.rollup?.lastHuman;
   // Your own thread never collides with your own outreach.
   if (lh && lh.kind === "colleague" && !MINE_RE.test(lh.who)) {
     const age = ageDays(lh.day, now);
-    if (age != null && age <= 7) colleague = { who: lh.who, day: lh.day };
+    if (age != null && age <= COLLISION_DAYS) colleague = { who: lh.who, day: lh.day };
   }
+  const ours = record ? recordColleague(record, now) : null;
+  // By latest; the record wins a tie (C1).
+  if (ours && (!colleague || ours.day >= colleague.day.slice(0, 10))) colleague = ours;
   if (mktgSends7 <= 0 && !colleague) return null;
   return { mktgSends7, colleague };
 }
