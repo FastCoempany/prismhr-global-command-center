@@ -22,7 +22,7 @@
 import { useRouter } from "next/navigation";
 import type { Door } from "@/lib/ingest/doors";
 import { sendToVault, sendUnfiled, type VaultReceipt } from "@/lib/ingest/vault";
-import type { Window } from "@/lib/ingest/windows";
+import { transportCut, type Window } from "@/lib/ingest/windows";
 import { DROP_ACCEPT } from "@/lib/paste-files";
 import { splitDrop, vaultAfterVerdict, type VaultStep } from "@/lib/room/drop-plan";
 import { roomPaste } from "../actions";
@@ -103,15 +103,22 @@ export type FilingOpts = {
 
 /** What one filing asks of the server: the account, the text, and the door
  *  the capture came through, which stamps every row the filing writes (P3),
- *  with the operator's force and the reader's windows. Pure, so the suite
- *  can read the request a pick makes. */
+ *  with the operator's force and the reader's windows. A pasted text too
+ *  heavy for the server's request cap is windowed to fit here, as the file
+ *  reader windows a file, and the window joins the others (TRANSPORT_BYTES;
+ *  D4); a text that fits passes untouched (pass 8 call 3). Pure, so the
+ *  suite can read the request a pick makes. */
 export function filingRequest(
   door: FilingDoor,
   accountId: string,
   text: string,
   opts: Pick<FilingOpts, "force" | "windows"> = {},
 ): Parameters<typeof roomPaste> {
-  return [accountId, text, { force: !!opts.force, door, windows: opts.windows }];
+  const carried = transportCut("the text", text);
+  const windows = carried.window
+    ? [...(opts.windows ?? []), carried.window]
+    : opts.windows;
+  return [accountId, carried.text, { force: !!opts.force, door, windows }];
 }
 
 /** A filing's result, with what its verdict does with the files that waited

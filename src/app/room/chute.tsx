@@ -496,7 +496,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
             className={styles.chuteUndo}
             title={
               it.armed
-                ? "Press again to clear it. Earlier drops are not kept, so nothing is restored."
+                ? "Press again to clear it. No earlier drop comes back."
                 : "Take this drop back. Clears every account's second-record read."
             }
             onClick={() => {
@@ -509,7 +509,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
                 patch(it.key, {
                   state: "undone",
                   reason: r.ok
-                    ? `${r.lines[0]} Earlier drops are not kept, so nothing was restored.`
+                    ? `${r.lines[0]} No earlier drop came back.`
                     : (r.reason ?? "The take-back failed."),
                 });
               });

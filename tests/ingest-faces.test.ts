@@ -833,7 +833,12 @@ describe("the Chute's own copy obeys the writing canon (pass 8, C3, C4, C6, B48)
       if (/\s/.test(s)) assert.ok(!/\([^)]*\)/.test(s), `a parenthetical in "${s}"`);
     }
     assert.ok(!/staging replaces wholesale/.test(code));
-    assert.ok(code.includes("Earlier drops are not kept, so nothing was restored."));
+    // The take-back's lines state the fact flat, with no consequence closer
+    // ("… not kept, so nothing is restored"), as the dock's do.
+    assert.ok(!/nothing (is|was) restored/i.test(code));
+    assert.ok(code.includes('"Press again to clear it. No earlier drop comes back."'));
+    assert.ok(code.includes("`${r.lines[0]} No earlier drop came back.`"));
+    assert.ok(code.includes('"Nothing changed. The record already holds this drop."'));
   });
 
   test("their promises count in plain words, and Send-it's duplicate line has no dash", () => {

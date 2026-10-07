@@ -165,7 +165,10 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
     assert.match(client, /useIngest\(\{\s*door:\s*"drop"/);
     const door = read("src/app/room/ingest/use-ingest.ts");
     assert.match(door, /roomPaste\(\.\.\.filingRequest\(door,/);
-    assert.match(door, /\{ force: !!opts\.force, door, windows: opts\.windows \}/);
+    // The windows are the reader's, plus the transport's when a pasted text
+    // was too heavy for the server's cap (pass 9, after pass 8 call 3).
+    assert.match(door, /\{ force: !!opts\.force, door, windows \}/);
+    assert.match(door, /const windows = carried\.window\s*\? \[\.\.\.\(opts\.windows \?\? \[\]\), carried\.window\]\s*: opts\.windows;/);
     const actions = read("src/app/room/actions.ts");
     // The door is a required argument since pass 9 (pass 8 housekeeping):
     // roomPaste no longer defaults a caller that names none to the Drop.

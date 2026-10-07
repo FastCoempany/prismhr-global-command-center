@@ -42,7 +42,9 @@ import {
   READ_WINDOW_TAPE,
   TEXT_FLOOR,
   TRANSCRIBE_BYTES,
+  TRANSPORT_BYTES,
   cut,
+  transportCut,
   filingSentences,
   windowSentences,
   windowsOf,
@@ -54,6 +56,8 @@ import {
   sanitizeAiResult,
 } from "../src/lib/intel/ai-clean";
 import { sheetToPaste } from "../src/lib/paste-files";
+import { readFileToText } from "../src/app/room/read-file";
+import { filingRequest } from "../src/app/room/ingest/use-ingest";
 import {
   createAccountNoteRow,
   createTodoRow,
@@ -541,10 +545,11 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
     assert.ok(!actions.includes('cut("the transcription"'), "the transcriber cuts nothing");
     assert.ok(actions.includes("return { ok: true, text, window: null };"));
     const reader = read("src/app/room/read-file.ts");
-    assert.ok(!/\bcut\(/.test(reader), "the file reader cuts nothing");
+    assert.ok(!/\bcut\(/.test(reader), "the file reader cuts nothing but the transport's");
     assert.ok(reader.includes("`DOCUMENT — ${f.name}\\n\\n${raw}`"), "the document whole");
     assert.ok(reader.includes("if (r.window) windows.push(r.window);"));
-    assert.ok(reader.includes("return { ok: true, text, windows };"));
+    assert.ok(reader.includes('const carried = transportCut("the file", text);'));
+    assert.ok(reader.includes("return { ok: true, text: carried.text, windows };"));
     assert.ok(roomPaste.includes("const windows: Window[] = [...(opts.windows ?? [])];"));
   });
 
@@ -951,5 +956,87 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
     assert.match(roomPaste, /\} finally \{[\s\S]*?if \(claim\.kind === "claimed"\) await releaseCapture\(pasteKey, claim\.token\);/);
     assert.ok(roomPaste.indexOf("claimCapture(") < roomPaste.indexOf("aiCleanTimeline("), "the claim precedes the read");
     assert.match(roomPaste, /const dupeCheck: DupeCheck = claim\.kind === "skipped" \? "skipped" : "ran";/);
+  });
+});
+
+// ── the transport's window (pass 8 call 3, the coordinator's follow-up) ────
+// Under the server's request cap every reader hands on the text whole; above
+// it, a text used to fail its filing with nothing fanned out. The reader now
+// windows it to fit, the window rides to the receipt (D4), and it files.
+describe("a text too heavy for the transport is windowed to fit and still files", () => {
+  const encoded = (t: string) => new TextEncoder().encode(JSON.stringify(t)).length;
+
+  test("the limit is named once, under the platform's request cap", () => {
+    assert.equal(TRANSPORT_BYTES, 4 * 1024 * 1024);
+    const config = read("next.config.ts");
+    const kb = Number(/bodySizeLimit:\s*"(\d+)kb"/.exec(config)?.[1] ?? "0");
+    assert.ok(kb > 0, "the server action body limit is set");
+    assert.ok(TRANSPORT_BYTES < kb * 1024, "the window stays under the server's cap");
+    assert.ok(kb * 1024 < 4.5 * 1024 * 1024, "and the cap under the platform's 4.5 MB");
+    // Both doors take the module's limit, never one of their own.
+    assert.ok(read("src/app/room/read-file.ts").includes('transportCut("the file", text)'));
+    assert.ok(read("src/app/room/ingest/use-ingest.ts").includes('transportCut("the text", text)'));
+  });
+
+  test("under the limit nothing is cut; over it the head that fits is kept and the window says how much", () => {
+    assert.deepEqual(transportCut("the file", "short", 100), { text: "short", window: null });
+    const exact = "x".repeat(98);
+    assert.equal(transportCut("the file", exact, 100).window, null, "98 characters and two quotes fit 100 bytes");
+    const over = transportCut("the file", "x".repeat(250), 100);
+    assert.equal(over.text, "x".repeat(98));
+    assert.deepEqual(over.window, { what: "the file", read: 98, of: 250 });
+    // Every kind of character is costed as it travels: escapes, UTF-8's
+    // widths, a pair never split, a control character's \u escape.
+    for (const unit of ["—", "\n", '"', "é", "😀", "\u0001", "a\\b"]) {
+      const text = unit.repeat(200);
+      const r = transportCut("the file", text, 101);
+      assert.ok(r.window, `${JSON.stringify(unit)} is cut`);
+      assert.ok(encoded(r.text) <= 101, `${JSON.stringify(unit)} fits: ${encoded(r.text)}`);
+      assert.ok(encoded(text.slice(0, r.text.length + unit.length)) > 101, `${JSON.stringify(unit)} keeps all that fits`);
+      assert.ok(!/[\uD800-\uDBFF]$/.test(r.text), "no half of a pair");
+    }
+  });
+
+  test("the reader windows a file past the limit, records the window and hands on what fits", async () => {
+    const noPdf = async () => ({ ok: false, reason: "no reader in the suite" });
+    const line = "Dana Ellis: the board meets Thursday — we sign after.\n";
+    const big = line.repeat(Math.ceil((TRANSPORT_BYTES + 400_000) / line.length));
+    const r = await readFileToText(new File([big], "export.txt", { type: "text/plain" }), noPdf);
+    assert.ok(r.ok);
+    if (!r.ok) return;
+    // The text reader trims the file, so the whole is the trimmed text.
+    const whole = big.trim();
+    assert.equal(r.windows.length, 1);
+    assert.deepEqual(r.windows[0], { what: "the file", read: r.text.length, of: whole.length });
+    assert.ok(encoded(r.text) <= TRANSPORT_BYTES, "what travels fits the transport");
+    assert.ok(encoded(whole) > TRANSPORT_BYTES, "and the whole would not have");
+    assert.ok(whole.startsWith(r.text), "the head is kept");
+    // The receipt's amber line says it, beside roomPaste's own read window.
+    const read60 = { what: "the paste", read: READ_WINDOW, of: r.text.length };
+    assert.deepEqual(filingSentences({ windows: [...r.windows, read60] }), [
+      `Read ${r.text.length.toLocaleString("en-US")} of ${whole.length.toLocaleString("en-US")} characters of the file.`,
+      `Read 60,000 of ${r.text.length.toLocaleString("en-US")} characters of the paste.`,
+    ]);
+    // A file under the limit passes whole, with no window.
+    const small = await readFileToText(new File([line.repeat(40)], "note.txt"), noPdf);
+    assert.ok(small.ok);
+    if (small.ok) {
+      assert.deepEqual(small.windows, []);
+      assert.equal(small.text, line.repeat(40).trim());
+    }
+  });
+
+  test("a pasted text past the limit is windowed in the filing request, and one that fits is untouched", () => {
+    const fits = filingRequest("drop", "A1", "The board meets Thursday.", { windows: [] });
+    assert.deepEqual(fits, ["A1", "The board meets Thursday.", { force: false, door: "drop", windows: [] }]);
+    const heavy = "y".repeat(TRANSPORT_BYTES + 10);
+    const [, text, opts] = filingRequest("drop", "A1", heavy, {
+      windows: [{ what: "the file", read: 5, of: 9 }],
+    });
+    assert.equal(text.length, TRANSPORT_BYTES - 2);
+    assert.deepEqual(opts.windows, [
+      { what: "the file", read: 5, of: 9 },
+      { what: "the text", read: TRANSPORT_BYTES - 2, of: heavy.length },
+    ]);
   });
 });

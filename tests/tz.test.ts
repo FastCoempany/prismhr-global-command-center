@@ -322,6 +322,8 @@ describe("the read's day math names the Chicago day (pass 8 X5)", () => {
       assert.equal(rec.quietDays, 1);
     });
   }
+});
+
 // Pass 8, H11: a commitment due today and filed before 7 AM Chicago read as
 // scheduled, because its reminder sat at noon UTC on the due day. The
 // reminder is the due day's first Chicago moment now, so it is due all day.
