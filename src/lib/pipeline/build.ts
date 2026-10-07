@@ -11,11 +11,13 @@
 // book's real 1,323 notes and check each field against the record.
 
 import { contactsFor } from "@/lib/book/contacts";
-import { isCall, isTape } from "@/lib/ingest/dialect";
+import { isCall } from "@/lib/ingest/dialect";
 import { shortName } from "@/lib/ingest/short-name";
 import { isCallArchive, speakersIn } from "@/lib/intel/meeting";
 import { peopleFor } from "@/lib/intel/people";
+import type { RecordDoc } from "@/lib/record/docs";
 import type { AccountRead } from "@/lib/record/read";
+import { factAnswer } from "@/lib/intel/extract";
 import { isHomeSideName, MINE_RE } from "@/lib/intel/provenance";
 import { effectiveAt } from "@/lib/intel/clock";
 import {
@@ -187,35 +189,42 @@ export function tidyPeople(names: readonly string[]): string[] {
 /** One filed entry. Callers pass notes already stripped of ✕-parked rows
  *  (`hide:note:` dispositions) — the note survives in the table, the row does
  *  not, and the report must read exactly what the room reads. */
-/** Which product each country is named beside. Reads the distilled entries and
- *  notes, never the raw tape — a demo walks through every product in the suite
- *  and would attach all of them to whichever country was on screen. */
+/** The record docs a fact's answer stands on, under the one tape rule
+ *  (factAnswer, src/lib/intel/extract.ts; pass 9 seam, S-20): the reads, or
+ *  the tape when the answer is the tape's because no read named one. The
+ *  drawer's country and product refinements read these docs, never a source
+ *  filter of their own, so they say what the room says. */
+function rungDocs(
+  docs: readonly RecordDoc[],
+  answer: readonly { tape: boolean }[],
+): RecordDoc[] {
+  const tape = answer.length > 0 && answer.every((f) => f.tape);
+  return docs.filter((d) => !d.hidden && !!d.noteId && d.tape === tape);
+}
+
 /** The countries the record shows work in. Reads the same docs the countries
- *  themselves came from — the reads, never the raw tape. An empty set means the
- *  record is too thin to judge, and the caller keeps every country rather than
- *  showing none. */
-function countriesInPlay(
-  notes: readonly { body: string; source?: string }[],
-): Set<string> {
+ *  themselves came from (rungDocs). An empty set means the record is too thin
+ *  to judge, and the caller keeps every country rather than showing none. */
+function countriesInPlay(docs: readonly RecordDoc[]): Set<string> {
   const out = new Set<string>();
-  for (const n of notes) {
-    if (isTape(n.source)) continue;
-    for (const m of countryMentions(n.body ?? ""))
-      if (demandNear(n.body ?? "", m.at)) out.add(m.code);
-  }
+  for (const d of docs)
+    for (const m of countryMentions(d.text ?? ""))
+      if (demandNear(d.text ?? "", m.at)) out.add(m.code);
   return out;
 }
 
-function productByCountry(
-  notes: readonly { body: string; source?: string }[],
-): Map<string, string[]> {
+/** Which product each country is named beside, over the docs the products
+ *  came from (rungDocs): the reads when they name a product, because a demo
+ *  walks through every product in the suite and would attach all of them to
+ *  whichever country was on screen; the tape only when it alone names one. */
+function productByCountry(docs: readonly RecordDoc[]): Map<string, string[]> {
   const out = new Map<string, string[]>();
-  for (const n of notes) {
-    if (isTape(n.source)) continue;
+  for (const d of docs) {
+    const body = d.text ?? "";
     for (const key of Object.keys(PRODUCT_TERMS) as (keyof typeof PRODUCT_TERMS)[]) {
       const re = new RegExp(PRODUCT_TERMS[key].source, "gi");
-      for (const m of (n.body ?? "").matchAll(re)) {
-        const c = countryNear(n.body, m.index ?? 0, 120);
+      for (const m of body.matchAll(re)) {
+        const c = countryNear(body, m.index ?? 0, 120);
         if (!c) continue;
         const at = out.get(c) ?? out.set(c, []).get(c)!;
         // Both, when the record names both. XCEL HR's Canada is a payroll
@@ -431,12 +440,12 @@ function record(
   // first product for every row printed "Canada · EOR", which is the opposite
   // of what the record says. Where the record names no product beside a
   // country, the honest answer is Unknown rather than a borrowed one.
-  const productAt = productByCountry(ns);
+  const productAt = productByCountry(rungDocs(a.read.docs, factAnswer(a.read.products)));
   // Only the countries with work to be done in them. A country the account
   // merely HAS something in is context: XCEL HR's parent already owns payroll
   // companies in the UK, which the report was listing beside Mexico and Canada
   // as though it were a deal.
-  const inPlay = countriesInPlay(ns);
+  const inPlay = countriesInPlay(rungDocs(a.read.docs, factAnswer(a.read.countries)));
   const opportunities = intel.countries
     .filter((c) => !inPlay.size || inPlay.has(c.value))
     .slice(0, 4)

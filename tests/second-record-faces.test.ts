@@ -8,10 +8,13 @@
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import {
+  NO_CASE,
   caseNumberOf,
+  caseRows,
   cleanExcerpt,
   cleanSubject,
   correspondentsOf,
+  themeCaseGroups,
 } from "../src/lib/activity/excerpt";
 import {
   collisionFor,
@@ -25,6 +28,7 @@ import {
   dropAgeDays,
   type SecondRecord,
 } from "../src/lib/activity/read";
+import { quietFlagOf } from "../src/lib/activity/quiet-flag";
 import { render, textOf } from "./helpers/room-render";
 import { buildQueue } from "../src/lib/groundwork/day";
 import { readAccount } from "../src/lib/record/read";
@@ -179,6 +183,36 @@ describe("cleanExcerpt — the meat law's cleaner", () => {
     );
     assert.equal(caseNumberOf("Re: pricing"), "");
     assert.equal(cleanSubject("Update [ thread::L9TrIyskd3q ] here"), "Update here");
+  });
+
+  test("every line of the case list opens its rows, uncased traffic too (S-13)", () => {
+    const rows = [
+      { k: "a", s: "Email: PrismHR Case 00687719: Suggested Solution", lane: "support" },
+      { k: "b", s: "Re: PrismHR Case 00687719 update", lane: "support" },
+      { k: "c", s: "Payroll question", lane: "support" },
+      { k: "d", s: "Payroll follow-up", lane: "support" },
+      { k: "e", s: "Re: pricing", lane: "human" },
+    ];
+    const groups = themeCaseGroups(rows, "");
+    assert.deepEqual([...groups.keys()], ["00687719", NO_CASE]);
+    // The door reads the list's own grouping: each key opens exactly the rows
+    // the list counted under it. "no-case" used to match no case number and
+    // open an empty timeline.
+    for (const [key, list] of groups)
+      assert.deepEqual(
+        caseRows(rows, key).map((r) => r.k),
+        list.map((r) => r.k),
+        key,
+      );
+    assert.deepEqual(
+      caseRows(rows, NO_CASE).map((r) => r.k),
+      ["c", "d"],
+    );
+    // A theme narrows the uncased door the way it narrows the list.
+    assert.deepEqual(
+      caseRows(rows, NO_CASE, "follow-up").map((r) => r.k),
+      ["d"],
+    );
   });
 });
 
@@ -340,6 +374,99 @@ describe("read.ts — the pure derivations", () => {
       NOW,
     );
     assert.equal(old, null);
+  });
+
+  // The direct doctrine: "When a send crosses a hot, live CSM thread, the
+  // composed thing carries a quiet flag." The guard read the export alone, so
+  // a CSM's live thread filed to the operator's own record raised nothing
+  // (pass 9 seam, S-18). Both records now speak, by latest, inside the same
+  // seven days.
+  describe("the colleague's thread reads both records (S-18)", () => {
+    const entry = (id: string, actors: string, createdAt: string) => ({
+      id,
+      accountId: "TEST0000000000001",
+      partner: "",
+      kind: "account" as const,
+      lane: "mine" as const,
+      body: `✉ OL — Re: Canada · ${actors}\nLooping in the global team on this.`,
+      actors,
+      source: "outlook",
+      recipients: (actors.split("→")[1] ?? "").trim(),
+      createdAt,
+    });
+    const readOf = (
+      notes: ReturnType<typeof entry>[],
+      dispositions = new Map<string, unknown>(),
+    ) =>
+      readAccount({
+        account: { id: "TEST0000000000001", name: "Test Partner", contacts: [] },
+        notes,
+        touches: [],
+        todos: [],
+        dispositions,
+        homeSide: ["Lesha Cyphers"],
+        now: NOW,
+      });
+    const csmMail = entry("c1", "Lesha Cyphers → Dana Ellis", "2026-08-18T15:00:00Z");
+    const exportColleague = (day: string) =>
+      sr({
+        rollup: rollup({
+          lastHuman: {
+            day,
+            how: "email",
+            who: "Anika Steenstra",
+            kind: "colleague",
+            subject: "x",
+          },
+        }),
+      });
+
+    test("a CSM's mail on the operator's own record raises the flag with no export behind it", () => {
+      const col = collisionFor(undefined, NOW, readOf([csmMail]));
+      assert.deepEqual(
+        {
+          who: col?.colleague?.who,
+          day: col?.colleague?.day,
+          noteId: col?.colleague?.noteId,
+        },
+        { who: "Lesha Cyphers", day: "2026-08-18", noteId: "c1" },
+      );
+      assert.equal(quietFlagOf(col), "LESHA CYPHERS'S THREAD · 08/18");
+      assert.match(col?.colleague?.text ?? "", /Looping in the global team/);
+    });
+
+    test("an account person's mail to the CSM is the CSM's thread too", () => {
+      const toCsm = entry("c2", "Dana Ellis → Lesha Cyphers", "2026-08-19T15:00:00Z");
+      assert.equal(
+        collisionFor(undefined, NOW, readOf([toCsm]))?.colleague?.who,
+        "Lesha Cyphers",
+      );
+    });
+
+    test("the two records merge by latest, and the record wins a tie", () => {
+      const read = readOf([csmMail]);
+      assert.equal(
+        collisionFor(exportColleague("2026-08-19"), NOW, read)?.colleague?.who,
+        "Anika Steenstra",
+      );
+      assert.equal(
+        collisionFor(exportColleague("2026-08-15"), NOW, read)?.colleague?.who,
+        "Lesha Cyphers",
+      );
+      assert.equal(
+        collisionFor(exportColleague("2026-08-18"), NOW, read)?.colleague?.who,
+        "Lesha Cyphers",
+      );
+    });
+
+    test("the operator's own send, a stale thread and a parked entry raise nothing", () => {
+      const ours = entry("o1", "Antaeus Coe → Lesha Cyphers", "2026-08-19T15:00:00Z");
+      assert.equal(collisionFor(undefined, NOW, readOf([ours])), null);
+      const stale = entry("s1", "Lesha Cyphers → Dana Ellis", "2026-08-10T15:00:00Z");
+      assert.equal(collisionFor(undefined, NOW, readOf([stale])), null);
+      const parked = readOf([csmMail], new Map([["hide:note:c1", { status: "parked" }]]));
+      assert.equal(collisionFor(undefined, NOW, parked), null);
+    });
   });
 
   test("outreachGem skips acted and coordination gems", () => {

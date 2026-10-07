@@ -15,6 +15,7 @@ import { render, textOf } from "../helpers/room-render";
 import { actSendRow } from "../../src/lib/act/lane";
 import { buildQueue, SEAT_SLOT_CAP, type QueueItem } from "../../src/lib/groundwork/day";
 import { buildFile } from "../../src/lib/groundwork/file";
+import { quietChipOf, quietFlagOf } from "../../src/lib/activity/quiet-flag";
 import type { Peo } from "../../src/lib/book";
 import { readAccount, type RecordNote } from "../../src/lib/record/read";
 import { lastHumanTouch, sheetSecond } from "../../src/lib/record/accounts";
@@ -453,12 +454,16 @@ describe("LAST HUMAN TOUCH and the verdict open one click deep (A5, the click-de
       record: "salesforce" as const,
     };
     const cite = touchCiteOf(readOf([]), touch, lastHuman);
+    // The cite carries the row's key when the rollup did (S-17); this rollup
+    // was written before the key rode, so the key is empty and the fold
+    // falls back to the day and the subject.
     assert.deepEqual(cite, {
       from: "salesforce",
       day: "2026-10-01",
       who: "Pat Lee",
       how: "EMAIL",
       subject: "Re: Mexico headcount",
+      k: "",
     });
     const { TouchEvidence } = await import("../../src/app/accounts/second-record-panel");
     const html = await render(
@@ -670,6 +675,11 @@ describe("the lane's send carries the quiet flag (A8; the direct doctrine)", () 
   const cadence = { mktgSends7: 3, colleague: null };
 
   test("the flag's words are Groundwork's file card's, off the same collision", () => {
+    // One writer (pass 9 seam, S-6): the Act Lane's send and the file card
+    // both read src/lib/activity/quiet-flag.ts, so the parity below holds by
+    // construction, the colleague the export could not name included (the
+    // two copies once said "'S THREAD" and "A COLLEAGUE'S THREAD" for it).
+    assert.equal(sendFlagOf, quietFlagOf);
     const peoW = peo("001F000000w38BOIAY", "Simploy");
     const item = {
       accountId: peoW.id,
@@ -683,7 +693,8 @@ describe("the lane's send carries the quiet flag (A8; the direct doctrine)", () 
       carried: false,
       intent: null,
     } as unknown as QueueItem;
-    for (const col of [thread, cadence]) {
+    const unnamed = { mktgSends7: 0, colleague: { who: "", day: "2026-10-02" } };
+    for (const col of [thread, cadence, unnamed]) {
       const file = buildFile(peoW, {
         queueItem: item,
         intent: null,
@@ -696,7 +707,13 @@ describe("the lane's send carries the quiet flag (A8; the direct doctrine)", () 
       });
       assert.equal(sendFlagOf(col), file.collisionLine);
     }
+    assert.equal(sendFlagOf(unnamed), "A COLLEAGUE'S THREAD · 10/02");
     assert.equal(sendFlagOf(null), "");
+    // The stage's chip is the same words cut to the chip row: a first name,
+    // and the cadence without its noun.
+    assert.equal(quietChipOf(thread), "ANIKA'S THREAD · 10/02");
+    assert.equal(quietChipOf(cadence), "MKTG CADENCE LIVE · 3 THIS WEEK");
+    assert.equal(quietChipOf(unnamed), "A COLLEAGUE'S THREAD · 10/02");
   });
 
   test("the lane shows the flag above the composed send; it informs and the send stays", async () => {

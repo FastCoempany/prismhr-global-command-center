@@ -607,8 +607,10 @@ describe("the room wires every new mechanism", () => {
       actions.indexOf("export async function roomResearch("),
       actions.indexOf("export async function roomGapsRefill("),
     );
-    assert.match(research, /const people = readFromStores\(/, "the pass names the read's people");
-    assert.match(research, /\.people\.map\(\(p\) => p\.name\)/);
+    assert.match(research, /const read = readFromStores\(/, "the pass reads the account read");
+    assert.match(research, /const people = read\.people\s*\.map\(\(p\) => p\.name\)/, "the pass names the read's people");
+    // Its countries are the record's too, never the last pass's own.
+    assert.match(research, /countries: read\.countries\.map\(/);
     assert.ok(!/where: \{ accountId: acct\.id \},\s*orderBy: \{ createdAt: "desc" \},\s*take: 60/.test(research), "the raw sixty rows are read again");
   });
   test("the research control states when it last ran", () => {

@@ -21,17 +21,15 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { effectiveAt } from "@/lib/intel/clock";
 import type { DigestEntry } from "@/lib/intel/digest";
-import { THEIR_PROMISE_RE, extractDealIntel } from "@/lib/intel/extract";
+import { THEIR_PROMISE_RE, dealFacts, extractDealIntel } from "@/lib/intel/extract";
 import { GLYPH_RE } from "@/lib/ingest/dialect";
-import { HEADCOUNT, PRODUCT_TERMS, countriesIn, countryNear } from "@/lib/intel/lexicon";
 import { isMeetingNote, meetingRead } from "@/lib/intel/meeting";
 import { peopleFor, type ContactForPeople, type PersonRow } from "@/lib/intel/people";
 import { MINE_RE, isHomeSideName, normPerson } from "@/lib/intel/provenance";
 import { relationshipFor, type Relationship } from "@/lib/intel/relationship";
-import type { DealIntel, ProductKey, SourcedFact } from "@/lib/intel/types";
+import type { DealIntel, EntryFacts, ProductKey, TapedFact } from "@/lib/intel/types";
 import { dayBlown, owedByThem } from "@/lib/room/owed";
 import { lastTouchRead, newestOutbound, targetOf } from "@/lib/room/touch";
-import type { EntryHeadcount } from "@/lib/sf-timeline";
 import { cardNextStep } from "@/lib/today/build";
 import type { AccountNote } from "@/lib/today/overlay";
 import { chicagoDay } from "@/lib/tz";
@@ -42,16 +40,14 @@ import {
   type RecordDoc,
   type TouchRow,
 } from "./docs";
+import { hideNoteKey } from "./hide";
 import { isTheirAcceptance, whoseMove, type WhoseMove } from "./whose-move";
 
-/** The deal facts a Filing's read states on one entry (src/lib/sf-timeline.ts,
- *  TimelineEntry; slice 4). A row that carries them was read by the model,
- *  and its facts are taken over the regex (§2.1, §7 item 13). */
-export type EntryFacts = {
-  countries?: readonly string[];
-  products?: readonly string[];
-  headcounts?: readonly EntryHeadcount[];
-};
+/** The deal facts a Filing's read states on one entry, and a fact with the
+ *  tape flag: the types live with the one facts reader (src/lib/intel/
+ *  types.ts; pass 9 seam, S-20) and are re-exported where the pages import
+ *  them. */
+export type { EntryFacts, TapedFact };
 
 /** A record row as the read takes it: the wide loader's row, and the facts
  *  its Filing stated for it when the caller has them. */
@@ -99,10 +95,6 @@ export type AccountReadInput = {
    *  node labels — the stage (E12) reads them and nothing else does. */
   board?: { card: DashCardRow; labels?: Record<string, string> } | null;
 };
-
-/** A fact with the doc it stands on and whether that doc is the tape, so a
- *  consumer can rank or exclude the tape without re-scanning (E18). */
-export type TapedFact<T> = SourcedFact<T> & { tape: boolean };
 
 type DealOutcome = NonNullable<ReturnType<typeof readOutcome>>;
 
@@ -206,7 +198,9 @@ export type AccountRead = {
    *  proof the meeting exists. Our own side accepting books nothing, so it
    *  is never this fact; `who` is the person of theirs who accepted. */
   lastAccepted: { at: string; who: string; noteId: string } | null;
-  /** 16 · any doc with a direction, or any touch. */
+  /** 16 · any doc with a direction, any touch, or a meeting held (field 6):
+   *  a held meeting filed as an undirected ☰ archive is a conversation
+   *  (pass 9 seam, S-15). */
   conversationExists: boolean;
   /** 17 · the second record, folded by canonical id. */
   secondRecord: SecondRecord | null;
@@ -220,8 +214,6 @@ export type AccountRead = {
   /** 20 · the newest record entry's moment, "" on an empty record. */
   lastRecordAt: string;
 };
-
-const HIDE_NOTE = "hide:note:";
 
 // ── the second record's fold (E17) ──────────────────────────────────────────
 // The fold lives with the second record's read layer (src/lib/activity/read.ts)
@@ -265,83 +257,11 @@ function stageOf(board: NonNullable<AccountReadInput["board"]>, now: Date): Stag
 }
 
 // ── the deal facts with the tape flag (E18) ─────────────────────────────────
-
-function pushFact<T>(
-  list: TapedFact<T>[],
-  value: T,
-  doc: { src: string; at: string },
-  tape: boolean,
-  eq: (a: T, b: T) => boolean,
-): void {
-  if (!list.some((f) => eq(f.value, value)))
-    list.push({ value, src: doc.src, at: doc.at, tape });
-}
-
-/** The product key a Playbook product name reads as, through the lexicon:
- *  "contractor plus" before "contractor", as the extractor orders them. */
-function productKeyOf(name: string): ProductKey | null {
-  for (const key of Object.keys(PRODUCT_TERMS) as ProductKey[]) {
-    if (key === "contractor" && PRODUCT_TERMS.contractor_plus.test(name)) continue;
-    if (PRODUCT_TERMS[key].test(name)) return key;
-  }
-  return null;
-}
-
-const sameHc = (a: { n: number; country?: string }, b: { n: number; country?: string }) =>
-  a.n === b.n && a.country === b.country;
-const same = <T>(a: T, b: T) => a === b;
-
-function factsOver(
-  docs: readonly RecordDoc[],
-  factsById: ReadonlyMap<string, EntryFacts>,
-  seed: DealIntel | Partial<DealIntel> | undefined,
-): Pick<AccountRead, "countries" | "products" | "headcounts"> {
-  const countries: TapedFact<string>[] = [];
-  const products: TapedFact<ProductKey>[] = [];
-  const headcounts: TapedFact<{ n: number; country?: string }>[] = [];
-  // The reads first, the tape after, so a fact both state is credited to the
-  // read and a fact only the tape states carries the flag.
-  const ordered = [...docs.filter((d) => !d.tape), ...docs.filter((d) => d.tape)];
-  for (const doc of ordered) {
-    const facts = doc.noteId ? factsById.get(doc.noteId) : undefined;
-    if (facts) {
-      // The Filing's own facts: the model named them per entry and the
-      // sanitizer clamped them to the lexicon; the regex is not run on a row
-      // the model already read (§2.1).
-      for (const name of facts.countries ?? [])
-        for (const c of countriesIn(name)) pushFact(countries, c, doc, false, same);
-      for (const name of facts.products ?? []) {
-        const key = productKeyOf(name);
-        if (key) pushFact(products, key, doc, false, same);
-      }
-      for (const hc of facts.headcounts ?? []) {
-        const country = countryNear(hc.what, 0) || undefined;
-        pushFact(headcounts, { n: hc.count, country }, doc, false, sameHc);
-      }
-      continue;
-    }
-    for (const c of countriesIn(doc.text)) pushFact(countries, c, doc, doc.tape, same);
-    for (const hc of doc.text.matchAll(new RegExp(HEADCOUNT.source, "gi")))
-      pushFact(
-        headcounts,
-        { n: Number(hc[1]), country: countryNear(doc.text, hc.index ?? 0) },
-        doc,
-        doc.tape,
-        sameHc,
-      );
-    // Every product the doc names — "contractor plus" before "contractor", as
-    // the extractor orders them.
-    for (const k of Object.keys(PRODUCT_TERMS) as ProductKey[]) {
-      if (k === "contractor" && PRODUCT_TERMS.contractor_plus.test(doc.text)) continue;
-      if (PRODUCT_TERMS[k].test(doc.text)) pushFact(products, k, doc, doc.tape, same);
-    }
-  }
-  // The seed fills what no doc decided — a fallback, never a lock.
-  for (const f of seed?.countries ?? []) pushFact(countries, f.value, f, false, same);
-  for (const f of seed?.products ?? []) pushFact(products, f.value, f, false, same);
-  for (const f of seed?.headcounts ?? []) pushFact(headcounts, f.value, f, false, sameHc);
-  return { countries, products, headcounts };
-}
+// Field 18 is the one facts reader's (dealFacts, src/lib/intel/extract.ts):
+// every fact the visible docs state, a row's Filing facts over the regex, the
+// tape flagged, the seed last. The intel's countries, products and headcounts
+// are its answer under the one tape rule (factAnswer), so every surface that
+// reads either reads one fact (pass 9 seam, S-20).
 
 // ── their promise (E14) ─────────────────────────────────────────────────────
 
@@ -368,7 +288,7 @@ export function readAccount(input: AccountReadInput): AccountRead {
   // `docs`, flagged; it leaves every derived fact below.
   const hidden = new Set<string>();
   for (const n of input.notes)
-    if (input.dispositions.has(`${HIDE_NOTE}${n.id}`)) hidden.add(n.id);
+    if (input.dispositions.has(hideNoteKey(n.id))) hidden.add(n.id);
   const visible = input.notes.filter((n) => !hidden.has(n.id));
 
   // The account's own slice of the shared stores, as the room read them.
@@ -677,10 +597,9 @@ export function readAccount(input: AccountReadInput): AccountRead {
       }
     : null;
 
-  // 18 · the facts with the tape flag, the Filing's own first.
-  const factsById = new Map<string, EntryFacts>();
-  for (const n of visible) if (n.facts) factsById.set(n.id, n.facts);
-  const facts = factsOver(live, factsById, digest?.intelSeed);
+  // 18 · the facts with the tape flag, the Filing's own first: the same
+  // reader the intel's answer came from, over the same docs and seed.
+  const facts = dealFacts(live, digest?.intelSeed);
 
   // 20 · the newest entry's moment.
   let lastRecordAt = "";
@@ -705,7 +624,11 @@ export function readAccount(input: AccountReadInput): AccountRead {
     theirPromise,
     theirPromises,
     lastAccepted,
-    conversationExists: live.some((d) => !!d.direction) || touches.length > 0,
+    // A meeting held is a conversation (pass 9 seam, S-15): the ☰ archive of
+    // a call carries no actors line and so no direction, and the meeting read
+    // (field 6) is the one spelling of "a meeting happened".
+    conversationExists:
+      live.some((d) => !!d.direction) || touches.length > 0 || lastMeeting !== null,
     secondRecord: input.secondRecord ?? null,
     countries: facts.countries,
     products: facts.products,

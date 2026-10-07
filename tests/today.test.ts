@@ -71,6 +71,9 @@ function intel(partial: Partial<AccountIntel>): AccountIntel {
     score: partial.score ?? 50,
     tier: partial.tier ?? "medium",
     demand: partial.demand ?? null,
+    // Real demand defaults to what the sweep's number says, as accountIntel
+    // reads it when no pass of the account's own is newer (S-12).
+    realDemand: partial.realDemand ?? (partial.demand != null && partial.demand >= 30),
     confidence: partial.confidence ?? "low",
     researched: partial.researched ?? false,
     play: partial.play ?? null,

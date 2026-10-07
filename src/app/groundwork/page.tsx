@@ -16,6 +16,7 @@ import { relationshipFor } from "@/lib/intel/relationship";
 import type { DealIntel } from "@/lib/intel/types";
 import { readAccount, secondRecordFor, type AccountRead } from "@/lib/record/read";
 import { readFromStores } from "@/lib/record/stores";
+import { hideNoteKey } from "@/lib/record/hide";
 import { homeSideFrom } from "@/lib/pipeline/build";
 import {
   RESEARCH_NS,
@@ -223,7 +224,7 @@ export default async function GroundworkPage({
       id,
       notes
         // ✕-parked entries leave every register view — here too.
-        .filter((n) => !dispositions.has(`hide:note:${n.id}`))
+        .filter((n) => !dispositions.has(hideNoteKey(n.id)))
         .map((n) => ({
           body: n.body,
           source: n.source,
@@ -267,9 +268,12 @@ export default async function GroundworkPage({
   const homeSide = [...csms, ...homeSideFrom(notesMap)];
 
   // The second record, parsed once for the whole book — rule fuel, the chips,
-  // and the collision gate all read this one map; the reads and the exclusion
-  // take it folded by canonical id, so a drop keyed by a shell id reads under
-  // the one account (E17).
+  // and the collision gate all read this one map. The fetch hands it back
+  // already folded by canonical id (foldSecondRecords), so a drop keyed by a
+  // shell id reads under the one account (E17), and a lookup by a book id is
+  // the fold's own record. secondFolded is the same records keyed by the
+  // book's accounts alone, for the reads and the exclusion; the queue's
+  // lookups by book id read identical records from either map.
   const secondById: Map<string, SecondRecord> = await fetchSecondRecords().catch(
     () => new Map(),
   );
@@ -430,7 +434,7 @@ export default async function GroundworkPage({
     if (!seat) continue;
     // ✕ on the register parks the seat like any record entry (C8); a parked
     // seat stays off the wing until the Archive restores it.
-    if (dispositions.has(`hide:note:${seatNote.id}`)) continue;
+    if (dispositions.has(hideNoteKey(seatNote.id))) continue;
     // The read's docs, so a ✕-parked send retires no seat (the one hide
     // filter, inside the read).
     const worked = seatWorked(
@@ -607,12 +611,17 @@ export default async function GroundworkPage({
   // only when a door needs it; the doors carry row keys, and every excerpt
   // comes down from the evidence route on click.
   const stageSr = stageItem ? secondById.get(stageItem.accountId) : undefined;
-  const stageCollision = stageSr ? collisionFor(stageSr, now) : null;
+  // The quiet flag reads both records (S-18; the direct doctrine): the
+  // export's colleague row and a colleague's live thread in the operator's
+  // own record, by latest, through the read's docs and declared roster.
+  const stageCollision = stageItem
+    ? collisionFor(stageSr, now, readById.get(stageItem.accountId))
+    : null;
   const stageRows =
     stageItem &&
     stageSr &&
     ((stageItem.ruleId === "roundup-slot" && !!stageAccount?.csm) ||
-      !!stageCollision?.colleague ||
+      (!!stageCollision?.colleague && !stageCollision.colleague.noteId) ||
       !!stageSr.support?.spike)
       ? await fetchStageRows(stageItem.accountId).catch(() => [])
       : [];
@@ -647,7 +656,9 @@ export default async function GroundworkPage({
           lastOutbound: readById.get(stageItem.accountId)?.lastOutbound?.at ?? "",
           second: (() => {
             const sr = stageSr;
-            if (!sr) return null;
+            // With no export, the composed thing still carries the record's
+            // quiet flag (S-18).
+            if (!sr) return stageCollision ? { collision: stageCollision } : null;
             const gem = outreachGem(sr);
             // The roundup brief's prep (5.3): the CSM's own last five rows on
             // this account, each a door to its excerpt, from the staged slice
@@ -845,14 +856,17 @@ export default async function GroundworkPage({
                 <p className={styles.stgWhy}>{stageItem.reason}</p>
                 {(() => {
                   const sr = stageSr;
-                  if (!sr) return null;
-                  const warm = intentWarm(sr, now);
                   const col = stageCollision;
+                  // A colleague's thread in the operator's own record raises
+                  // the flag with no export behind it (S-18), so the chip row
+                  // can stand on the collision alone.
+                  if (!sr && !col) return null;
+                  const warm = sr ? intentWarm(sr, now) : null;
                   return (
                     <EvidenceChips
                       accountId={stageItem.accountId}
                       support={
-                        sr.support && sr.support.total > 0
+                        sr?.support && sr.support.total > 0
                           ? {
                               total: sr.support.total,
                               spikeDay: sr.support.spike?.day ?? "",
@@ -865,7 +879,7 @@ export default async function GroundworkPage({
                           : null
                       }
                       intent={
-                        sr.intent
+                        sr?.intent
                           ? {
                               opens30: sr.intent.windows.w30.o,
                               clicks30: sr.intent.windows.w30.c,
@@ -885,10 +899,14 @@ export default async function GroundworkPage({
                         col
                           ? {
                               mktgSends7: col.mktgSends7,
+                              // The record's entry opens to its own words; the
+                              // export's row opens from the staged slice.
                               colleague: col.colleague
                                 ? {
                                     ...col.colleague,
-                                    cite: collisionCite(stageRows, col.colleague),
+                                    cite: col.colleague.noteId
+                                      ? null
+                                      : collisionCite(stageRows, col.colleague),
                                   }
                                 : null,
                             }
@@ -896,7 +914,7 @@ export default async function GroundworkPage({
                       }
                       // A colleague's gem produces nothing for the operator
                       // anywhere (C6 as amended; pass 8 G1).
-                      gems={chipGems(sr.gems)}
+                      gems={sr ? chipGems(sr.gems) : []}
                     />
                   );
                 })()}

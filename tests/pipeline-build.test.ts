@@ -453,6 +453,25 @@ describe("the Word document", () => {
       "the overlay changes the file",
     );
   });
+  test("a blown promise is flagged in the brand's amber by role: a rule and a fill, ink words (S-24)", () => {
+    const blown = {
+      ...r,
+      ourNext: [
+        { text: "Send the model", full: "Send the model", opened: "", urgent: true },
+      ],
+    };
+    const text = JSON.stringify(reportSection([blown], {}, day));
+    const at = text.indexOf("PROMISED, AND THE DAY PASSED");
+    assert.ok(at > 0, "the kicker renders");
+    // The off-brand dark amber is gone; #F59E0B is the rule, its soft tint
+    // the fill, and the run around the kicker is ink.
+    assert.ok(!text.includes("B45309"));
+    // The paragraph's own properties and the kicker run's, up to its text.
+    const para = text.slice(text.lastIndexOf('"rootKey":"w:p"', at), at);
+    assert.ok(para.includes('"value":"F59E0B"'), "the amber rule");
+    assert.ok(para.includes('"value":"FEF3E2"'), "the soft amber fill");
+    assert.ok(para.includes('{"val":"0A1C40"}'), "ink words");
+  });
   test("an edited line is the one that ships", () => {
     const children = reportSection(
       [r],

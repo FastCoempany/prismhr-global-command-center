@@ -13,6 +13,7 @@ import {
 import { contactsFor } from "@/lib/book/contacts";
 import { relationshipFor } from "@/lib/intel/relationship";
 import { accountIntel, partnerKickoff, partnerOutreachKey } from "@/lib/today/build";
+import { ownPassesFrom } from "@/lib/intel/deep-research";
 import type { Touch } from "@/lib/today/follow-ups";
 import type { DraftRecipient } from "@/lib/claude/prompt";
 import { LocalTime } from "../today-client";
@@ -113,8 +114,12 @@ export default async function PartnersPage() {
   // A ✕-parked entry leaves this room too: it never names a recipient (X1).
   const acctNotes = visibleNotes(allAcctNotes, dispositions);
   // Not-mine accounts are excluded here too — same rule as Today/Accounts.
+  // Both research stores speak: the sweep and each account's own newest pass
+  // (pass 9 seam, S-12).
   const kickoff = partnerKickoff(
-    accountIntel().filter((a) => dispositions.get(a.id)?.status !== "not-mine"),
+    accountIntel(ownPassesFrom(allAcctNotes)).filter(
+      (a) => dispositions.get(a.id)?.status !== "not-mine",
+    ),
     new Set(),
   );
 

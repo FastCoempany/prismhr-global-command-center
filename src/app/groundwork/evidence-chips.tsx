@@ -10,6 +10,8 @@
 // colleague's row or the campaign table, and every row opens its excerpt.
 
 import { useState } from "react";
+import { NO_CASE } from "@/lib/activity/excerpt";
+import { quietChipOf } from "@/lib/activity/quiet-flag";
 import type { Cite } from "@/lib/groundwork/chips";
 import styles from "./groundwork.module.css";
 
@@ -43,8 +45,16 @@ type ChipsProps = {
   collision: {
     mktgSends7: number;
     /** The colleague's thread, with the row it stands on when the staged
-     *  slice still holds it (collisionCite). A quiet flag, never a move. */
-    colleague: { who: string; day: string; cite: Cite | null } | null;
+     *  slice still holds it (collisionCite), or, when the thread is an entry
+     *  of the operator's own record (S-18), that entry's own words. A quiet
+     *  flag, never a move. */
+    colleague: {
+      who: string;
+      day: string;
+      cite: Cite | null;
+      noteId?: string;
+      text?: string;
+    } | null;
   } | null;
   gems: {
     term: string;
@@ -268,10 +278,7 @@ export default function EvidenceChips({
             }
             title="Your note would land beside live motion. It informs; it never blocks."
           >
-            ⚠{" "}
-            {collision.mktgSends7 > 0
-              ? `MKTG CADENCE LIVE · ${collision.mktgSends7} THIS WEEK`
-              : `${(collision.colleague?.who ?? "A COLLEAGUE").split(" ")[0].toUpperCase()}’S THREAD · ${mmdd(collision.colleague?.day ?? "")}`}
+            ⚠ {quietChipOf(collision)}
           </button>
         )}
       </div>
@@ -307,7 +314,7 @@ export default function EvidenceChips({
                 className={styles.evCite}
                 onClick={() => loadTimeline(c.caseNo)}
               >
-                {c.caseNo === "no-case" ? "uncased traffic" : c.caseNo} · ×{c.rows} ·{" "}
+                {c.caseNo === NO_CASE ? "uncased traffic" : c.caseNo} · ×{c.rows} ·{" "}
                 {mmdd(c.firstDay)}→{mmdd(c.lastDay)} · {c.who}{" "}
                 <b>
                   {busy === c.caseNo ? "…" : timeline?.caseNo === c.caseNo ? "▾" : "▸"}
@@ -351,6 +358,13 @@ export default function EvidenceChips({
           {collision.colleague &&
             (collision.colleague.cite ? (
               <CiteRows accountId={accountId} rows={[collision.colleague.cite]} />
+            ) : collision.colleague.noteId ? (
+              <div className={styles.evExcerpt}>
+                <span className={styles.evStamp}>
+                  {mmdd(collision.colleague.day)} · {collision.colleague.who}
+                </span>
+                {collision.colleague.text && <div>{collision.colleague.text}</div>}
+              </div>
             ) : (
               <span className={styles.evQuiet}>
                 The staged slice no longer holds {collision.colleague.who}&rsquo;s row.

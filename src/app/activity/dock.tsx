@@ -13,6 +13,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { activityReceipt, activityRun, activityStage, activityTakeBack } from "./actions";
+import { NOT_THE_REPORT } from "@/lib/activity/parse";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import styles from "./dock.module.css";
 
@@ -144,9 +145,7 @@ export function ActivityDock({
     setBusy(true);
     try {
       if (!(await probeActivityReport(f))) {
-        setLine(
-          "This isn't the activity report — 18 Digit ID / Subject missing. Check the export's columns.",
-        );
+        setLine(NOT_THE_REPORT);
         return;
       }
       setLine(

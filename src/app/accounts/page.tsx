@@ -367,8 +367,9 @@ export default async function AccountsPage() {
         onBoard: liveOnBoard(boardById.get(p.id)),
         // The quiet flag's fact (the direct doctrine; pass 8 A7, A8): live
         // marketing sends or a colleague's thread inside seven days, read by
-        // the same collision guard Groundwork's file card reads.
-        collision: collisionFor(sr ?? undefined, now),
+        // the same collision guard Groundwork's file card reads, over both
+        // records: the export and the read's own docs (pass 9 seam, S-18).
+        collision: collisionFor(sr, now, acct),
         // LAST HUMAN TOUCH reads both records (C1): the later of the read's
         // own touch and the export's last human row, with the whisper. Its
         // cite is the door one click down (pass 8 A5).

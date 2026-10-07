@@ -15,6 +15,7 @@ import {
   dateTimeKeyOf,
   dropShaOf,
   fingerprintHeaders,
+  NOT_THE_REPORT,
   refusalFor,
   rowRecord,
   rowsChecksum,
@@ -137,10 +138,7 @@ export function createIngest(
     if (!headers) {
       headers = raw;
       fingerprint = fingerprintHeaders(raw);
-      if (!fingerprint.ok)
-        return {
-          stop: "This isn't the activity report — 18 Digit ID / Subject missing. Check the export's columns.",
-        };
+      if (!fingerprint.ok) return { stop: NOT_THE_REPORT };
       // Recognized but gutless. The door closes here, before a single row is
       // bucketed, so a blank read can never replace a good one (2026-08-28).
       const blocked = refusalFor(fingerprint);

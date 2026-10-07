@@ -5,7 +5,9 @@
 //
 // Modes, by query param:
 //   ?acct=<id>&k=<rowKey>      → one row's cleaned excerpt
-//   ?acct=<id>&case=<number>   → a case's timeline (rows + excerpts)
+//   ?acct=<id>&case=<number>   → a case's timeline (rows + excerpts); the
+//                                uncased key (no-case) opens the uncased
+//                                support rows, with &theme= when it carries one
 //   ?acct=<id>&theme=<label>   → the theme's case list (numbers · dates · actors)
 //   ?acct=<id>&camps=1         → the intent store's campaign table
 //   ?acct=<id>&who=<name>      → the draft desk's one cited line for a recipient
@@ -14,7 +16,12 @@ import { NextResponse } from "next/server";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
 import { deskLineFor, fetchSecondRecordFor, fetchStageRows } from "@/lib/activity/read";
-import { caseNumberOf, cleanExcerpt, cleanSubject } from "@/lib/activity/excerpt";
+import {
+  caseRows,
+  cleanExcerpt,
+  cleanSubject,
+  themeCaseGroups,
+} from "@/lib/activity/excerpt";
 import { rowPerson } from "@/lib/activity/classify";
 import type { StagedRow } from "@/lib/activity/types";
 
@@ -101,8 +108,10 @@ export async function GET(req: Request) {
   }
 
   if (caseNo) {
-    const timeline = rows
-      .filter((r) => caseNumberOf(r.s) === caseNo)
+    // The list and the door read one grouping (excerpt.ts), so the uncased
+    // line opens its rows instead of an empty timeline (pass 9 seam, S-13).
+    const timeline = caseRows(rows, caseNo, theme ?? "")
+      .slice()
       .sort((a, b) => (a.d < b.d ? 1 : -1))
       .slice(0, 30)
       .map(rowOut);
@@ -113,14 +122,7 @@ export async function GET(req: Request) {
     // The theme's cases: support rows whose cleaned subject folds to the
     // theme label (empty theme = every support case). One line per case
     // number — count, span, last actor — each a door to its timeline.
-    const support = rows.filter((r) => r.lane === "support");
-    const wanted = theme.trim().toLowerCase();
-    const byCase = new Map<string, StagedRow[]>();
-    for (const r of support) {
-      if (wanted && !cleanSubject(r.s).toLowerCase().includes(wanted)) continue;
-      const no = caseNumberOf(r.s) || "no-case";
-      byCase.set(no, [...(byCase.get(no) ?? []), r]);
-    }
+    const byCase = themeCaseGroups(rows, theme);
     const cases = [...byCase.entries()]
       .map(([no, list]) => {
         const days = list.map((r) => r.d).sort();

@@ -8,6 +8,7 @@ import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { isPaste, isSalesNav, isWire } from "@/lib/ingest/dialect";
+import { quietFlagOf, type Collision } from "@/lib/activity/quiet-flag";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { userDayKey } from "@/lib/tz";
 import type { IntentSignal } from "./signals";
@@ -85,10 +86,7 @@ export function buildFile(
     second?: {
       supportCases?: number;
       gem?: { act: string; reason: string; term: string; who: string[] } | null;
-      collision?: {
-        mktgSends7: number;
-        colleague: { who: string; day: string } | null;
-      } | null;
+      collision?: Collision | null;
       /** roundup-slot only: the CSM's own last five rows on this account —
        *  key, date and subject head, from the staged slice. */
       csmPrep?: Cite[];
@@ -197,13 +195,9 @@ export function buildFile(
   });
   // The collision guard speaks on the stage first (the chips) and rides the
   // composed thing here — the same quiet-flag pattern the CSM-thread flag
-  // set. It informs; it never blocks (the direct doctrine).
-  const col = deps.second?.collision;
-  const collisionLine = col
-    ? col.mktgSends7 > 0
-      ? `MKTG CADENCE LIVE · ${col.mktgSends7} SEND${col.mktgSends7 === 1 ? "" : "S"} THIS WEEK`
-      : `${(col.colleague?.who ?? "A COLLEAGUE").toUpperCase()}'S THREAD · ${(col.colleague?.day ?? "").slice(5).replace("-", "/")}`
-    : "";
+  // set. It informs; it never blocks (the direct doctrine). The words are the
+  // one writer's (quiet-flag.ts), which the Act Lane's send reads too (S-6).
+  const collisionLine = quietFlagOf(deps.second?.collision);
   const threadCount = intel?.threads.people.length ?? 0;
   const singleThread = threadCount === 1;
   // The widening question travels INSIDE the composed text when one person

@@ -51,6 +51,8 @@ import {
   parseInstBody,
 } from "../src/lib/groundwork/institutions";
 import { peos, type Peo } from "../src/lib/book";
+import { compositeScore } from "../src/lib/book/scoring";
+import { accountIntel } from "../src/lib/today/build";
 import { EMPTY_INTEL, type DealIntel } from "../src/lib/intel/types";
 
 const NOW = new Date("2026-07-30T15:00:00Z"); // 10:00a Chicago, a Thursday
@@ -1249,6 +1251,29 @@ describe("G7 · the queue's demand reads the latest of both research stores", ()
 
   test("a pass older than the sweep yields to the sweep", () => {
     assert.deepEqual(run("2026-06-01T12:00:00Z", 2), []);
+  });
+
+  test("the room's account intel reads demand the way the queue does (S-12)", () => {
+    // accountIntel feeds /partners and the room's signal bands; it read the
+    // sweep alone, so an account the queue called real demand stayed below
+    // the gate there. One reading now (researchDemand), case by case.
+    const intelOf = (at: string, signals: number) =>
+      accountIntel(new Map([[LOW.id, { at, signals }]])).find((a) => a.id === LOW.id)!;
+    assert.equal(accountIntel().find((a) => a.id === LOW.id)?.realDemand, false);
+    for (const [at, signals] of [
+      ["2026-07-10T12:00:00Z", 2],
+      ["2026-07-10T12:00:00Z", 0],
+      ["2026-06-01T12:00:00Z", 2],
+    ] as const) {
+      const queueSaysReal = run(at, signals).some((q) => q.ruleId === "stale-above-gate");
+      assert.equal(intelOf(at, signals).realDemand, queueSaysReal, `${at} · ${signals}`);
+    }
+    // The later pass overturned the sweep's 18: the composite rests on the
+    // desk alone, as the queue's does, and the sweep's number stays for prose.
+    const real = intelOf("2026-07-10T12:00:00Z", 2);
+    assert.equal(real.score, compositeScore(real.desk, null, real.confidence).score);
+    assert.equal(real.demand, 18);
+    assert.equal(real.researched, true);
   });
 
   test("the research age is the newer of the two passes, as the Spring's chip reads it", () => {

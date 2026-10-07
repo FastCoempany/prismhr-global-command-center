@@ -76,6 +76,13 @@ export type Fingerprint = {
   blockers: { header: string; carries: string; alsoCalled: string[] }[];
 };
 
+/** The refusal for a .csv that is not the activity report at all: its first
+ *  row lacks the anchors or most of the export's columns. One line, said
+ *  flat, with the two columns that identify the export (the writing canon;
+ *  pass 9 seam, S-23). The ingest core and the Intranet dock both say it. */
+export const NOT_THE_REPORT =
+  "Nothing filed. This isn't the activity report. Check the export for the 18 Digit ID and Subject columns.";
+
 /** The refusal an operator reads, or "" when the file can be read. Names the
  *  column, says what it carries, and says nothing was filed. */
 export function refusalFor(fp: Fingerprint): string {
