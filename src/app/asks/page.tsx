@@ -4,7 +4,7 @@ import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { getPeo } from "@/lib/book";
-import { askLinks } from "@/lib/ask/links";
+import { askFolds, askLinks } from "@/lib/ask/links";
 import { cleanAskText } from "@/lib/ask/clean";
 import { dayLabelFor, timeLabelFor } from "@/lib/scratch";
 import { bankAsk } from "./actions";
@@ -106,6 +106,16 @@ export default async function AsksPage() {
         },
         nameOf,
       ),
+      // A playbook question cited opens in place to the bank's question and
+      // its gloss: one click, no page, no link (C13).
+      folds: askFolds(
+        cites.map((c) => ({
+          origin: c?.origin ?? "",
+          originRef: c?.originRef ?? "",
+          accountId: c?.accountId ?? "",
+          docTitle: c?.docTitle ?? "",
+        })),
+      ),
     };
   });
 
@@ -115,9 +125,9 @@ export default async function AsksPage() {
       <main className={styles.wrap}>
         <h1 className={styles.masthead}>The bank</h1>
         <p className={styles.sub}>
-          Every question the app has answered, kept. Each answer carries the doors that
-          land on the exact thing — an account already open, the Playbook card already
-          lit, the archive already searched.
+          Every question the app has answered, kept. Each answer carries its doors: the
+          account already open, the archive already searched, and the playbook question it
+          cites, opened in place.
         </p>
         {access.canWrite && (
           <>
@@ -168,6 +178,13 @@ export default async function AsksPage() {
                     ))}
                   </div>
                 )}
+                {e.folds.map((f) => (
+                  <details key={f.id} className={styles.fold}>
+                    <summary>The playbook question it cites</summary>
+                    <p className={styles.foldQ}>{f.question}</p>
+                    {f.why && <p className={styles.foldWhy}>{f.why}</p>}
+                  </details>
+                ))}
               </article>
             </div>
           );

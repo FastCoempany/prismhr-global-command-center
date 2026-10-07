@@ -10,6 +10,9 @@ function strokeForSize(size: number) {
   return 2;
 }
 
+// The mark is ink only: navy or currentColor, never an accent (the design
+// canon; pass 8 X6). The dot and the arrowhead once wore the orange and the
+// blue, which spent the surface's one orange move on a logo.
 function ProductMark({ className, size = 24 }: ProductMarkProps) {
   return (
     <svg
@@ -26,8 +29,8 @@ function ProductMark({ className, size = 24 }: ProductMarkProps) {
     >
       <path d="M8 14h32M8 24h32M8 34h32" opacity="0.42" />
       <path d="M10 35c6-12 13-10 18-19 3-5 7-6 10-5" />
-      <circle cx="28" cy="16" fill="var(--ds-orange)" r="3.2" stroke="none" />
-      <path d="M34 11h6v6" stroke="var(--ds-blue)" />
+      <circle cx="28" cy="16" fill="currentColor" r="3.2" stroke="none" />
+      <path d="M34 11h6v6" />
     </svg>
   );
 }

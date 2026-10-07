@@ -1,6 +1,7 @@
 /* The Sendbook — the outreach register. Antaeus: bright field, navy ink at
    the ladder, serif masthead, mono kickers; green only for the record's own
-   replies, amber never (nothing here is due — Groundwork owes the due). */
+   replies and acceptances; amber only for the live-campaign caution. Nothing
+   here is due: Groundwork owes the due. */
 
 .wrap {
   max-width: 920px;
@@ -129,13 +130,56 @@
   border-radius: 999px;
   padding: 2px 8px;
 }
-.replied,
-.booked {
+/* ↩ REPLIED and BOOKED are doors (pass 8 S2): the mark opens, in place, to
+   the message it reports. */
+.door {
+  position: relative;
+}
+.mark {
   font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
   font-size: 10px;
   letter-spacing: 0.06em;
   color: #22c55e;
   font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.mark::-webkit-details-marker {
+  display: none;
+}
+.mark:hover {
+  text-decoration: underline;
+}
+.answer {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 2;
+  width: min(420px, 86vw);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid rgba(10, 28, 64, 0.22);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(10, 28, 64, 0.12);
+}
+.answerKick {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: rgba(10, 28, 64, 0.42);
+  text-transform: uppercase;
+}
+.answerHead {
+  font-weight: 600;
+  font-size: 13px;
+}
+.answerBody {
+  font-size: 12.5px;
+  color: rgba(10, 28, 64, 0.66);
+  line-height: 1.45;
 }
 
 .empty {
@@ -153,15 +197,18 @@
   max-width: 70ch;
 }
 
-/* The live-cadence marker (5.1, shipped 2026-08-20) — quiet mono, click-deep
-   by title; informs, never blocks. */
+/* The live-cadence marker (5.1, shipped 2026-08-20): quiet mono, click-deep
+   by title. It informs and blocks nothing. A caution, so the brand amber
+   carries it in the fill and the rule, with navy ink for the words (pass 8
+   S1; the ochre it wore was ad hoc). */
 .mktgLive {
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #b6791a;
-  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #0a1c40;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid #f59e0b;
   border-radius: 4px;
   padding: 1px 6px;
   white-space: nowrap;

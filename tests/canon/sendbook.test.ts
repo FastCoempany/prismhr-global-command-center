@@ -1,10 +1,17 @@
 // The Sendbook's decrees, pinned as behavior (CLAUDE.md "The Sendbook",
 // :331-354, the closer rule :407-423, the Ted doctrine's machinery clause
 // :399-400, and the 2026-09-25 rulings R6 and R7). Every test calls
-// buildSendbook and checks its lines and lanes; none reads a source file.
+// buildSendbook and checks its lines and lanes, or renders the marks the page
+// paints; the one exception reads the register's stylesheet, because the
+// palette has no other reader (pass 8 S1).
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
+import { createElement } from "react";
+import { render, textOf } from "../helpers/room-render";
 import {
   acceptanceDates,
   buildSendbook,
@@ -357,6 +364,15 @@ describe("Groundwork's and /sendbook's registers agree on an account with an org
     assert.deepEqual([...withLog.laneById], [...plain.laneById]);
     assert.equal(plain.laneById.get("A1"), "gone-cold");
     assert.equal(plain.lines[0].repliedAt, "2026-09-10T12:00:00.000Z");
+    // The door opens to the export's own row: its writer and subject. The
+    // body never uploaded, so there is none to show (D21; pass 8 S2).
+    assert.deepEqual(plain.lines[0].reply, {
+      at: "2026-09-10T12:00:00.000Z",
+      who: "Adam Reyes",
+      head: "Re: Canada",
+      excerpt: "",
+      from: "export",
+    });
   });
 
   test("the account-level datetime alone sets neither (D19)", () => {
@@ -368,5 +384,137 @@ describe("Groundwork's and /sendbook's registers agree on an account with an org
     });
     assert.equal(laneById.get("A1"), "never-met");
     assert.equal(lines[0].repliedAt, "");
+  });
+});
+
+// ── pass 8 S2 · ↩ REPLIED and BOOKED are doors (the click-depth law) ───────
+// An annotation is a compression of a message. One click opens it in place:
+// who wrote it, its subject and day, and the words when the record holds
+// them. The read carries the message behind each mark; the page's marks
+// render it behind a <details>, with no page and no link.
+describe("↩ REPLIED and BOOKED open to the message they report (pass 8 S2)", () => {
+  const accepted = (clock: string) => ({
+    body: `✉ OL ${clock} — Accepted: Global intro · Adam Reyes → Antaeus Coe\n`,
+    source: "outlook-ai",
+    createdAt: NOON,
+    actors: "Adam Reyes → Antaeus Coe",
+  });
+  const marks = () => import("../../src/app/sendbook/marks");
+
+  test("the line carries the reply and the acceptance behind its marks", () => {
+    const { lines } = book([
+      send("9:44 AM"),
+      reply("10:39 AM", "Tuesday works. Sending an invite."),
+      accepted("11:02 AM"),
+    ]);
+    assert.deepEqual(lines[0].reply, {
+      at: "2026-09-02T10:39:00.000Z",
+      who: "Adam Reyes",
+      head: "Re: Canada",
+      excerpt: "Tuesday works. Sending an invite.",
+      from: "record",
+    });
+    assert.deepEqual(lines[0].booking, {
+      at: "2026-09-02T11:02:00.000Z",
+      who: "Adam Reyes",
+      head: "Accepted: Global intro",
+      excerpt: "",
+      from: "record",
+    });
+  });
+
+  test("a line with no annotation carries no message", () => {
+    const { lines } = book([send("9:44 AM")]);
+    assert.equal(lines[0].reply, null);
+    assert.equal(lines[0].booking, null);
+  });
+
+  test("the message is rendered, so money never reaches it", () => {
+    const { lines } = book([
+      send("9:44 AM"),
+      reply("10:39 AM", "We can do $12,000 a month if the Canada piece lands."),
+    ]);
+    assert.ok(lines[0].reply);
+    assert.doesNotMatch(lines[0].reply.excerpt, /12,000/);
+  });
+
+  test("each mark opens in place to its message: one click, no link", async () => {
+    const { lines } = book([
+      send("9:44 AM"),
+      reply("10:39 AM", "Tuesday works. Sending an invite."),
+      accepted("11:02 AM"),
+    ]);
+    const { SendMarks } = await marks();
+    const html = await render(
+      createElement(SendMarks, {
+        mktg: false,
+        cold: false,
+        reply: lines[0].reply,
+        booking: lines[0].booking,
+      }),
+    );
+    assert.equal((html.match(/<details/g) ?? []).length, 2, "two marks, two doors");
+    assert.equal((html.match(/<summary/g) ?? []).length, 2);
+    assert.doesNotMatch(html, /<a\s/, "the door is in place, never a link");
+    const text = textOf(html);
+    assert.match(text, /↩ REPLIED 9\/2/);
+    assert.match(text, /BOOKED 9\/2/);
+    assert.match(text, /Re: Canada/);
+    assert.match(text, /Tuesday works\. Sending an invite\./);
+    assert.match(text, /Accepted: Global intro/);
+    assert.match(text, /Adam Reyes/);
+  });
+});
+
+// ── pass 8 S1 · the marks speak plainly, in the brand's palette ────────────
+describe("the Sendbook's marks speak plainly and wear the brand palette (pass 8 S1)", () => {
+  test("no mark's title is balanced on an antithesis or hangs an em-dash aside", async () => {
+    const { MARK_TITLES } = await import("../../src/app/sendbook/marks");
+    for (const t of Object.values(MARK_TITLES)) {
+      assert.doesNotMatch(t, /—/, t);
+      assert.doesNotMatch(t, /,\s*not an?\s+\w+\.?$/i, t);
+      assert.doesNotMatch(t, /it informs; it never blocks/i, t);
+    }
+  });
+
+  test("GONE COLD and MKTG LIVE carry those titles on the page", async () => {
+    const { MARK_TITLES, SendMarks } = await import("../../src/app/sendbook/marks");
+    const html = await render(
+      createElement(SendMarks, { mktg: true, cold: true, reply: null, booking: null }),
+    );
+    const titles = [...html.matchAll(/title="([^"]*)"/g)].map((m) =>
+      m[1].replace(/&#x27;/g, "'"),
+    );
+    assert.deepEqual(titles, [MARK_TITLES.mktg, MARK_TITLES.cold]);
+    assert.doesNotMatch(html, /re-open, not an introduction/);
+  });
+
+  test("every color the register's stylesheet names is the brand's", () => {
+    // The palette, never an ad-hoc hue (the design canon): navy ink, the
+    // field, white, and the five role accents.
+    const BRAND = new Set([
+      "0a1c40",
+      "f5f7fb",
+      "ffffff",
+      "e6701e",
+      "2563eb",
+      "22c55e",
+      "f59e0b",
+      "ef4444",
+    ]);
+    const css = readFileSync(join(cwd(), "src/app/sendbook/sendbook.module.css"), "utf8");
+    const off: string[] = [];
+    for (const m of css.matchAll(/#([0-9a-f]{3,8})\b/gi)) {
+      const h = m[1].toLowerCase();
+      const full = h.length === 3 ? [...h].map((c) => c + c).join("") : h.slice(0, 6);
+      if (!BRAND.has(full)) off.push(m[0]);
+    }
+    for (const m of css.matchAll(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g)) {
+      const full = [m[1], m[2], m[3]]
+        .map((n) => Number(n).toString(16).padStart(2, "0"))
+        .join("");
+      if (!BRAND.has(full)) off.push(m[0]);
+    }
+    assert.deepEqual(off, []);
   });
 });

@@ -31,6 +31,8 @@ import { intranetCapture } from "./capture-actions";
 import { SEND_IT_LABEL, handToChute } from "../room/ingest/hand-off";
 import type { RunReport } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
+import { SELECTION_DOT, selectionDot } from "./selection";
+import { dockRefuses } from "./grab";
 import type {
   AskReply,
   PassageReply,
@@ -65,9 +67,6 @@ type FeedEntry = LedgerEntry | LiveEntry;
 
 /** One selected drawer — a rail topic, a country, or a country's subject row. */
 type Sel = { key: string; label: string; scope: ShelfScope };
-
-/** Selection dots cycle through the brand's own accents — never a new hue. */
-const DOTS = ["#2563EB", "#E6701E", "#22C55E", "#F59E0B", "#0A1C40"];
 
 export function IntranetClient({
   rail,
@@ -254,6 +253,13 @@ export function IntranetClient({
   // ELSE is waiting the room keeps going on its own — "Send it" knows.
   const file = () => {
     if (!paste.trim() || capBusy) return;
+    // A Sales Nav grab files on its account through the Chute's pipeline,
+    // never through this dock (pass 8 call 12).
+    const refused = dockRefuses(paste);
+    if (refused) {
+      setReceipt(refused);
+      return;
+    }
     // The gadget unfolds up top — take the operator to the instrument, so the
     // SEND-IT RUN is in front of them within a second of pressing.
     gadgetRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -448,10 +454,7 @@ export function IntranetClient({
   // ── the rail ──────────────────────────────────────────────────────────────
   // Parents are subject-matter heads: no counts (V.4). Counts sit on the
   // subtopics. A selected row carries its colored dot.
-  const dotFor = (key: string) => {
-    const i = selIdx(key);
-    return i < 0 ? null : DOTS[i % DOTS.length];
-  };
+  const dotFor = (key: string) => selectionDot(selIdx(key));
 
   const renderTopic = (t: RailTopic, depth: number) => {
     const isOpen = open[t.id] === true;
@@ -1100,7 +1103,7 @@ export function IntranetClient({
           {sel.length > 0 && (
             <div className={styles.itChips}>
               <span className={styles.itChipsWord}>Reading</span>
-              {sel.map((s, i) => (
+              {sel.map((s) => (
                 <button
                   key={s.key}
                   type="button"
@@ -1108,10 +1111,7 @@ export function IntranetClient({
                   title="remove from the selection"
                   onClick={() => toggleSel(s)}
                 >
-                  <span
-                    className={styles.itDot}
-                    style={{ background: DOTS[i % DOTS.length] }}
-                  />
+                  <span className={styles.itDot} style={{ background: SELECTION_DOT }} />
                   {s.label}
                   <span className={styles.itChipX}>✕</span>
                 </button>
@@ -1268,6 +1268,16 @@ export function IntranetClient({
                 From a note that has since been removed from the app. The brain keeps it.
               </p>
             )}
+            {/* A playbook question cited opens to the bank's own words: the
+                question and its gloss (C13). */}
+            {passage.bank && (
+              <div className={styles.itPassage}>
+                <b>{passage.bank.question}</b>
+                {passage.bank.why && (
+                  <span className={styles.itDim}> {passage.bank.why}</span>
+                )}
+              </div>
+            )}
             <div className={styles.itPassage}>
               <span className={styles.itDim}>{passage.before}</span>
               <mark className={styles.itMark}>{passage.span}</mark>
@@ -1287,8 +1297,7 @@ export function IntranetClient({
           <div className={styles.itGrab}>
             <span className={styles.itGrabKick}>THE GRAB LANDED</span>
             <span className={styles.itGrabTx}>
-              Your Sales Nav capture is on the clipboard. Paste it into the Chute on this
-              page or an account&apos;s Drop. It files as a note and the queue reads it.
+              Your Teams thread is on the clipboard. Paste it below and send it.
             </span>
             <button
               type="button"
@@ -1296,10 +1305,13 @@ export function IntranetClient({
               onClick={async () => {
                 try {
                   const t = await navigator.clipboard.readText();
-                  if (t.trim()) {
-                    setPaste(t);
-                    setGrabOpen(false);
-                  }
+                  if (!t.trim()) return;
+                  // A Sales Nav grab from an older bookmark: never into the
+                  // dock; the line says where it goes (pass 8 call 12).
+                  const refused = dockRefuses(t);
+                  setGrabOpen(false);
+                  if (refused) setReceipt(refused);
+                  else setPaste(t);
                 } catch {
                   // clipboard read refused — the manual paste path stands
                 }

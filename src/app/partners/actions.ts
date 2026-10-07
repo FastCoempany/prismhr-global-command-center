@@ -78,6 +78,7 @@ import {
   loadTouches,
 } from "@/lib/today/overlay";
 import { buildFollowUpPrompt, type DraftRecipient } from "@/lib/claude/prompt";
+import { visibleNotes } from "./visible";
 import { claudeDead, markClaudeDown, markClaudeUp } from "@/lib/claude/health";
 
 export async function getFollowUpPrompt(
@@ -107,7 +108,8 @@ export async function getFollowUpPrompt(
     },
     thread,
     accounts,
-    accountNotes,
+    // A ✕-parked entry never rides into a draft (hidden is hidden, X1).
+    accountNotes: visibleNotes(accountNotes, dispositions),
     partnerNotes: partnerNotes.get(p) ?? [],
     pastedContext: (pastedContext ?? "").slice(0, 100_000),
   });

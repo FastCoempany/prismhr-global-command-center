@@ -37,6 +37,68 @@ export async function strikeLine(client: StrikeClient, id: string): Promise<numb
   return r.count;
 }
 
+// ── Paging (pass 8 X8) ──────────────────────────────────────────────────────
+// Nothing on the paper ever dies, so every line stays reachable: the pad and
+// its struck history read a page at a time, newest first, and an EARLIER fold
+// at the foot reads the next page. The cursor is the last line of the page
+// the server sent, by its moment and then its id, so two lines kept in the
+// same millisecond are never skipped and never read twice.
+
+/** A line as the pad shows it. */
+export type ScratchLine = { id: string; body: string; at: string };
+
+/** Where the next page starts: the oldest line the last page held. */
+export type ScratchCursor = { at: string; id: string };
+
+/** Lines per page. The pad reads one on open; the fold reads the next. */
+export const SCRATCH_PAGE = 300;
+
+/** The one query a page makes, for the namespace and the cursor: one row
+ *  past the page, so the page knows whether another follows. */
+export function scratchPageArgs(ns: string, before: ScratchCursor | null, take: number) {
+  const at = before ? new Date(before.at) : null;
+  return {
+    where:
+      before && at && !Number.isNaN(at.getTime())
+        ? {
+            accountId: ns,
+            OR: [{ createdAt: { lt: at } }, { createdAt: at, id: { lt: before.id } }],
+          }
+        : { accountId: ns },
+    orderBy: [{ createdAt: "desc" as const }, { id: "desc" as const }],
+    take: take + 1,
+    select: { id: true, body: true, createdAt: true } as const,
+  };
+}
+
+/** The slice of the client a page needs: one read. */
+export type PageClient = {
+  accountNote: {
+    findMany(
+      args: ReturnType<typeof scratchPageArgs>,
+    ): Promise<{ id: string; body: string; createdAt: Date }[]>;
+  };
+};
+
+/** One page of a pad namespace, newest first, and whether more lines wait
+ *  behind it. */
+export async function scratchPage(
+  client: PageClient,
+  ns: string,
+  before: ScratchCursor | null,
+  take: number = SCRATCH_PAGE,
+): Promise<{ lines: ScratchLine[]; more: boolean }> {
+  const rows = await client.accountNote.findMany(scratchPageArgs(ns, before, take));
+  return {
+    lines: rows.slice(0, take).map((r) => ({
+      id: r.id,
+      body: r.body,
+      at: r.createdAt.toISOString(),
+    })),
+    more: rows.length > take,
+  };
+}
+
 // The in-place edit's one decision (founder-decreed 2026-08-21; ruled
 // 2026-09-25, D24 — CLAUDE.md, The Scratchpaper :329): Enter keeps, Escape
 // puts it back, and a click-away KEEPS — the pad never eats your words. The

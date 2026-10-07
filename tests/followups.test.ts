@@ -22,8 +22,10 @@ import {
 import { fileFollowUpToAccounts } from "../src/lib/today/followup-file";
 import { bindDismiss, type DismissTarget } from "../src/components/use-dismiss";
 import { TOOLS, teamsBookmarklet } from "../src/app/intake/grabs";
-import { parseSfTimeline } from "../src/lib/sf-timeline";
+import { SALESNAV_ELSEWHERE, dockRefuses } from "../src/app/intranet/grab";
+import { intentFor } from "../src/lib/groundwork/signals";
 import { SOURCE_OF, sniffHead } from "../src/lib/ingest/dialect";
+import { parseSfTimeline } from "../src/lib/sf-timeline";
 import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 import {
   captureShelf,
@@ -593,5 +595,55 @@ describe("the Capture page is the shelf the grabs live on", () => {
       classesOf(html).filter((c) => c === "undefined" || c === "null"),
       [],
     );
+  });
+});
+
+// ── pass 8 call 12 · the Sales Nav grab lands in the Chute's pipeline ─────
+// "The bookmarklet's paste lands in the Chute's pipeline under the SALESNAV
+// ACCOUNTS head, never in the Intranet dock." The grab opened the Intranet,
+// whose grab box filled the dock with it. It opens the HomeRoom now, where
+// the Chute and every account's ⚡ box file through the one paste pipeline;
+// the head names the source the queue's intent read takes; the dock refuses
+// a grab an older bookmark still sends there.
+describe("the Sales Nav grab files through the pipeline, never the Intranet dock", () => {
+  const salesnav = TOOLS.find((t) => t.key === "salesnav");
+  const grab =
+    "SALESNAV ACCOUNTS - captured 10/7/2026, 9:12:00 AM - 2 rows collected\n\n" +
+    "Acme Staffing · High buyer intent · 11 activities\n\n----\n\nBeta HR · 2 alerts";
+
+  test("the grab opens the HomeRoom, on both of its paths, and never the Intranet", () => {
+    assert.ok(salesnav);
+    const href = salesnav.build("https://cc.test");
+    const opens = [...href.matchAll(/window\.open\('([^']+)'/g)].map((m) => m[1]);
+    assert.deepEqual(opens, ["https://cc.test/room", "https://cc.test/room"]);
+    assert.doesNotMatch(href, /intranet/);
+  });
+
+  test("the shelf says where it lands", () => {
+    assert.ok(salesnav);
+    assert.match(salesnav.takes, /HomeRoom/);
+    assert.match(salesnav.takes, /⚡ box/);
+    assert.doesNotMatch(salesnav.takes, /Chute or an account/);
+  });
+
+  test("the head the grab writes is the store the queue reads", () => {
+    const { dialect, head } = sniffHead(grab);
+    assert.equal(dialect, "SN");
+    const source = SOURCE_OF(dialect, head, "rules");
+    assert.equal(source, "salesnav");
+    const now = new Date("2026-10-07T15:00:00.000Z");
+    const read = intentFor([{ body: grab, source, createdAt: now.toISOString() }], now);
+    assert.equal(read?.level, "high");
+  });
+
+  test("the Intranet dock refuses a Sales Nav grab and says where it goes", () => {
+    assert.equal(dockRefuses(grab), SALESNAV_ELSEWHERE);
+    assert.match(SALESNAV_ELSEWHERE, /HomeRoom/);
+    assert.equal(dockRefuses("TEAMS THREAD - Simploy · captured 9/25/2026\n\nhi"), "");
+    assert.equal(dockRefuses("a plain note about the Canada deal"), "");
+  });
+
+  test("the Teams grab still opens the Intranet's dock", () => {
+    assert.match(teamsBookmarklet("https://cc.test"), /cc\.test\/intranet\?grab=1/);
   });
 });

@@ -1592,7 +1592,8 @@ describe("what prospects ask lives on the Playbook (IV.5)", () => {
 
   test("the Playbook carries the shelf", () => {
     assert.ok(pbClient.includes("What prospects ask"));
-    assert.ok(pbClient.includes("Ours, not theirs"), "the inverse list is missing");
+    // X9 (pass 9): the inverse list keeps its place under a flat heading.
+    assert.ok(pbClient.includes("Bank questions no buyer has asked yet"), "the inverse list is missing");
     assert.ok(pbPage.includes("harvestBattlecards"));
     assert.ok(pbPage.includes("prospectAsks"));
   });

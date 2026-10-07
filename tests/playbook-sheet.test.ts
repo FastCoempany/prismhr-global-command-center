@@ -10,6 +10,7 @@ import {
   CUES,
   ISSUE_ORDER,
   PRODUCTS,
+  RUNG_LABEL,
   cuesFor,
   product,
   type Cite,
@@ -19,7 +20,9 @@ import { peos } from "../src/lib/book";
 import { knownPeople } from "../src/lib/book/contacts";
 import { redactMoney } from "../src/lib/intel/lexicon";
 
-const RUNGS = new Set(["tape", "filed", "research", "none"]);
+// The ladder is the module's own label table: a rung the chip cannot name is
+// not a rung (pass 8 X9 widened it to the canon's six).
+const RUNGS = new Set(Object.keys(RUNG_LABEL));
 
 /** Everything a partner or the operator reads on this surface. */
 function spokenLines(): string[] {
@@ -46,8 +49,10 @@ function spokenLines(): string[] {
 
 function allCites(): Cite[] {
   const out: Cite[] = [];
-  for (const p of PRODUCTS)
+  for (const p of PRODUCTS) {
     for (const issue of ISSUE_ORDER) out.push(...p.solves[issue].ev);
+    out.push(...p.cites.how, ...p.cites.split, ...p.cites.time, ...p.cites.ask);
+  }
   for (const c of CUES) out.push(...c.ev);
   for (const b of BETWEEN) out.push(...b.ev);
   return out;
@@ -108,6 +113,43 @@ describe("the Sheet · the scans", () => {
     }
     for (const c of CUES) assert.ok(c.ev.length > 0, `cue ${c.id} stands on nothing`);
     for (const b of BETWEEN) assert.ok(b.ev.length > 0, `"${b.q}" stands on nothing`);
+  });
+
+  // pass 8 X9 · "The middle reads like the flyer … Every block cites its
+  // rung." What it solves cites per issue and the tiers cite the flyer; the
+  // other four blocks carry their own.
+  test("every block in the middle cites its rung", () => {
+    for (const p of PRODUCTS)
+      for (const block of ["how", "split", "time", "ask"] as const)
+        assert.ok(p.cites[block].length > 0, `${p.id}'s ${block} block stands on nothing`);
+  });
+
+  // Rule 14: "Cite labels name their rung — ON TAPE / FILED THREAD / CALL
+  // NOTES / ❖ LESSON / RESEARCH / TEAM INTEL". FILED names the filed rung,
+  // where the flyers sit beside the threads.
+  test("the chip names every rung of the ladder", () => {
+    assert.deepEqual(RUNG_LABEL, {
+      tape: "ON TAPE",
+      filed: "FILED",
+      notes: "CALL NOTES",
+      lesson: "❖ LESSON",
+      research: "RESEARCH",
+      intel: "TEAM INTEL",
+      none: "∅",
+    });
+  });
+
+  test("call notes cite the CALL NOTES rung, never the tape", () => {
+    for (const [text, rung, src] of allCites())
+      if (/notes/i.test(src ?? ""))
+        assert.equal(rung, "notes", `"${text}" cites ${src} as ${rung}`);
+  });
+
+  // The plain-speech law's first device: a line balanced on "X, not Y." is
+  // rewritten flat ("A team, not a person." was a cue's gist).
+  test("no line on the sheet is balanced on an antithesis", () => {
+    for (const line of spokenLines())
+      assert.doesNotMatch(line, /^[^.]{1,40}, not (?:a |an |the )?\w+\.$/i, line);
   });
 
   test("no account name and no person name reaches the surface", () => {

@@ -29,22 +29,12 @@ import {
   loadTouches,
 } from "@/lib/today/overlay";
 import { dayLabelFor } from "@/lib/scratch";
+import { SendMarks } from "./marks";
 import styles from "./sendbook.module.css";
 
 export const dynamic = "force-dynamic";
 
 const LINE_CAP = 400;
-
-const shortDate = (iso: string): string => {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  const d = new Date(t);
-  return d.toLocaleDateString("en-US", {
-    month: "numeric",
-    day: "numeric",
-    timeZone: "America/Chicago",
-  });
-};
 
 export default async function SendbookPage({
   searchParams,
@@ -114,7 +104,7 @@ export default async function SendbookPage({
       readFromStores(stores, { id, name: getPeo(id)?.name ?? id }, { now }),
     );
   const book = buildSendbook({ readsById, tapsById, now });
-  // A live marketing cadence marks the line. Informs, never blocks.
+  // A live marketing cadence marks the line. It informs and blocks nothing.
   const mktgLive = new Set<string>();
   for (const [id, read] of readsById)
     if (orgSignalsOf(read.secondRecord).mktgLive) mktgLive.add(id);
@@ -142,9 +132,9 @@ export default async function SendbookPage({
       <main className={styles.wrap}>
         <h1 className={styles.masthead}>The Sendbook</h1>
         <p className={styles.sub}>
-          Every outreach touch, kept — the Chute&rsquo;s filed sends and the Channel
-          Ask&rsquo;s tapped ones, one register. Replies annotate from the record. What is
-          due next stays on <Link href="/groundwork">Groundwork</Link>.
+          Every outreach touch, from the sends filed through the Chute and the taps in the
+          Channel Ask. Replies come from the record. What&rsquo;s due next is on{" "}
+          <Link href="/groundwork">Groundwork</Link>.
         </p>
 
         <div className={styles.weekhead}>
@@ -187,7 +177,7 @@ export default async function SendbookPage({
         {lines.length === 0 && (
           <p className={styles.empty}>
             No outreach on the book yet. Work a move on Groundwork or drop a sent email in
-            the Chute — every touch lands here.
+            the Chute. Every touch lands here.
           </p>
         )}
 
@@ -208,33 +198,12 @@ export default async function SendbookPage({
                 {l.clause}
                 {l.contact ? (l.clause ? ` — ${l.contact}` : l.contact) : ""}
               </span>
-              {mktgLive.has(l.accountId) && newestLineAt.get(l.accountId) === l.at && (
-                <span
-                  className={styles.mktgLive}
-                  title="Marketing sent this account a blast inside seven days — your note lands beside it. It informs; it never blocks."
-                >
-                  MKTG LIVE
-                </span>
-              )}
-              {book.laneById.get(l.accountId) === "gone-cold" && (
-                <span
-                  className={styles.cold}
-                  title="They have spoken before — a reply or a meeting on the record, or their voice reaching the org in the weekly export. The widest record decides the lane. This is a re-open, not an introduction."
-                >
-                  GONE COLD
-                </span>
-              )}
-              {l.repliedAt && (
-                <span className={styles.replied}>↩ REPLIED {shortDate(l.repliedAt)}</span>
-              )}
-              {l.bookedAt && (
-                <span
-                  className={styles.booked}
-                  title="Their calendar accepted a meeting after this send. The calendar answered, so it doesn't count as a reply and doesn't warm the account."
-                >
-                  BOOKED {shortDate(l.bookedAt)}
-                </span>
-              )}
+              <SendMarks
+                mktg={mktgLive.has(l.accountId) && newestLineAt.get(l.accountId) === l.at}
+                cold={book.laneById.get(l.accountId) === "gone-cold"}
+                reply={l.reply}
+                booking={l.booking}
+              />
             </div>
           </div>
         ))}
@@ -246,9 +215,8 @@ export default async function SendbookPage({
         )}
 
         <p className={styles.legend}>
-          NEVER MET is the register&rsquo;s default population — no reply ever, no meeting
-          ever held, whatever was thrown at them. The operator&rsquo;s own outbound never
-          warms an account; a CSM intro doesn&rsquo;t either.
+          NEVER MET means they have never replied and no meeting was ever held. Your own
+          outreach never warms an account, and a CSM intro doesn&rsquo;t either.
         </p>
       </main>
     </>

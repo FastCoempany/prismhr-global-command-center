@@ -348,7 +348,7 @@
         "Additional payments listed; Onboard Employee button"
       ],
       "say": "One review card: who they are, what they'll do, what they'll make, what extras they get. Click Onboard Employee and the hire is in motion.",
-      "demoPurpose": "Land the hire flow: five steps, one button."
+      "demoPurpose": "Land the hire flow: five stages, one button."
     },
     {
       "id": "pds-23-invite-employee-portal",
@@ -1148,7 +1148,7 @@
       "asker": "Prospect — payroll ops",
       "question": "Were there any other questions you had? I know we've run a bit long — I'm sure we'll have follow-ups we'll hit you with. I think I'm good; what about you guys?",
       "askedWhileShowing": "The service-provider invoices list, just before screen share ends.",
-      "answer": "The sales lead takes the opening and raises pricing — they definitely need to understand what would be charged in this model — which launches the closing exchange on pricing, the live prospect's timeline, and evaluation next steps.",
+      "answer": "The sales lead takes the opening and raises pricing — they definitely need to understand what would be charged in this model — which launches the closing exchange on pricing, the live prospect's timeline, and what comes next in their evaluation.",
       "answerQuote": "Do we have pricing information?",
       "status": "answered"
     },
