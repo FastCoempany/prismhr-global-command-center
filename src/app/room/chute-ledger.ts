@@ -18,6 +18,7 @@
 // CHUTE_PARALLEL files read at once; the rest wait in drop order.
 
 import type { Window } from "@/lib/ingest/windows";
+import type { FilingWrote } from "@/lib/ingest/wrote";
 import type { RouteHit } from "@/lib/route-capture";
 import { chicagoDay } from "@/lib/tz";
 
@@ -73,7 +74,7 @@ export type LedgerRow = {
   /** The router's candidates on a row waiting for the pick, which the held
    *  box offers by id, name and rung. A Chute route's hits carry their score
    *  and why beside them; a Send-it hand-off's never do, because what leaves
-   *  the server is names and rungs (D12). */
+   *  the server is names and rungs (D13). */
   candidates?: PickCandidate[];
   /** The activity drop's own arrival counts — what came in, before any verdict. */
   came?: { rows: number; accounts: number; textRows: number };
@@ -119,6 +120,16 @@ export type LedgerRow = {
   /** One amber sentence for the receipt's second line: the refused export's
    *  decreed line on the Drop (D2 as amended 2026-10-05). */
   note?: string;
+  /** A duplicate's earlier filing: its day and, when the Filing table holds
+   *  it, its id, so "Already on file." opens one click to what that filing
+   *  wrote (pass 8, C2). Ids and a day, never text, so a settled row keeps
+   *  it (D12). */
+  prior?: { day?: string; filingId?: string };
+  /** What a take-back took, as its lines, so "N removed." opens to them
+   *  (pass 8, C5). Volatile: the lines are body text, which a settled row
+   *  never keeps (D12), so storedRow drops them and a reloaded row opens to
+   *  the counts it kept instead. */
+  took?: FilingWrote;
 };
 
 const LEDGER_KEY = "chute-ledger-v1";
@@ -130,7 +141,9 @@ export const LEDGER_TEXT_CAP = 200_000;
 /** How many dropped files the Chute reads at once. */
 export const CHUTE_PARALLEL = 3;
 
-const READ_CUT_SHORT = "A reload cut the read short. Drop the file again.";
+// The decree's words, verbatim (CLAUDE.md, The Chute: mid-flight reads come
+// back as "interrupted — drop it again"; B48).
+const READ_CUT_SHORT = "interrupted — drop it again";
 const PICK_LOST = "The pick did not survive. Drop the file again.";
 
 export type LedgerStorage = {
@@ -191,6 +204,7 @@ export function storedRow(x: LedgerRow): LedgerRow {
     door: x.door,
     day: x.day,
     note: x.note,
+    prior: x.prior,
   };
   if (isWaiting(x.state)) {
     const keep = !!x.text && x.text.length <= LEDGER_TEXT_CAP;
@@ -305,7 +319,7 @@ export type DisputedHandOff = HandOffBase & {
 };
 
 /** A capture the route found no sure match for: the candidates it found,
- *  by id, name and rung (D12), which the held row offers as its choices. */
+ *  by id, name and rung (D13), which the held row offers as its choices. */
 export type UnsureHandOff = HandOffBase & {
   candidates: { id: string; name: string; rung: string }[];
 };

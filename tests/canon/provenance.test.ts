@@ -167,7 +167,11 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
     assert.match(door, /roomPaste\(\.\.\.filingRequest\(door,/);
     assert.match(door, /\{ force: !!opts\.force, door, windows: opts\.windows \}/);
     const actions = read("src/app/room/actions.ts");
-    assert.match(actions, /const door: Door = opts\?\.door \?\? "drop";/);
+    // The door is a required argument since pass 9 (pass 8 housekeeping):
+    // roomPaste no longer defaults a caller that names none to the Drop.
+    assert.match(actions, /opts: \{ force\?: boolean; door: Door; windows\?: Window\[\] \},/);
+    assert.match(actions, /const door: Door = opts\.door;/);
+    assert.ok(!/opts\?\.door/.test(actions), "no caller's door is optional");
     // The fan-out is its own module since slice 6 (src/lib/ingest/fanout.ts).
     const fanoutSrc = read("src/lib/ingest/fanout.ts");
     const absorb = fanoutSrc.slice(
@@ -757,7 +761,10 @@ describe("createTodoRow writes the sheet's codec", () => {
       urgency: "high",
       kind: "action",
     });
-    assert.equal(writes[0].remindAt?.toISOString(), "2026-07-30T12:00:00.000Z");
+    // The first moment of the Chicago day, midnight CDT (pass 8, H11): noon
+    // UTC read as 7 AM Chicago, so a commitment due today and filed before
+    // then read as scheduled.
+    assert.equal(writes[0].remindAt?.toISOString(), "2026-07-30T05:00:00.000Z");
     assert.equal(writes[0].position, 9);
     assert.equal(writes[0].accountId, "A1");
     assert.equal(writes[0].done, false);

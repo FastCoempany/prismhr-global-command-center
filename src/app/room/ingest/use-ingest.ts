@@ -11,9 +11,9 @@
 // receipt. Both faces paint one held box and one receipt (./held.tsx and
 // ./receipt.tsx; slice 18a, the face approved 2026-10-06).
 //
-// Client-side only, and marked so the D12 scan reads this module as the
+// Client-side only, and marked so the D13 scan reads this module as the
 // browser's: routing runs on the server through its action and the roster
-// never ships here (C2, D12); filing is roomPaste with the mounting door's
+// never ships here (C2, D13); filing is roomPaste with the mounting door's
 // name, so every row the filing writes carries it (P3); the vault is the
 // server's two doors through sendToVault, so no token reaches the browser
 // (D8, as amended 2026-10-05). The reads run at most CHUTE_PARALLEL at a
@@ -56,7 +56,8 @@ export type DropPlan = {
   /** Files the reader cannot open: a recording, an archive, a binary. The
    *  vault's alone. The Drop sends them under its row at once, because they
    *  carry no verdict to wait for; the Chute routes them by filename or waits
-   *  for the pick (D13: vaulting is filing, with a receipt and a take-back). */
+   *  for the pick (D6: vaulting is filing, with a receipt; backups are
+   *  permanent, so a backup line has no take-back). */
   vault: File[];
   /** On the Drop, every .csv. The weekly export is the Chute's to read for
    *  the book; dropped on a row it is refused before any read, vaulted under
@@ -116,8 +117,8 @@ export function filingRequest(
 /** A filing's result, with what its verdict does with the files that waited
  *  on it. The vault waits on the verdict (founder-decreed 2026-09-03): an
  *  accepted filing releases them, a disputed one holds them with the
- *  question, and a filing that failed for any other reason sends nothing
- *  anywhere. */
+ *  question, a duplicate vaults nothing new, and a filing that failed for
+ *  any other reason hands them to the backup all the same (pass 8 call 8). */
 export type Filed = PasteResult & { vault: VaultStep };
 
 export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfReader }) {
@@ -132,7 +133,7 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
    *  reader refuses the export too, a belt under planDrop's braces. */
   const read = (f: File) => readFileToText(f, readPdf, { door });
 
-  /** Route a text on the server over the joined roster (C2, D12). The
+  /** Route a text on the server over the joined roster (C2, D13). The
    *  Chute's call; the Drop is bound to its row and never routes. */
   const route = (text: string): Promise<RouteReply> => routeText(text);
 

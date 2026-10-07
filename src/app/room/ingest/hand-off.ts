@@ -13,7 +13,7 @@
 // next mount reads it back held (C20). The capture's text travels from the
 // box that sent it to the Chute beside it, in the browser; the verdict and
 // the candidates came from the server and carry names and rungs, never the
-// roster (D12).
+// roster (D13).
 
 import { seatHandOff, type HandOff } from "../chute-ledger";
 

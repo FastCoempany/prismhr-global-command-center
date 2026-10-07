@@ -51,7 +51,9 @@ function slice(src: string, from: string, to: string): string {
 const roomPaste = slice(
   actions,
   "export async function roomPaste(",
-  "export async function roomActionUndo(",
+  // roomActionUndo, the old tail, retired in pass 9 (no client had called it
+  // since #360); the next action is the tail now.
+  "export async function roomMoveDone(",
 );
 const absorbRead = slice(
   fanoutSrc,
@@ -166,7 +168,9 @@ describe("bug 3 — the guard's comments and copy contradict the canon", () => {
     const lateAt = roomPaste.indexOf("if (!verdict.ok)");
     assert.ok(lateAt > earlyAt, "the late guard is still consulted");
     assert.match(roomPaste.slice(lateAt, lateAt + 160), /return \{\s*ok: false,\s*filed: 0/);
-    assert.ok(roomPaste.includes("opts?.force"), "force stays the operator's override");
+    // The options are required since pass 9 (the door is a required
+    // argument), so force reads without the optional chain.
+    assert.ok(roomPaste.includes("opts.force"), "force stays the operator's override");
   });
   test("the keyless early rung stands on the text's own evidence", () => {
     // The early guard runs before any read, key or no key, so its verdict
@@ -209,13 +213,17 @@ describe("bug 5 — absorbRead on a rules-fallback read", () => {
     assert.ok(roomPaste.slice(assignAt).includes("read = null;"), "a throw resets the read");
     assert.match(roomPaste, /const absorbed(?::[^=]+)? = read\s*\?\s*await absorbRead\(/);
   });
-  test("option 1: the receipt names the model's judgment when the rules filed the entries", () => {
-    // Decided 2026-09-24: `how` stays the entries' provenance, and the
-    // result carries `judged` whenever the read object was non-null, so a
-    // filing whose entries came from the rules but whose actions and asks
-    // came from the model can say so instead of reading as a plain rules
-    // pass. The flag is the contract; the Drop's receipt reads it.
-    assert.match(roomPaste, /judged: read !== null/);
+  test("option 1: `how` stays the entries' provenance and the counts carry the model's judgment", () => {
+    // Decided 2026-09-24: `how` stays the entries' provenance. The result
+    // once carried a `judged` flag for the receipt to name the model's
+    // judgment beside a rules read, but no door ever read it, and the
+    // receipt the face approved on 2026-10-06 names no reader at all; the
+    // flag retired in pass 9 (pass 8 housekeeping). What the model judged
+    // reaches the receipt as its counts, which absorbRead hands back
+    // whichever reader filed the entries.
+    assert.doesNotMatch(roomPaste, /\bjudged\??:/);
+    assert.match(roomPaste, /how = how === "ai" \? "rules" : how;/);
+    assert.match(roomPaste, /\.\.\.fanout,/);
   });
 });
 

@@ -28,6 +28,7 @@ import { meetingRead } from "../src/lib/intel/meeting";
 import { MINE_RE } from "../src/lib/intel/provenance";
 import { readAccount, type RecordNote } from "../src/lib/record/read";
 import { buildPipelineReport } from "../src/lib/pipeline/build";
+import { chicagoDayStart, createTodoRow, type TodoData } from "../src/lib/notes/write";
 
 // Two midnights, one in each half of the year. `evening` is 7:30 PM Chicago on
 // the day before; `night` is 12:30 AM Chicago on the day after. Both are
@@ -321,4 +322,61 @@ describe("the read's day math names the Chicago day (pass 8 X5)", () => {
       assert.equal(rec.quietDays, 1);
     });
   }
+// Pass 8, H11: a commitment due today and filed before 7 AM Chicago read as
+// scheduled, because its reminder sat at noon UTC on the due day. The
+// reminder is the due day's first Chicago moment now, so it is due all day.
+describe("a dated commitment is due from the first moment of its Chicago day (H11)", () => {
+  const filedEarly = [
+    { label: "CDT (UTC-5)", day: "2026-09-25", start: "2026-09-25T05:00:00.000Z", now: "2026-09-25T11:10:00Z" },
+    { label: "CST (UTC-6)", day: "2026-12-11", start: "2026-12-11T06:00:00.000Z", now: "2026-12-11T12:10:00Z" },
+  ] as const;
+  for (const c of filedEarly) {
+    test(`${c.label}: due today and filed at 6:10 AM Chicago, it reads as due, not scheduled`, async () => {
+      assert.equal(chicagoDayStart(c.day)?.toISOString(), c.start);
+      const writes: TodoData[] = [];
+      const client = {
+        todo: {
+          create: async ({ data }: { data: TodoData }) => {
+            writes.push(data);
+            return { id: "t1" };
+          },
+          findFirst: async () => null,
+        },
+      };
+      const now = new Date(c.now);
+      assert.equal(chicagoDay(now), c.day, "the filing moment is the due day in Chicago");
+      await createTodoRow(
+        { body: "Send the census.", tags: { kind: "action" }, due: c.day, now, accountId: "esc", position: 0 },
+        client,
+      );
+      const remindAt = writes[0].remindAt;
+      assert.ok(remindAt && remindAt.getTime() <= now.getTime(), `the reminder is not ahead: ${remindAt?.toISOString()}`);
+      const sheet = buildAccountSheet(
+        [
+          {
+            id: "t1",
+            body: writes[0].body,
+            done: false,
+            accountId: "esc",
+            remindAt: remindAt.toISOString(),
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+        ],
+        "esc",
+        new Set(),
+        new Map(),
+        now,
+      );
+      assert.equal(sheet.delayed.length, 0, "not scheduled");
+      assert.equal(sheet.open.length, 1, "open today");
+    });
+  }
+  test("the day's first moment follows the season on the switch days, and junk is no day", () => {
+    assert.equal(chicagoDayStart("2026-03-08")?.toISOString(), "2026-03-08T06:00:00.000Z", "the spring switch day starts in CST");
+    assert.equal(chicagoDayStart("2026-03-09")?.toISOString(), "2026-03-09T05:00:00.000Z");
+    assert.equal(chicagoDayStart("2026-11-01")?.toISOString(), "2026-11-01T05:00:00.000Z", "the fall switch day starts in CDT");
+    assert.equal(chicagoDayStart("next friday"), undefined);
+    assert.equal(chicagoDayStart(""), undefined);
+  });
 });

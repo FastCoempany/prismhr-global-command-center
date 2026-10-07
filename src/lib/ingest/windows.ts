@@ -17,21 +17,13 @@ export const READ_WINDOW = 60000;
  *  higher ceiling — a three-hour call still fits. */
 export const READ_WINDOW_TAPE = 400000;
 
-/** The most text the document transcriber hands back from a PDF or an image. */
-export const TRANSCRIBE_WINDOW = 60000;
-
 /** The most bytes the transcriber sends the model — a PDF or an image past
  *  this is refused with a reason, never cut. */
 export const TRANSCRIBE_BYTES = 8 * 1024 * 1024;
 
-/** A spreadsheet as paste text: the character budget sheetToPaste spends
- *  before it says the sheet continues, so a 40k-row export cannot flood the
- *  read. */
-export const SHEET_WINDOW = 30000;
-
-/** A document (.docx) as paste text, when it does not read as a transcript —
- *  a transcript is never cut (src/app/room/read-file.ts). */
-export const DOCX_WINDOW = 60000;
+// No reader keeps a window of its own (ruled 2026-10-07, pass 8 call 3): the
+// transcription, the spreadsheet and the document are handed on whole, and
+// the read windows above are the only cuts, on what goes to the model.
 
 /** The most entries one read files, and the most the model is asked for. */
 export const ENTRY_CAP = 40;
@@ -43,8 +35,7 @@ export const TEXT_FLOOR = 20;
 /** A window that cut something: what was cut, how much was read, how much
  *  arrived. Stored on the Filing row and read by the receipt (D4). */
 export type Window = {
-  /** The thing that was cut, as the receipt says it: "the paste", "the
-   *  transcription", "the document". */
+  /** The thing that was cut, as the receipt says it: "the paste". */
   what: string;
   read: number;
   of: number;

@@ -14,7 +14,14 @@ import { Prisma } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
 import type { Door } from "@/lib/ingest/doors";
 import { windowsOf, type Window } from "@/lib/ingest/windows";
+import { wroteFrom, type FilingWrote } from "@/lib/ingest/wrote";
 import { sanitizeAiResult, type AiCleanResult } from "@/lib/intel/ai-clean";
+import {
+  PLAYBOOK_LESSONS,
+  PLAYBOOK_MARKET,
+  parsePlaybookBody,
+} from "@/lib/playbook/store";
+import { gapNs, parseGapBody } from "@/lib/room/gaps";
 
 /** Whose read filed the entries: the model's, the rule parser's, or none
  *  (a tape archived whole). */
@@ -118,10 +125,14 @@ function rowOf(s: StoredFiling): FilingRow {
   };
 }
 
-/** Write the filing, replacing the row an earlier filing of the same capture
- *  left: a ✕-parked or undone filing (D13) is re-droppable, and the unique on
- *  (accountId, fingerprint) is never violated. Null when the table is not
- *  there yet — the rows then file without a link, as before. */
+/** Write the filing, replacing any row an earlier filing of the same capture
+ *  left, so the unique on (accountId, fingerprint) is never violated. An
+ *  undone filing is re-droppable: its take-back clears the duplicate guard's
+ *  marker and the row. A ✕-parked filing is still on file and its re-drop is
+ *  refused at the duplicate check before this runs (D7); the replace is for
+ *  a filing whose check failed open (D7) or whose marker did not land. Null
+ *  when the table is not there yet — the rows then file without a link, as
+ *  before. */
 export async function fileFiling(
   f: NewFiling,
   client: FilingClient = getPrisma(),
@@ -221,5 +232,197 @@ export async function undoFiling(
     return { notes: notes.count, todos: todos.count, filing: filing.count };
   } catch {
     return none;
+  }
+}
+
+// ── what a filing wrote, by its id ─────────────────────────────────────────
+
+/** The most note rows one receipt opens to: a filing files at most ENTRY_CAP
+ *  entries, its transcript and its outcome marker on the account, then its
+ *  asks and its playbook lines in their own namespaces. */
+export const WROTE_NOTES = 120;
+/** The most todo rows one receipt opens to: the to-dos and their loops. */
+export const WROTE_TODOS = 60;
+
+/** The slice of the Prisma client the receipt's read needs — a test hands in
+ *  a stub. */
+export type WroteClient = {
+  accountNote: {
+    findMany(args: {
+      where: { filingId: string; accountId: { in: string[] } };
+      orderBy: { createdAt: "asc" };
+      select: { body: true; createdAt: true; accountId: true };
+      take: number;
+    }): Promise<{ body: string; createdAt: Date; accountId: string }[]>;
+  };
+  todo: {
+    findMany(args: {
+      where: { filingId: string; accountId: string };
+      orderBy: { createdAt: "asc" };
+      select: { body: true };
+      take: number;
+    }): Promise<{ body: string }[]>;
+  };
+};
+
+/** Everything one filing wrote, read by the filing's id across every
+ *  namespace it writes to: the record entries on the account, the asks in
+ *  its gaps namespace, the playbook lines whose tail names it, and the todos
+ *  on the account. The receipt opens every count it shows (ruled 2026-10-07,
+ *  pass 8 call 9), so the asks and the playbook lines are read here beside
+ *  the entries. Each read is scoped to the account or its own namespaces, so
+ *  a forged filing id reaches no other account's rows: the playbook is one
+ *  namespace for every account, and a line counts only when its tail names
+ *  this one, as the undo reads it. Throws when the store does. */
+export async function wroteOfFiling(
+  accountId: string,
+  filingId: string,
+  client: WroteClient = getPrisma(),
+): Promise<FilingWrote> {
+  const asksNs = gapNs(accountId);
+  const [notes, todos] = await Promise.all([
+    client.accountNote.findMany({
+      where: {
+        filingId,
+        accountId: { in: [accountId, asksNs, PLAYBOOK_MARKET, PLAYBOOK_LESSONS] },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { body: true, createdAt: true, accountId: true },
+      take: WROTE_NOTES,
+    }),
+    client.todo.findMany({
+      where: { filingId, accountId },
+      orderBy: { createdAt: "asc" },
+      select: { body: true },
+      take: WROTE_TODOS,
+    }),
+  ]);
+  const entries: { body: string; createdAt: Date }[] = [];
+  const asks: string[] = [];
+  const learned: string[] = [];
+  for (const n of notes) {
+    if (n.accountId === accountId) entries.push(n);
+    else if (n.accountId === asksNs) asks.push(parseGapBody(n.body));
+    else {
+      const { text, tail } = parsePlaybookBody(n.body);
+      if (tail.a === accountId) learned.push(text);
+    }
+  }
+  return wroteFrom(entries, todos, { asks, learned });
+}
+
+// ── the duplicate guard's claim ────────────────────────────────────────────
+// The same capture filed to the same account twice is refused (CLAUDE.md, The
+// Chute: "Already on file. Nothing filed twice."). The guard's marker is the
+// `pastehash:<account>:<fingerprint>` disposition row, whose key is unique.
+// A check that only reads the marker lets two filings of one capture in
+// flight together both pass it and fold onto one Filing row (pass 8, the
+// duplicate race), so the check claims the key instead: the first filing
+// creates the marker as a claim, a twin's create meets the unique key and
+// reads the claim, and the filing turns the claim into the filed marker when
+// it lands (roomPaste's stampPasteMark) or releases it when it files nothing.
+// No schema change: the claim is the marker row with its own status, which
+// the disposition loader drops like every namespaced marker's.
+
+/** The marker's status while a filing holds the capture. */
+export const CLAIM_STATUS = "filing";
+
+/** A claim older than this is a filing that died mid-flight (a closed tab, a
+ *  timed-out function); the next filing of the capture takes it over. */
+export const CLAIM_STALE_MS = 10 * 60 * 1000;
+
+/** What the duplicate check found: this filing holds the capture, the
+ *  capture is already on file (with the marker's reason, "<ISO>·<note id>"),
+ *  a twin is filing it now, or the check failed open (D7). */
+export type Claim =
+  | { kind: "claimed"; token: string }
+  | { kind: "filed"; reason: string }
+  | { kind: "inflight" }
+  | { kind: "skipped" };
+
+/** The slice of the Prisma client the claim needs — a test hands in a stub. */
+export type ClaimClient = {
+  accountDisposition: {
+    create(args: {
+      data: { accountId: string; status: string; reason: string };
+    }): Promise<unknown>;
+    findUnique(args: {
+      where: { accountId: string };
+    }): Promise<{ status: string; reason: string | null } | null>;
+    updateMany(args: {
+      where: { accountId: string; status: string; reason: string };
+      data: { reason: string };
+    }): Promise<{ count: number }>;
+    deleteMany(args: {
+      where: { accountId: string; status: string; reason: string };
+    }): Promise<{ count: number }>;
+  };
+};
+
+const isUniqueViolation = (e: unknown): boolean =>
+  !!e && typeof e === "object" && (e as { code?: unknown }).code === "P2002";
+
+/** The claim's token: its moment, so a stale claim is readable as stale, and
+ *  a nonce, so a release or a takeover touches this claim and no other. */
+const claimToken = (now: Date): string =>
+  `${now.toISOString()}·claim:${globalThis.crypto.randomUUID()}`;
+
+/** Claim a capture for one filing. Fails open (D7): a store that errors
+ *  answers "skipped" and the filing goes ahead, saying so on its receipt. */
+export async function claimCapture(
+  pasteKey: string,
+  now: Date,
+  client: ClaimClient = getPrisma(),
+): Promise<Claim> {
+  const token = claimToken(now);
+  // Twice: a claim released between a twin's create and its read leaves the
+  // key free, and the second attempt takes it.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await client.accountDisposition.create({
+        data: { accountId: pasteKey, status: CLAIM_STATUS, reason: token },
+      });
+      return { kind: "claimed", token };
+    } catch (e) {
+      if (!isUniqueViolation(e)) return { kind: "skipped" };
+    }
+    try {
+      const prior = await client.accountDisposition.findUnique({
+        where: { accountId: pasteKey },
+      });
+      if (!prior) continue;
+      const reason = prior.reason ?? "";
+      if (prior.status !== CLAIM_STATUS) return { kind: "filed", reason };
+      const at = Date.parse(reason.split("·")[0] ?? "");
+      if (!Number.isNaN(at) && now.getTime() - at < CLAIM_STALE_MS)
+        return { kind: "inflight" };
+      // A stale claim: take it over only if it is still the one read, so two
+      // filings arriving after a dead one cannot both take it.
+      const took = await client.accountDisposition.updateMany({
+        where: { accountId: pasteKey, status: CLAIM_STATUS, reason },
+        data: { reason: token },
+      });
+      return took.count === 1 ? { kind: "claimed", token } : { kind: "inflight" };
+    } catch {
+      return { kind: "skipped" };
+    }
+  }
+  return { kind: "skipped" };
+}
+
+/** Let a claim go when its filing filed nothing, so the capture can be filed
+ *  again. A claim the filing turned into the filed marker is left alone: the
+ *  delete matches the claim's own status and token only. */
+export async function releaseCapture(
+  pasteKey: string,
+  token: string,
+  client: ClaimClient = getPrisma(),
+): Promise<void> {
+  try {
+    await client.accountDisposition.deleteMany({
+      where: { accountId: pasteKey, status: CLAIM_STATUS, reason: token },
+    });
+  } catch {
+    // A claim that will not clear goes stale and is taken over later.
   }
 }

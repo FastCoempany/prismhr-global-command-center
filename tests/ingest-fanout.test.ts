@@ -608,13 +608,10 @@ describe("undo by filing id removes every row and todo it wrote and nothing else
     assert.ok(undo.includes("+ completions"), "the receipt counts them");
     // The id lists stay the undo's reach until slice 8 stops sending them.
     assert.match(undo, /todoIds: string\[\] = \[\],\n[\s\S]*?filingId\?: string,\n\)/);
-    // ✕ on one opened action takes its completion line with it too.
-    const one = actions.slice(
-      actions.indexOf("export async function roomActionUndo("),
-      actions.indexOf("export async function roomMoveDone("),
-    );
-    assert.ok(one.includes("await prisma.todo.delete({ where: { id } });"));
-    assert.ok(one.includes("await undoCompletions(acct.id, [id]);"));
+    // The per-action ✕ (roomActionUndo) retired in pass 9: no client had
+    // called it since the receipt's chips went in #360, so the filing's own
+    // take-back above is the only door that reaches an opened action.
+    assert.ok(!actions.includes("export async function roomActionUndo("));
     // The close still files its line through the module.
     assert.ok(actions.includes("if (wasRouted) await fileCompletion(acct.id, id, t.body);"));
   });

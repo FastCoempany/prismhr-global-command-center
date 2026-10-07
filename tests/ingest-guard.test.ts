@@ -13,7 +13,7 @@
 // source where it does not: roomPaste gates on getAppAccess and getPrisma,
 // so, as tests/ingest-defects.test.ts does, its sequencing is read from the
 // slice between `export async function roomPaste(` and `export async
-// function roomActionUndo(` (the fan-out left for its own module in slice 6).
+// function roomMoveDone(` (the fan-out left for its own module in slice 6).
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -64,7 +64,9 @@ function slice(src: string, from: string, to: string): string {
 const roomPaste = slice(
   actions,
   "export async function roomPaste(",
-  "export async function roomActionUndo(",
+  // roomActionUndo, the old tail, retired in pass 9 (no client had called it
+  // since #360); the next action is the tail now.
+  "export async function roomMoveDone(",
 );
 
 // ── the fixtures, as misfile-guard.test.ts holds them ──────────────────────
@@ -463,6 +465,29 @@ describe("reasonFromWhy over every why misfile.ts can produce", () => {
     assert.equal(reasonFromWhy("the read names Advocate Pay", "Regis HR Group", "Advocate Pay"), "The read names Advocate Pay.");
   });
 
+  test("the fallback reports what the read names, never a hedge (pass 8 call 13)", () => {
+    // Ruled 2026-10-07: "This reads like {claim}." becomes "The read names
+    // {claim}." for a why the reason table does not know and for a name too
+    // long for any sentence; "Reads as {label}." elsewhere is a report of
+    // the reader's classification and stays.
+    assert.equal(
+      reasonFromWhy("something the router never said", "Regis HR Group", "Simploy"),
+      "The read names Simploy.",
+    );
+    assert.equal(
+      reasonFromWhy("something the router never said", "Regis", "Simploy"),
+      "The read names Simploy. Nothing points to Regis.",
+    );
+    const absurd = "One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve";
+    assert.equal(reasonFromWhy("named in the text", "Regis", absurd), "The read names One Two Three Four Five Six.");
+    for (const [why] of whys) {
+      for (const claim of ["Simploy", absurd]) {
+        const r = reasonFromWhy(why, "Regis HR Group", claim);
+        assert.ok(!/reads like/i.test(r), `a hedge: "${r}"`);
+      }
+    }
+  });
+
   test("the book's longest names still fit nine words", () => {
     const long = "Superior Staffing & Services LLC dba Hawai'i Staffing & Services";
     const longer = "HAWAII EMPLOYEE LEASING PROFESSIONALS LLC dba HR HAWAII";
@@ -530,18 +555,22 @@ describe("the pick", () => {
     // the text rung's return and the read assignment reads the flag.
     const between = slice(roomPaste, "if (refused) return refused;", "read = await aiCleanTimeline(");
     assert.ok(!/force/.test(between), "the read is not gated on force");
-    assert.ok(roomPaste.includes("opts?.force"), "force stays the operator's override");
-    assert.match(roomPaste, /force: Boolean\(opts\?\.force\)/);
+    // The options are required since pass 9 (the door is a required
+    // argument), so force reads without the optional chain.
+    assert.ok(roomPaste.includes("opts.force"), "force stays the operator's override");
+    assert.match(roomPaste, /force: Boolean\(opts\.force\)/);
   });
 
   test("against a duplicate under the picked account is refused", () => {
     // The duplicate check runs before either rung and reads no force flag:
     // the pick's re-run meets it like any other filing (D5: the pick never
     // re-judges; the duplicate guard is not a judgment).
+    // Since pass 9 the check claims the capture and the rest of the filing
+    // runs in fileClaimed, so the check is the stretch up to that call.
     const dupeAt = roomPaste.indexOf("duplicate: true,");
-    const forceAt = roomPaste.indexOf("opts?.force");
+    const forceAt = roomPaste.indexOf("opts.force");
     assert.ok(dupeAt > 0 && dupeAt < forceAt, "the duplicate refusal precedes the first rung");
-    const dupe = slice(roomPaste, "const fingerprint = pasteFingerprint(rawText);", "if (!opts?.force) {");
+    const dupe = slice(roomPaste, "const fingerprint = pasteFingerprint(rawText);", "return await fileClaimed(");
     assert.ok(dupe.includes("duplicate: true,"));
     assert.ok(!/force/.test(dupe), "the duplicate check never reads force");
   });

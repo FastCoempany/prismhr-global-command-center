@@ -1,9 +1,12 @@
 // The Drop's decisions around the vault, pure so the suite can pin them as
 // behavior. The vault waits on the verdict (founder-decreed 2026-09-03): a
-// readable capture archives only once its filing is ACCEPTED — a misfiled
-// drop used to put its file in the wrong account's folder too, and the vault
-// never un-writes (the Simploy call in accounts/Regis HR Group/). Files the
-// reader cannot open carry no verdict to wait for, so they go at once.
+// readable capture archives under its account once its filing is ACCEPTED —
+// a misfiled drop used to put its file in the wrong account's folder too, and
+// the vault never un-writes (the Simploy call in accounts/Regis HR Group/).
+// Files the reader cannot open carry no verdict to wait for, so they go at
+// once. A readable file whose filing fails for a reason other than a dispute
+// or a duplicate still backs up (ruled 2026-10-07, pass 8 call 8): git is
+// the home for every dropped file (D8).
 
 export type DropSplit = {
   /** The first readable file: the one the Drop read alone before slice 8 of
@@ -40,18 +43,25 @@ export type VaultStep = {
   archive: File[];
   /** Files the verdict holds with the question, to ride the forced retry. */
   hold: File[];
+  /** Files whose filing failed for a reason other than a dispute or a
+   *  duplicate. They back up all the same, to the account the filing named
+   *  or under accounts/_unfiled/, and the receipt says the filing failed and
+   *  the file is backed up (pass 8 call 8). Present only when there are any. */
+  failed?: File[];
 };
 
 /** What a filing's verdict does with the files waiting on it: an accepted
  *  filing releases them to the vault, a disputed one holds them with the
- *  question, and a filing that failed for any other reason sends nothing
- *  anywhere. */
+ *  question, a duplicate vaults nothing new (D8: the earlier filing's backup
+ *  is already there), and a filing that failed for any other reason hands
+ *  them to the backup as failed. */
 export function vaultAfterVerdict(
-  r: { ok: boolean; mismatch?: unknown },
+  r: { ok: boolean; mismatch?: unknown; duplicate?: boolean },
   waiting: readonly File[] | undefined,
 ): VaultStep {
   const files = [...(waiting ?? [])];
   if (r.mismatch) return { archive: [], hold: files };
   if (r.ok) return { archive: files, hold: [] };
-  return { archive: [], hold: [] };
+  if (r.duplicate || files.length === 0) return { archive: [], hold: [] };
+  return { archive: [], hold: [], failed: files };
 }

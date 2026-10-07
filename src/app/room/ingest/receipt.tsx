@@ -13,10 +13,13 @@
 // every window that cut the read (D4), the duplicate check that failed open
 // (D7), the reader that was down, a backup that failed, the refused export's
 // decreed line on the Drop. The line opens in place, one click, to what the
-// filing wrote (the click-depth law), read on request by the filing's id and
-// never stored. Hover ↺ takes the whole filing back; hover ✕ clears the
-// receipt; a read-only session sees the receipt and no ↺ (D29). The Spring's
-// controls: minimal, hover-revealed, tooltip-titled.
+// filing wrote (the click-depth law), every count it shows, asks and
+// playbook lines included (ruled 2026-10-07, pass 8 call 9), read on request
+// by the filing's id and never stored. The other settled lines open too
+// (pass 8, C2 and C5): a duplicate to the earlier filing, a take-back to
+// what it took, a backup to the file in git. Hover ↺ takes the whole filing
+// back; hover ✕ clears the receipt; a read-only session sees the receipt and
+// no ↺ (D29). The Spring's controls: minimal, hover-revealed, tooltip-titled.
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
@@ -62,7 +65,8 @@ export function receiptCounts(
   return [
     r.filed ? `${r.filed} filed` : "",
     r.opened ? many(r.opened, "to-do", "to-dos") : "",
-    r.promises ? many(r.promises, "their promise", "their promises") : "",
+    // Plain words (pass 8, C6): "1 their promise" is not how anyone counts.
+    r.promises ? many(r.promises, "promise from them", "promises from them") : "",
     r.asks ? many(r.asks, "ask", "asks") : "",
     r.learned ? `${r.learned} to the playbook` : "",
   ].filter(Boolean);
@@ -75,11 +79,25 @@ export function receiptCaveats(r: LedgerRow): string[] {
   return [
     ...(filed ? filingSentences(r) : []),
     filed && r.degraded ? READER_DOWN : "",
-    // A failed backup under a filing says why; a backup that was the whole
-    // filing says it on its own line instead.
-    filed && r.vault?.bad ? r.vault.text : "",
+    // A failed backup under a filing says why, and so does one under a
+    // filing that failed (pass 8 call 8); a backup that was the whole filing
+    // says it on its own line instead.
+    (filed || r.state === "error") && r.vault?.bad ? r.vault.text : "",
     r.note ?? "",
   ].filter(Boolean);
+}
+
+/** The backup's door: "open" to the file in git, when the vault gave a link. */
+function OpenLink({ url }: { url?: string }) {
+  if (!url) return null;
+  return (
+    <>
+      {" · "}
+      <a href={url} target="_blank" rel="noreferrer">
+        open
+      </a>
+    </>
+  );
 }
 
 /** What follows the account on a filing's line: the counts, the day, the
@@ -142,34 +160,48 @@ export function ReceiptLine({
     <p className={styles.rcptCaveat}>{caveats.join(" ")}</p>
   );
 
-  if (row.state === "filed" && acct) {
-    const toggle = () => {
-      const next = !open;
-      setOpen(next);
-      // Read once, on the first open: the lines live on the rows, never on
-      // the ledger (D12).
-      if (next && wrote === null) {
-        if (!row.filingId) {
-          setWrote("none");
-          return;
-        }
-        setWrote("reading");
-        void filingWrote(acct.id, row.filingId).then((w) => setWrote(w ?? "none"));
+  // Open one filing's lines, read once on the first open: the lines live on
+  // the rows, never on the ledger (D12). The filed line reads its own
+  // filing; the duplicate reads the earlier one (pass 8, C2).
+  const toggleFiling = (filingId: string | undefined) => () => {
+    const next = !open;
+    setOpen(next);
+    if (next && wrote === null) {
+      if (!acct || !filingId) {
+        setWrote("none");
+        return;
       }
-    };
+      setWrote("reading");
+      void filingWrote(acct.id, filingId).then((w) => setWrote(w ?? "none"));
+    }
+  };
+  const wroteBody = (
+    <>
+      {wrote === "reading" && <p className={styles.rcptQuiet}>Reading…</p>}
+      {wrote === "none" && (
+        <p className={styles.rcptQuiet}>Nothing on file for this filing.</p>
+      )}
+      {wrote && typeof wrote === "object" && <WroteLists wrote={wrote} />}
+    </>
+  );
+  const accountLink = acct && (
+    <Link
+      href={`/accounts?focus=${acct.id}`}
+      className={styles.rcptAcct}
+      title={shortName(acct.name) === acct.name ? undefined : acct.name}
+    >
+      {shortName(acct.name)}
+    </Link>
+  );
+
+  if (row.state === "filed" && acct) {
     const landed = row.vault && !row.vault.bad && !row.vault.going ? row.vault : null;
     return (
       <>
         <div className={styles.rcptRow}>
           <span className={styles.rcptLine}>
             <span className={styles.rcptOk}>✓</span>
-            <Link
-              href={`/accounts?focus=${acct.id}`}
-              className={styles.rcptAcct}
-              title={shortName(acct.name) === acct.name ? undefined : acct.name}
-            >
-              {shortName(acct.name)}
-            </Link>{" "}
+            {accountLink}{" "}
             {/* The separator's leading space sits outside the button: a
                 button's first whitespace collapses, which ran the account
                 name into its dot. */}
@@ -178,7 +210,7 @@ export function ReceiptLine({
               className={styles.rcptOpen}
               aria-expanded={open}
               title={open ? "Hide what this filing wrote" : "Show what this filing wrote"}
-              onClick={toggle}
+              onClick={toggleFiling(row.filingId)}
             >
               {"· "}
               {receiptTail(row)}
@@ -199,25 +231,98 @@ export function ReceiptLine({
                     {landed && (
                       <>
                         {" · Backed up"}
-                        {landed.url && (
-                          <>
-                            {" · "}
-                            <a href={landed.url} target="_blank" rel="noreferrer">
-                              open
-                            </a>
-                          </>
-                        )}
+                        <OpenLink url={landed.url} />
                       </>
                     )}
                   </li>
                 </ul>
               </>
             )}
-            {wrote === "reading" && <p className={styles.rcptQuiet}>Reading…</p>}
-            {wrote === "none" && (
-              <p className={styles.rcptQuiet}>Nothing on file for this filing.</p>
+            {wroteBody}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // A duplicate opens one click to the earlier filing (pass 8, C2): the
+  // decree's line verbatim, then the account it is on file under and the day
+  // it filed, which opens to what that filing wrote.
+  if (row.state === "dupe") {
+    const prior = row.prior;
+    return (
+      <>
+        <div className={styles.rcptRow}>
+          <span className={styles.rcptQuiet}>
+            {row.filename} · {row.reason ?? ""}
+            {accountLink && (
+              <>
+                {" · "}
+                {accountLink}
+              </>
             )}
-            {wrote && typeof wrote === "object" && <WroteLists wrote={wrote} />}
+            {prior?.day && " · "}
+            {prior?.day &&
+              (acct && prior.filingId ? (
+                <button
+                  type="button"
+                  className={styles.rcptOpen}
+                  aria-expanded={open}
+                  title={
+                    open
+                      ? "Hide what the earlier filing wrote"
+                      : "Show what the earlier filing wrote"
+                  }
+                  onClick={toggleFiling(prior.filingId)}
+                >
+                  Filed {prior.day}
+                </button>
+              ) : (
+                `Filed ${prior.day}`
+              ))}
+          </span>
+          {ctl}
+        </div>
+        {open && <div className={styles.rcptWrote}>{wroteBody}</div>}
+      </>
+    );
+  }
+
+  // A take-back opens to what it took (pass 8, C5): the lines while the tab
+  // holds them, and after a reload the counts the receipt kept, because the
+  // record no longer holds the rows and the ledger never keeps text (D12).
+  if (row.state === "undone") {
+    const counts = receiptCounts(row);
+    const canOpen = !!row.took || counts.length > 0;
+    return (
+      <>
+        <div className={styles.rcptRow}>
+          <span className={styles.rcptQuiet}>
+            {"↺ "}
+            {canOpen ? (
+              <button
+                type="button"
+                className={styles.rcptOpen}
+                aria-expanded={open}
+                title={open ? "Hide what was taken back" : "Show what was taken back"}
+                onClick={() => setOpen((v) => !v)}
+              >
+                {row.reason ?? ""}
+              </button>
+            ) : (
+              (row.reason ?? "")
+            )}
+          </span>
+          {ctl}
+        </div>
+        {caveat}
+        {open && canOpen && (
+          <div className={styles.rcptWrote}>
+            {row.took ? (
+              <WroteLists wrote={row.took} />
+            ) : (
+              <p className={styles.rcptQuiet}>{counts.join(" · ")}</p>
+            )}
           </div>
         )}
       </>
@@ -233,17 +338,12 @@ export function ReceiptLine({
   let settled = true;
   switch (row.state) {
     case "vaulted":
+      // The backup's door rides every backup line, the refused export's
+      // included (pass 8, C5).
       line = (
         <>
           {row.note ? `⇪ ${name}${day}` : `⇪ Backed up · ${name}${day}`}
-          {!row.note && row.vault?.url && (
-            <>
-              {" · "}
-              <a href={row.vault.url} target="_blank" rel="noreferrer">
-                open
-              </a>
-            </>
-          )}
+          <OpenLink url={row.vault?.url} />
         </>
       );
       break;
@@ -252,14 +352,6 @@ export function ReceiptLine({
       break;
     case "kept":
       line = `Not filed. Kept in the brain. · ${name}${day}`;
-      break;
-    case "undone":
-      line = `↺ ${row.reason ?? ""}`;
-      tone = styles.rcptQuiet;
-      break;
-    case "dupe":
-      line = `${name} · ${row.reason ?? ""}`;
-      tone = styles.rcptQuiet;
       break;
     case "error":
       line = `${name} · ${row.reason ?? ""}`;
@@ -277,6 +369,11 @@ export function ReceiptLine({
           ? `${name} · Filing to ${shortName(acct.name)}…`
           : `${name} · Reading…`;
   }
+  // A filing that failed still backs its file up (pass 8 call 8), and the
+  // receipt says so under the failure: in flight, landed with its door, or
+  // the backup's own failure on the amber line.
+  const failedBackup =
+    row.state === "error" && row.vault && !row.vault.bad ? row.vault : null;
   return (
     <>
       <div className={styles.rcptRow}>
@@ -292,18 +389,35 @@ export function ReceiptLine({
         </span>
         {settled && ctl}
       </div>
+      {failedBackup && (
+        <p className={styles.rcptQuiet}>
+          {failedBackup.going ? (
+            `⇪ ${failedBackup.text}`
+          ) : (
+            <>
+              {"⇪ Not filed. Backed up."}
+              <OpenLink url={failedBackup.url} />
+            </>
+          )}
+        </p>
+      )}
       {settled && caveat}
     </>
   );
 }
 
-/** What the filing wrote, under its kickers: the entries, the to-dos, their
- *  promises. */
+/** What the filing wrote, under its kickers, in the line's order: the
+ *  entries, the to-dos, their promises, the asks, the playbook lines. Every
+ *  count the line shows has its list (pass 8 call 9). */
 function WroteLists({ wrote }: { wrote: FilingWrote }) {
+  const asks = wrote.asks ?? [];
+  const learned = wrote.learned ?? [];
   const sections: [string, string[]][] = [
     ["Filed", wrote.filed],
     [wrote.todos.length === 1 ? "To-do" : "To-dos", wrote.todos],
     [wrote.promises.length === 1 ? "Their promise" : "Their promises", wrote.promises],
+    [asks.length === 1 ? "Ask" : "Asks", asks],
+    ["To the playbook", learned],
   ];
   const shown = sections.filter(([, xs]) => xs.length > 0);
   if (shown.length === 0)
