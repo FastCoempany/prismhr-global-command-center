@@ -60,13 +60,14 @@ function SfId({ id }: { id: string }) {
 }
 
 // A deep-link to the account in Salesforce, or a copyable id, or (for synthetic
-// ids) a note that there's no SF record yet.
+// ids) a note that there's no SF record yet. The link is plain words: account
+// names are plain links, with no ↗ arrow or affordance glyph (pass 8 A6).
 function SfLink({ id, name }: { id: string; name?: string }) {
   const url = sfAccountUrl(id);
   if (url) {
     return (
       <a className={styles.link} href={url} target="_blank" rel="noreferrer">
-        Open {name ? `${name} ` : ""}in Salesforce ↗
+        Open {name ? `${name} ` : ""}in Salesforce
       </a>
     );
   }

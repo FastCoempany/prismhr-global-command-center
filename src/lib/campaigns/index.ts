@@ -1,4 +1,4 @@
-import type { Approach, Stage } from "@/lib/command-center/types";
+import type { Stage } from "@/lib/command-center/types";
 
 // Reusable outreach plays layered over the book. The copy is static reference
 // content (like the catalog); only *which* play was applied to a PEO persists,
@@ -19,15 +19,33 @@ export type CampaignKit = {
   dueInDays: number;
 };
 
-// What each approach (channel permission gate) lets you reach. A NEEDS_CSM PEO
-// only ever surfaces the CSM play — never a PEO- or client-facing one.
-const ALLOWED: Record<Approach, KitAudience[]> = {
-  NEEDS_CSM: ["CSM"],
-  CHANNEL_OK: ["CSM", "PEO"],
-  DIRECT_OK: ["CSM", "PEO", "CLIENT"],
-};
+// The Approach is a fact, never a gate (ruled 2026-09-25, C19): NEEDS_CSM,
+// CHANNEL_OK and DIRECT_OK record whether the CSM was briefed and whether
+// client outreach is cleared, and no play is withheld by them. Every stage
+// that has plays has a direct one (a PEO- or client-facing play), and that
+// play is the default seed; the CSM play rides beside it as the alternative.
 
 export const KITS: CampaignKit[] = [
+  {
+    id: "peo-first-touch",
+    name: "First note to the PEO",
+    stage: "NOT_TOUCHED",
+    audience: "PEO",
+    channel: "email",
+    subject: "Global hiring for {PEO}'s clients",
+    body: `Hi {contactFirst},
+
+I work on the global side of PrismHR. I help PEOs like {PEO} support clients who want to hire or pay people outside the US.
+
+When a client wants to hire a developer in Poland or a contractor in Brazil, the hard parts are usually setting up a local entity, classifying the worker correctly and running local payroll. PrismHR Global takes those on as the employer of record and handles contractor compliance, and it runs on the PrismHR platform you already use.
+
+Do you have 20 minutes this week to talk through how it could work for {PEO}'s clients?
+
+Best,
+Antaeus`,
+    ask: "Email {contactFirst} about global hiring",
+    dueInDays: 4,
+  },
   {
     id: "csm-brief-intro",
     name: "CSM briefing → warm intro request",
@@ -167,10 +185,52 @@ export function mergeText(tpl: string, ctx: MergeContext): string {
   return tpl.replace(/\{(\w+)\}/g, (m, key) => (key in map ? map[key] : m));
 }
 
-// Gate-aware: plays for a PEO's current stage that its approach permits.
-export function kitsFor(stage: Stage, approach: Approach): CampaignKit[] {
-  const allowed = ALLOWED[approach];
-  return KITS.filter((k) => k.stage === stage && allowed.includes(k.audience));
+/** A play's ask as an action line: the same merge, but a missing contact
+ *  reads "the contact", never the greeting's "there" ("Email there about
+ *  global hiring" is no instruction). */
+export function askText(tpl: string, ctx: MergeContext): string {
+  const who = (ctx.contactName ?? "").trim() ? first(ctx.contactName) : "the contact";
+  return mergeText(tpl.replace(/\{contactFirst\}/g, who), ctx);
+}
+
+// Every play for the stage, the direct play first (C19). The Approach is not
+// an argument: nothing it records can withhold a play.
+export function kitsFor(stage: Stage): CampaignKit[] {
+  const plays = KITS.filter((k) => k.stage === stage);
+  return [
+    ...plays.filter((k) => k.audience !== "CSM"),
+    ...plays.filter((k) => k.audience === "CSM"),
+  ];
+}
+
+/** The stage's direct play: the default seed at every stage, NOT_TOUCHED
+ *  included. Undefined only past the plays (OPPORTUNITY, WON, PASSED). */
+export function defaultPlay(stage: Stage): CampaignKit | undefined {
+  return kitsFor(stage).find((k) => k.audience !== "CSM");
+}
+
+/** The stage's plays as the drilldown lists them. The CSM play is the
+ *  alternative and carries the quiet flag when the CSM's thread is live
+ *  (the direct doctrine): it informs, and it never hides or reorders a play. */
+export function playsFor(
+  stage: Stage,
+  csmThreadFlag: string,
+): { kit: CampaignKit; flag: string }[] {
+  return kitsFor(stage).map((kit) => ({
+    kit,
+    flag: kit.audience === "CSM" ? csmThreadFlag : "",
+  }));
+}
+
+/** The applied play's next action, naming the person the account read finds
+ *  the relationship runs through (the Ted doctrine; hidden rows never feed
+ *  it, pass 8 X1). */
+export function playNextAction(
+  kit: CampaignKit,
+  ctx: MergeContext,
+  relationshipName: string,
+): string {
+  return askText(kit.ask, { ...ctx, contactName: relationshipName }).slice(0, 400);
 }
 
 export const getKit = (id: string): CampaignKit | undefined =>

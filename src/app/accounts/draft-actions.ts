@@ -14,8 +14,10 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo, type Peo } from "@/lib/book";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { KITS, getKit, kitsFor, mergeText, type CampaignKit } from "@/lib/campaigns";
+import { KITS, defaultPlay, getKit, mergeText, type CampaignKit } from "@/lib/campaigns";
 import { boardLift, type Approach, type Stage } from "@/lib/command-center/types";
+import { loadDispositions } from "@/lib/today/overlay";
+import { unparked } from "./rules";
 
 const SYSTEM = `You draft outreach email for Antaeus Coe, Sr. Global Business Consultant at PrismHR Global. He sells global payroll, EOR, and contractor management to PEOs that already run on PrismHR software.
 
@@ -60,8 +62,8 @@ async function templateDraft(
         getPrisma().dashCard.findFirst({ where: { name: peo.name } }),
       ]);
       let stage = (state?.stage ?? "NOT_TOUCHED") as Stage;
-      let approach = (state?.approach ?? "NEEDS_CSM") as Approach;
-      if (card) ({ stage, approach } = boardLift(stage, approach));
+      if (card)
+        stage = boardLift(stage, (state?.approach ?? "NEEDS_CSM") as Approach).stage;
       // A deal past the plays never gets a cold first-touch template.
       if (stage === "OPPORTUNITY" || stage === "WON" || stage === "PASSED")
         return {
@@ -69,14 +71,16 @@ async function templateDraft(
           reason:
             "This deal is past the plays, so no template fits. Name a play (recap, demo, referral) or write it by hand.",
         };
-      // The audience gate steps aside before the cold nudge does: the direct
-      // doctrine keeps every stage's own play available.
-      kit = kitsFor(stage, approach)[0] ?? KITS.find((k) => k.stage === stage);
+      // The stage's direct play seeds at every stage (C19): the Approach is
+      // a recorded fact, so it never turns the seed into the CSM play.
+      kit = defaultPlay(stage);
     } catch {
       kit = undefined;
     }
   }
-  kit = kit ?? getKit("peo-value-nudge") ?? KITS[0];
+  // With no stored stage the account reads as NOT_TOUCHED, as the sheet
+  // reads it, and that stage's direct play seeds.
+  kit = kit ?? defaultPlay("NOT_TOUCHED") ?? KITS[0];
   // "Unassigned" is a seat, not a person, and the operator's chosen recipient
   // outranks the seeded contact even when nameless (the Ted doctrine).
   const csm = peo.csm === "Unassigned" ? "" : peo.csm;
@@ -131,17 +135,22 @@ export async function draftOutreach(
   }
 
   // The account's recent record, heads only — the draft grounds in what
-  // actually happened, money redacted like everywhere else.
+  // actually happened, money redacted like everywhere else. A ✕-parked
+  // entry never grounds a draft (hidden is hidden, pass 8 X1).
   let recent = "";
   if (hasDatabaseEnv()) {
     try {
-      const notes = await getPrisma().accountNote.findMany({
-        where: { accountId: peo.id },
-        select: { body: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 8,
-      });
-      recent = notes
+      const [rows, dispositions] = await Promise.all([
+        getPrisma().accountNote.findMany({
+          where: { accountId: peo.id },
+          select: { id: true, body: true, createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 40,
+        }),
+        loadDispositions(),
+      ]);
+      recent = unparked(rows, dispositions)
+        .slice(0, 8)
         .map(
           (n) =>
             `- ${n.createdAt.toISOString().slice(0, 10)}: ${redactMoney(

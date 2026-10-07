@@ -2,13 +2,16 @@
 
 // The Act Lane's actions (founder-decreed 2026-08-21, Version C winner).
 // The lane works the act right there: Send files a real outbound to the
-// record (the record then clears the gem's nag itself), File-as-done stamps
-// the gem by hand, drafts save so the pad never eats your words, and the
-// fork files the follow-up where it belongs — a board account's move in the
-// HomeRoom's TODAY register, an off-board account's in Groundwork's wing.
+// record and stamps the gem acted, as the hover ✓ does (pass 8 A3), File-as-
+// done stamps the gem by hand, drafts save so the pad never eats your words,
+// and the fork files the follow-up where it belongs — a live deal's move in
+// the HomeRoom's TODAY register, any other account's in Groundwork's wing.
 // Every write carries its take-back.
+//
+// No action here revalidates a path (D15, reached to every action by pass 8
+// call 2): there is no revalidation list, every page derives on request, and
+// the lane's client asks the router for the fresh read after each write.
 
-import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
@@ -23,6 +26,7 @@ import {
   renderActDraftBody,
   renderSeatBody,
 } from "@/lib/act/lane";
+import { sendConsequences, stampActed } from "./rules";
 
 async function requireWrite(): Promise<boolean> {
   if (!hasDatabaseEnv()) return false;
@@ -32,12 +36,6 @@ async function requireWrite(): Promise<boolean> {
 
 const clip = (s: unknown, max: number) =>
   typeof s === "string" ? s.trim().slice(0, max) : "";
-
-function refresh() {
-  revalidatePath("/accounts");
-  revalidatePath("/groundwork");
-  revalidatePath("/room");
-}
 
 // ── the draft (the pad never eats your words) ───────────────────────────────
 
@@ -83,6 +81,8 @@ export async function fileActSend(args: {
   accountId: string;
   to: string;
   subject: string;
+  /** The gem the lane is working; Send stamps it acted. */
+  term: string;
 }): Promise<{ ok: boolean }> {
   const accountId = clip(args.accountId, 40);
   const to = clip(args.to, 120);
@@ -95,11 +95,21 @@ export async function fileActSend(args: {
       door: "act-lane",
       ...actSendRow({ to, subject }),
     });
+    const after = sendConsequences({
+      accountId,
+      term: clip(args.term, 80),
+      now: new Date(),
+    });
     // The draft is consumed by the send.
     await getPrisma().accountNote.deleteMany({
-      where: { accountId: `${ACT_DRAFT_NS}${accountId}` },
+      where: { accountId: after.consumeDraft },
     });
-    refresh();
+    // Sending from the lane is acting on the gem: the stamp lands now, on the
+    // gems store's own actedDay, so the nag clears without waiting for the
+    // next export pass, and its ↺ takes it back like the hover ✓'s. The send
+    // is filed either way; a stamp that fails leaves it to the acted sweep.
+    if (after.stamp)
+      await setActed(accountId, after.stamp.term, after.stamp.day).catch(() => false);
     return { ok: true };
   } catch {
     return { ok: false };
@@ -117,12 +127,11 @@ export async function fileActSend(args: {
 async function setActed(accountId: string, term: string, day: string) {
   const note = await fetchGemsNoteFor(accountId);
   if (!note) return false;
-  const gem = note.gems.find((g) => g.term === term);
-  if (!gem) return false;
-  gem.actedDay = day;
+  const gems = stampActed(note.gems, term, day);
+  if (!gems) return false;
   await getPrisma().accountNote.update({
     where: { id: note.id },
-    data: { body: renderGemsBody(note.gems) },
+    data: { body: renderGemsBody(gems) },
   });
   return true;
 }
@@ -135,9 +144,7 @@ export async function markActActed(args: {
   const term = clip(args.term, 80);
   if (!accountId || !term || !(await requireWrite())) return { ok: false };
   try {
-    const ok = await setActed(accountId, term, userDayKey(new Date()));
-    if (ok) refresh();
-    return { ok };
+    return { ok: await setActed(accountId, term, userDayKey(new Date())) };
   } catch {
     return { ok: false };
   }
@@ -151,15 +158,13 @@ export async function unmarkActActed(args: {
   const term = clip(args.term, 80);
   if (!accountId || !term || !(await requireWrite())) return { ok: false };
   try {
-    const ok = await setActed(accountId, term, "");
-    if (ok) refresh();
-    return { ok };
+    return { ok: await setActed(accountId, term, "") };
   } catch {
     return { ok: false };
   }
 }
 
-// ── the fork (board → HomeRoom TODAY, off-board → Groundwork's wing) ────────
+// ── the fork (a live deal → HomeRoom TODAY, else → Groundwork's wing) ──────
 
 export async function forkAct(args: {
   accountId: string;
@@ -175,7 +180,6 @@ export async function forkAct(args: {
   try {
     if (args.toHome) {
       const t = await createTodoRow({ body: act, accountId, remindAt: new Date() });
-      refresh();
       return { ok: true, undo: { kind: "todo", id: t.id } };
     }
     // One seat per account — refiling replaces the old seat.
@@ -190,7 +194,6 @@ export async function forkAct(args: {
       lane: "mine",
       source: "act-lane",
     });
-    refresh();
     return { ok: true, undo: { kind: "seat", id: row.id } };
   } catch {
     return { ok: false };
@@ -207,7 +210,6 @@ export async function undoForkAct(args: {
   try {
     if (args.kind === "todo") await prisma.todo.delete({ where: { id } });
     else await prisma.accountNote.delete({ where: { id } });
-    refresh();
     return { ok: true };
   } catch {
     return { ok: false };

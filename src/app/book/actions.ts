@@ -4,11 +4,17 @@ import { redirect } from "next/navigation";
 import { PeoApproach, PeoIntent, PeoStage } from "@/generated/prisma/client";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { getPeo } from "@/lib/book";
-import { getKit, mergeText } from "@/lib/campaigns";
+import { csms, getPeo } from "@/lib/book";
+import { getKit, playNextAction } from "@/lib/campaigns";
 import { contactsFor } from "@/lib/book/contacts";
-import { relationshipFor } from "@/lib/intel/relationship";
-import { loadAccountNotes } from "@/lib/today/overlay";
+import { homeSideFrom } from "@/lib/pipeline/build";
+import { readAccount } from "@/lib/record/read";
+import {
+  loadAccountNotes,
+  loadDispositions,
+  loadTodos,
+  loadTouches,
+} from "@/lib/today/overlay";
 
 const stageValues = new Set<string>(Object.values(PeoStage));
 const approachValues = new Set<string>(Object.values(PeoApproach));
@@ -89,13 +95,31 @@ export async function applyPlay(formData: FormData) {
   }
 
   // The relationship's name rides the durable next action, not the book
-  // seed's (Ted doctrine) — "Email Bryce" outlives Bryce otherwise.
-  const rel = relationshipFor(
-    (await loadAccountNotes()).get(peoId) ?? [],
-    contactsFor(peoId),
-    { name: peo.contactName, email: peo.contactEmail },
-  );
-  const nextAction = mergeText(kit.ask, { ...peo, contactName: rel.name }).slice(0, 400);
+  // seed's (Ted doctrine) — "Email Bryce" outlives Bryce otherwise. It is
+  // the account read's own answer (field 13), the one the Accounts row
+  // shows: read over the visible record, so a ✕-parked entry never names
+  // the person a play is aimed at (hidden is hidden, pass 8 X1).
+  const [notes, dispositions, touches, todos] = await Promise.all([
+    loadAccountNotes(),
+    loadDispositions(),
+    loadTouches(),
+    loadTodos(),
+  ]);
+  const read = readAccount({
+    account: {
+      id: peo.id,
+      name: peo.name,
+      contacts: contactsFor(peoId),
+      contact: { name: peo.contactName, email: peo.contactEmail },
+    },
+    notes: notes.get(peoId) ?? [],
+    touches,
+    todos,
+    dispositions,
+    homeSide: [...csms, ...homeSideFrom(notes)],
+    now: new Date(),
+  });
+  const nextAction = playNextAction(kit, peo, read.relationship.name);
   const nextActionDate = new Date(Date.now() + kit.dueInDays * 86_400_000);
 
   const prisma = getPrisma();

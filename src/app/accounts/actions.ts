@@ -20,6 +20,8 @@ import { contactsFor, type BookContact } from "@/lib/book/contacts";
 import { getPeo } from "@/lib/book";
 import { discoveredContacts, domainOfAccount } from "@/lib/book/live-contacts";
 import { peopleFor } from "@/lib/intel/people";
+import { loadDispositions } from "@/lib/today/overlay";
+import { unparked } from "./rules";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -172,12 +174,17 @@ export async function getContacts(accountId: string): Promise<ContactRow[]> {
 
   if (!hasDatabaseEnv()) return roster;
   try {
-    const notes = await getPrisma().accountNote.findMany({
-      where: { accountId: id },
-      select: { body: true, createdAt: true, actors: true, lane: true },
-      orderBy: { createdAt: "desc" },
-      take: 400,
-    });
+    // Hidden is hidden (pass 8 X1): a ✕-parked entry never adds a person.
+    const [rows, dispositions] = await Promise.all([
+      getPrisma().accountNote.findMany({
+        where: { accountId: id },
+        select: { id: true, body: true, createdAt: true, actors: true, lane: true },
+        orderBy: { createdAt: "desc" },
+        take: 400,
+      }),
+      loadDispositions(),
+    ]);
+    const notes = unparked(rows, dispositions);
     const found = discoveredContacts(
       notes.map((n) => ({ body: n.body, createdAt: n.createdAt.toISOString() })),
       domainOfAccount(peo.website ?? "", peo.contactEmail ?? ""),

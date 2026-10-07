@@ -6,6 +6,9 @@
 // the sheet scrolls; clicking another chip reloads it — after saving any
 // touched draft, because the pad never eats your words. Citations drill to
 // cleaned excerpts by the meat law, served by the evidence route.
+//
+// Every write here asks the router for the fresh read itself: the actions
+// revalidate nothing (D15, pass 8 call 2).
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +20,7 @@ import {
   saveActDraft,
   undoForkAct,
 } from "./act-actions";
+import { draftOnClose } from "./rules";
 
 export type LaneAct = {
   accountId: string;
@@ -30,7 +34,12 @@ export type LaneAct = {
   toEmail: string;
   subject: string;
   body: string;
+  /** A live deal on the board: neither archived nor stamped Closed Won or
+   *  Lost (pass 8 A4). The fork's HomeRoom half. */
   onBoard: boolean;
+  /** The quiet flag: this send lands beside live motion (the direct
+   *  doctrine). "" when clear. It informs and never blocks. */
+  flag: string;
 };
 
 const mmdd = (day: string) => (day ? day.slice(5).replace("-", "/") : "");
@@ -57,25 +66,20 @@ export default function ActLane({
     undo: { kind: "todo" | "seat"; id: string } | null;
   } | null>(null);
 
-  // The pad never eats your words: a touched draft saves on unmount too.
-  const latest = useRef({ to, subject, body, dirty });
+  // The pad never eats your words: a touched draft saves on unmount too. A
+  // sent one is gone (Send consumes it, pass 8 A2): Send marks the snapshot
+  // sent before the lane closes, and the close then saves nothing.
+  const latest = useRef({ to, subject, body, dirty, sent: false });
   useEffect(() => {
-    latest.current = { to, subject, body, dirty };
+    latest.current = { ...latest.current, to, subject, body, dirty };
   }, [to, subject, body, dirty]);
   useEffect(() => {
     const snapshot = latest;
     const acct = act.accountId;
     const term = act.term;
     return () => {
-      const s = snapshot.current;
-      if (s.dirty)
-        void saveActDraft({
-          accountId: acct,
-          term,
-          to: s.to,
-          subject: s.subject,
-          body: s.body,
-        });
+      const keep = draftOnClose(snapshot.current);
+      if (keep) void saveActDraft({ accountId: acct, term, ...keep });
     };
   }, [act.accountId, act.term]);
 
@@ -105,12 +109,21 @@ export default function ActLane({
 
   const doSend = async () => {
     setBusy("send");
-    const r = await fileActSend({ accountId: act.accountId, to, subject });
+    const r = await fileActSend({
+      accountId: act.accountId,
+      to,
+      subject,
+      term: act.term,
+    });
     setBusy("");
     if (!r.ok) {
       setSaved("The send didn't file. Try again.");
       return;
     }
+    // The send consumed the draft on the server; the close must not save it
+    // back. The ref is set here, before the unmount the close causes.
+    latest.current = { ...latest.current, sent: true };
+    setDirty(false);
     const mail = `mailto:${encodeURIComponent(act.toEmail && to === act.to ? act.toEmail : "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mail, "_blank");
     router.refresh();
@@ -226,6 +239,14 @@ export default function ActLane({
         </div>
       ))}
 
+      {act.flag && (
+        <span
+          className={styles.quietFlag}
+          title="Your note lands beside live motion. Send stays open."
+        >
+          ⚠ {act.flag}
+        </span>
+      )}
       <div className={styles.actLaneField}>
         <label>TO</label>
         <input
