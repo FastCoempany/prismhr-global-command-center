@@ -18,6 +18,7 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { csms } from "@/lib/book";
+import { accountIdsOf } from "@/lib/book/merge";
 import { contactsFor } from "@/lib/book/contacts";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { redactMoney } from "@/lib/intel/lexicon";
@@ -27,13 +28,15 @@ import {
   redactStructured,
   type AccountNoteData,
 } from "@/lib/notes/write";
+import { docOf } from "@/lib/record/docs";
 import { theirLoopOf } from "@/lib/room/owed";
 import { RUN_LOCK_CHECKSUM } from "@/lib/intranet/doctrine";
 import { inboundDates, recordSends, type NoteLike } from "@/lib/sendbook/read";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { rowsChecksum, tallyChecksum } from "./parse";
 import { deriveColleagues, isMachineryName, rowPerson } from "./classify";
-import { personMoved } from "./acted";
+import { actedDayFor, type SweepRow } from "./acted";
+import { HIDE_NOTE_PREFIX, hiddenIds } from "./read";
 import {
   buildRollup,
   intentWindows,
@@ -43,24 +46,32 @@ import {
   type Rollup,
 } from "./rollup";
 import {
+  ACTED_NS,
   ACTIVITY_NS,
   GEMS_NS,
   INTENT_NS,
   MANIFEST_ID,
   SECOND_RECORD_SPANS,
   STAGE_NS,
+  STAGE_PENDING_NS,
   SUPPORT_NS,
+  actedStampsOf,
   emptyRunState,
   isRollupNoteId,
+  mergeActedStamps,
+  parseActedBody,
   parseGemsBody,
   parseManifestBody,
   parseStageBody,
+  reattachActed,
+  renderActedBody,
   renderGemsBody,
   renderIntentBody,
   renderManifestBody,
   renderRollupBody,
   renderStageBody,
   renderSupportBody,
+  type ActedStamp,
   type Gem,
   type ManifestStore,
 } from "./stores";
@@ -114,10 +125,14 @@ const say = (run: { receipt: string[] }, text: string): void => {
 function configLine(): string {
   const sha = (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7);
   const ws = process.env.ANTHROPIC_WORKSPACE_ID?.trim();
-  return `This build is ${sha || "local"}; its workspace id is ${ws ? `set (${ws.slice(0, 12)}…)` : "NOT SET"}.`;
+  return `This build is ${sha || "local"}. Its workspace id ${ws ? `is set and starts ${ws.slice(0, 12)}` : "is NOT SET"}.`;
 }
 
 const CONCURRENT_DISTILLS = 4;
+
+/** The dead-key line's opening, said once per run; the run looks for it
+ *  before saying it again. */
+const DEAD_KEY_MARK = "The key is dead.";
 const RETRY_SIGNAL_HUMAN_ROWS = 5;
 
 // ── the pulse (the bench gadget narrates this run too) ──────────────────────
@@ -163,14 +178,19 @@ async function pulse(
   }
 }
 
+// ── the store ───────────────────────────────────────────────────────────────
+
+/** The store the run reads and writes: the Prisma client in production. A
+ *  test hands in an in-memory table, the way the writer takes its client. */
+export type ActivityDb = ReturnType<typeof getPrisma>;
+
 // ── manifest store I/O ──────────────────────────────────────────────────────
 
-async function readManifestStore(): Promise<{
+async function readManifestStore(db: ActivityDb = getPrisma()): Promise<{
   noteId: string;
   store: ManifestStore;
 } | null> {
-  const prisma = getPrisma();
-  const rows = await prisma.accountNote.findMany({
+  const rows = await db.accountNote.findMany({
     where: { accountId: MANIFEST_ID },
     orderBy: { createdAt: "desc" },
     take: 1,
@@ -181,8 +201,11 @@ async function readManifestStore(): Promise<{
 }
 
 /** The manifest is book-wide: no account's people are on it. */
-async function writeManifestStore(store: ManifestStore): Promise<void> {
-  await replaceSecondRecordNote(MANIFEST_ID, renderManifestBody(store));
+async function writeManifestStore(
+  store: ManifestStore,
+  db: ActivityDb = getPrisma(),
+): Promise<void> {
+  await replaceSecondRecordNote(MANIFEST_ID, renderManifestBody(store), NO_PEOPLE, db);
 }
 
 // ── the second record's writer (P4; slice 17) ───────────────────────────────
@@ -308,13 +331,16 @@ export async function replaceSecondRecordNote(
   }
 }
 
-async function readStageSlice(accountId: string): Promise<{
+async function readStageSlice(
+  accountId: string,
+  db: ActivityDb = getPrisma(),
+  ns: string = STAGE_NS,
+): Promise<{
   dropSha: string;
   slice: AccountSlice;
 } | null> {
-  const prisma = getPrisma();
-  const rows = await prisma.accountNote.findMany({
-    where: { accountId: `${STAGE_NS}${accountId}` },
+  const rows = await db.accountNote.findMany({
+    where: { accountId: `${ns}${accountId}` },
     orderBy: { createdAt: "desc" },
     take: 1,
   });
@@ -324,13 +350,53 @@ async function readStageSlice(accountId: string): Promise<{
 
 // ── staging ─────────────────────────────────────────────────────────────────
 
-export async function stageActivityBatch(batch: StageBatch): Promise<StageReply> {
-  if (!hasDatabaseEnv()) return { ok: false, reason: "The store isn't reachable." };
+/** The drop a rollup body came from: its head's short sha, "" if none. */
+const rollupDropOf = (body: string): string =>
+  /^⌗ ACTIVITY · drop (\S+) · /.exec(body ?? "")?.[1] ?? "";
+
+/** Swap a verified drop's pending slices in (D17). Each pending row takes the
+ *  stage key before the slice it replaces is removed, so a reader finds one
+ *  whole slice at every moment, and whatever is left pending afterwards, a
+ *  slice an abandoned upload left behind, goes. */
+async function promotePending(
+  accountIds: readonly string[],
+  db: ActivityDb,
+): Promise<void> {
+  for (const id of accountIds) {
+    const [pending] = await db.accountNote.findMany({
+      where: { accountId: `${STAGE_PENDING_NS}${id}` },
+      orderBy: { createdAt: "desc" },
+      take: 1,
+      select: { id: true },
+    });
+    if (!pending) continue;
+    const prior = await db.accountNote.findMany({
+      where: { accountId: `${STAGE_NS}${id}` },
+      select: { id: true },
+    });
+    await db.accountNote.update({
+      where: { id: pending.id },
+      data: { accountId: `${STAGE_NS}${id}` },
+    });
+    for (const p of prior) await db.accountNote.delete({ where: { id: p.id } });
+  }
+  await db.accountNote.deleteMany({
+    where: { accountId: { startsWith: STAGE_PENDING_NS } },
+  });
+}
+
+export async function stageActivityBatch(
+  batch: StageBatch,
+  dbIn?: ActivityDb,
+): Promise<StageReply> {
+  if (!dbIn && !hasDatabaseEnv())
+    return { ok: false, reason: "The store isn't reachable." };
+  const db = dbIn ?? getPrisma();
 
   // Fresh drop? Reset the run state, remember the prior drop for change
   // detection and lane drift — the prior is data we already verified, never a
   // re-read of old files.
-  let current = await readManifestStore();
+  let current = await readManifestStore(db);
   if (!current || current.store.manifest.dropSha !== batch.dropSha) {
     // The prior drop, for change detection and lane drift. Only a COMPLETED
     // drop becomes the prior — an abandoned half-drop keeps whatever prior it
@@ -377,9 +443,12 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
   }
   const store = current.store;
 
-  // Stage each slice — server re-verifies the client's checksums before
-  // anything lands, and redacts money again on the way in (defense in depth;
-  // the client already redacted).
+  // Stage each slice. The server re-verifies the client's checksums before
+  // anything lands, and redacts money again on the way in, defense in depth
+  // over the client's own redaction. A slice lands PENDING: the faces cite
+  // the prior drop's slice until the manifest verifies the whole upload
+  // (ruled 2026-09-25, D17), so an upload refused or abandoned halfway leaves
+  // the prior drop exactly as it was.
   const mismatched: string[] = [];
   for (const slice of batch.slices) {
     const keys = slice.rows.map((r) => r.k);
@@ -393,9 +462,10 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
     }
     for (const r of slice.rows) if (r.c) r.c = redactMoney(r.c);
     await replaceSecondRecordNote(
-      `${STAGE_NS}${slice.id}`,
+      `${STAGE_PENDING_NS}${slice.id}`,
       renderStageBody(slice, batch.dropSha),
       slicePeople(slice),
+      db,
     );
   }
 
@@ -412,7 +482,7 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
 
     const badAccounts: string[] = [...mismatched];
     for (const a of m.accounts) {
-      const staged = await readStageSlice(a.id);
+      const staged = await readStageSlice(a.id, db, STAGE_PENDING_NS);
       if (
         !staged ||
         staged.dropSha !== m.dropSha ||
@@ -428,11 +498,16 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       store.run.receipt = [
         stamped(
           missingBatches.length > 0
-            ? `Upload incomplete — ${missingBatches.length} of ${m.totalBatches} batches missing. Drop the file again.`
-            : `${badAccounts.length} account slice${badAccounts.length === 1 ? "" : "s"} failed verification. Drop the file again.`,
+            ? `${missingBatches.length} of ${m.totalBatches} batches never arrived. The last drop still stands. Drop the file again.`
+            : `${badAccounts.length} account slice${badAccounts.length === 1 ? "" : "s"} failed verification. The last drop still stands. Drop the file again.`,
         ),
       ];
-      await writeManifestStore(store);
+      // Nothing of a refused upload replaces anything (D17); its pending
+      // slices go, and the prior drop's slices were never touched.
+      await db.accountNote.deleteMany({
+        where: { accountId: { startsWith: STAGE_PENDING_NS } },
+      });
+      await writeManifestStore(store, db);
       return {
         ok: false,
         verified: false,
@@ -441,6 +516,12 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
         reason: store.run.receipt[0],
       };
     }
+
+    // Verified whole: the drop swaps in (D17).
+    await promotePending(
+      m.accounts.map((a) => a.id),
+      db,
+    );
 
     // Accounts held while the distiller was down owe a re-judge: their
     // coverage is arithmetic only, and the moment the key is back a re-drop
@@ -456,37 +537,40 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
     if (heldPrior.length > 0 && claudeConfigured() && claudeDead()) markClaudeUp();
     const rejudge = heldPrior.length > 0 && distillAvailable();
 
-    // Same drop as the prior one? Nothing changed — zero writes, zero calls.
+    // Same drop as the prior one? Nothing changed: zero writes, zero calls.
     if (store.prior && store.prior.dropSha === m.dropSha && !rejudge) {
       store.manifest = m;
       store.run.phase = "done";
-      store.run.receipt = [
-        stamped("Nothing changed — the record already holds this drop."),
-      ];
-      await writeManifestStore(store);
+      store.run.receipt = [stamped("Nothing changed. This drop is already on file.")];
+      await writeManifestStore(store, db);
       return { ok: true, verified: true, unchanged: true };
     }
 
     // Change detection: rows changed → distill; tally alone → arithmetic.
     // A re-drop of the SAME file refreshes staging but never re-distills what
-    // this sha already produced — an account counts as covered when the run's
-    // covered map holds it OR its rollup note already exists (rollups replace
-    // per drop, so an existing rollup under the same manifest IS this drop's
-    // product). Same rows, same gems, zero calls.
-    const sameSha = store.manifest.dropSha === m.dropSha;
-    const shaCovered = new Set<string>(sameSha ? Object.keys(store.run.covered) : []);
-    if (sameSha) {
-      const holders = await getPrisma().accountNote.findMany({
-        where: { accountId: { startsWith: ACTIVITY_NS } },
-        select: { accountId: true },
-      });
-      for (const n of holders)
-        if (isRollupNoteId(n.accountId))
-          shaCovered.add(n.accountId.slice(ACTIVITY_NS.length));
-      // A hold is not coverage of the gems: with the distiller back, held
-      // accounts re-queue on the same sha.
-      if (rejudge) for (const id of heldPrior) shaCovered.delete(id);
-    }
+    // this sha already produced: an account counts as covered when the run's
+    // covered map holds it OR its rollup note was written by this very drop.
+    // Same rows, same gems, zero calls. The rollup's own head names its drop;
+    // reading that is what tells a re-drop from a new drop. The store was
+    // reset to the incoming sha at the drop's first batch, so comparing the
+    // manifest's sha to the incoming one called every drop a re-drop, and a
+    // new drop skipped every account that already held a rollup.
+    const holders = await db.accountNote.findMany({
+      where: {
+        accountId: { startsWith: ACTIVITY_NS },
+        NOT: [{ accountId: { startsWith: STAGE_NS } }, { accountId: MANIFEST_ID }],
+      },
+      select: { accountId: true, body: true },
+    });
+    const thisDrop = m.dropSha.slice(0, 8);
+    const shaCovered = new Set<string>(Object.keys(store.run.covered));
+    for (const n of holders)
+      if (isRollupNoteId(n.accountId) && rollupDropOf(n.body) === thisDrop)
+        shaCovered.add(n.accountId.slice(ACTIVITY_NS.length));
+    const sameSha = shaCovered.size > 0;
+    // A hold is not coverage of the gems: with the distiller back, held
+    // accounts re-queue on the same sha.
+    if (rejudge) for (const id of heldPrior) shaCovered.delete(id);
     const priorById = new Map((store.prior?.accounts ?? []).map((a) => [a.id, a]));
     const { distillQueue, intentQueue } = dropQueues(m.accounts, priorById, shaCovered);
     if (rejudge) {
@@ -497,33 +581,37 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
 
     // What came in, first line, in counts. A drop that reads nothing looks
     // identical to a drop that reads everything until this number is on the
-    // page — the 2026-08-28 blank read reported "Coverage: 100%" and the
-    // operator had no way to see that zero rows carried email text.
+    // page: the 2026-08-28 blank read reported full coverage and the operator
+    // had no way to see that zero rows carried email text. Every line below
+    // is a flat sentence over arithmetic (C4; the writing canon and the
+    // plain-speech law).
+    const plural = (n: number, one: string, many = `${one}s`) =>
+      `${n} ${n === 1 ? one : many}`;
     const receipt: string[] = [
-      `The drop landed — ${m.rowCount} rows across ${m.accounts.length} accounts, ${m.textRows} of them carrying email text${m.dupes > 0 ? `, ${m.dupes} identical repeats kept (multi-recipient sends look alike)` : ""}.`,
+      `The drop landed with ${plural(m.rowCount, "row")} across ${plural(m.accounts.length, "account")}. ${m.textRows} of them carry email text.${m.dupes > 0 ? ` ${plural(m.dupes, "row is an identical repeat", "rows are identical repeats")}, kept because one send to several people logs once per person.` : ""}`,
     ];
     if (m.textRows === 0 && m.rowCount > 0)
       receipt.push(
-        `NOT ONE ROW CARRIED TEXT — this drop read nothing. Check the export's Full Comments column and drop it again.`,
+        "No row carried email text, so this drop read nothing. Check the export's Full Comments column and drop it again.",
       );
     if (m.headerDiff.missing.length > 0)
       receipt.push(
-        `Missing columns this drop: ${m.headerDiff.missing.join(", ")} — those readings run dark.`,
+        `This drop is missing ${m.headerDiff.missing.join(", ")}. What reads ${m.headerDiff.missing.length === 1 ? "that column" : "those columns"} is blank this drop.`,
       );
     if (m.headerDiff.extra.length > 0)
       receipt.push(`New columns ignored: ${m.headerDiff.extra.join(", ")}.`);
     if (m.unmatched.length > 0) {
       const total = m.unmatched.reduce((n, u) => n + u.rows, 0);
       receipt.push(
-        `${total} rows matched no book account: ${m.unmatched
+        `${plural(total, "row")} matched no book account: ${m.unmatched
           .slice(0, 5)
-          .map((u) => `${u.name} (${u.rows})`)
-          .join(", ")}${m.unmatched.length > 5 ? ", …" : ""}.`,
+          .map((u) => `${u.name} with ${u.rows}`)
+          .join(", ")}${m.unmatched.length > 5 ? ", and more" : ""}.`,
       );
     }
     if (m.collisions.length > 0)
       receipt.push(
-        `Name collisions (unresolved either side): ${m.collisions.join(", ")}.`,
+        `Each of these names is both a contact and a colleague, and neither side is settled: ${m.collisions.join(", ")}.`,
       );
 
     // ⚔ lane drift — a >15-point share swing against the prior drop is named,
@@ -538,16 +626,16 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
         const is = share(m.laneTotals, lane);
         if (Math.abs(is - was) > 15)
           receipt.push(
-            `Lane drift: ${lane} ${Math.round(was)}% → ${Math.round(is)}% — check the report's filters before trusting this drop.`,
+            `The ${lane} lane moved from ${Math.round(was)}% to ${Math.round(is)}% of the rows. Check the report's filters before trusting this drop.`,
           );
       }
     }
-    if (sameSha && shaCovered.size > 0)
+    if (sameSha)
       receipt.push(
-        `Same file re-dropped — staging refreshed; ${shaCovered.size} accounts already covered stay covered.`,
+        `This file was dropped before. Staging is refreshed, and ${plural(shaCovered.size, "account")} already covered keep${shaCovered.size === 1 ? "s" : ""} what ${shaCovered.size === 1 ? "it" : "they"} had.`,
       );
     receipt.push(
-      `${distillQueue.length} accounts changed and wait for distillation; ${intentQueue.length} need only their tallies refreshed.`,
+      `${plural(distillQueue.length, "account")} changed and wait${distillQueue.length === 1 ? "s" : ""} to be distilled. ${plural(intentQueue.length, "account")} need${intentQueue.length === 1 ? "s" : ""} only ${intentQueue.length === 1 ? "its tally" : "their tallies"} refreshed.`,
     );
 
     store.manifest = m;
@@ -557,13 +645,14 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
       distillQueue,
       intentQueue,
       receipt: receipt.map(stamped),
-      // A same-sha re-drop keeps its coverage — the work already happened.
-      covered: sameSha ? store.run.covered : {},
+      // A same-sha re-drop keeps its coverage: the work already happened. A
+      // new drop's run state was reset at its first batch, so this is empty.
+      covered: store.run.covered,
       batchesSeen: store.run.batchesSeen,
       startedAt: "",
       finishedAt: "",
     };
-    await writeManifestStore(store);
+    await writeManifestStore(store, db);
     await pulse(
       {
         active: true,
@@ -572,8 +661,8 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
         total: distillQueue.length + intentQueue.length,
         done: 0,
         failed: 0,
-        now: "The activity report landed — verified complete.",
-        unit: `the second record — 0 of ${distillQueue.length + intentQueue.length} accounts`,
+        now: "The activity report landed and verified complete.",
+        unit: `the second record, 0 of ${distillQueue.length + intentQueue.length} accounts`,
         lanes: [],
       },
       receipt.map((text) => ({ text })),
@@ -585,23 +674,122 @@ export async function stageActivityBatch(batch: StageBatch): Promise<StageReply>
     };
   }
 
-  await writeManifestStore(store);
+  await writeManifestStore(store, db);
   return { ok: true };
+}
+
+// ── the gems write and the acted ledger (D18) ───────────────────────────────
+// The operator's acted stamp is the first record (ruled 2026-09-25, D18). It
+// rides in the gems body, the second record's span, so every write that
+// replaces or clears a gems note reads the stamps out first: a fresh gem with
+// the same key takes its stamp back, and a stamp whose gem this drop did not
+// find waits in the acted ledger (ACTED_NS), outside every span the take-back
+// clears, for a later drop that finds it. A stamp that re-attaches leaves the
+// ledger, so the operator's own ↺ on the gem is never undone by a later drop.
+
+async function readActedLedger(accountId: string, db: ActivityDb): Promise<ActedStamp[]> {
+  const [row] = await db.accountNote.findMany({
+    where: { accountId: `${ACTED_NS}${accountId}` },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  });
+  return parseActedBody(row?.body ?? "");
+}
+
+/** Replace-forward write of an account's acted ledger; an empty ledger
+ *  leaves no row. A first-record row with a door, never a bare one (P3): the
+ *  stamps are the operator's own hand. */
+async function writeActedLedger(
+  accountId: string,
+  stamps: readonly ActedStamp[],
+  db: ActivityDb,
+): Promise<void> {
+  const key = `${ACTED_NS}${accountId}`;
+  const rows = await db.accountNote.findMany({
+    where: { accountId: key },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  if (stamps.length === 0) {
+    if (rows.length > 0) await db.accountNote.deleteMany({ where: { accountId: key } });
+    return;
+  }
+  const body = renderActedBody(stamps);
+  if (rows.length > 0) {
+    await db.accountNote.update({ where: { id: rows[0].id }, data: { body } });
+    for (const extra of rows.slice(1))
+      await db.accountNote.delete({ where: { id: extra.id } });
+    return;
+  }
+  await createAccountNoteRow(
+    { accountId: key, kind: "mine", body, door: "hand", lane: "mine", source: "acted" },
+    db,
+  );
+}
+
+/** Write an account's gems, or clear them when none survived, carrying the
+ *  operator's acted stamps across (D18). */
+export async function fileGems(
+  accountId: string,
+  gems: Gem[],
+  people: SecondRecordPeople = NO_PEOPLE,
+  db: ActivityDb = getPrisma(),
+): Promise<void> {
+  const key = `${GEMS_NS}${accountId}`;
+  const [current] = await db.accountNote.findMany({
+    where: { accountId: key },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  });
+  // The body being replaced speaks first; the ledger after it.
+  const carried = mergeActedStamps(
+    actedStampsOf(parseGemsBody(current?.body ?? "")),
+    await readActedLedger(accountId, db),
+  );
+  // The body keeps three gems; only those three can take a stamp back.
+  const { gems: kept, left } = reattachActed(gems.slice(0, 3), carried);
+  if (kept.length > 0)
+    await replaceSecondRecordNote(key, renderGemsBody(kept), people, db);
+  else await db.accountNote.deleteMany({ where: { accountId: key } });
+  await writeActedLedger(accountId, left, db);
+}
+
+/** The note ids the operator ✕-parked: hidden is hidden (X1). A failed read
+ *  hides nothing rather than stop the run. */
+async function hiddenNoteIdsIn(db: ActivityDb): Promise<Set<string>> {
+  try {
+    const markers = await db.accountDisposition.findMany({
+      where: { accountId: { startsWith: HIDE_NOTE_PREFIX } },
+      select: { accountId: true, status: true },
+    });
+    return hiddenIds(markers);
+  } catch {
+    return new Set();
+  }
 }
 
 // ── the first-record context pack ───────────────────────────────────────────
 
-async function contextPackFor(accountId: string, name: string): Promise<ContextPack> {
-  const prisma = getPrisma();
+export async function contextPackFor(
+  accountId: string,
+  name: string,
+  db: ActivityDb = getPrisma(),
+): Promise<ContextPack> {
+  const prisma = db;
   const lines: string[] = [
     "the operator is Antaeus Coe — their own logged motion is the first record, never a door to walk through",
   ];
   try {
-    const notes = await prisma.accountNote.findMany({
-      where: { accountId },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-    });
+    // A ✕-parked row is hidden from the distiller too (X1): it leaves the
+    // pack's last outbound, its last inbound and its record lines.
+    const hidden = await hiddenNoteIdsIn(prisma);
+    const notes = (
+      await prisma.accountNote.findMany({
+        where: { accountId },
+        orderBy: { createdAt: "desc" },
+        take: 80,
+      })
+    ).filter((n) => !hidden.has(n.id));
     const likes: NoteLike[] = notes.map((n) => ({
       body: n.body,
       source: n.source ?? "",
@@ -672,10 +860,12 @@ export type RunPassResult = {
 
 export async function runActivityPass(opts?: {
   deadlineMs?: number;
+  db?: ActivityDb;
 }): Promise<RunPassResult> {
-  if (!hasDatabaseEnv())
+  if (!opts?.db && !hasDatabaseEnv())
     return { ok: false, done: false, remaining: 0, receipt: [], reason: "No store." };
-  const current = await readManifestStore();
+  const db = opts?.db ?? getPrisma();
+  const current = await readManifestStore(db);
   if (!current)
     return {
       ok: false,
@@ -717,12 +907,12 @@ export async function runActivityPass(opts?: {
   const doneAlready = Object.keys(run.covered).length;
 
   // ⚔ 3 · staleness & acted — sweep at the head of every pass.
-  await actedSweep();
+  await actedSweep(db);
 
   // Tally-only accounts: pure arithmetic, no model, cheap enough to finish.
   while (run.intentQueue.length > 0 && Date.now() < deadline) {
     const id = run.intentQueue.shift()!;
-    const staged = await readStageSlice(id);
+    const staged = await readStageSlice(id, db);
     if (!staged) continue;
     await replaceSecondRecordNote(
       `${INTENT_NS}${id}`,
@@ -732,10 +922,11 @@ export async function runActivityPass(opts?: {
         receipts: staged.slice.tally.receipts,
       }),
       slicePeople(staged.slice),
+      db,
     );
     run.covered[id] = run.covered[id] || "verdict";
   }
-  await writeManifestStore(store);
+  await writeManifestStore(store, db);
 
   // Changed accounts: rollup + stores + distillation, CONCURRENT_DISTILLS at
   // a time, resumable — the store is saved after every batch.
@@ -777,10 +968,10 @@ export async function runActivityPass(opts?: {
 
   const processAccount = async (id: string): Promise<string[]> => {
     const log: string[] = [];
-    const staged = await readStageSlice(id);
+    const staged = await readStageSlice(id, db);
     if (!staged) {
       run.covered[id] = "verdict";
-      return [`${nameById.get(id) ?? id}: staging missing — skipped, named here.`];
+      return [`${nameById.get(id) ?? id}: no staged slice, so it was skipped.`];
     }
     const slice = staged.slice;
     const name = slice.name || nameById.get(id) || id;
@@ -807,6 +998,7 @@ export async function runActivityPass(opts?: {
         `${SUPPORT_NS}${id}`,
         renderSupportBody({ dropSha: m.dropSha, ...support }),
         people,
+        db,
       );
     await replaceSecondRecordNote(
       `${INTENT_NS}${id}`,
@@ -816,6 +1008,7 @@ export async function runActivityPass(opts?: {
         receipts: slice.tally.receipts,
       }),
       people,
+      db,
     );
 
     const motionRows = slice.rows.filter(isHumanMotion);
@@ -830,11 +1023,9 @@ export async function runActivityPass(opts?: {
     let gems: Gem[] = [];
 
     if (distillerRan) {
-      const pack = await contextPackFor(id, name);
+      const pack = await contextPackFor(id, name, db);
       const rowsByKey = new Map(slice.rows.map((r) => [r.k, r]));
-      const card = await getPrisma()
-        .dashCard.findFirst({ where: { name } })
-        .catch(() => null);
+      const card = await db.dashCard.findFirst({ where: { name } }).catch(() => null);
       const rollupText = renderRollupBody(rollup);
 
       const attempt = async (retryNote?: string): Promise<Gem[]> => {
@@ -900,15 +1091,14 @@ export async function runActivityPass(opts?: {
     }
 
     if (gems.length > 0) {
-      await replaceSecondRecordNote(`${GEMS_NS}${id}`, renderGemsBody(gems), people);
+      await fileGems(id, gems, people, db);
       rollup.verdict = "";
       run.covered[id] = "gems";
       log.push(`${name}: ${gems.length} gem${gems.length === 1 ? "" : "s"} confirmed.`);
     } else if (distillerCould) {
-      // A changed account whose gems all died keeps no stale gems note.
-      await getPrisma().accountNote.deleteMany({
-        where: { accountId: `${GEMS_NS}${id}` },
-      });
+      // A changed account whose gems all died keeps no stale gems note; its
+      // acted stamps move to the ledger (D18).
+      await fileGems(id, [], people, db);
       rollup.verdict = verdictLine(rollup);
       run.covered[id] = "verdict";
       log.push(`${name}: ${rollup.verdict}.`);
@@ -918,14 +1108,14 @@ export async function runActivityPass(opts?: {
       // arithmetic stores above still moved. "held" is coverage of the
       // arithmetic only: a re-drop of the SAME file with the distiller
       // back re-queues exactly these accounts.
-      const standing = await getPrisma()
-        .accountNote.findFirst({ where: { accountId: `${GEMS_NS}${id}` } })
+      const standing = await db.accountNote
+        .findFirst({ where: { accountId: `${GEMS_NS}${id}` } })
         .catch(() => null);
       rollup.verdict = verdictLine(rollup);
       run.covered[id] = "held";
       log.push(
         standing
-          ? `${name}: ${rollup.verdict}. Gems held from the last pass — the distiller is down.`
+          ? `${name}: ${rollup.verdict}. The distiller is down, so the gems from the last distilled pass stay.`
           : `${name}: ${rollup.verdict}.`,
       );
     }
@@ -933,6 +1123,7 @@ export async function runActivityPass(opts?: {
       `${ACTIVITY_NS}${id}`,
       renderRollupBody(rollup),
       people,
+      db,
     );
     return log;
   };
@@ -952,7 +1143,7 @@ export async function runActivityPass(opts?: {
         Object.keys(run.covered).length - doneAlready >= 0
           ? Object.keys(run.covered).length
           : 0,
-      unit: `the second record — ${Object.keys(run.covered).length} of ${totalWork} accounts`,
+      unit: `the second record, ${Object.keys(run.covered).length} of ${totalWork} accounts`,
       lanes: held.map((what) => ({
         src: "the activity report",
         what,
@@ -974,13 +1165,13 @@ export async function runActivityPass(opts?: {
           (s.reason as { message?: string })?.message ?? s.reason ?? "unknown",
         ).slice(0, 200);
         logs.push({
-          text: `${nameById.get(batch[i]) ?? batch[i]} failed this pass — ${errText} — queued for retry.`,
+          text: `${nameById.get(batch[i]) ?? batch[i]} failed this pass and waits for a retry. The error: ${errText}`,
           bad: true,
         });
         // A DEAD key (auth or credits) is not a failure to loop on or to
         // stall the drop over: the latch flips and the re-queued accounts
-        // take the held path next pass — the drop completes arithmetically
-        // and the receipt says what held (founder-decreed 2026-08-22).
+        // take the held path next pass, the drop finishes on its counts, and
+        // the receipt says what held (founder-decreed 2026-08-22).
         noteClaudeFailure(s.reason);
         if (claudeDead()) {
           // Say WHAT the API said. "The key is dead" names a symptom with
@@ -988,10 +1179,10 @@ export async function runActivityPass(opts?: {
           // and a workspace with no credit read identically — and the operator
           // burned an evening guessing between them while this text sat right
           // here and was discarded (2026-09-01).
-          if (!run.receipt.some((r) => r.includes("completes arithmetically")))
+          if (!run.receipt.some((r) => r.includes(DEAD_KEY_MARK)))
             say(
               run,
-              `The key is dead — the API said: ${errText}. ${configLine()} The rest of this drop completes arithmetically and gems hold from the last funded pass.`,
+              `${DEAD_KEY_MARK} The API said: ${errText}. ${configLine()} The rest of this drop runs on its counts alone, and the gems from the last distilled pass stay.`,
             );
           continue;
         }
@@ -1002,29 +1193,32 @@ export async function runActivityPass(opts?: {
           settled.every((x) => x.status === "rejected") &&
           Object.keys(run.covered).length === 0
         ) {
-          say(run, `Every distillation failed — ${errText}. Fix it and run again.`);
-          await writeManifestStore(store);
+          say(
+            run,
+            `Every distillation failed. The error: ${errText}. Fix it and run again.`,
+          );
+          await writeManifestStore(store, db);
           await pulse(
-            { active: false, now: `Distillation is paused — ${errText.slice(0, 120)}` },
-            [{ text: `Distillation is paused — ${errText.slice(0, 120)}`, bad: true }],
+            { active: false, now: `Distillation is paused. ${errText.slice(0, 120)}` },
+            [{ text: `Distillation is paused. ${errText.slice(0, 120)}`, bad: true }],
           );
           return {
             ok: false,
             done: false,
             remaining: run.distillQueue.length,
             receipt: run.receipt,
-            reason: `Every distillation failed — ${errText}`,
+            reason: `Every distillation failed. The error: ${errText}`,
           };
         }
       }
     }
-    await writeManifestStore(store);
+    await writeManifestStore(store, db);
     await pulse({}, logs);
   }
 
   const remaining = run.distillQueue.length + run.intentQueue.length;
   if (remaining > 0) {
-    await writeManifestStore(store);
+    await writeManifestStore(store, db);
     return { ok: true, done: false, remaining, receipt: run.receipt };
   }
 
@@ -1033,7 +1227,7 @@ export async function runActivityPass(opts?: {
   // evidence it exists.
   const priorRollups = new Set(
     (
-      await getPrisma().accountNote.findMany({
+      await db.accountNote.findMany({
         where: { accountId: { startsWith: ACTIVITY_NS } },
         select: { accountId: true },
       })
@@ -1046,7 +1240,7 @@ export async function runActivityPass(opts?: {
   // evidence. Read which accounts actually have one before judging coverage.
   const gemHolders = new Set(
     (
-      await getPrisma().accountNote.findMany({
+      await db.accountNote.findMany({
         where: { accountId: { startsWith: GEMS_NS } },
         select: { accountId: true },
       })
@@ -1065,52 +1259,55 @@ export async function runActivityPass(opts?: {
   const held = Object.entries(run.covered).filter(([, v]) => v === "held");
   const heldN = held.length;
   const heldEmpty = held.filter(([id]) => !gemHolders.has(id)).length;
+  // Every closing line is a flat sentence over the run's own counts (C4).
+  const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
   say(
     run,
-    `${Object.keys(run.covered).length} accounts distilled — ${gemsN} hold confirmed gems, ${verdictsN} filed honest verdicts, ${run.died} candidates died in refutation.`,
+    `${n(Object.keys(run.covered).length, "account")} distilled. ${gemsN} ${gemsN === 1 ? "holds confirmed gems" : "hold confirmed gems"}, ${verdictsN} ${verdictsN === 1 ? "holds" : "hold"} a verdict, and ${n(run.died, "candidate")} died in refutation.`,
   );
   if (heldN > 0)
     say(
       run,
       heldEmpty === 0
-        ? `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"} — their gems hold from the last funded pass. Re-drop the file once the key is back and they re-judge.`
-        : `The distiller was down for ${heldN} account${heldN === 1 ? "" : "s"}, and ${heldEmpty} of them hold NO gem — there was no funded pass to fall back on. Fix the key and drop the file again; nothing was judged this run.`,
+        ? `The distiller was down for ${n(heldN, "account")}, so the gems from the last distilled pass stay. Drop the file again once the key is back to judge ${heldN === 1 ? "it" : "them"}.`
+        : `The distiller was down for ${n(heldN, "account")}, and ${heldEmpty} of them hold no gem because no earlier pass distilled them. Fix the key and drop the file again. Nothing was judged this run.`,
     );
   if (mortalityFlag(run.born, run.died))
     say(
       run,
-      `Distiller quality flag: ${run.died} of ${run.born} candidates died. Read the receipt before trusting this drop's gems.`,
+      `${run.died} of ${n(run.born, "gem candidate")} died. Read the receipt before trusting this drop's gems.`,
     );
   if (uncovered.length > 0) {
     run.phase = "failed-coverage";
     say(
       run,
-      `COVERAGE FAILED — ${uncovered.length} active account${uncovered.length === 1 ? "" : "s"} hold neither a gem nor a verdict: ${uncovered.slice(0, 8).join(", ")}${uncovered.length > 8 ? ", …" : ""}.`,
+      `COVERAGE FAILED. ${n(uncovered.length, "active account holds", "active accounts hold")} neither a gem nor a verdict: ${uncovered.slice(0, 8).join(", ")}${uncovered.length > 8 ? ", and more" : ""}.`,
     );
   } else {
     run.phase = "done";
-    // The claim is arithmetic, never a slogan: it names what the store holds.
-    // "Coverage: 100%" over an empty store is the exact line that told the
-    // founder a dead-key run had succeeded (2026-08-31).
+    // The claim is arithmetic, never a slogan: it names what the store holds
+    // and how many. Full coverage over an empty store is the exact line that
+    // told the founder a dead-key run had succeeded (2026-08-31).
+    const active = m.accounts.filter((a) => a.humanRows > 0).length;
     say(
       run,
       heldN > 0
-        ? `Coverage: 100% — but ${heldN} account${heldN === 1 ? "" : "s"} held, so ${gemsN + verdictsN} of ${gemsN + verdictsN + heldN} were judged this run. The rest read their old gems.`
-        : "Coverage: 100% — every active account holds a gem or an honest verdict.",
+        ? `Coverage is 100%, with ${n(heldN, "account")} held. ${gemsN + verdictsN} of ${gemsN + verdictsN + heldN} were judged this run, and the held ones keep their old gems.`
+        : `Coverage is 100%. ${active === 1 ? "The 1 active account holds" : `All ${active} active accounts hold`} a gem or a verdict.`,
     );
   }
-  await writeManifestStore(store);
+  await writeManifestStore(store, db);
   await pulse(
     {
       active: false,
       kind: "activity",
       now:
         run.phase !== "done"
-          ? "The run finished BELOW coverage — see the receipt."
+          ? "The run finished below full coverage. Open the receipt."
           : heldN > 0
-            ? `The second record is distilled — ${gemsN + verdictsN} judged, ${heldN} held on their old gems.`
-            : "The second record is distilled — coverage 100%.",
-      unit: `the second record — ${Object.keys(run.covered).length} of ${totalWork} accounts`,
+            ? `The second record is distilled. ${gemsN + verdictsN} judged and ${heldN} held on their old gems.`
+            : "The second record is distilled at full coverage.",
+      unit: `the second record, ${Object.keys(run.covered).length} of ${totalWork} accounts`,
       lanes: [],
     },
     [
@@ -1130,63 +1327,69 @@ export async function runActivityPass(opts?: {
 }
 
 // ── ⚔ 3 · acted detection — the first record kills the nag ──────────────────
+// The record has moved on a gem when a first-record row after the gem's day
+// carries the gem's person as an actor or recipient (ruled 2026-09-25, D20).
+// Every row, not only the operator's sends, each read at its own moment from
+// its own columns (pass 8 call 5): the sweep once looked each send's columns
+// up by the stored stamp while the send came back at its head's clock, so a
+// clocked Outlook send never matched and a person who was only a recipient
+// never stamped. The rows are the account's under every id that folds into
+// it (E17), and a ✕-parked row is hidden (X1).
 
-async function actedSweep(): Promise<number> {
-  const prisma = getPrisma();
+export async function actedSweep(db: ActivityDb = getPrisma()): Promise<number> {
   let stamped = 0;
   try {
-    const gemNotes = await prisma.accountNote.findMany({
+    const gemNotes = await db.accountNote.findMany({
       where: { accountId: { startsWith: GEMS_NS } },
       take: 400,
     });
+    const hidden = await hiddenNoteIdsIn(db);
     for (const note of gemNotes) {
-      const accountId = note.accountId.slice(GEMS_NS.length);
+      const rawId = note.accountId.slice(GEMS_NS.length);
       const gems = parseGemsBody(note.body);
-      if (gems.length === 0 || gems.every((g) => g.actedDay)) continue;
-      const notes = await prisma.accountNote.findMany({
-        where: { accountId },
+      const open = gems.filter((g) => !g.actedDay);
+      if (open.length === 0) continue;
+      const since = open.map((g) => g.createdDay).sort()[0] ?? "";
+      const from = Date.parse(`${since}T00:00:00Z`);
+      const notes = await db.accountNote.findMany({
+        where: {
+          accountId: { in: accountIdsOf(rawId) },
+          ...(Number.isNaN(from) ? {} : { createdAt: { gte: new Date(from) } }),
+        },
         orderBy: { createdAt: "desc" },
-        take: 60,
       });
-      const likes: NoteLike[] = notes.map((n) => ({
-        body: n.body,
-        source: n.source ?? "",
-        createdAt: n.createdAt.toISOString(),
-        actors: n.actors ?? "",
-      }));
-      // The columns behind each send, keyed the way recordSends reads them,
-      // so the match reads actors and recipients (D20), never the head alone.
-      const columnsOf = new Map<string, { actors: string; recipients: string }>();
-      for (const n of notes)
-        columnsOf.set(`${n.createdAt.toISOString()}|${n.body.split("\n")[0] ?? ""}`, {
-          actors: n.actors ?? "",
-          recipients: n.recipients ?? "",
-        });
-      const sends = recordSends(likes);
+      const rows: SweepRow[] = notes.map((n) => {
+        const d = docOf(
+          {
+            id: n.id,
+            body: n.body,
+            createdAt: n.createdAt.toISOString(),
+            kind: n.kind,
+            actors: n.actors ?? "",
+            source: n.source ?? "",
+            recipients: n.recipients ?? "",
+          },
+          csms,
+          hidden,
+        );
+        return {
+          day: chiDay(n.createdAt),
+          actors: d.actors,
+          recipients: d.recipients,
+          hidden: d.hidden,
+        };
+      });
       let changed = false;
       for (const g of gems) {
         if (g.actedDay) continue;
-        for (const s of sends) {
-          const day = chiDay(new Date(s.at));
-          if (day <= g.createdDay) continue;
-          const cols = columnsOf.get(`${s.at}|${s.head}`);
-          if (
-            personMoved(g.who, {
-              who: s.who,
-              head: s.head,
-              actors: cols?.actors ?? "",
-              recipients: cols?.recipients ?? "",
-            })
-          ) {
-            g.actedDay = day;
-            changed = true;
-            stamped += 1;
-            break;
-          }
-        }
+        const day = actedDayFor(g, rows);
+        if (!day) continue;
+        g.actedDay = day;
+        changed = true;
+        stamped += 1;
       }
       if (changed)
-        await prisma.accountNote.update({
+        await db.accountNote.update({
           where: { id: note.id },
           data: { body: renderGemsBody(gems) },
         });
@@ -1229,16 +1432,18 @@ export async function activityStatus(): Promise<ActivityStatus> {
 }
 
 // ── the take-back (2026-08-28) ──────────────────────────────────────────────
-// A drop is reversible. Not to the drop before it — the writer overwrites a
+// A drop is reversible. Not to the drop before it: the writer overwrites a
 // note body in place and the manifest keeps only the prior drop's checksums,
 // so there is no earlier content to restore and the button must never pretend
 // otherwise. What it can do is complete: clear every store the second record
 // owns, and the app falls back to what it showed before any export existed.
 //
-// The reach is exactly the five namespaces the run writes and nothing else.
-// The record's own entries, the HomeRoom's moves, the Sendbook, the
-// Scratchpaper, act drafts, seats and research notes are untouched — a bad
-// drop was never able to reach them, and neither is the undo.
+// The reach is exactly the namespaces the run writes and nothing else. The
+// record's own entries, the HomeRoom's moves, the Sendbook, the Scratchpaper,
+// act drafts, seats and research notes are untouched; a bad drop was never
+// able to reach them, and neither is the undo. The operator's acted stamps
+// are the first record too (D18): they are read out of the gems before the
+// gems go, and wait in the acted ledger for the drop that finds them again.
 
 export type TakeBackResult = {
   ok: boolean;
@@ -1247,16 +1452,37 @@ export type TakeBackResult = {
   reason?: string;
 };
 
-export async function takeBackSecondRecord(): Promise<TakeBackResult> {
-  if (!hasDatabaseEnv())
+export async function takeBackSecondRecord(dbIn?: ActivityDb): Promise<TakeBackResult> {
+  if (!dbIn && !hasDatabaseEnv())
     return { ok: false, removed: 0, lines: [], reason: "No database in this session." };
-  const prisma = getPrisma();
-  const current = await readManifestStore();
+  const prisma = dbIn ?? getPrisma();
+  const current = await readManifestStore(prisma);
   const was = current?.store.manifest;
-  const spans = SECOND_RECORD_SPANS;
+
+  // The stamps first, so no delete below can take one (D18).
+  const stampsById = new Map<string, ActedStamp[]>();
+  for (const n of await prisma.accountNote.findMany({
+    where: { accountId: { startsWith: GEMS_NS } },
+    orderBy: { createdAt: "desc" },
+  })) {
+    const id = n.accountId.slice(GEMS_NS.length);
+    const stamps = actedStampsOf(parseGemsBody(n.body));
+    if (stamps.length > 0)
+      stampsById.set(id, mergeActedStamps(stampsById.get(id) ?? [], stamps));
+  }
+  let kept = 0;
+  for (const [id, stamps] of stampsById) {
+    await writeActedLedger(
+      id,
+      mergeActedStamps(stamps, await readActedLedger(id, prisma)),
+      prisma,
+    );
+    kept += stamps.length;
+  }
+
   const lines: string[] = [];
   let removed = 0;
-  for (const s of spans) {
+  for (const s of SECOND_RECORD_SPANS) {
     const r = await prisma.accountNote.deleteMany({
       where: { accountId: { startsWith: s.ns } },
     });
@@ -1271,20 +1497,24 @@ export async function takeBackSecondRecord(): Promise<TakeBackResult> {
     };
   lines.unshift(
     was
-      ? `Took back the drop of ${was.fileName || "the activity export"} from ${was.dropDay} — ${was.rowCount} rows, ${was.accounts.length} accounts.`
+      ? `Took back the drop of ${was.fileName || "the activity export"} from ${was.dropDay}: ${was.rowCount} rows across ${was.accounts.length} accounts.`
       : "Took back the second record.",
   );
+  if (kept > 0)
+    lines.push(
+      `Kept ${kept} acted stamp${kept === 1 ? "" : "s"}. Each comes back when a later drop finds its gem.`,
+    );
   // Said plainly, because a take-back that quietly loses the drop before it
   // would be the same kind of silence this whole fix exists to end.
   lines.push(
-    "The second record is empty. Earlier drops are not kept, so nothing was restored — every other surface reads what it read before any export was filed.",
+    "The second record is empty. Earlier drops were not kept, so every surface reads as it did before any export was filed.",
   );
   await pulse(
     {
       active: false,
       kind: "activity",
-      now: "The second record was taken back — nothing filed.",
-      unit: "the second record — empty",
+      now: "The second record was taken back.",
+      unit: "the second record, empty",
       lanes: [],
     },
     [{ text: lines[0], bad: false }],

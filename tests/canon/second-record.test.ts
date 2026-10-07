@@ -1,12 +1,51 @@
 // Canon pins for the second record (CLAUDE.md "The second record", rulings
-// of 2026-09-25: D20, D21). D18 (the acted stamp survives the take-back) is
-// not pinned here: the stamp lives inside the gems: note body the take-back
-// deletes, so it needs the design pass first.
+// of 2026-09-25: D17, D18, D19, D20, D21, and pass 8's calls 5 and 14 of
+// 2026-10-07). The store-level pins run the run's own entry points over an
+// in-memory table handed in where the Prisma client would be, the way the
+// writer takes its client.
 
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
-import { personMoved } from "../../src/lib/activity/acted";
+import { actedDayFor, personMoved } from "../../src/lib/activity/acted";
+import { createIngest } from "../../src/lib/activity/ingest";
 import { lintAct, lintReason } from "../../src/lib/activity/lint";
+import {
+  createCsvParser,
+  rowsChecksum,
+  tallyChecksum,
+  type ActivityRow,
+} from "../../src/lib/activity/parse";
+import {
+  actedSweep,
+  contextPackFor,
+  fileGems,
+  runActivityPass,
+  stageActivityBatch,
+  takeBackSecondRecord,
+  type ActivityDb,
+} from "../../src/lib/activity/run";
+import {
+  ACTED_NS,
+  GEMS_NS,
+  MANIFEST_ID,
+  SECOND_RECORD_SPANS,
+  STAGE_NS,
+  STAGE_PENDING_NS,
+  ACTIVITY_NS,
+  emptyRunState,
+  gemKey,
+  parseActedBody,
+  parseGemsBody,
+  parseManifestBody,
+  parseStageBody,
+  renderGemsBody,
+  renderManifestBody,
+  renderRollupBody,
+  renderStageBody,
+  type Gem,
+} from "../../src/lib/activity/stores";
+import type { AccountSlice, DropManifest } from "../../src/lib/activity/types";
+import { BOOK, csvLine, headerLine, row } from "../activity-fixtures";
 
 describe("the record has moved on a gem when a row after its day carries the gem's person (D20)", () => {
   // A send as the acted sweep reads it: the head names no one, so each case
@@ -174,5 +213,830 @@ describe("gem lines are operator copy: the seven devices are linted, and a non-d
     assert.equal(lintReason("Call Greg. Greg asked for a call.").ok, true);
     assert.equal(lintReason("Call Greg, since Greg asked for a call.").ok, true);
     assert.equal(lintAct("Ask Greg Williams about the call.").ok, true);
+  });
+});
+
+// ── the store, in memory ────────────────────────────────────────────────────
+// The run's entry points take the Prisma client as their last argument; this
+// table stands in for it with exactly the calls they make. Rows come back
+// newest first, as the client's orderBy asks.
+
+type NoteRow = {
+  id: string;
+  accountId: string;
+  body: string;
+  createdAt: Date;
+  kind: string;
+  partner: string;
+  lane: string;
+  actors: string;
+  source: string;
+  door: string;
+  recipients: string;
+};
+
+type Where = Record<string, unknown>;
+
+const fieldMatches = (value: unknown, cond: unknown): boolean => {
+  if (cond === undefined) return true;
+  if (cond && typeof cond === "object" && !(cond instanceof Date)) {
+    const c = cond as Record<string, unknown>;
+    if ("startsWith" in c && !String(value).startsWith(String(c.startsWith)))
+      return false;
+    if ("contains" in c && !String(value).includes(String(c.contains))) return false;
+    if ("in" in c && !(c.in as unknown[]).includes(value)) return false;
+    if ("notIn" in c && (c.notIn as unknown[]).includes(value)) return false;
+    if ("not" in c && value === c.not) return false;
+    if ("gte" in c && !((value as Date) >= (c.gte as Date))) return false;
+    return true;
+  }
+  return value === cond;
+};
+
+const matches = (r: Record<string, unknown>, where: Where | undefined): boolean => {
+  if (!where) return true;
+  for (const [k, cond] of Object.entries(where)) {
+    if (k === "AND") {
+      if (!(cond as Where[]).every((w) => matches(r, w))) return false;
+    } else if (k === "OR") {
+      if (!(cond as Where[]).some((w) => matches(r, w))) return false;
+    } else if (k === "NOT") {
+      const list = Array.isArray(cond) ? (cond as Where[]) : [cond as Where];
+      if (list.some((w) => matches(r, w))) return false;
+    } else if (!fieldMatches(r[k], cond)) return false;
+  }
+  return true;
+};
+
+function memoryDb(
+  seed: (Partial<NoteRow> & { accountId: string; body: string })[] = [],
+  markers: { accountId: string; status: string }[] = [],
+) {
+  let clock = Date.parse("2026-09-01T12:00:00Z");
+  let ids = 0;
+  const notes: NoteRow[] = seed.map((n) => ({
+    id: n.id ?? `seed${++ids}`,
+    createdAt: n.createdAt ?? new Date((clock += 1000)),
+    kind: "mine",
+    partner: "",
+    lane: "background",
+    actors: "",
+    source: "",
+    door: "seed",
+    recipients: "",
+    ...n,
+  }));
+  const find = (args: { where?: Where; take?: number } = {}) => {
+    const out = notes
+      .filter((n) => matches(n as unknown as Record<string, unknown>, args.where))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return typeof args.take === "number" ? out.slice(0, args.take) : out;
+  };
+  const db = {
+    accountNote: {
+      findMany: async (args: { where?: Where; take?: number }) => find(args),
+      findFirst: async (args: { where?: Where }) => find({ ...args, take: 1 })[0] ?? null,
+      update: async (args: { where: { id: string }; data: Partial<NoteRow> }) => {
+        const n = notes.find((x) => x.id === args.where.id);
+        if (!n) throw new Error("no such row");
+        Object.assign(n, args.data);
+        return n;
+      },
+      delete: async (args: { where: { id: string } }) => {
+        const i = notes.findIndex((x) => x.id === args.where.id);
+        if (i >= 0) notes.splice(i, 1);
+        return {};
+      },
+      deleteMany: async (args: { where?: Where }) => {
+        const gone = find({ where: args.where }).map((n) => n.id);
+        for (const id of gone)
+          notes.splice(
+            notes.findIndex((x) => x.id === id),
+            1,
+          );
+        return { count: gone.length };
+      },
+      create: async (args: {
+        data: Partial<NoteRow> & { accountId: string; body: string };
+      }) => {
+        const n: NoteRow = {
+          id: `n${++ids}`,
+          createdAt: args.data.createdAt ?? new Date((clock += 1000)),
+          kind: "mine",
+          partner: "",
+          lane: "",
+          actors: "",
+          source: "",
+          door: "",
+          recipients: "",
+          ...args.data,
+        };
+        notes.push(n);
+        return { id: n.id };
+      },
+    },
+    accountDisposition: {
+      findMany: async (args: { where?: Where }) =>
+        markers.filter((m) =>
+          matches(m as unknown as Record<string, unknown>, args.where),
+        ),
+    },
+    todo: { findMany: async () => [] },
+    dashCard: { findFirst: async () => null },
+  };
+  const under = (accountId: string) => find({ where: { accountId } });
+  return { db: db as unknown as ActivityDb, notes, under };
+}
+
+const SHA_A = "a".repeat(64);
+const SHA_B = "b".repeat(64);
+const ACCT = "001TESTTRENDHR000A";
+
+async function sliceOf(
+  over: Partial<AccountSlice> & { rowKey: string },
+): Promise<AccountSlice> {
+  const { rowKey, ...rest } = over;
+  const rows = [
+    {
+      k: rowKey,
+      d: "2026-09-18",
+      s: "Re: the model",
+      a: "Antaeus Coe",
+      lane: "human" as const,
+      sub: "Email",
+      rt: "",
+      ct: "",
+      fl: "",
+    },
+  ];
+  const tally = { days: {}, camps: {}, receipts: 0 };
+  return {
+    id: ACCT,
+    name: "Trend Personnel",
+    meta: {
+      primaryContact: "",
+      primaryContactEmail: "",
+      primaryContactTitle: "",
+      lastContact: "",
+      contactedDate: "",
+      lastEmailSentKey: "",
+      lastEmailReceivedKey: "",
+      gbc: "",
+    },
+    rows,
+    dropped: 0,
+    tally,
+    laneCounts: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+    laneEmails: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+    rowsSum: await rowsChecksum(rows.map((r) => r.k)),
+    tallySum: await tallyChecksum(tally),
+    ...rest,
+  };
+}
+
+const manifestFor = (
+  dropSha: string,
+  slices: AccountSlice[],
+  over: Partial<DropManifest> = {},
+): DropManifest => ({
+  dropSha,
+  dropDay: "2026-09-20",
+  fileName: "activity.csv",
+  fileBytes: 42,
+  rowCount: 9,
+  textRows: 4,
+  dupes: 2,
+  window: { from: "2026-06-20", to: "2026-09-19" },
+  laneTotals: { human: 5, csm: 0, support: 1, intent: 2, machinery: 1 },
+  receiptRows: 0,
+  accounts: slices.map((s) => ({
+    id: s.id,
+    name: s.name,
+    rowsSum: s.rowsSum,
+    tallySum: s.tallySum,
+    rows: s.rows.length,
+    humanRows: s.rows.length,
+  })),
+  unmatched: [{ name: "Advocate Pay LLC", id18: "001UNMATCHED00000Z", rows: 3 }],
+  colleagues: [],
+  collisions: [],
+  headerDiff: { missing: [], extra: [] },
+  totalBatches: 2,
+  ...over,
+});
+
+/** A receipt line in plain speech: no dash hinge, no parenthetical, none of
+ *  the coined words the C4 and X4 rows named. */
+const plainLine = (line: string): string[] => {
+  const faults: string[] = [];
+  if (/—/.test(line)) faults.push("a dash");
+  if (/[()]/.test(line)) faults.push("a parenthetical");
+  if (/honest|funded|run dark|gadget|arithmetically/i.test(line))
+    faults.push("coined words");
+  return faults;
+};
+
+// ── D17 · staging verifies before any slice replaces its predecessor ───────
+
+describe("a refused upload leaves the prior drop untouched (D17)", () => {
+  test("an abandoned or refused upload never replaces the prior drop's slice", async () => {
+    const prior = await sliceOf({ rowKey: "prior-row" });
+    const { db, under } = memoryDb([
+      { accountId: `${STAGE_NS}${ACCT}`, body: renderStageBody(prior, SHA_A) },
+    ]);
+    const next = await sliceOf({ rowKey: "next-row" });
+    // Batch 0 of three lands; batch 1 never arrives.
+    const first = await stageActivityBatch(
+      { dropSha: SHA_B, batchIndex: 0, totalBatches: 3, slices: [next] },
+      db,
+    );
+    assert.equal(first.ok, true);
+    const staged = () => parseStageBody(under(`${STAGE_NS}${ACCT}`)[0]?.body ?? "");
+    // Mid-upload, the evidence the faces cite is still the prior drop's.
+    assert.equal(staged()?.dropSha, SHA_A, "a half-landed upload replaced the slice");
+    assert.equal(staged()?.slice.rows[0].k, "prior-row");
+    // The final batch arrives with the manifest and the gap is found.
+    const last = await stageActivityBatch(
+      {
+        dropSha: SHA_B,
+        batchIndex: 2,
+        totalBatches: 3,
+        slices: [],
+        manifest: manifestFor(SHA_B, [next], { totalBatches: 3 }),
+      },
+      db,
+    );
+    assert.equal(last.ok, false);
+    assert.equal(last.verified, false);
+    assert.deepEqual(last.missingBatches, [1]);
+    assert.equal(staged()?.dropSha, SHA_A, "a refused upload replaced the slice");
+    assert.equal(staged()?.slice.rows[0].k, "prior-row");
+  });
+
+  test("a verified upload swaps the drop in and leaves nothing pending", async () => {
+    const prior = await sliceOf({ rowKey: "prior-row" });
+    const { db, notes, under } = memoryDb([
+      { accountId: `${STAGE_NS}${ACCT}`, body: renderStageBody(prior, SHA_A) },
+    ]);
+    const next = await sliceOf({ rowKey: "next-row" });
+    await stageActivityBatch(
+      { dropSha: SHA_B, batchIndex: 0, totalBatches: 2, slices: [next] },
+      db,
+    );
+    const reply = await stageActivityBatch(
+      {
+        dropSha: SHA_B,
+        batchIndex: 1,
+        totalBatches: 2,
+        slices: [],
+        manifest: manifestFor(SHA_B, [next]),
+      },
+      db,
+    );
+    assert.equal(reply.ok, true);
+    assert.equal(reply.verified, true);
+    const rows = under(`${STAGE_NS}${ACCT}`);
+    assert.equal(rows.length, 1);
+    assert.equal(parseStageBody(rows[0].body)?.dropSha, SHA_B);
+    assert.equal(parseStageBody(rows[0].body)?.slice.rows[0].k, "next-row");
+    assert.equal(
+      notes.filter((n) => n.accountId.startsWith(STAGE_PENDING_NS)).length,
+      0,
+      "a pending slice outlived the swap",
+    );
+    // The swapped-in slice keeps the activity door (P4).
+    assert.equal(rows[0].door, "activity");
+  });
+
+  test("the pending slices sit inside the take-back's reach and outside every face's read", () => {
+    assert.ok(STAGE_PENDING_NS.startsWith(STAGE_NS));
+    assert.ok(SECOND_RECORD_SPANS.some((s) => STAGE_PENDING_NS.startsWith(s.ns)));
+  });
+});
+
+// ── D18 · the acted stamp is the first record ───────────────────────────────
+
+const acted = (over: Partial<Gem> = {}): Gem => ({
+  dropSha: SHA_A.slice(0, 8),
+  verdict: "CONFIRMED",
+  createdDay: "2026-09-20",
+  actedDay: "",
+  who: ["Natalie Borland"],
+  whoKind: "account",
+  term: "PRICING ASK",
+  what: "Natalie asked for pricing",
+  whenDay: "2026-09-19",
+  signal: "a pricing ask",
+  act: "Send Natalie the pricing sheet.",
+  reason: "Sep 19 reply asks for pricing.",
+  cites: [
+    { k: "row-1", day: "2026-09-19", who: "Natalie Borland", subject: "Re: pricing" },
+  ],
+  ...over,
+});
+
+const gemsUnder = (rows: NoteRow[]): Gem[] => parseGemsBody(rows[0]?.body ?? "");
+
+describe("the operator's acted stamp survives the take-back and re-attaches by gem key (D18)", () => {
+  test("the take-back clears the gems and keeps the stamp outside every span it clears", async () => {
+    const { db, under, notes } = memoryDb([
+      {
+        accountId: `${GEMS_NS}${ACCT}`,
+        body: renderGemsBody([acted({ actedDay: "2026-09-22" })]),
+      },
+    ]);
+    const r = await takeBackSecondRecord(db);
+    assert.equal(r.ok, true);
+    assert.equal(under(`${GEMS_NS}${ACCT}`).length, 0, "the export's span dies");
+    const kept = parseActedBody(under(`${ACTED_NS}${ACCT}`)[0]?.body ?? "");
+    assert.deepEqual(kept, [{ key: gemKey(acted()), day: "2026-09-22" }]);
+    for (const span of SECOND_RECORD_SPANS)
+      assert.equal(
+        ACTED_NS.startsWith(span.ns),
+        false,
+        `${span.ns} would sweep the stamps`,
+      );
+    // The stamp row is a first-record row with a door, never a bare one (P3).
+    const row = notes.find((n) => n.accountId === `${ACTED_NS}${ACCT}`);
+    assert.equal(row?.door, "hand");
+    // And every line the operator reads is plain.
+    for (const line of r.lines) assert.deepEqual(plainLine(line), [], line);
+  });
+
+  test("the next drop that finds the same gem carries the stamp back", async () => {
+    const { db, under } = memoryDb([
+      {
+        accountId: `${GEMS_NS}${ACCT}`,
+        body: renderGemsBody([acted({ actedDay: "2026-09-22" })]),
+      },
+    ]);
+    await takeBackSecondRecord(db);
+    await fileGems(ACCT, [acted({ dropSha: SHA_B.slice(0, 8) })], undefined, db);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0]?.actedDay, "2026-09-22");
+    assert.equal(
+      under(`${ACTED_NS}${ACCT}`).length,
+      0,
+      "the stamp moved back onto its gem",
+    );
+  });
+
+  test("a re-drop with no take-back keeps the stamp on the fresh gem", async () => {
+    const { db, under } = memoryDb([
+      {
+        accountId: `${GEMS_NS}${ACCT}`,
+        body: renderGemsBody([acted({ actedDay: "2026-09-22" })]),
+      },
+    ]);
+    await fileGems(ACCT, [acted({ dropSha: SHA_B.slice(0, 8) })], undefined, db);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0]?.actedDay, "2026-09-22");
+  });
+
+  test("a stamp whose gem this drop did not find waits for a later drop", async () => {
+    const { db, under } = memoryDb([
+      {
+        accountId: `${GEMS_NS}${ACCT}`,
+        body: renderGemsBody([acted({ actedDay: "2026-09-22" })]),
+      },
+    ]);
+    // This drop's gems are about something else.
+    const other = acted({ term: "SUPPORT SPIKE", who: ["Greg Williams"] });
+    await fileGems(ACCT, [other], undefined, db);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0]?.actedDay, "");
+    assert.equal(parseActedBody(under(`${ACTED_NS}${ACCT}`)[0]?.body ?? "").length, 1);
+    // A later drop finds it again.
+    await fileGems(ACCT, [acted(), other], undefined, db);
+    const back = gemsUnder(under(`${GEMS_NS}${ACCT}`));
+    assert.equal(back.find((g) => g.term === "PRICING ASK")?.actedDay, "2026-09-22");
+  });
+
+  test("new evidence after the stamp is new motion, and a stamp the operator took back stays off", async () => {
+    const { db, under } = memoryDb([
+      {
+        accountId: `${GEMS_NS}${ACCT}`,
+        body: renderGemsBody([acted({ actedDay: "2026-09-22" })]),
+      },
+    ]);
+    await fileGems(ACCT, [acted({ whenDay: "2026-09-25" })], undefined, db);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0]?.actedDay, "");
+    // The operator's ↺ clears the stamp on the gem; the next drop leaves it off.
+    const {
+      db: db2,
+      under: under2,
+      notes,
+    } = memoryDb([
+      {
+        accountId: `${GEMS_NS}${ACCT}`,
+        body: renderGemsBody([acted({ actedDay: "2026-09-22" })]),
+      },
+    ]);
+    await takeBackSecondRecord(db2);
+    await fileGems(ACCT, [acted()], undefined, db2);
+    const gemsRow = notes.find((n) => n.accountId === `${GEMS_NS}${ACCT}`)!;
+    gemsRow.body = renderGemsBody([acted()]);
+    await fileGems(ACCT, [acted()], undefined, db2);
+    assert.equal(gemsUnder(under2(`${GEMS_NS}${ACCT}`))[0]?.actedDay, "");
+  });
+});
+
+// ── D19 · the book's internal names and our domain come first ──────────────
+
+async function ingestOf(rows: ActivityRow[]) {
+  const ing = createIngest(BOOK);
+  const p = createCsvParser();
+  const text = [headerLine(), ...rows.map(csvLine)].join("\n") + "\n";
+  for (const raw of [...p.push(text), ...p.finish()]) ing.takeRow(raw);
+  return ing.finish({ fileName: "x.csv", fileBytes: text.length, dropDay: "2026-09-20" });
+}
+
+const signed = (name: string, email: string) =>
+  `To: someone@example.com\nBody:\nThanks for the time today.\n\nBest regards,\n${name}\nE: ${email}`;
+
+describe("a colleague is a person the book names as internal or whose address is on our domain (D19, pass 8 call 10)", () => {
+  test("an account person Assigned on two accounts, with their own address, is not a colleague", async () => {
+    const dana = (id18: string, account: string) =>
+      row({
+        subject: "Re: the model",
+        account,
+        id18,
+        date: "9/18/2026",
+        assigned: "Dana Whitfield",
+        taskSubtype: "Email",
+        comments: signed("Dana Whitfield", "dana.whitfield@trendpersonnel.com"),
+      });
+    const { manifest } = await ingestOf([
+      dana("001TESTTRENDHR000A", "Trend Personnel"),
+      dana("001TESTSTAFFLSG00B", "Staff Leasing CNY"),
+    ]);
+    assert.equal(manifest.colleagues.includes("Dana Whitfield"), false);
+  });
+
+  test("our domain makes a colleague on one account, and a writer who is never Assigned too", async () => {
+    const { manifest } = await ingestOf([
+      row({
+        subject: "Welcome aboard",
+        account: "Trend Personnel",
+        id18: "001TESTTRENDHR000A",
+        date: "9/18/2026",
+        assigned: "Anika Steenstra",
+        taskSubtype: "Email",
+        comments: signed("Anika Steenstra", "anika.steenstra@prismhr.com"),
+      }),
+      row({
+        subject: "Re: onboarding",
+        account: "Staff Leasing CNY",
+        id18: "001TESTSTAFFLSG00B",
+        date: "9/17/2026",
+        assigned: "Antaeus Coe",
+        taskSubtype: "Email",
+        comments: signed("Mary Mahoney", "mary.mahoney@prismhr.com"),
+      }),
+    ]);
+    assert.ok(
+      manifest.colleagues.includes("Anika Steenstra"),
+      manifest.colleagues.join(", "),
+    );
+    assert.ok(
+      manifest.colleagues.includes("Mary Mahoney"),
+      manifest.colleagues.join(", "),
+    );
+  });
+
+  test("with no address on any row, the two-accounts count is the fallback", async () => {
+    const plain = (id18: string, account: string, who: string) =>
+      row({
+        subject: "Call",
+        account,
+        id18,
+        date: "9/18/2026",
+        assigned: who,
+        taskSubtype: "Call",
+        callType: "Outbound",
+      });
+    const { manifest } = await ingestOf([
+      plain("001TESTTRENDHR000A", "Trend Personnel", "Colleague Two"),
+      plain("001TESTSTAFFLSG00B", "Staff Leasing CNY", "Colleague Two"),
+      plain("001TESTTRENDHR000A", "Trend Personnel", "Colleague One"),
+    ]);
+    assert.ok(manifest.colleagues.includes("Colleague Two"));
+    assert.equal(manifest.colleagues.includes("Colleague One"), false);
+  });
+});
+
+// ── pass 8 call 14 · campaign titles are redacted before they are counted ──
+
+describe("campaign titles are money-redacted before they are counted (pass 8 call 14)", () => {
+  test("the tally's keys carry no figure", async () => {
+    const blast = (subject: string) =>
+      row({
+        subject,
+        account: "Trend Personnel",
+        id18: "001TESTTRENDHR000A",
+        date: "9/12/2026",
+        assigned: "Colleague One",
+        taskSubtype: "Task",
+      });
+    const { slices } = await ingestOf([
+      blast("Sent $500 gift card webinar"),
+      blast("Opened $500 gift card webinar"),
+    ]);
+    const keys = Object.keys(slices[0].tally.camps);
+    assert.equal(keys.length, 1, keys.join(" | "));
+    assert.ok(!/\$|500/.test(keys[0]), keys[0]);
+    assert.match(keys[0], /gift card webinar/);
+    assert.deepEqual(slices[0].tally.camps[keys[0]], {
+      s: 1,
+      o: 1,
+      c: 0,
+      lastOpen: "2026-09-12",
+    });
+  });
+});
+
+// ── D20 and pass 8 call 5 · every first-record row, each at its own moment ─
+
+const gemNote = (g: Gem) => ({
+  accountId: `${GEMS_NS}${ACCT}`,
+  body: renderGemsBody([g]),
+});
+
+describe("the acted sweep reads every first-record row carrying the gem's person (D20, pass 8 call 5)", () => {
+  test("a clocked Outlook send where the person is only a recipient stamps the gem", async () => {
+    const { db, under } = memoryDb([
+      gemNote(acted()),
+      {
+        accountId: ACCT,
+        body: "✉ OL Sep 22 9:12 AM — Re: the model · Antaeus Coe → Greg Williams +1",
+        createdAt: new Date("2026-09-22T12:00:00.000Z"),
+        source: "outlook",
+        actors: "Antaeus Coe → Greg Williams +1",
+        recipients: "Greg Williams, Natalie Borland",
+      },
+    ]);
+    assert.equal(await actedSweep(db), 1);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0].actedDay, "2026-09-22");
+  });
+
+  test("their own reply moves the gem too, not only the operator's sends", async () => {
+    const { db, under } = memoryDb([
+      gemNote(acted()),
+      {
+        accountId: ACCT,
+        body: "✉ OL Sep 23 10:02 AM — Re: the model · Natalie Borland → Antaeus Coe",
+        createdAt: new Date("2026-09-23T12:00:00.000Z"),
+        source: "outlook",
+        actors: "Natalie Borland → Antaeus Coe",
+        recipients: "Antaeus Coe",
+      },
+    ]);
+    assert.equal(await actedSweep(db), 1);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0].actedDay, "2026-09-23");
+  });
+
+  test("a ✕-parked row is hidden from the sweep (X1)", async () => {
+    const { db, under } = memoryDb(
+      [
+        gemNote(acted()),
+        {
+          id: "parked",
+          accountId: ACCT,
+          body: "✉ Re: the model — sent to Natalie Borland.",
+          createdAt: new Date("2026-09-22T15:30:00.000Z"),
+          source: "act-lane",
+          actors: "Antaeus Coe → Natalie Borland",
+          recipients: "natalie.borland@trendpersonnel.com",
+        },
+      ],
+      [{ accountId: "hide:note:parked", status: "parked" }],
+    );
+    assert.equal(await actedSweep(db), 0);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0].actedDay, "");
+  });
+
+  test("the earliest row after the gem's day wins; the gem's own day and another person do not count", () => {
+    const rows = [
+      {
+        day: "2026-09-20",
+        actors: "Antaeus Coe → Natalie Borland",
+        recipients: [],
+        hidden: false,
+      },
+      {
+        day: "2026-09-24",
+        actors: "Natalie Borland → Antaeus Coe",
+        recipients: [],
+        hidden: false,
+      },
+      {
+        day: "2026-09-21",
+        actors: "Antaeus Coe → Greg Williams",
+        recipients: [],
+        hidden: false,
+      },
+      {
+        day: "2026-09-23",
+        actors: "Antaeus Coe → Greg Williams",
+        recipients: ["Natalie Borland"],
+        hidden: false,
+      },
+    ];
+    assert.equal(actedDayFor(acted(), rows), "2026-09-23");
+    assert.equal(actedDayFor(acted({ who: ["Pat Example"] }), rows), "");
+  });
+});
+
+// ── X1 · the distiller's context pack never reads a ✕-parked row ───────────
+
+describe("hidden is hidden: the context pack skips ✕-parked rows (X1)", () => {
+  test("a parked send is neither the last outbound nor a record line", async () => {
+    const { db } = memoryDb(
+      [
+        {
+          id: "seen",
+          accountId: ACCT,
+          body: "✉ Re: intro — sent to Natalie Borland.",
+          createdAt: new Date("2026-09-10T15:00:00.000Z"),
+          source: "act-lane",
+          actors: "Antaeus Coe → Natalie Borland",
+        },
+        {
+          id: "parked",
+          accountId: ACCT,
+          body: "✉ Re: the wrong account entirely — sent to Pat Example.",
+          createdAt: new Date("2026-09-12T15:00:00.000Z"),
+          source: "act-lane",
+          actors: "Antaeus Coe → Pat Example",
+        },
+      ],
+      [{ accountId: "hide:note:parked", status: "parked" }],
+    );
+    const pack = await contextPackFor(ACCT, "Trend Personnel", db);
+    const text = pack.lines.join("\n");
+    assert.ok(!/wrong account|Pat Example/.test(text), text);
+    assert.match(text, /Re: intro/);
+  });
+});
+
+// ── C4 · the run's receipts in plain speech, every count arithmetic ────────
+
+describe("the run's receipt lines are plain and keep their counts (C4)", () => {
+  test("the drop's opening lines", async () => {
+    const next = await sliceOf({ rowKey: "next-row" });
+    const { db, under } = memoryDb();
+    await stageActivityBatch(
+      { dropSha: SHA_B, batchIndex: 0, totalBatches: 2, slices: [next] },
+      db,
+    );
+    await stageActivityBatch(
+      {
+        dropSha: SHA_B,
+        batchIndex: 1,
+        totalBatches: 2,
+        slices: [],
+        manifest: manifestFor(SHA_B, [next], {
+          textRows: 0,
+          headerDiff: { missing: ["Full Comments"], extra: [] },
+          collisions: ["Pat Example"],
+        }),
+      },
+      db,
+    );
+    const store = parseManifestBody(under(MANIFEST_ID)[0].body);
+    const receipt = store?.run.receipt ?? [];
+    assert.ok(receipt.length >= 4, receipt.join("\n"));
+    for (const line of receipt) assert.deepEqual(plainLine(line), [], line);
+    const text = receipt.join("\n");
+    assert.match(text, /9 rows across 1 account/);
+    assert.match(text, /3 rows matched no book account: Advocate Pay LLC with 3/);
+  });
+
+  test("the run's closing lines", async () => {
+    const ids = ["001TESTTRENDHR000A", "001TESTSTAFFLSG00B", "001TESTBACKOFC000C"];
+    const manifest = manifestFor(SHA_B, [], {
+      accounts: ids.map((id) => ({
+        id,
+        name: id,
+        rowsSum: "x",
+        tallySum: "y",
+        rows: 3,
+        humanRows: 3,
+      })),
+    });
+    const closing = async (covered: Record<string, string>, gemsFor: string[]) => {
+      const run = { ...emptyRunState(), phase: "ready" as const, covered };
+      const { db } = memoryDb([
+        {
+          accountId: MANIFEST_ID,
+          body: renderManifestBody({ manifest, run, prior: null }),
+        },
+        ...gemsFor.map((id) => ({
+          accountId: `${GEMS_NS}${id}`,
+          body: renderGemsBody([acted()]),
+        })),
+        ...ids.map((id) => ({
+          accountId: `${ACTIVITY_NS}${id}`,
+          body: renderRollupBody({
+            dropSha: SHA_B,
+            dropDay: "2026-09-20",
+            window: { from: "2026-06-20", to: "2026-09-19" },
+            lanes: { human: 3, csm: 0, support: 0, intent: 0, machinery: 0 },
+            emails: { human: 3, csm: 0, support: 0, intent: 0, machinery: 0 },
+            intent: { s: 0, o: 0, c: 0 },
+            receipts: 0,
+            lastHuman: null,
+            lastOrgInbound: "",
+            lastTheirs: null,
+            actors: [],
+            threads: [],
+            verdict: "",
+          }),
+        })),
+      ]);
+      const r = await runActivityPass({ db });
+      for (const line of r.receipt) assert.deepEqual(plainLine(line), [], line);
+      return r.receipt.join("\n");
+    };
+    const all = await closing(
+      { [ids[0]]: "gems", [ids[1]]: "verdict", [ids[2]]: "verdict" },
+      [ids[0]],
+    );
+    assert.match(all, /Coverage is 100%/);
+    assert.match(all, /All 3 active accounts hold a gem or a verdict/);
+    assert.match(
+      all,
+      /3 accounts distilled\. 1 holds? confirmed gems?, 2 hold a verdict/,
+    );
+    const held = await closing({ [ids[0]]: "gems", [ids[1]]: "held", [ids[2]]: "held" }, [
+      ids[0],
+      ids[1],
+    ]);
+    assert.match(held, /The distiller was down for 2 accounts/);
+    assert.match(
+      held,
+      /COVERAGE FAILED\. 1 active account holds neither a gem nor a verdict/,
+    );
+  });
+});
+
+// ── a new drop is not a re-drop ─────────────────────────────────────────────
+// The store resets to the incoming sha at a drop's first batch, so the old
+// same-sha test was always true at its last: every account that already held
+// a rollup counted as covered, and a new drop distilled only new accounts.
+// The rollup's own head names its drop, and that is the test now.
+
+describe("a new drop distills what changed; only the same file again costs nothing", () => {
+  const rollupBody = (sha: string) =>
+    renderRollupBody({
+      dropSha: sha,
+      dropDay: "2026-09-13",
+      window: { from: "2026-06-13", to: "2026-09-12" },
+      lanes: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+      emails: { human: 1, csm: 0, support: 0, intent: 0, machinery: 0 },
+      intent: { s: 0, o: 0, c: 0 },
+      receipts: 0,
+      lastHuman: null,
+      lastOrgInbound: "",
+      lastTheirs: null,
+      actors: [],
+      threads: [],
+      verdict: "",
+    });
+
+  const dropTwice = async (rollupSha: string) => {
+    const prior = await sliceOf({ rowKey: "prior-row" });
+    const next = await sliceOf({ rowKey: "next-row" });
+    const done = {
+      manifest: manifestFor(SHA_A, [prior]),
+      run: { ...emptyRunState(), phase: "done" as const, covered: {} },
+      prior: null,
+    };
+    const { db } = memoryDb([
+      { accountId: MANIFEST_ID, body: renderManifestBody(done) },
+      { accountId: `${STAGE_NS}${ACCT}`, body: renderStageBody(prior, SHA_A) },
+      { accountId: `${ACTIVITY_NS}${ACCT}`, body: rollupBody(rollupSha) },
+    ]);
+    await stageActivityBatch(
+      { dropSha: SHA_B, batchIndex: 0, totalBatches: 2, slices: [next] },
+      db,
+    );
+    return stageActivityBatch(
+      {
+        dropSha: SHA_B,
+        batchIndex: 1,
+        totalBatches: 2,
+        slices: [],
+        manifest: manifestFor(SHA_B, [next]),
+      },
+      db,
+    );
+  };
+
+  test("an account whose rollup came from the last drop and whose rows changed waits to be distilled", async () => {
+    const reply = await dropTwice(SHA_A);
+    assert.deepEqual(reply.queued, { distill: 1, intentOnly: 0 });
+  });
+
+  test("an account whose rollup this very drop wrote stays covered", async () => {
+    const reply = await dropTwice(SHA_B);
+    assert.deepEqual(reply.queued, { distill: 0, intentOnly: 0 });
   });
 });

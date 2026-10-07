@@ -77,3 +77,19 @@
   font-size: 12px;
   color: rgba(10, 28, 64, 0.66);
 }
+
+/* The status line as the door to its receipt: the same quiet line, with the
+   hover the fold takes. */
+.lineDoor {
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lineDoor:hover {
+  color: #2563eb;
+}

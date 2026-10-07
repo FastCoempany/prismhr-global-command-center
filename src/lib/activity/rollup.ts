@@ -51,7 +51,7 @@ export type Rollup = {
   lastTheirs: { day: string; who: string; subject: string } | null;
   actors: ActorTally[];
   threads: NotableThread[];
-  /** Present only when no gems survived — the arithmetic honesty line. */
+  /** Present only when no gems survived: the arithmetic verdict line. */
   verdict: string;
 };
 
@@ -279,18 +279,20 @@ export function buildRollup(inp: {
   };
 }
 
-/** The honesty line for an account with no surviving gems — arithmetic
- *  sentences from the rollup, never model text. */
+/** The verdict for an account with no surviving gems: arithmetic sentences
+ *  from the rollup, never model text. It rides the run's receipt and the
+ *  Accounts verdict cell, so it reads as a flat clause with no dash hinge
+ *  (C4; the writing canon and the plain-speech law). */
 export function verdictLine(r: Rollup): string {
   const human = r.lanes.human + r.lanes.csm;
   const blasts = r.intent.s + r.intent.o + r.intent.c;
   if (human === 0 && r.lanes.support === 0 && blasts > 0)
-    return `machinery only — ${blasts} blast receipts, no human motion`;
+    return `machinery only, ${blasts} blast receipts and no human motion`;
   if (human === 0 && r.lanes.support > 0)
-    return `support traffic only — ${r.lanes.support} case rows, no sales motion`;
+    return `support traffic only, ${r.lanes.support} case rows and no sales motion`;
   if (human === 0 && blasts === 0) return `no motion at all in the window`;
-  if (!r.lastHuman) return `logging only — ${human} rows, none a person moving`;
-  return `${human} human rows, latest ${r.lastHuman.day} — nothing actionable beyond the record's own read`;
+  if (!r.lastHuman) return `logging only, ${human} rows and none of them a person moving`;
+  return `${human} human rows, the latest on ${r.lastHuman.day}, and nothing to act on beyond what the record shows`;
 }
 
 // ── intent windows (the intent:<id> store's arithmetic) ─────────────────────
