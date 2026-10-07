@@ -15,14 +15,17 @@ import {
 } from "../src/lib/activity/excerpt";
 import {
   collisionFor,
+  deskLineFor,
   engagedNeverIntroduced,
   intentWarm,
+  liveDigestRefs,
   orgInboundKey,
   outreachGem,
   verifiedCold,
   dropAgeDays,
   type SecondRecord,
 } from "../src/lib/activity/read";
+import { render, textOf } from "./helpers/room-render";
 import { buildQueue } from "../src/lib/groundwork/day";
 import { readAccount } from "../src/lib/record/read";
 
@@ -43,6 +46,7 @@ import { composeFor } from "../src/lib/groundwork/compose";
 import type { Peo } from "../src/lib/book";
 import type { Rollup, IntentWindows } from "../src/lib/activity/rollup";
 import type { Gem } from "../src/lib/activity/stores";
+import type { StagedRow } from "../src/lib/activity/types";
 
 const NOW = new Date("2026-08-20T15:00:00Z"); // 10:00a Chicago, a Thursday
 
@@ -723,6 +727,163 @@ describe("the ring reads the second record", () => {
     assert.ok(smuggled);
     assert.ok(!smuggled.body.includes("must never travel"));
     assert.ok(!smuggled.body.includes("activity:stage"));
+  });
+});
+
+// ── A1 · the draft desk's one line cites its row or says nothing ──────────
+
+const staged = (over: Partial<StagedRow>): StagedRow => ({
+  k: "row-0",
+  d: "2026-09-12",
+  s: "Re: the model",
+  a: "Antaeus Coe",
+  lane: "human",
+  sub: "Email",
+  rt: "",
+  ct: "",
+  fl: "",
+  ...over,
+});
+
+describe("the draft desk's line is evidence or nothing (A1, D19)", () => {
+  test("Salesforce's bare datetime never speaks, and never as their voice", () => {
+    const desk = deskLineFor(
+      "pat@example.com",
+      [],
+      rollup({
+        lastOrgInbound: "2026-09-22 09:00",
+        lastHuman: {
+          day: "2026-09-12",
+          how: "email",
+          who: "",
+          kind: "unresolved",
+          subject: "x",
+        },
+      }),
+    );
+    assert.deepEqual(desk, { line: "", cite: null });
+  });
+
+  test("every line it does say cites the row it stands on", () => {
+    const sent = staged({ k: "ours", d: "2026-09-12", s: "Re: the model" });
+    const theirs = staged({
+      k: "theirs",
+      d: "2026-09-18",
+      s: "Re: pricing [ thread::abc ]",
+      a: "Automated Process",
+      w: "Dana Whitfield",
+    });
+    const rows = [theirs, sent];
+    // Nobody named: their last attributed word, at its row.
+    const said = deskLineFor(
+      "nobody@else.com",
+      rows,
+      rollup({
+        lastOrgInbound: "2026-09-22 09:00",
+        lastTheirs: { day: "2026-09-18", who: "Dana Whitfield", subject: "Re: pricing" },
+      }),
+    );
+    assert.equal(said.line, "Dana wrote 09/18: Re: pricing.");
+    assert.equal(said.cite?.k, "theirs");
+    // No attributed word: the last human motion, at its row.
+    const ahead = staged({ k: "due", d: "2027-03-26", s: "Follow up", fl: "f" });
+    const last = deskLineFor("nobody@else.com", [ahead, sent], rollup({}));
+    assert.equal(last.line, "Last touched 09/12: Re: the model.");
+    assert.equal(last.cite?.k, "ours");
+    // The person named on a row: that row.
+    const named = deskLineFor("Dana Whitfield", rows, rollup({}));
+    assert.equal(named.line, "Dana was on the 09/18 email: Re: pricing.");
+    assert.equal(named.cite?.k, "theirs");
+    for (const d of [said, last, named]) {
+      assert.ok(d.cite, d.line);
+      assert.ok(!/—|org-side|Nobody has touched/.test(d.line), d.line);
+    }
+  });
+});
+
+// ── R5 · the brain keeps only the drop the store holds ─────────────────────
+
+describe("an older drop's digest leaves the brain's live set (R5, A4.1)", () => {
+  test("the current drop's digest is live; last week's and a taken-back drop's are not", () => {
+    const body = (sha: string) =>
+      `⌗ ACTIVITY · drop ${sha} · 2026-09-20 · window 2026-06-20→2026-09-19\nLANES · human 4`;
+    const refOf = (sha: string) =>
+      mirrorActivityDigest({
+        accountId: "A1",
+        accountName: "Test Partner",
+        dropSha: sha,
+        dropDay: "2026-09-20",
+        rollupBody: body(sha),
+        gemsBody: "",
+      })?.originRef ?? "";
+    const live = liveDigestRefs([
+      { accountId: "activity:A1", body: body("bbbbbbbb") },
+      { accountId: "activity:stage:A1", body: body("cccccccc") },
+      { accountId: "activity:manifest", body: "{}" },
+    ]);
+    assert.ok(live.has(refOf("bbbbbbbb")));
+    assert.equal(live.has(refOf("aaaaaaaa")), false, "last week's digest stays live");
+    assert.equal(live.size, 1, "a staged slice or the manifest keeps nothing alive");
+    // After a take-back the store holds no rollup, and nothing is live.
+    assert.equal(liveDigestRefs([]).size, 0);
+  });
+});
+
+// ── X4 · the dock speaks plainly and its lines open ─────────────────────────
+
+describe("the Intranet dock's lines are plain, and a compressed line opens (X4)", async () => {
+  const dock = await import("../src/app/activity/dock");
+  test("the copy carries no dash hinge, no coined phrase, and its counts", () => {
+    const lines = [
+      dock.idleLine("", ""),
+      dock.idleLine("2026-10-06", "done"),
+      dock.idleLine("2026-10-06", "refused"),
+      dock.idleLine("2026-10-06", "failed-coverage"),
+      dock.progressLine(1),
+      dock.progressLine(12),
+      dock.stoppedLine(3),
+      dock.countsLine({
+        rows: 67872,
+        accounts: 124,
+        textRows: 4100,
+        distill: 40,
+        intentOnly: 9,
+      }),
+      dock.TAKE_BACK_ARMED,
+    ];
+    for (const l of lines) {
+      assert.ok(!/—/.test(l), l);
+      assert.ok(!/gadget|nothing is restored|tally-only/i.test(l), l);
+    }
+    assert.equal(dock.idleLine("2026-10-06", "done"), "The 10/06 drop is distilled.");
+    assert.equal(dock.progressLine(1), "Distilling. 1 account left.");
+    assert.match(lines[7], /67872 rows across 124 accounts, 4100 with email text/);
+    assert.match(lines[7], /40 accounts to distill and 9 with only a tally to refresh/);
+  });
+
+  test("with a receipt behind it the line is a door to the receipt; with none it is text", async () => {
+    const door = await render(
+      dock.DockLine({
+        text: "The 10/06 drop is distilled.",
+        receipt: 4,
+        open: false,
+        onToggle: () => {},
+      }),
+    );
+    assert.match(
+      door,
+      /^<button[^>]*title="Open the receipt\."[^>]*aria-expanded="false"/,
+    );
+    assert.equal(textOf(door), "The 10/06 drop is distilled.");
+    const plain = await render(
+      dock.DockLine({
+        text: "Drop the weekly activity export here.",
+        receipt: 0,
+        open: false,
+        onToggle: () => {},
+      }),
+    );
+    assert.match(plain, /^<span/);
   });
 });
 

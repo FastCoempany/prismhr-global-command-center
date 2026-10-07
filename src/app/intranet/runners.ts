@@ -65,6 +65,12 @@ import { getScreen } from "@/lib/catalog";
 import { accountsMentioned } from "@/lib/intranet/bridges";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
 import { recordRowsWhere } from "@/lib/notes/record-rows";
+import {
+  HIDE_NOTE_PREFIX,
+  HIDE_TODO_PREFIX,
+  hiddenIds,
+  liveDigestRefs,
+} from "@/lib/activity/read";
 import type { Claim, Topic } from "@/lib/intranet/types";
 
 export type RunReport = {
@@ -145,12 +151,17 @@ export async function syncApp(budget = 400): Promise<RunReport> {
 
   try {
     const drafts: MirrorDoc[] = [];
+    const hidden = await hiddenRows();
 
     // The namespaces leave in the query, never after it: a budget of 400
     // rows is 400 record rows, whatever the scratch pad or the second
-    // record's slices wrote that day (ruled 2026-09-25, D30).
+    // record's slices wrote that day (ruled 2026-09-25, D30). A ✕-parked row
+    // leaves the same way: hidden is hidden, in the brain too (X1).
     const notes = await prisma.accountNote.findMany({
-      where: recordRowsWhere(),
+      where:
+        hidden.notes.size > 0
+          ? { AND: [recordRowsWhere(), { id: { notIn: [...hidden.notes] } }] }
+          : recordRowsWhere(),
       orderBy: { createdAt: "desc" },
       take: budget,
     });
@@ -173,7 +184,10 @@ export async function syncApp(budget = 400): Promise<RunReport> {
     }
 
     const todos = await prisma.todo.findMany({
-      where: { accountId: { not: "" } },
+      where: {
+        accountId: { not: "" },
+        ...(hidden.todos.size > 0 ? { id: { notIn: [...hidden.todos] } } : {}),
+      },
       orderBy: { createdAt: "desc" },
       take: budget,
     });
@@ -314,7 +328,7 @@ export async function syncApp(budget = 400): Promise<RunReport> {
     );
 
     // C6 · a mirror whose home row has gone keeps its place and gains a stamp.
-    const gone = await markVanished();
+    const gone = await markVanished(hidden);
     if (gone > 0)
       lines.push(`${gone} row${gone === 1 ? "" : "s"} left the app — kept here, marked.`);
 
@@ -340,11 +354,19 @@ async function upsertDocs(drafts: MirrorDoc[]) {
     const sum = checksum(d.body);
     const existing = await prisma.intranetDoc.findUnique({
       where: { origin_originRef: { origin: d.origin, originRef: d.originRef } },
-      select: { id: true, checksum: true },
+      select: { id: true, checksum: true, originGone: true },
     });
     const verdict = syncVerdict(existing?.checksum ?? null, sum);
     if (verdict === "skip") {
-      skipped += 1;
+      // A row marked gone that is back, un-hidden or re-dropped unchanged,
+      // loses its mark; its text is the same, so nothing is read again.
+      if (existing?.originGone) {
+        await prisma.intranetDoc.update({
+          where: { id: existing.id },
+          data: { originGone: null },
+        });
+        updated += 1;
+      } else skipped += 1;
       continue;
     }
     const data = {
@@ -372,11 +394,35 @@ async function upsertDocs(drafts: MirrorDoc[]) {
   return { created, updated, skipped };
 }
 
+/** The record rows the operator ✕-parked, notes and sheet lines (X1). A
+ *  failed read hides nothing rather than stop the sync. */
+async function hiddenRows(): Promise<{ notes: Set<string>; todos: Set<string> }> {
+  try {
+    const markers = await getPrisma().accountDisposition.findMany({
+      where: { accountId: { startsWith: "hide:" } },
+      select: { accountId: true, status: true },
+    });
+    return {
+      notes: hiddenIds(markers, HIDE_NOTE_PREFIX),
+      todos: hiddenIds(markers, HIDE_TODO_PREFIX),
+    };
+  } catch {
+    return { notes: new Set(), todos: new Set() };
+  }
+}
+
 /** Mark mirrors whose home rows have disappeared. Never a delete — the brain
  *  remembers what the app forgot, which is the whole point of C6. The playbook
  *  origin joined 2026-08-24: a retired question's mirror doc otherwise teaches
- *  a question the bank no longer asks, forever. */
-async function markVanished(): Promise<number> {
+ *  a question the bank no longer asks, forever. The activity origin joined
+ *  2026-10-07 (pass 8 R5, A4.1): each drop files a digest under its own sha,
+ *  so last week's rollup and gems stayed live in the brain beside this
+ *  week's, and after a take-back with nothing at all behind them. A ✕-parked
+ *  row counts as gone too (X1). */
+async function markVanished(hidden: {
+  notes: Set<string>;
+  todos: Set<string>;
+}): Promise<number> {
   const prisma = getPrisma();
   let n = 0;
   const { DISCOVERY } = await import("@/lib/intel/discovery");
@@ -384,10 +430,32 @@ async function markVanished(): Promise<number> {
   const { SCENARIOS } = await import("@/lib/intel/scenarios");
   const bankIds = new Set([...DISCOVERY, ...PRODUCT_BANK].map((q) => q.id));
   const scenarioIds = new Set(SCENARIOS.map((s) => s.id));
+  // The digests the stored rollups keep alive: `<account>:<drop sha8>`.
+  const liveDigests = liveDigestRefs(
+    await prisma.accountNote.findMany({
+      where: {
+        accountId: { startsWith: "activity:" },
+        NOT: [
+          { accountId: { startsWith: "activity:stage:" } },
+          { accountId: "activity:manifest" },
+        ],
+      },
+      select: { accountId: true, body: true },
+    }),
+  );
   const mirrored = await prisma.intranetDoc.findMany({
     where: {
       origin: {
-        in: ["account-note", "todo", "touch", "partner-note", "card", "demo", "playbook"],
+        in: [
+          "account-note",
+          "todo",
+          "touch",
+          "partner-note",
+          "card",
+          "demo",
+          "playbook",
+          "activity",
+        ],
       },
       originGone: null,
     },
@@ -398,19 +466,24 @@ async function markVanished(): Promise<number> {
     let alive = true;
     try {
       if (m.origin === "account-note")
-        alive = Boolean(
-          await prisma.accountNote.findUnique({
-            where: { id: m.originRef },
-            select: { id: true },
-          }),
-        );
+        alive =
+          !hidden.notes.has(m.originRef) &&
+          Boolean(
+            await prisma.accountNote.findUnique({
+              where: { id: m.originRef },
+              select: { id: true },
+            }),
+          );
       else if (m.origin === "todo")
-        alive = Boolean(
-          await prisma.todo.findUnique({
-            where: { id: m.originRef },
-            select: { id: true },
-          }),
-        );
+        alive =
+          !hidden.todos.has(m.originRef) &&
+          Boolean(
+            await prisma.todo.findUnique({
+              where: { id: m.originRef },
+              select: { id: true },
+            }),
+          );
+      else if (m.origin === "activity") alive = liveDigests.has(m.originRef);
       else if (m.origin === "touch")
         alive = Boolean(
           await prisma.touch.findUnique({

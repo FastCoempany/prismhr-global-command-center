@@ -16,7 +16,20 @@ export const GEMS_NS = "gems:";
 export const SUPPORT_NS = "support:";
 export const INTENT_NS = "intent:";
 export const STAGE_NS = "activity:stage:";
+/** A slice waits here until its drop's manifest verifies the whole upload;
+ *  only then does it replace the slice under STAGE_NS (ruled 2026-09-25, D17:
+ *  slices land in a pending drop, the manifest verifies the whole, then the
+ *  drop swaps in, and a refused upload leaves the prior drop untouched). It
+ *  sits under STAGE_NS on purpose: every read that keeps the heavy slices out
+ *  of a page's query, the mirror's and the faces', already excludes that
+ *  prefix, and the take-back's ACTIVITY_NS span clears it with the rest. */
+export const STAGE_PENDING_NS = "activity:stage:pending:";
 export const MANIFEST_ID = "activity:manifest";
+/** The operator's acted stamps whose gems are not in the store right now
+ *  (ruled 2026-09-25, D18: the acted stamp is the first record; it survives
+ *  the take-back and re-attaches by gem key). Deliberately outside every
+ *  SECOND_RECORD_SPANS prefix, so the take-back never reaches it. */
+export const ACTED_NS = "acted:";
 
 const ROLLUP_CAP = 4_000;
 const GEMS_CAP = 2_600;
@@ -262,6 +275,87 @@ export function parseGemsBody(body: string): Gem[] {
     });
   }
   return out;
+}
+
+// ── the acted ledger (acted:<id>) — D18 ─────────────────────────────────────
+// The hand stamp and the acted sweep write actedDay into the gems body, which
+// is the second record's own span. Two things used to throw it away: the
+// take-back, which deletes every gems note, and every drop that re-distilled
+// the account, which wrote fresh gems with no stamp on them. The stamp is the
+// operator's, the first record, so neither may lose it. Before a gems note is
+// replaced or removed, its stamps are read out; a fresh gem with the same key
+// takes its stamp back, and a stamp whose gem is not in this drop waits here
+// for a later drop that finds it.
+
+/** One acted stamp, held by the gem's key. */
+export type ActedStamp = { key: string; day: string };
+
+const normKey = (s: string): string =>
+  sv(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9@.' -]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** The gem key: its term and its people, normalized and order-free. The hand
+ *  stamp finds a gem by its term within the account (src/app/accounts/
+ *  act-actions.ts); the people ride with it so a later gem that happens to
+ *  reuse a term about someone else is a different gem. */
+export function gemKey(g: Pick<Gem, "term" | "who">): string {
+  const who = g.who.map(normKey).filter(Boolean).sort().join("; ");
+  return `${normKey(g.term)} · ${who}`;
+}
+
+/** The stamps a gems body carries, keyed. */
+export function actedStampsOf(gems: readonly Gem[]): ActedStamp[] {
+  return gems.filter((g) => g.actedDay).map((g) => ({ key: gemKey(g), day: g.actedDay }));
+}
+
+export function renderActedBody(stamps: readonly ActedStamp[]): string {
+  return stamps.map((s) => `✓ ACTED · ${s.day} · ${s.key}`).join("\n");
+}
+
+export function parseActedBody(body: string): ActedStamp[] {
+  const out: ActedStamp[] = [];
+  for (const line of (body ?? "").split("\n")) {
+    const m = /^✓ ACTED · (\d{4}-\d{2}-\d{2}) · (.+)$/.exec(line.trim());
+    if (m) out.push({ key: m[2].trim(), day: m[1] });
+  }
+  return out;
+}
+
+/** Stamp lists merged, one stamp per key; an earlier list wins a key. */
+export function mergeActedStamps(
+  ...lists: readonly (readonly ActedStamp[])[]
+): ActedStamp[] {
+  const out = new Map<string, ActedStamp>();
+  for (const list of lists) for (const s of list) if (!out.has(s.key)) out.set(s.key, s);
+  return [...out.values()];
+}
+
+/** Re-attach stamps to fresh gems by key (D18). A stamp re-attaches only when
+ *  the gem it lands on carries no newer evidence than the stamp: a gem whose
+ *  newest cited day is after the day the operator acted is new motion, and
+ *  the old stamp does not answer it. Earlier stamps in the list win a key, so
+ *  the caller puts the gems body it is replacing ahead of the ledger. Returns
+ *  the gems, stamped, and every stamp that found no gem, to keep. */
+export function reattachActed(
+  gems: readonly Gem[],
+  stamps: readonly ActedStamp[],
+): { gems: Gem[]; left: ActedStamp[] } {
+  const byKey = new Map(mergeActedStamps(stamps).map((s) => [s.key, s]));
+  const used = new Set<string>();
+  const out = gems.map((g) => {
+    const key = gemKey(g);
+    const s = byKey.get(key);
+    if (!s) return g;
+    used.add(key);
+    if (g.actedDay) return g;
+    if (g.whenDay && g.whenDay > s.day) return g;
+    return { ...g, actedDay: s.day };
+  });
+  const left = [...byKey.values()].filter((s) => !used.has(s.key));
+  return { gems: out, left };
 }
 
 // ── the support grammar (support:<id>) ──────────────────────────────────────

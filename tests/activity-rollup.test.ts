@@ -221,7 +221,7 @@ test("verdict lines are arithmetic sentences", () => {
     }),
     ...ctx,
   });
-  assert.match(verdictLine(machineryOnly), /machinery only — 15 blast receipts/);
+  assert.match(verdictLine(machineryOnly), /machinery only, 15 blast receipts/);
   const supportOnly = buildRollup({
     slice: mkSlice([mkRow({ lane: "support", s: "Email: PrismHR Case 1: help" })], {
       laneEmails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
@@ -230,7 +230,7 @@ test("verdict lines are arithmetic sentences", () => {
     }),
     ...ctx,
   });
-  assert.match(verdictLine(supportOnly), /support traffic only — 9 case rows/);
+  assert.match(verdictLine(supportOnly), /support traffic only, 9 case rows/);
 });
 
 test("support themes: case machinery stripped from labels, spike found", () => {

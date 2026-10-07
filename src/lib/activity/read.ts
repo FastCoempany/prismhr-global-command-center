@@ -8,6 +8,10 @@
 import { accountIdsOf, canonicalAccountId } from "@/lib/book/merge";
 import { getPrisma } from "@/lib/db";
 import { MINE_RE } from "@/lib/intel/provenance";
+import { LOADED_DISPOSITION_STATUSES } from "@/lib/today/overlay";
+import { rowPerson } from "./classify";
+import { cleanSubject } from "./excerpt";
+import { isHumanMotion } from "./rollup";
 import type { Gem } from "./stores";
 import {
   ACTIVITY_NS,
@@ -290,6 +294,123 @@ export async function fetchStageRows(accountId: string): Promise<StagedRow[]> {
     });
   }
   return foldStageRows(slices);
+}
+
+// ── hidden is hidden (X1) ───────────────────────────────────────────────────
+// A ✕-parked record row is a `hide:note:<id>` disposition, and a ✕-parked
+// sheet line a `hide:todo:<id>` one (src/app/room/actions.ts writes both).
+// The account read drops a parked row from every derived fact
+// (src/lib/record/read.ts); the second record's own readers of the first
+// record, the distiller's context pack, the acted sweep and the intranet
+// mirror, drop it the same way. A marker counts exactly when the page's
+// disposition load would keep it.
+
+export const HIDE_NOTE_PREFIX = "hide:note:";
+export const HIDE_TODO_PREFIX = "hide:todo:";
+
+/** The row ids a set of hide markers parks, for one prefix. Pure. */
+export function hiddenIds(
+  markers: readonly { accountId: string; status: string }[],
+  prefix: string = HIDE_NOTE_PREFIX,
+): Set<string> {
+  const kept = LOADED_DISPOSITION_STATUSES as readonly string[];
+  const out = new Set<string>();
+  for (const m of markers)
+    if (m.accountId.startsWith(prefix) && kept.includes(m.status))
+      out.add(m.accountId.slice(prefix.length));
+  return out;
+}
+
+// ── the draft desk's one line (5.2; D19; evidence or nothing) ───────────────
+// A per-person read of both records, one line, and every line cites the row
+// it stands on or says nothing. Salesforce's account-level Last Email
+// Received is a datetime with no row behind it, so it never speaks here: it
+// is never their voice (D19), and a line with no row has no cite. Priority: a
+// row naming the person, then the account's last attributed word, then the
+// last human motion. Pure; the evidence route serves it.
+
+const mmdd = (d: string): string => (d ? d.slice(5).replace("-", "/") : "");
+
+const firstOf = (name: string): string => (name ?? "").trim().split(/\s+/)[0] ?? "";
+
+/** What kind of row it is, in the words the line uses. */
+const rowKind = (r: StagedRow): "email" | "call" | "meeting" | "task" =>
+  r.ct ? "call" : r.fl.includes("e") ? "meeting" : r.sub === "Email" ? "email" : "task";
+
+export type DeskLine = { line: string; cite: StagedRow | null };
+
+export function deskLineFor(
+  who: string,
+  rows: readonly StagedRow[],
+  rollup: Rollup | null,
+): DeskLine {
+  const needle = (who ?? "").trim().toLowerCase();
+  const nameBits = needle
+    .split(/[@\s.]+/)
+    .filter((x) => x.length >= 3)
+    .slice(0, 2);
+  const hit =
+    needle.length >= 3
+      ? rows.find((r) => {
+          const hay = `${r.s} ${r.a} ${r.w ?? ""} ${r.c ?? ""}`.toLowerCase();
+          return (
+            hay.includes(needle) ||
+            (nameBits.length > 1 && nameBits.every((b) => hay.includes(b)))
+          );
+        })
+      : undefined;
+  if (hit) {
+    const first = firstOf(rowPerson(hit)) || firstOf(who) || "Someone";
+    const subject = cleanSubject(hit.s).slice(0, 60);
+    const kind = rowKind(hit);
+    const where =
+      kind === "task"
+        ? `came up in a ${mmdd(hit.d)} task`
+        : kind === "meeting"
+          ? `was at the ${mmdd(hit.d)} meeting`
+          : `was on the ${mmdd(hit.d)} ${kind}`;
+    return { line: `${first} ${where}: ${subject}.`, cite: hit };
+  }
+  // Their last attributed word, at the row the rollup read it from.
+  const lt = rollup?.lastTheirs;
+  if (lt) {
+    const row = rows.find((r) => r.d === lt.day && rowPerson(r) === lt.who);
+    if (row)
+      return {
+        line: `${firstOf(lt.who)} wrote ${mmdd(row.d)}: ${cleanSubject(row.s).slice(0, 60)}.`,
+        cite: row,
+      };
+  }
+  // The last time a person moved on the account, at its row. A row dated
+  // ahead is a due date, not a thing that happened (the "f" flag).
+  const last = rows.filter((r) => isHumanMotion(r) && !r.fl.includes("f"))[0];
+  if (last)
+    return {
+      line: `Last touched ${mmdd(last.d)}: ${cleanSubject(last.s).slice(0, 60)}.`,
+      cite: last,
+    };
+  return { line: "", cite: null };
+}
+
+// ── the brain's copy of the drop (R5; A4.1) ─────────────────────────────────
+// The mirror files one intranet doc per account per drop, keyed
+// `<account>:<drop sha8>` (src/lib/intranet/mirror.ts mirrorActivityDigest).
+// The doc is live while that account's rollup still comes from that drop; a
+// newer drop or a take-back leaves the old doc with no home row, and the
+// mirror marks it, the way it marks any row that left the app.
+
+/** The digest refs the second record's stored rollups keep alive. Pure. */
+export function liveDigestRefs(
+  rollupNotes: readonly { accountId: string; body: string }[],
+): Set<string> {
+  const out = new Set<string>();
+  for (const n of rollupNotes) {
+    if (!n.accountId.startsWith(ACTIVITY_NS)) continue;
+    if (n.accountId.startsWith(STAGE_NS) || n.accountId === MANIFEST_ID) continue;
+    const head = /^⌗ ACTIVITY · drop (\S+) · /.exec(n.body ?? "");
+    if (head) out.add(`${n.accountId.slice(ACTIVITY_NS.length)}:${head[1]}`);
+  }
+  return out;
 }
 
 const DAY = 86_400_000;

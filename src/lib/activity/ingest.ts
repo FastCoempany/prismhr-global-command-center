@@ -4,6 +4,7 @@
 // production does.
 
 import { redactMoney } from "@/lib/intel/lexicon";
+import { isHomeSideName } from "@/lib/intel/provenance";
 import { resolveSfId } from "@/lib/salesforce";
 import { cleanExcerpt, correspondentsOf, senderOf } from "./excerpt";
 import { laneOf, type ActivityLane } from "./classify";
@@ -98,12 +99,22 @@ export function createIngest(
   const seen = new Map<string, number>();
   const buckets = new Map<string, Bucket>();
   const unmatched = new Map<string, { name: string; id18: string; rows: number }>();
-  // name → the accounts it was Assigned on. The colleague rule is ≥2 distinct
-  // accounts: the export's Assigned column carries ACCOUNT PEOPLE too (their
-  // captured emails log under their own name — Natalie Borland, measured
-  // 2026-08-20), and an account person only ever assigns on their own
-  // account. Book CSMs and EXTRA_PARTNERS join server-side regardless.
+  // The colleague read (ruled 2026-09-25, D19; pass 8 call 10): a colleague
+  // is a person the book names as internal or whose address is on our
+  // domain, and the two-accounts count is the fallback only for a row with
+  // no address. The export's Assigned column carries ACCOUNT PEOPLE too
+  // (their captured emails log under their own name, Natalie Borland,
+  // measured 2026-08-20), so a name Assigned on two accounts is not enough
+  // when a row says who they are. The address a row carries for a person is
+  // their signature's own (senderOf reads the name and the address together
+  // and speaks only when they agree). The book's CSMs and EXTRA_PARTNERS
+  // join server-side and win regardless (deriveColleagues).
+  //
+  // name → the accounts it was Assigned on, counted only from rows that
+  // carry no address for that name.
   const assigned = new Map<string, Set<string>>();
+  // name → whether a row showed their address on our domain, or elsewhere.
+  const addressed = new Map<string, { ours: boolean; theirs: boolean }>();
   const contacts = new Set<string>();
   const laneTotals: Record<ActivityLane, number> = {
     human: 0,
@@ -155,8 +166,16 @@ export function createIngest(
     const read = laneOf(r);
     laneTotals[read.lane] += 1;
     if (read.flags.receipt) receiptRows += 1;
+    // The signature names the writer and their address together, or neither.
+    const sender = r.comments ? senderOf(r.comments) : { name: "", email: "" };
+    if (sender.name && sender.email) {
+      const seen = addressed.get(sender.name) ?? { ours: false, theirs: false };
+      if (isHomeSideName(sender.email, [])) seen.ours = true;
+      else seen.theirs = true;
+      addressed.set(sender.name, seen);
+    }
     const who = (r.assigned ?? "").trim();
-    if (who) {
+    if (who && !(sender.email && sender.name === who)) {
       const set = assigned.get(who) ?? new Set<string>();
       set.add(r.id18 || "~none");
       assigned.set(who, set);
@@ -241,11 +260,15 @@ export function createIngest(
       if (read.intentKind === "sent") dayRow.s += 1;
       else if (read.intentKind === "opened") dayRow.o += 1;
       else dayRow.c += 1;
+      // The title is redacted BEFORE it keys the count (pass 8 call 14):
+      // titles are arithmetic and may upload (D21), so a figure in one never
+      // rides the tally, and two titles that differ only by a figure are one
+      // campaign.
+      const title = read.campaign ? redactMoney(read.campaign) : "~other";
       const campKey =
-        Object.keys(b.tally.camps).length >= CAMPAIGN_KEY_CAP &&
-        !((read.campaign ?? "~other") in b.tally.camps)
+        Object.keys(b.tally.camps).length >= CAMPAIGN_KEY_CAP && !(title in b.tally.camps)
           ? "~other"
-          : (read.campaign ?? "~other");
+          : title;
       const camp = (b.tally.camps[campKey] ??= { s: 0, o: 0, c: 0, lastOpen: "" });
       if (read.intentKind === "sent") camp.s += 1;
       else if (read.intentKind === "opened") {
@@ -295,7 +318,7 @@ export function createIngest(
         : undefined,
       // Also read before the cleaner: the sign-off is the only place the
       // export says who typed the words. Absent when it doesn't say.
-      w: r.comments ? senderOf(r.comments).name || undefined : undefined,
+      w: sender.name || undefined,
     };
     b.rows.push(staged);
     b.byKey.set(key0, staged);
@@ -355,18 +378,20 @@ export function createIngest(
       rowCount,
     );
 
-    // The colleague roster: assigned on two or more distinct accounts. A
-    // single-account assigned name reads as that account's person, not a
-    // colleague. The server unions in the book's CSMs and EXTRA_PARTNERS (the
-    // roster rule as blessed 2026-08-20: derived from the file each drop,
-    // never a hand-kept list). Collisions named now. D19 rules the book's
-    // internal names and our domain the first read, with this two-accounts
-    // count the fallback only for a row with no address (ruled 2026-09-25 —
-    // CLAUDE.md, The second record :489); the code still counts first.
-    const colleagues = [...assigned.entries()]
-      .filter(([, accts]) => accts.size >= 2)
-      .map(([name]) => name)
-      .sort();
+    // The colleague roster, D19's order (the roster rule as blessed
+    // 2026-08-20: derived from the file each drop, never a hand-kept list).
+    // Our domain first: anyone whose own address is ours. Then the fallback:
+    // a name Assigned on two or more distinct accounts on rows that carried
+    // no address for them, and never a name whose own address is elsewhere.
+    // The server unions in the book's internal names on top. Collisions are
+    // named now.
+    const roster = new Set<string>();
+    for (const [name, seen] of addressed) if (seen.ours) roster.add(name);
+    for (const [name, accts] of assigned) {
+      const seen = addressed.get(name);
+      if (accts.size >= 2 && !seen?.theirs) roster.add(name);
+    }
+    const colleagues = [...roster].sort();
     const colleagueSet = new Set(colleagues);
     const collisions = [...contacts].filter((c) => colleagueSet.has(c)).sort();
 

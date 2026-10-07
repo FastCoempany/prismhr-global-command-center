@@ -325,6 +325,7 @@ test("terms: two words, labels not sentences", () => {
 // take-back clears. A new namespace that collides fails the build here.
 
 const APP_NAMESPACES = [
+  "acted:",
   "actdraft:",
   "gaps:",
   "hide:",

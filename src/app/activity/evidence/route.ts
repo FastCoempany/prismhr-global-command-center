@@ -8,12 +8,12 @@
 //   ?acct=<id>&case=<number>   → a case's timeline (rows + excerpts)
 //   ?acct=<id>&theme=<label>   → the theme's case list (numbers · dates · actors)
 //   ?acct=<id>&camps=1         → the intent store's campaign table
-//   ?acct=<id>&who=<name>      → the draft desk's one line for a recipient
+//   ?acct=<id>&who=<name>      → the draft desk's one cited line for a recipient
 
 import { NextResponse } from "next/server";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
-import { fetchSecondRecordFor, fetchStageRows } from "@/lib/activity/read";
+import { deskLineFor, fetchSecondRecordFor, fetchStageRows } from "@/lib/activity/read";
 import { caseNumberOf, cleanExcerpt, cleanSubject } from "@/lib/activity/excerpt";
 import { rowPerson } from "@/lib/activity/classify";
 import type { StagedRow } from "@/lib/activity/types";
@@ -69,66 +69,19 @@ export async function GET(req: Request) {
 
   if (who != null) {
     // The draft desk's per-person read (5.2): exact words from both records,
-    // one line, cited or silent — no fuzzy maybes. Priority: a row naming the
-    // person → the org's inbound → the measured silence. An unmatched
-    // recipient with no rollup renders nothing at all.
+    // one line, and every line cites the row it stands on or says nothing
+    // (evidence or nothing). Salesforce's account-level Last Email Received
+    // has no row behind it, so it never speaks here and never as their voice
+    // (D19). The line is the read layer's (deskLineFor).
     const [rows, second] = await Promise.all([
       fetchStageRows(acct),
       fetchSecondRecordFor(acct),
     ]);
-    const rollup = second?.rollup ?? null;
-    const needle = who.trim().toLowerCase();
-    const nameBits = needle
-      .split(/[@\s.]+/)
-      .filter((x) => x.length >= 3)
-      .slice(0, 2);
-    const hit =
-      needle.length >= 3
-        ? rows.find((r) => {
-            const hay = `${r.s} ${r.a} ${r.w ?? ""} ${r.c ?? ""}`.toLowerCase();
-            return (
-              hay.includes(needle) ||
-              (nameBits.length > 1 && nameBits.every((b) => hay.includes(b)))
-            );
-          })
-        : undefined;
-    const mmdd = (d: string) => (d ? d.slice(5).replace("-", "/") : "");
-    if (hit) {
-      const first =
-        personOf(hit).split(" ")[0] || (who ?? "").trim().split(" ")[0] || "Someone";
-      return NextResponse.json(
-        {
-          ok: true,
-          line: `${first} was in their traffic ${mmdd(hit.d)} — ${cleanSubject(hit.s).slice(0, 60)}.`,
-          cite: rowOut(hit),
-        },
-        noStore,
-      );
-    }
-    if (rollup?.lastOrgInbound) {
-      const day = rollup.lastOrgInbound.slice(0, 10);
-      return NextResponse.json(
-        { ok: true, line: `They wrote org-side ${mmdd(day)}.`, cite: null },
-        noStore,
-      );
-    }
-    if (rollup?.lastHuman?.day) {
-      const days = Math.max(
-        0,
-        Math.floor(
-          (Date.now() - Date.parse(`${rollup.lastHuman.day}T12:00:00Z`)) / 86_400_000,
-        ),
-      );
-      return NextResponse.json(
-        {
-          ok: true,
-          line: `Nobody has touched them in ${days} day${days === 1 ? "" : "s"}.`,
-          cite: null,
-        },
-        noStore,
-      );
-    }
-    return NextResponse.json({ ok: true, line: "", cite: null }, noStore);
+    const desk = deskLineFor(who, rows, second?.rollup ?? null);
+    return NextResponse.json(
+      { ok: true, line: desk.line, cite: desk.cite ? rowOut(desk.cite) : null },
+      noStore,
+    );
   }
 
   const rows = await fetchStageRows(acct);
@@ -141,7 +94,7 @@ export async function GET(req: Request) {
         : {
             ok: false,
             reason:
-              "That row isn't in the staged slice — the slice cap keeps the newest 300, and older citations retire with their drop.",
+              "That row isn't in the staged slice. The slice keeps the newest 300 rows, and older citations retire with their drop.",
           },
       noStore,
     );
