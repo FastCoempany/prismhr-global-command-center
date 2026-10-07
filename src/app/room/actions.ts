@@ -195,8 +195,8 @@ async function fileGrabCapture(
   door: Door,
   windows: Window[],
 ): Promise<Awaited<ReturnType<typeof roomPaste>>> {
-  const plan = planGrab(rawText, await joinedRoster());
   const now = new Date();
+  const plan = planGrab(rawText, await joinedRoster(), now);
   try {
     const grab = await fileGrab(
       plan,

@@ -16,8 +16,10 @@
 //
 // Nothing files blind: a row with no sure match files nothing and is counted
 // on the receipt. The duplicate guard holds per account: an account's note
-// fingerprints like any capture, head line skipped (D16), so the same row
-// re-pasted is refused on that account and counted as already on file. The
+// fingerprints like any capture, head line skipped (D16), with the day the
+// grab was taken beside it, so the same row re-copied that day is refused on
+// that account and counted as already on file, and a grab taken on a new day
+// files fresh, because a grab is an observation of its day. The
 // row the paste landed on decides nothing, and no model reads the list: the
 // intent read parses Sales Navigator's own words.
 //
@@ -33,6 +35,7 @@ import { ALREADY_ON_FILE } from "./wrote";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { pasteFingerprint } from "@/lib/paste-files";
 import { routeCapture, type RouteAccount, type RouteRung } from "@/lib/route-capture";
+import { chicagoDay } from "@/lib/tz";
 
 /** What a grab's receipt names in the account's seat: the grab files on
  *  many accounts and on none of them alone. */
@@ -104,8 +107,28 @@ export type GrabFiling = {
 };
 
 /** What a grab will file: one filing per surely matched account, in the
- *  grab's order, and the first line of every row no account surely matched. */
-export type GrabPlan = { filings: GrabFiling[]; missed: string[] };
+ *  grab's order, the first line of every row no account surely matched, and
+ *  the Chicago day the grab was taken. */
+export type GrabPlan = { filings: GrabFiling[]; missed: string[]; day: string };
+
+/** The Chicago day a grab was taken, YYYY-MM-DD: the date of the head's
+ *  "captured …" moment, which the bookmarklet writes on the operator's own
+ *  clock (en-US, "10/7/2026, 9:12:00 AM"), or the filing day when the head
+ *  carries no full date. */
+export function grabDay(head: string, now: Date = new Date()): string {
+  const us = /captured\s+(\d{1,2})\/(\d{1,2})\/(\d{4})(?!\d)/i.exec(head ?? "");
+  if (us) return `${us[3]}-${us[1]!.padStart(2, "0")}-${us[2]!.padStart(2, "0")}`;
+  const iso = /captured\s+(\d{4})-(\d{2})-(\d{2})(?!\d)/i.exec(head ?? "");
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  return chicagoDay(now);
+}
+
+/** One account's fingerprint for the duplicate guard: the capture's own
+ *  (D16, head line skipped) with the grab's day beside it. A grab is an
+ *  observation of the day it was taken (pass 9 seam ruling, 2026-10-07). */
+export function grabFingerprint(body: string, day: string): string {
+  return `${pasteFingerprint(body)}-${day}`;
+}
 
 /** A row's first line, as the receipt lists a row that matched nothing.
  *  It renders, so a figure in it never does (the money doctrine). */
@@ -116,7 +139,11 @@ const firstLine = (row: string): string =>
  *  the pipeline reads (the joined roster, C2). A row files only on the
  *  router's sure match: the top hit clears the bar and no rival comes close.
  *  Pure. */
-export function planGrab(text: string, roster: readonly RouteAccount[]): GrabPlan {
+export function planGrab(
+  text: string,
+  roster: readonly RouteAccount[],
+  now: Date = new Date(),
+): GrabPlan {
   const { head, rows } = splitGrab(text);
   const by = new Map<
     string,
@@ -144,6 +171,7 @@ export function planGrab(text: string, roster: readonly RouteAccount[]): GrabPla
       body: `${head}\n\n${f.rows.join(ROW_JOIN)}`,
     })),
     missed,
+    day: grabDay(head, now),
   };
 }
 
@@ -211,13 +239,14 @@ export type GrabSummary = {
  *  go, as roomPaste lets one go. */
 async function fileShare(
   f: GrabFiling,
+  day: string,
   store: GrabStore,
   door: Door,
 ): Promise<
   | { kind: "filed"; account: GrabAccount; dupeCheck: DupeCheck }
   | { kind: "duplicate" | "failed" }
 > {
-  const fingerprint = pasteFingerprint(f.body);
+  const fingerprint = grabFingerprint(f.body, day);
   const key = pasteKeyFor(f.account.id, fingerprint);
   const claim = await store.claim(key);
   if (claim.kind === "filed" || claim.kind === "inflight") return { kind: "duplicate" };
@@ -256,7 +285,7 @@ export async function fileGrab(
   door: Door,
 ): Promise<GrabSummary> {
   const results = await runLimited(
-    plan.filings.map((f) => () => fileShare(f, store, door)),
+    plan.filings.map((f) => () => fileShare(f, plan.day, store, door)),
     GRAB_PARALLEL,
   );
 
@@ -339,6 +368,7 @@ export function grabResult(g: GrabSummary, windows: Window[]) {
       how: "",
       duplicate: true,
       reason: `${ALREADY_ON_FILE}${unmatched}`,
+      grab: g,
     };
   if (g.failed.length > 0)
     return {

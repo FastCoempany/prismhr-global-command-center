@@ -990,6 +990,37 @@ describe("a Sales Nav grab's receipt counts every row and opens to the accounts 
     assert.ok(copy.includes("Matched no account 1 row. Nothing filed."), copy);
   });
 
+  test("the Drop paints the grab's receipt, and its ↺ reaches the whole grab", async () => {
+    // A grab pasted in a row's ⚡ box files through roomPaste's split; the
+    // Drop's receipt carries the split, so it names the grab and never the
+    // row, and the take-back goes through use-undo's grab path.
+    const src = read("src/app/room/room-client.tsx");
+    const fileText = src.slice(src.indexOf("  const fileText = async ("), src.indexOf("  const answerHeld = "));
+    assert.match(fileText, /state: "filed",[\s\S]*?grab: r\.grab,[\s\S]*?day: receiptDay\(\),/);
+    assert.match(src, /rc\.state === "filed" &&\s*\(rc\.noteIds\?\.length \|\| rc\.filingId \|\| rc\.grab\?\.accounts\.length\)/);
+    const takeBack = src.slice(src.indexOf("  const takeBack = (rc: LedgerRow)"), src.indexOf("  const clearReceipt = "));
+    assert.match(takeBack, /const from = rc\.grab \? "" : ` from \$\{shortName\(acct\.name\)\}`;/);
+    assert.match(takeBack, /reason: `Taken back\$\{from\}\. \$\{r\.removed \+ r\.retired\} removed\.`,/);
+    assert.match(takeBack, /await undo\(acct\.id, rc\)/);
+    // The Drop's receipt keeps the row as its account; the line still names
+    // the grab and links no one account until it opens.
+    const dropRow: LedgerRow = { ...row, account: REGIS };
+    const html = await receiptLine(dropRow);
+    assert.equal(textOf(html), "✓ Sales Nav · 2 accounts · 1 row matched no account · 1 already on file · 10/7 ↺ ✕");
+    assert.ok(!html.includes("focus="));
+    // A grab already on file everywhere is on file under its own accounts,
+    // so its duplicate line names no row beside the decree's words.
+    const { dropRefusal } = await roomClient();
+    const dupe = dropRefusal(
+      { ok: false, duplicate: true, reason: `${ALREADY_ON_FILE} 1 row matched no account.`, grab: { ...grab, accounts: [] }, vault: { archive: [], hold: [] } },
+      REGIS,
+      "",
+      "10/7",
+    );
+    assert.ok(dupe && !("account" in dupe), "the row is not the grab's account");
+    assert.equal(textOf(await receiptLine({ key: 4, ...dupe! })), "Paste · Already on file. Nothing filed twice. 1 row matched no account. ✕");
+  });
+
   test("↺ takes back every account's share in one request, each bound to its own account", () => {
     assert.deepEqual(grabUndoRequest(grab), [
       [

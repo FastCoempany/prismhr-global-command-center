@@ -34,6 +34,8 @@ import { claimCapture, releaseCapture, type ClaimClient } from "../src/lib/inges
 import {
   fileGrab,
   grabCounts,
+  grabDay,
+  grabFingerprint,
   grabResult,
   isGrab,
   keptGrab,
@@ -820,7 +822,8 @@ describe("the Sales Nav grab files each row on its own account", () => {
   test("the duplicate guard holds per account: a re-paste files nothing twice", async () => {
     const m = memory();
     await fileGrab(planGrab(GRAB, ROSTER), m.store, "drop");
-    // The same rows with a fresh copy moment: the head line is skipped (D16).
+    // The same rows re-copied later the same day: the head line is skipped
+    // (D16) and the day the grab was taken is the same, so it dedupes.
     const again = GRAB.replace("9:12:00 AM", "4:40:00 PM");
     const g = await fileGrab(planGrab(again, ROSTER), m.store, "chute");
     assert.equal(m.notes.length, 2, "nothing filed twice");
@@ -837,6 +840,52 @@ describe("the Sales Nav grab files each row on its own account", () => {
     const g2 = await fileGrab(planGrab(moved, ROSTER), m.store, "drop");
     assert.deepEqual(g2.accounts.map((a) => a.id), ["B0000000000000002"]);
     assert.deepEqual(g2.duplicates.map((d) => d.id), ["A0000000000000001"]);
+  });
+
+  // A grab is an observation of the day it was taken (pass 9 seam ruling,
+  // 2026-10-07): each account's fingerprint carries the grab's Chicago day,
+  // read from the head's "captured …" moment, or the filing day when the
+  // head has none. A re-copy that day dedupes (D16); a grab on a new day
+  // files fresh, so intentFor's decay runs from the newest observation.
+  test("a grab taken on a new day files fresh; the same day is refused", async () => {
+    const m = memory();
+    await fileGrab(planGrab(GRAB, ROSTER, NOW), m.store, "drop");
+    const sameDay = GRAB.replace("10/7/2026, 9:12:00 AM", "10/7/2026, 11:58:00 PM");
+    const refused = await fileGrab(planGrab(sameDay, ROSTER, NOW), m.store, "drop");
+    assert.deepEqual(refused.accounts, [], "the same day is the same observation");
+    assert.equal(refused.duplicates.length, 2);
+    const nextDay = GRAB.replace("10/7/2026, 9:12:00 AM", "10/8/2026, 8:05:00 AM");
+    const fresh = await fileGrab(planGrab(nextDay, ROSTER, NOW), m.store, "drop");
+    assert.deepEqual(
+      fresh.accounts.map((a) => a.id),
+      ["A0000000000000001", "B0000000000000002"],
+      "a new day's grab files fresh on every account",
+    );
+    assert.deepEqual(fresh.duplicates, []);
+    assert.equal(m.notes.length, 4);
+    // The fingerprint is the capture's own with the day beside it.
+    const body = planGrab(GRAB, ROSTER, NOW).filings[0].body;
+    assert.equal(grabFingerprint(body, "2026-10-07"), grabFingerprint(body, "2026-10-07"));
+    assert.notEqual(grabFingerprint(body, "2026-10-07"), grabFingerprint(body, "2026-10-08"));
+  });
+
+  test("the grab's day is the head's captured date, else the Chicago filing day", async () => {
+    assert.equal(grabDay(HEAD), "2026-10-07");
+    assert.equal(grabDay("SALESNAV ACCOUNTS - captured 3/9/2027, 7:00:00 PM - 2 rows collected"), "2027-03-09");
+    assert.equal(grabDay("SALESNAV ACCOUNTS - captured 2026-10-06T14:00 - 2 rows"), "2026-10-06");
+    // No full date in the head: the filing day, in Chicago. 03:00 UTC on
+    // 10/8 is still the evening of 10/7 there.
+    const late = new Date("2026-10-08T03:00:00.000Z");
+    assert.equal(grabDay("SALESNAV ACCOUNTS - captured Jul 30 - 118 rows", late), "2026-10-07");
+    assert.equal(grabDay("SALESNAV", late), "2026-10-07");
+    // A dateless grab dedupes within its filing day and files fresh the next.
+    const dateless = GRAB.replace(HEAD, "SALESNAV ACCOUNTS - captured Jul 30 - 3 rows collected");
+    const m = memory();
+    await fileGrab(planGrab(dateless, ROSTER, late), m.store, "drop");
+    const again = await fileGrab(planGrab(dateless, ROSTER, new Date("2026-10-08T04:30:00.000Z")), m.store, "drop");
+    assert.equal(again.accounts.length, 0, "the same Chicago day");
+    const next = await fileGrab(planGrab(dateless, ROSTER, new Date("2026-10-08T15:00:00.000Z")), m.store, "drop");
+    assert.equal(next.accounts.length, 2, "the next Chicago day");
   });
 
   test("nothing files blind: a grab no row of which surely matches files nothing", async () => {
@@ -873,7 +922,7 @@ describe("the Sales Nav grab files each row on its own account", () => {
     // The split reads the joined roster and files through the pipeline's own
     // writers, with the door the capture came through.
     const grab = actions.slice(actions.indexOf("async function fileGrabCapture("), actions.indexOf("function refusal("));
-    assert.match(grab, /planGrab\(rawText, await joinedRoster\(\)\)/);
+    assert.match(grab, /planGrab\(rawText, await joinedRoster\(\), now\)/);
     for (const writer of ["claimCapture(", "releaseCapture(", "stampPasteMark(", "fileFiling(", "createAccountNoteRow("])
       assert.ok(grab.includes(writer), writer);
     assert.match(grab, /fileGrab\(\s*plan,\s*\{[\s\S]*?\},\s*door,?\s*\)/);

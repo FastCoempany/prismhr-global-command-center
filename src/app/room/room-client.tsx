@@ -346,7 +346,7 @@ const receiptDay = (): string => monthDay(new Date());
  *  row's note says why, as before. A pasted duplicate is named as the held
  *  box names a paste. */
 export function dropRefusal(
-  r: Pick<Filed, "ok" | "duplicate" | "reason" | "prior" | "vault">,
+  r: Pick<Filed, "ok" | "duplicate" | "reason" | "prior" | "vault" | "grab">,
   account: HeldAccount,
   filename: string,
   day: string,
@@ -355,7 +355,9 @@ export function dropRefusal(
     return {
       filename: filename || "Paste",
       state: "dupe",
-      account,
+      // A grab already on file is on file under its own accounts, never
+      // this row (seam S-25), so the line names no account beside it.
+      ...(r.grab ? {} : { account }),
       reason: r.reason ?? ALREADY_ON_FILE,
       ...(r.prior ? { prior: r.prior } : {}),
       day,
@@ -783,6 +785,10 @@ export function Row({
         filingId: r.filingId,
         windows: r.windows,
         dupeCheck: r.dupeCheck,
+        // A Sales Nav grab pasted here filed each row on its own account
+        // (seam S-25): the receipt names the grab and its accounts, never
+        // this row, and its take-back reaches every account's share.
+        grab: r.grab,
         day: receiptDay(),
       });
       // Accepted: NOW the files may go to the account's folder, and the
@@ -1077,6 +1083,9 @@ export function Row({
   const takeBack = (rc: LedgerRow) => {
     const acct = rc.account;
     if (!acct || pending) return;
+    // A grab's take-back reaches every account it filed to (use-undo.ts), so
+    // its receipt names no one account (seam S-25).
+    const from = rc.grab ? "" : ` from ${shortName(acct.name)}`;
     start(async () => {
       const r = await undo(acct.id, rc);
       // The line opens to what was taken back (pass 8, C5): the server reads
@@ -1085,7 +1094,7 @@ export function Row({
       if (r.ok)
         patchReceipt(rc.key, {
           state: "undone",
-          reason: `Taken back from ${shortName(acct.name)}. ${r.removed + r.retired} removed.`,
+          reason: `Taken back${from}. ${r.removed + r.retired} removed.`,
           took: r.took,
         });
       else setNote(r.reason ?? "The take-back didn't go through.");
@@ -1973,7 +1982,8 @@ export function Row({
                     row={rc}
                     canWrite={row.canWrite}
                     onTakeBack={
-                      rc.state === "filed" && (rc.noteIds?.length || rc.filingId)
+                      rc.state === "filed" &&
+                      (rc.noteIds?.length || rc.filingId || rc.grab?.accounts.length)
                         ? () => takeBack(rc)
                         : undefined
                     }
