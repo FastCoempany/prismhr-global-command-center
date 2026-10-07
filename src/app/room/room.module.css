@@ -912,9 +912,11 @@ button.sdRadio:hover {
   background: rgba(245, 158, 11, 0.12);
   color: var(--ink);
 }
+/* Done is real health: the brand's green as the tint, ink for the words,
+   the kit's own pattern for a semantic chip (--color-low-fg is ink). */
 .stDone {
   background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
+  color: var(--ink);
 }
 
 .gAct {
@@ -1486,17 +1488,23 @@ button.sdRadio:hover {
 }
 
 /* A wall that already passed is real risk, and the contingency that rode in
-   with the commitment becomes the move. */
+   with the commitment becomes the move. The brand's red carries the risk as
+   the chip's tint and rule and as the fallback's rule; the words stay ink,
+   because the kit has no darker red for text on the field (--color-high-fg
+   is ink). */
 .stWall {
   background: rgba(239, 68, 68, 0.12);
-  color: #b42318;
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.55);
+  color: var(--ink);
 }
 .fallback {
   display: block;
   margin-top: 2px;
   font-size: 12px;
   line-height: 1.45;
-  color: #b42318;
+  color: var(--ink);
+  border-left: 2px solid var(--red);
+  padding-left: 6px;
 }
 
 /* ── the research control ─────────────────────────────────────────────────────
@@ -1532,7 +1540,7 @@ button.sdRadio:hover {
   padding: 0 4px;
   border-radius: 999px;
   background: var(--amber);
-  color: #3a2600;
+  color: var(--ink);
   font-family: var(--f-mono), ui-monospace, monospace;
   font-size: 10.5px;
   font-weight: 700;
@@ -1562,7 +1570,7 @@ button.sdRadio:hover {
   border-color: var(--quiet);
 }
 .fuOpenLive {
-  color: #7a4b00;
+  color: var(--ink);
   border-color: rgba(245, 158, 11, 0.5);
   background: rgba(245, 158, 11, 0.1);
 }
@@ -1614,7 +1622,7 @@ button.sdRadio:hover {
   padding: 4px 7px;
   border-radius: 7px;
   background: rgba(37, 99, 235, 0.07);
-  color: #1e3a8a;
+  color: var(--ink);
   font-size: 11.5px;
 }
 .fuYes,
@@ -2753,7 +2761,7 @@ button.sdRadio:hover {
   padding: 1px 5px;
   margin-left: 6px;
   border: 1px solid rgba(245, 158, 11, 0.55);
-  color: #b45309;
+  color: var(--ink);
   border-radius: 2px;
 }
 
@@ -2822,9 +2830,10 @@ button.sdRadio:hover {
   border-color: var(--orange);
   color: #fff;
 }
+/* The move's hover is the kit's own pressed orange. */
 .pipeCopyPrimary:hover {
-  background: #cf6318;
-  border-color: #cf6318;
+  background: var(--ds-orange-strong);
+  border-color: var(--ds-orange-strong);
   color: #fff;
 }
 .pipeCopyDid {
