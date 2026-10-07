@@ -116,7 +116,7 @@ export default async function IntranetPage({
         {/* The same Chute the HomeRoom carries (founder-decreed 2026-09-02):
             recordings, VTTs, and anything else thrown here route, file, and
             vault exactly as they do at the room's door. The route runs on
-            the server over the joined roster (C2, D12); no roster rides. */}
+            the server over the joined roster (C2, D13); no roster rides. */}
         <Chute canWrite={access.canWrite} />
         <IntranetClient
           rail={rail}

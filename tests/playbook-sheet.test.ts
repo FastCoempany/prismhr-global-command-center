@@ -4,6 +4,9 @@
 // and the country wing's index against the sheet it stands on.
 
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
 import { describe, test } from "node:test";
 import {
   BETWEEN,
@@ -125,18 +128,37 @@ describe("the Sheet · the scans", () => {
   });
 
   // Rule 14: "Cite labels name their rung — ON TAPE / FILED THREAD / CALL
-  // NOTES / ❖ LESSON / RESEARCH / TEAM INTEL". FILED names the filed rung,
-  // where the flyers sit beside the threads.
+  // NOTES / ❖ LESSON / RESEARCH / TEAM INTEL". This pin read filed: "FILED"
+  // for threads and flyers alike, which kept the label short and left it
+  // untrue for a thread. A cite to a filed thread now reads FILED THREAD,
+  // the canon's own label; the flyer is a filed document, which the canon's
+  // list has no label for, so it keeps FILED on a rung of its own (seam
+  // S-27).
   test("the chip names every rung of the ladder", () => {
     assert.deepEqual(RUNG_LABEL, {
       tape: "ON TAPE",
-      filed: "FILED",
+      filed: "FILED THREAD",
+      doc: "FILED",
       notes: "CALL NOTES",
       lesson: "❖ LESSON",
       research: "RESEARCH",
       intel: "TEAM INTEL",
       none: "∅",
     });
+  });
+
+  // Seam S-27: a FILED THREAD chip stands on a thread, which the record
+  // dates; the flyer is a document and stands on the document rung, whose
+  // chip says FILED. The tiers' inline cite in the face counts too.
+  test("a flyer cites the document rung, and a filed thread carries its day", () => {
+    for (const [text, rung, src] of allCites()) {
+      if (src === "flyer") assert.equal(rung, "doc", `"${text}" cites the flyer as ${rung}`);
+      if (rung === "filed")
+        assert.match(src ?? "", /\b\d{1,2}\/\d{1,2}\b/, `"${text}" is a filed thread with no day`);
+    }
+    const face = readFileSync(join(cwd(), "src/app/playbook/product-sheet.tsx"), "utf8");
+    assert.ok(!face.includes('"filed", "flyer"'), "the face cites the flyer as a thread");
+    assert.ok(face.includes('"doc", "flyer"'), "the tiers no longer cite the flyer");
   });
 
   test("call notes cite the CALL NOTES rung, never the tape", () => {
@@ -216,6 +238,44 @@ describe("the Sheet · the country wing", () => {
       const card = countryCard(name);
       assert.ok(card, `${name} is not on the sheet`);
       assert.notEqual(card.verdict, "ok", `${name} reads as a plain yes`);
+    }
+  });
+});
+
+// Seam S-26 · the brand palette by role (CLAUDE.md, Design canon; the kit's
+// tokens in antaeus-brand-kit/css/tokens.css). The rung chips carried the
+// darker per-hue text shades the room retired in pass 9 (green-700,
+// amber-700, a literal blue-700). The kit's own pattern holds instead, as in
+// the room: a semantic chip keeps its accent as the tint and its words in
+// ink, and the blue action's hover is the kit's --ds-blue-strong token.
+describe("the Sheet · the palette", () => {
+  const css = (p: string) => readFileSync(join(cwd(), p), "utf8");
+  const sheet = css("src/app/playbook/product-sheet.module.css");
+  const page = css("src/app/playbook/playbook.module.css");
+  const rule = (src: string, sel: string): string => {
+    const at = src.indexOf(`\n${sel} {`);
+    assert.ok(at >= 0, `${sel} is gone`);
+    return src.slice(at, src.indexOf("}", at));
+  };
+
+  test("no off-brand text shade, and the blue-700 only as the kit's token", () => {
+    for (const src of [sheet, page])
+      for (const off of ["#15803d", "#b45309", "#1d4ed8"])
+        assert.ok(!src.toLowerCase().includes(off), `the Playbook still carries ${off}`);
+    assert.match(rule(page, ".copyBtn:hover"), /color: var\(--ds-blue-strong\)/);
+  });
+
+  test("each rung chip keeps its accent as the tint and its words in ink", () => {
+    const tinted: [string, string][] = [
+      [".tape", "--ds-green-soft"],
+      [".filed,\n.doc", "--ds-blue-soft"],
+      [".notes,\n.lesson", "--ds-blue-soft"],
+      [".none", "--ds-amber-soft"],
+    ];
+    for (const [sel, tint] of tinted) {
+      const r = rule(sheet, sel);
+      assert.ok(r.includes(`background: var(${tint})`), `${sel} lost its tint`);
+      assert.match(r, /color: var\(--ds-ink\);/, `${sel} words are not in ink`);
     }
   });
 });

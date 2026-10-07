@@ -2,7 +2,7 @@
 
 // The router's door (the Chute brains refactor plan, §2.4 and slice 7).
 // Routing runs on the server and the roster never ships to the browser
-// (ruled 2026-09-25, D12 — CLAUDE.md, The Chute): a door hands the text
+// (ruled 2026-09-25, D13 — CLAUDE.md, The Chute): a door hands the text
 // here, the joined roster is read on the server (src/lib/ingest/route.ts),
 // and what goes back is the verdict — the best account and the candidates,
 // each with its rung and its why — and the picker's names. Names may

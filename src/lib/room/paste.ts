@@ -47,7 +47,13 @@ export function readFreeVerdict(
       why: early.why,
       boundWhy: early.boundWhy,
     },
-    reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
+    // The held box's fallback grammar (ruled 2026-10-07, pass 8 call 13): a
+    // plain report of what the read names, never "This reads like X, not Y —
+    // why.", whose hedge and em-dash hinge the writing canon bans. The doors
+    // show the guard plan's nine-word reason built from the same why
+    // (reasonFromWhy, src/lib/ingest/guard.ts); the evidence rides in
+    // `mismatch` beside this.
+    reason: `The read names ${early.claim}.`,
   };
 }
 

@@ -374,7 +374,7 @@ function ProductPanel({ p }: { p: Product }) {
               </div>
             ))}
           </div>
-          <Cites ev={[[p.flyer, "filed", "flyer"]]} />
+          <Cites ev={[[p.flyer, "doc", "flyer"]]} />
         </section>
       )}
 

@@ -20,9 +20,10 @@
   cursor: pointer;
   white-space: nowrap;
 }
+/* The blue action's hover is the kit's own token (seam S-26). */
 .copyBtn:hover {
-  border-color: #2563eb;
-  color: #1d4ed8;
+  border-color: var(--ds-blue);
+  color: var(--ds-blue-strong);
 }
 
 /* ── Playbook additions ───────────────────────────────────────────────────────

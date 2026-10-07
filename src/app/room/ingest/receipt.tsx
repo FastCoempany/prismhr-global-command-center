@@ -23,6 +23,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { GRAB_LABEL, grabCounts, type GrabSummary } from "@/lib/ingest/grab";
 import { shortName } from "@/lib/ingest/short-name";
 import { filingSentences } from "@/lib/ingest/windows";
 import type { FilingWrote } from "@/lib/ingest/wrote";
@@ -193,6 +194,61 @@ export function ReceiptLine({
       {shortName(acct.name)}
     </Link>
   );
+
+  // A Sales Nav grab files on many accounts and on none of them alone (seam
+  // S-25): the line names the grab in the account's seat, then its counts
+  // and the day. It opens to every count: the accounts it filed to, each a
+  // plain link; the rows that matched no account while the tab holds them;
+  // the accounts it was already on file under. ↺ takes back every
+  // account's share.
+  if (row.state === "filed" && row.grab) {
+    const g = row.grab;
+    const landed = row.vault && !row.vault.bad && !row.vault.going ? row.vault : null;
+    return (
+      <>
+        <div className={styles.rcptRow}>
+          <span className={styles.rcptLine}>
+            <span className={styles.rcptOk}>✓</span>
+            {GRAB_LABEL}{" "}
+            <button
+              type="button"
+              className={styles.rcptOpen}
+              aria-expanded={open}
+              title={open ? "Hide what this grab filed" : "Show what this grab filed"}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {"· "}
+              {[...grabCounts(g), row.day ?? ""].filter(Boolean).join(" · ")}
+            </button>
+          </span>
+          {ctl}
+        </div>
+        {caveat}
+        {row.vault?.going && <p className={styles.rcptQuiet}>⇪ {row.vault.text}</p>}
+        {open && (
+          <div className={styles.rcptWrote}>
+            {row.filename && (
+              <>
+                <div className={styles.rcptWroteK}>File</div>
+                <ul className={styles.rcptWroteList}>
+                  <li>
+                    {row.filename}
+                    {landed && (
+                      <>
+                        {" · Backed up"}
+                        <OpenLink url={landed.url} />
+                      </>
+                    )}
+                  </li>
+                </ul>
+              </>
+            )}
+            <GrabLists grab={g} />
+          </div>
+        )}
+      </>
+    );
+  }
 
   if (row.state === "filed" && acct) {
     const landed = row.vault && !row.vault.bad && !row.vault.going ? row.vault : null;
@@ -402,6 +458,64 @@ export function ReceiptLine({
         </p>
       )}
       {settled && caveat}
+    </>
+  );
+}
+
+/** What a grab filed, under its kickers, in the line's order: the accounts
+ *  its rows filed to, the rows that matched no account, the accounts it was
+ *  already on file under, the ones whose filing broke. A reloaded receipt
+ *  keeps no row text (D12), so the unmatched rows then show as their count. */
+function GrabLists({ grab }: { grab: GrabSummary }) {
+  const names = (xs: { id: string; name: string }[]) =>
+    xs.map((a) => (
+      <li key={a.id}>
+        <Link
+          href={`/accounts?focus=${a.id}`}
+          className={styles.rcptAcct}
+          title={shortName(a.name) === a.name ? undefined : a.name}
+        >
+          {shortName(a.name)}
+        </Link>
+      </li>
+    ));
+  const missed = grab.missed ?? [];
+  return (
+    <>
+      {grab.accounts.length > 0 && (
+        <div>
+          <div className={styles.rcptWroteK}>Filed</div>
+          <ul className={styles.rcptWroteList}>{names(grab.accounts)}</ul>
+        </div>
+      )}
+      {grab.unmatched > 0 && (
+        <div>
+          <div className={styles.rcptWroteK}>Matched no account</div>
+          {missed.length > 0 ? (
+            <ul className={styles.rcptWroteList}>
+              {missed.map((m, i) => (
+                <li key={i}>{m}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.rcptQuiet}>
+              {grab.unmatched} {grab.unmatched === 1 ? "row" : "rows"}. Nothing filed.
+            </p>
+          )}
+        </div>
+      )}
+      {grab.duplicates.length > 0 && (
+        <div>
+          <div className={styles.rcptWroteK}>Already on file</div>
+          <ul className={styles.rcptWroteList}>{names(grab.duplicates)}</ul>
+        </div>
+      )}
+      {grab.failed.length > 0 && (
+        <div>
+          <div className={styles.rcptWroteK}>Didn&apos;t file</div>
+          <ul className={styles.rcptWroteList}>{names(grab.failed)}</ul>
+        </div>
+      )}
     </>
   );
 }

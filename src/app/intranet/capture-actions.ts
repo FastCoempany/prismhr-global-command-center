@@ -30,6 +30,7 @@
 // tables, and the import-graph test keeps it that way.
 
 import { roomPaste } from "@/app/room/actions";
+import { dockRefuses } from "@/app/intranet/grab";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { routeText } from "@/lib/ingest/route";
@@ -108,6 +109,12 @@ export async function intranetCapture(
   if (!(await canWrite())) return refused("Read-only session.");
   const text = (raw ?? "").trim();
   if (text.length < 20) return refused("Nothing there to keep.");
+  // A Sales Nav grab never lands here (pass 8 call 12): the dock refuses it
+  // in the browser, and so does the server, for a caller that skips the
+  // dock. It belongs on the HomeRoom, where the pipeline splits it row by
+  // row onto each account (seam S-25).
+  const elsewhere = dockRefuses(text);
+  if (elsewhere) return refused(elsewhere);
 
   const cap = normalizeCapture(text, { origin: originHint });
 

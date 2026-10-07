@@ -51,20 +51,25 @@
   vertical-align: middle;
   white-space: nowrap;
 }
+/* Each chip keeps its accent as the tint and its words in ink, the kit's
+   pattern and the room's since pass 9: no per-hue text shade (seam S-26). */
 .tape {
   background: var(--ds-green-soft);
-  color: #15803d;
+  color: var(--ds-ink);
 }
-.filed {
+/* The filed thread and the filed document (the flyers) share the record's
+   blue tint; their chips say which (seam S-27). */
+.filed,
+.doc {
   background: var(--ds-blue-soft);
-  color: #1d4ed8;
+  color: var(--ds-ink);
 }
 /* Call notes and lessons sit on the record's own rungs beside the filed
    threads; team intel beside research (pass 8 X9). */
 .notes,
 .lesson {
   background: var(--ds-blue-soft);
-  color: #1d4ed8;
+  color: var(--ds-ink);
 }
 .research,
 .intel {
@@ -73,7 +78,7 @@
 }
 .none {
   background: var(--ds-amber-soft);
-  color: #b45309;
+  color: var(--ds-ink);
 }
 .srcs {
   margin-top: 10px;

@@ -25,6 +25,7 @@ import { TOOLS, teamsBookmarklet } from "../src/app/intake/grabs";
 import { SALESNAV_ELSEWHERE, dockRefuses } from "../src/app/intranet/grab";
 import { intentFor } from "../src/lib/groundwork/signals";
 import { SOURCE_OF, sniffHead } from "../src/lib/ingest/dialect";
+import { splitGrab } from "../src/lib/ingest/grab";
 import { parseSfTimeline } from "../src/lib/sf-timeline";
 import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 import {
@@ -626,14 +627,22 @@ describe("the Sales Nav grab files through the pipeline, never the Intranet dock
     assert.doesNotMatch(salesnav.takes, /Chute or an account/);
   });
 
-  test("the head the grab writes is the store the queue reads", () => {
+  test("the head the grab writes is the store the queue reads, one account's row at a time", () => {
     const { dialect, head } = sniffHead(grab);
     assert.equal(dialect, "SN");
     const source = SOURCE_OF(dialect, head, "rules");
     assert.equal(source, "salesnav");
+    // Rewritten for seam S-25: this pin read the whole grab as one note,
+    // which is how every row's intent became the one account's it was
+    // pasted on. The pipeline now files each row on its own account under
+    // the grab's head (src/lib/ingest/grab.ts; tests/ingest-route.test.ts
+    // drops a grab through it), so the read takes one account's row.
     const now = new Date("2026-10-07T15:00:00.000Z");
-    const read = intentFor([{ body: grab, source, createdAt: now.toISOString() }], now);
-    assert.equal(read?.level, "high");
+    const { head: line, rows } = splitGrab(grab);
+    const readOf = (row: string) =>
+      intentFor([{ body: `${line}\n\n${row}`, source, createdAt: now.toISOString() }], now);
+    assert.equal(readOf(rows[0])?.level, "high");
+    assert.equal(readOf(rows[1]), null, "the Acme row's intent is not the Beta row's");
   });
 
   test("the Intranet dock refuses a Sales Nav grab and says where it goes", () => {

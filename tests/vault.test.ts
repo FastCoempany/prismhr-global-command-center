@@ -215,7 +215,7 @@ test("the chute vaults every drop and routes binaries by filename or pick", asyn
   assert.deepEqual(vaultAfterVerdict(disputed, [vtt]), { archive: [], hold: [vtt] });
   // The picker takes every type — no accept filter on the chute's input. The
   // mount is propless but for canWrite: the roster never ships to the browser
-  // (D12), the route runs on the server (slice 7).
+  // (D13), the route runs on the server (slice 7).
   const { Chute } = await chute();
   const bar = await render(createElement(Chute, { canWrite: true }));
   const input = /<input[^>]*type="file"[^>]*>/.exec(bar)?.[0] ?? "";

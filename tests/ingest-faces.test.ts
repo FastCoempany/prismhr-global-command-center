@@ -28,6 +28,7 @@ import {
   type LedgerStorage,
 } from "../src/app/room/chute-ledger";
 import { DROP_CSV_RECEIPT, filingRequest } from "../src/app/room/ingest/use-ingest";
+import { grabUndoRequest } from "../src/app/room/ingest/use-undo";
 import { dismissHeld } from "../src/app/room/ingest/use-verdict";
 import { UNFILED_FOLDER, archiveFileToGitHub } from "../src/lib/github/archive";
 import { claimAccountId } from "../src/lib/ingest/guard";
@@ -183,7 +184,7 @@ describe("the held box: the kicker, the reason, the four choices, the grounds", 
     for (const s of order) assert.ok(copy.includes(s), s);
     assert.ok(copy.indexOf(order[0]) < copy.indexOf(order[1]) && copy.indexOf(order[1]) < copy.indexOf(order[2]));
     assert.ok(html.includes('placeholder="Search the book…"'), "the search of the book comes last");
-    assert.ok(html.includes('title="A suggestion. The rest of this drop filed there."'), "the sibling is marked a suggestion, never a rung (D6)");
+    assert.ok(html.includes('title="A suggestion. The rest of this drop filed there."'), "the sibling is marked a suggestion, never a rung (D5)");
   });
 
   test("the waiting row with no sure match is the same box, with that sentence and nothing more", async () => {
@@ -940,5 +941,98 @@ describe("the Chute's own copy obeys the writing canon (pass 8, C3, C4, C6, B48)
     const back = loadLedger(storage, now).items[0];
     assert.equal(back.state, "interrupted");
     assert.equal(back.reason, "interrupted — drop it again");
+  });
+});
+
+// ── seam S-25 · the Sales Nav grab's receipt ───────────────────────────────
+// A grab files each row on the account it surely matches (pass 8 call 12,
+// D30), so its receipt names no one account: the grab sits in the account's
+// seat, then how many accounts it filed to, the rows that matched no
+// account, the rows already on file and the day. Every count opens (the
+// click-depth law); ↺ takes back every account's share.
+
+describe("a Sales Nav grab's receipt counts every row and opens to the accounts (seam S-25)", () => {
+  const grab = {
+    accounts: [
+      { id: SIMPLOY.id, name: SIMPLOY.name, rung: "name" as const, noteId: "N1", filingId: "F1" },
+      { id: REGIS.id, name: REGIS.name, rung: "name" as const, noteId: "N2", filingId: "F2" },
+    ],
+    duplicates: [{ id: ADVOCATE.id, name: ADVOCATE.name }],
+    failed: [],
+    unmatched: 1,
+    missed: ["Halcyon Unknown Holdings"],
+    dupeCheck: "ran" as const,
+  };
+  const row: LedgerRow = { key: 7, filename: "", state: "filed", filed: 2, grab, day: "10/7" };
+
+  test("the line names the grab in the account's seat, with its counts and the day", async () => {
+    const html = await receiptLine(row);
+    assert.equal(textOf(html), "✓ Sales Nav · 2 accounts · 1 row matched no account · 1 already on file · 10/7 ↺ ✕");
+    assert.ok(!html.includes("focus="), "the shut line links no one account");
+  });
+
+  test("it opens to every count: the accounts as plain links, the unmatched rows, the ones on file", async () => {
+    const html = await receiptLine(row, { defaultOpen: true });
+    const copy = textOf(html);
+    for (const s of ["Filed Simploy Regis HR Group", "Matched no account Halcyon Unknown Holdings", "Already on file Advocate Pay"])
+      assert.ok(copy.includes(s), s);
+    assert.match(html, /<a class="rcptAcct" href="\/accounts\?focus=001F000000w38BOIAY">Simploy<\/a>/);
+    const words = copyOf(html);
+    assert.ok(!words.includes("—"), `an em-dash: ${words}`);
+    assert.ok(!/\([^)]*\)/.test(words), `a parenthetical: ${words}`);
+  });
+
+  test("a reloaded receipt keeps the ids, names and counts and no row text (D12)", async () => {
+    const stored = storedRow({ ...row });
+    assert.ok(stored.grab);
+    assert.ok(!JSON.stringify(stored).includes("Halcyon"), "a row's text rode into storage");
+    const copy = textOf(await receiptLine(stored, { defaultOpen: true }));
+    assert.ok(copy.includes("Matched no account 1 row. Nothing filed."), copy);
+  });
+
+  test("the Drop paints the grab's receipt, and its ↺ reaches the whole grab", async () => {
+    // A grab pasted in a row's ⚡ box files through roomPaste's split; the
+    // Drop's receipt carries the split, so it names the grab and never the
+    // row, and the take-back goes through use-undo's grab path.
+    const src = read("src/app/room/room-client.tsx");
+    const fileText = src.slice(src.indexOf("  const fileText = async ("), src.indexOf("  const answerHeld = "));
+    assert.match(fileText, /state: "filed",[\s\S]*?grab: r\.grab,[\s\S]*?day: receiptDay\(\),/);
+    assert.match(src, /rc\.state === "filed" &&\s*\(rc\.noteIds\?\.length \|\| rc\.filingId \|\| rc\.grab\?\.accounts\.length\)/);
+    const takeBack = src.slice(src.indexOf("  const takeBack = (rc: LedgerRow)"), src.indexOf("  const clearReceipt = "));
+    assert.match(takeBack, /const from = rc\.grab \? "" : ` from \$\{shortName\(acct\.name\)\}`;/);
+    assert.match(takeBack, /reason: `Taken back\$\{from\}\. \$\{r\.removed \+ r\.retired\} removed\.`,/);
+    assert.match(takeBack, /await undo\(acct\.id, rc\)/);
+    // The Drop's receipt keeps the row as its account; the line still names
+    // the grab and links no one account until it opens.
+    const dropRow: LedgerRow = { ...row, account: REGIS };
+    const html = await receiptLine(dropRow);
+    assert.equal(textOf(html), "✓ Sales Nav · 2 accounts · 1 row matched no account · 1 already on file · 10/7 ↺ ✕");
+    assert.ok(!html.includes("focus="));
+    // A grab already on file everywhere is on file under its own accounts,
+    // so its duplicate line names no row beside the decree's words.
+    const { dropRefusal } = await roomClient();
+    const dupe = dropRefusal(
+      { ok: false, duplicate: true, reason: `${ALREADY_ON_FILE} 1 row matched no account.`, grab: { ...grab, accounts: [] }, vault: { archive: [], hold: [] } },
+      REGIS,
+      "",
+      "10/7",
+    );
+    assert.ok(dupe && !("account" in dupe), "the row is not the grab's account");
+    assert.equal(textOf(await receiptLine({ key: 4, ...dupe! })), "Paste · Already on file. Nothing filed twice. 1 row matched no account. ✕");
+  });
+
+  test("↺ takes back every account's share in one request, each bound to its own account", () => {
+    assert.deepEqual(grabUndoRequest(grab), [
+      [
+        { id: SIMPLOY.id, noteId: "N1", filingId: "F1" },
+        { id: REGIS.id, noteId: "N2", filingId: "F2" },
+      ],
+    ]);
+    // The server runs each share through the one take-back, bound to its
+    // account: no id list reaches past the account it names.
+    const actions = read("src/app/room/actions.ts");
+    const undo = actions.slice(actions.indexOf("export async function roomGrabUndo("), actions.indexOf("export async function roomPasteUndo("));
+    assert.match(undo, /roomPasteUndo\(\s*x\.id,\s*\[x\.noteId\],\s*\[\],/);
+    assert.match(read("src/app/room/ingest/use-undo.ts"), /await roomGrabUndo\(\.\.\.grabUndoRequest\(row\.grab\)\)/);
   });
 });
