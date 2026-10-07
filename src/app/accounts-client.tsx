@@ -45,7 +45,7 @@ import {
 import {
   askText,
   defaultPlay,
-  mergeText,
+  kitText,
   playsFor,
   type CampaignKit,
 } from "@/lib/campaigns";
@@ -350,7 +350,8 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
   const seed = defaultPlay(a.stage);
   const suggested = seed ? askText(seed.ask, a) : suggestedAction(a);
   const copyKit = async (kit: CampaignKit) => {
-    const text = `Subject: ${mergeText(kit.subject, a)}\n\n${mergeText(kit.body, a)}`;
+    const merged = kitText(kit, a);
+    const text = `Subject: ${merged.subject}\n\n${merged.body}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(kit.id);
@@ -477,9 +478,9 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
                 <details className={styles.playDetails}>
                   <summary>Preview message</summary>
                   <div className={styles.playSubject}>
-                    Subject: {mergeText(k.subject, a)}
+                    Subject: {kitText(k, a).subject}
                   </div>
-                  <pre className={styles.playPre}>{mergeText(k.body, a)}</pre>
+                  <pre className={styles.playPre}>{kitText(k, a).body}</pre>
                 </details>
                 <div className={styles.playActions}>
                   <button

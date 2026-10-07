@@ -14,7 +14,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo, type Peo } from "@/lib/book";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { KITS, defaultPlay, getKit, mergeText, type CampaignKit } from "@/lib/campaigns";
+import { KITS, defaultPlay, getKit, kitText, type CampaignKit } from "@/lib/campaigns";
 import { boardLift, type Approach, type Stage } from "@/lib/command-center/types";
 import { loadDispositions } from "@/lib/today/overlay";
 import { unparked } from "./rules";
@@ -81,22 +81,20 @@ async function templateDraft(
   // With no stored stage the account reads as NOT_TOUCHED, as the sheet
   // reads it, and that stage's direct play seeds.
   kit = kit ?? defaultPlay("NOT_TOUCHED") ?? KITS[0];
-  // "Unassigned" is a seat, not a person, and the operator's chosen recipient
-  // outranks the seeded contact even when nameless (the Ted doctrine).
-  const csm = peo.csm === "Unassigned" ? "" : peo.csm;
-  const ctx = {
+  // The operator's chosen recipient outranks the seeded contact even when
+  // nameless (the Ted doctrine). kitText reads "Unassigned" as no CSM and
+  // drops the sentence that would name one.
+  const { subject, body } = kitText(kit, {
     name: peo.name,
-    csm,
+    csm: peo.csm,
     contactName: toNames.filter(Boolean)[0] || "",
     city: peo.city,
     state: peo.state,
     industry: peo.industry,
-  };
-  let body = mergeText(kit.body, ctx);
-  if (!csm) body = body.replace(/the CSM suggested I reach out\.\s*/, "");
+  });
   return {
     ok: true,
-    subject: mergeText(kit.subject, ctx).slice(0, 140),
+    subject: subject.slice(0, 140),
     body,
     note: `The brain is down. Drafted from the "${kit.name}" play. Edit before it goes.`,
   };

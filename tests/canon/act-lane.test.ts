@@ -19,12 +19,13 @@ import type { Peo } from "../../src/lib/book";
 import { readAccount, type RecordNote } from "../../src/lib/record/read";
 import { lastHumanTouch, sheetSecond } from "../../src/lib/record/accounts";
 import { parseGemsBody, renderGemsBody, type Gem } from "../../src/lib/activity/stores";
-import { lintAct } from "../../src/lib/activity/lint";
+import { lintAct, lintReason } from "../../src/lib/activity/lint";
 import {
   KITS,
   askText,
   defaultPlay,
   getKit,
+  kitText,
   kitsFor,
   mergeText,
   playNextAction,
@@ -574,6 +575,93 @@ describe("the Approach is a fact, never a gate (A7; C19)", () => {
   });
 });
 
+// The play copy, swept against the plain-speech law and the writing canon
+// (the coordinator's follow-up to A7). Every line runs through the canon lint
+// the second record's gems face (src/lib/activity/lint.ts), so a device in a
+// play fails the build: drafts a CSM or a prospect reads go sentence by
+// sentence through the device and hedge checks, and each ask goes through
+// the action-line lint whole.
+describe("the play copy obeys the plain-speech law", () => {
+  const CTX = {
+    name: "Regis HR Group",
+    csm: "Anika Steenstra",
+    contactName: "Pat Lee",
+    city: "",
+    state: "",
+    industry: "PEO",
+  };
+  const BARE = { ...CTX, csm: "Unassigned", contactName: "" };
+  // Two of the lint's faults are the gem line's format, not devices: the
+  // eight-word cap and the digit that is not a date. A draft says "20
+  // minutes" and runs longer than eight words; neither is a device.
+  const FORMAT_ONLY = /the cap is eight|a digit that is not a date/;
+  const faultsIn = (line: string) =>
+    lintReason(line).faults.filter((f) => !FORMAT_ONLY.test(f));
+  const sentencesOf = (text: string) =>
+    text
+      .split(/\n+/)
+      .flatMap((para) => para.split(/(?<=[.!?])\s+/))
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+  test("every name, subject and sentence of every play passes the canon lint", () => {
+    const found: string[] = [];
+    for (const kit of KITS)
+      for (const ctx of [CTX, BARE]) {
+        const { subject, body } = kitText(kit, ctx);
+        for (const line of [kit.name, subject, ...sentencesOf(body)])
+          for (const f of faultsIn(line)) found.push(`${kit.id}: ${f} · ${line}`);
+      }
+    assert.deepEqual(found, []);
+  });
+
+  test("every ask is an action line in the writing canon, with or without names", () => {
+    for (const kit of KITS)
+      for (const ctx of [CTX, BARE]) {
+        const ask = askText(kit.ask, ctx);
+        assert.deepEqual(lintAct(ask), { ok: true, faults: [] }, `${kit.id}: ${ask}`);
+      }
+  });
+
+  test("no play carries a dash, a money figure or an unfilled placeholder", () => {
+    for (const kit of KITS)
+      for (const ctx of [CTX, BARE]) {
+        const { subject, body } = kitText(kit, ctx);
+        const all = [kit.name, subject, body, askText(kit.ask, ctx)].join("\n");
+        assert.doesNotMatch(all, /[—–]|\s-\s/, kit.id);
+        assert.doesNotMatch(all, /[$€£]\s?\d/, kit.id);
+        assert.doesNotMatch(all, /\{\w+\}/, kit.id);
+      }
+  });
+
+  test("a draft never claims a CSM who isn't there", () => {
+    const nudge = getKit("peo-value-nudge")!;
+    assert.ok(
+      kitText(nudge, CTX).body.includes("Anika Steenstra knows I'm reaching out."),
+    );
+    const bare = kitText(nudge, BARE).body;
+    assert.doesNotMatch(bare, /CSM|Unassigned|reaching out/);
+    assert.ok(bare.startsWith("Hi there,\n\nI work on the global side"), bare);
+    assert.equal(
+      askText(getKit("csm-brief-intro")!.ask, BARE),
+      "Ask the CSM for an intro",
+    );
+  });
+
+  test("the lint is the gate: the lines the sweep removed fail it", () => {
+    assert.ok(
+      faultsIn("I'll keep it low-key and lead with value, not a pitch.").includes(
+        "antithesis",
+      ),
+    );
+    assert.ok(
+      faultsIn(
+        "Helping Regis clients hire internationally — no entity required",
+      ).includes("a dash hinge"),
+    );
+  });
+});
+
 describe("the lane's send carries the quiet flag (A8; the direct doctrine)", () => {
   const thread = {
     mktgSends7: 0,
@@ -679,7 +767,7 @@ describe("hidden is hidden on Accounts (X1)", () => {
     const p = peo(ACCT, "Simploy");
     assert.equal(
       playNextAction(kit, p, read.relationship.name),
-      "Email Pat the global-hiring angle",
+      "Email Pat about hiring abroad",
     );
   });
 });
