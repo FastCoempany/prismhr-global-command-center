@@ -300,6 +300,19 @@ describe("the receipt line: the account, the counts, the day, the rung", () => {
     // Shut, nothing of it shows.
     assert.ok(!textOf(await receiptLine(filed(), { wrote })).includes("Send the census template."));
   });
+
+  // Pass 9's tail (D11): "The Chute reads three files at once; the rest wait
+  // in drop order and say so." A file waiting its turn read "Reading…" like
+  // the three in flight; it says it is waiting now, with its place.
+  test("a file waiting its turn says so with its place; Reading… is only for the reads in flight", async () => {
+    const queued = { key: 9, filename: "x.pdf", state: "queued" as const };
+    assert.equal(textOf(await receiptLine(queued, { ahead: 0, onClear: undefined })), "x.pdf · Waiting · next in line");
+    assert.equal(textOf(await receiptLine(queued, { ahead: 2, onClear: undefined })), "x.pdf · Waiting · 2 ahead");
+    assert.ok(!textOf(await receiptLine(queued, { ahead: 1 })).includes("Reading"));
+    // The waiting row is in flight: no ✕, no ↺, nothing to clear yet.
+    assert.ok(!/✕|↺/.test(textOf(await receiptLine(queued, { ahead: 1 }))));
+    assert.equal(textOf(await receiptLine({ key: 9, filename: "x.pdf", state: "reading" })), "x.pdf · Reading…");
+  });
 });
 
 describe("the second line speaks only when something needs saying", () => {
@@ -605,6 +618,8 @@ describe("the faces' copy obeys the writing canon", () => {
       await receiptLine({ key: 9, filename: "x.pdf", state: "kept", day: "10/6" }),
       await receiptLine({ key: 9, filename: "x.pdf", state: "filing", account: REGIS }),
       await receiptLine({ key: 9, filename: "x.pdf", state: "reading" }),
+      await receiptLine({ key: 9, filename: "x.pdf", state: "queued" }, { ahead: 0 }),
+      await receiptLine({ key: 9, filename: "x.pdf", state: "queued" }, { ahead: 2 }),
       await receiptLine({ key: 9, filename: "x.pdf", state: "filed", account: REGIS, vault: { text: "Backing up x.pdf… 1 of 3", going: true } }),
     ];
     for (const html of renders) {

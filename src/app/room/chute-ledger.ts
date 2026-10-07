@@ -5,8 +5,9 @@
 //   · a row waiting on the operator (pick, mismatch) keeps its text and
 //     comes back in the same state — a disputed read waits for the pick, and
 //     a reload must not quietly turn the wait into "drop it again";
-//   · a row mid-read when the tab died (reading, filing, activity) comes back
-//     interrupted, because its read died with the tab;
+//   · a row mid-read when the tab died (reading, filing, activity), or still
+//     waiting its turn to be read (queued), comes back interrupted, because
+//     its read died with the tab;
 //   · a settled row (filed, undone, vaulted, unfiled, kept, dupe, error,
 //     activityDone, interrupted) keeps the account, the counts, the day and
 //     the rung the router placed it on — never an address, never body text,
@@ -15,7 +16,8 @@
 // A waiting row whose text cannot be kept — a binary awaiting the vault, or a
 // capture past LEDGER_TEXT_CAP — comes back interrupted and says to drop it
 // again. The limiter at the foot is the Chute's concurrency ceiling: at most
-// CHUTE_PARALLEL files read at once; the rest wait in drop order.
+// CHUTE_PARALLEL files read at once; the rest wait in drop order and say so,
+// each with its place in the line (D11).
 
 import { keptGrab, type GrabSummary } from "@/lib/ingest/grab";
 import type { Window } from "@/lib/ingest/windows";
@@ -24,6 +26,9 @@ import type { RouteHit } from "@/lib/route-capture";
 import { chicagoDay } from "@/lib/tz";
 
 type LedgerState =
+  // Seated and waiting its turn: the Chute reads CHUTE_PARALLEL files at once
+  // and the rest wait in drop order, saying so (D11).
+  | "queued"
   | "reading"
   | "filing"
   | "filed"
@@ -163,7 +168,7 @@ export { chicagoDay };
 
 const isWaiting = (s: LedgerState): boolean => s === "pick" || s === "mismatch";
 const isInFlight = (s: LedgerState): boolean =>
-  s === "reading" || s === "filing" || s === "activity";
+  s === "queued" || s === "reading" || s === "filing" || s === "activity";
 
 // The router's why strings, read back into the rung that produced them —
 // only for rows persisted before the rung rode on the row itself.
@@ -270,23 +275,48 @@ export function saveLedger(
 }
 
 /** Run tasks with at most `limit` in flight, starting them in order and
- *  returning their results in that same order. A task that throws rejects the
- *  whole run; the Chute's own tasks never throw — each swallow catches. */
+ *  returning their results in that same order: one batch through its own
+ *  line (readQueue, below). A task that throws rejects the whole run; the
+ *  Chute's own tasks never throw — each swallow catches. */
 export async function runLimited<T>(
   tasks: readonly (() => Promise<T>)[],
   limit: number,
 ): Promise<T[]> {
-  const results: T[] = new Array<T>(tasks.length);
-  let next = 0;
-  const worker = async (): Promise<void> => {
-    while (next < tasks.length) {
-      const i = next++;
-      results[i] = await tasks[i]!();
+  const run = readQueue(limit);
+  return Promise.all(tasks.map((task) => run(task)));
+}
+
+/** One line for every read a door starts, however many drops feed it: at
+ *  most `limit` in flight, the rest started in the order they joined (D11).
+ *  A drop thrown while another is still reading joins behind it, so the
+ *  door never reads more than `limit` at once and a waiting file's place
+ *  is true. A slot passes straight to the next in line when a read ends,
+ *  so nothing joining later can step ahead. */
+export function readQueue(limit: number): <T>(task: () => Promise<T>) => Promise<T> {
+  const lanes = Math.max(1, Math.floor(limit));
+  let running = 0;
+  const line: (() => void)[] = [];
+  const release = () => {
+    const next = line.shift();
+    if (next) next();
+    else running -= 1;
+  };
+  return async <T>(task: () => Promise<T>): Promise<T> => {
+    if (running < lanes && line.length === 0) running += 1;
+    else await new Promise<void>((go) => line.push(go));
+    try {
+      return await task();
+    } finally {
+      release();
     }
   };
-  const lanes = Math.max(1, Math.min(Math.floor(limit), tasks.length));
-  await Promise.all(Array.from({ length: lanes }, worker));
-  return results;
+}
+
+/** How many files wait ahead of a queued row: the queued rows seated before
+ *  it. Keys rise in drop order and the door's one line starts reads in that
+ *  order, so this is the row's true place (D11). */
+export function waitAhead(items: readonly LedgerRow[], key: number): number {
+  return items.filter((x) => x.state === "queued" && x.key < key).length;
 }
 
 /** A settled receipt is the operator's to clear (decreed 2026-09-01: no

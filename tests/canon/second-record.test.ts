@@ -5,6 +5,9 @@
 // writer takes its client.
 
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
 import { describe, test } from "node:test";
 import { actedDayFor, personMoved } from "../../src/lib/activity/acted";
 import { createIngest } from "../../src/lib/activity/ingest";
@@ -812,6 +815,60 @@ describe("the acted sweep reads every first-record row carrying the gem's person
     );
     assert.equal(await actedSweep(db), 0);
     assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0].actedDay, "");
+  });
+
+  // Pass 9's tail (A4.14, A8.4): the run swept only once per weekly export,
+  // so a send filed through the Chute cleared its gem's nag a week later. A
+  // filing now sweeps its own account at once ("the acted sweep can re-stamp
+  // from the record any time it truly speaks", the Act Lane), and nothing
+  // beyond it: another account's gem waits for its own record or the run.
+  test("a filing's sweep stamps its own account's gem and leaves every other account's", async () => {
+    const OTHER = "001TESTSTAFFLSG00B";
+    const send = (accountId: string) => ({
+      accountId,
+      body: "✉ OL Sep 22 9:12 AM — Re: the pricing sheet · Antaeus Coe → Natalie Borland",
+      createdAt: new Date("2026-09-22T12:00:00.000Z"),
+      source: "outlook",
+      actors: "Antaeus Coe → Natalie Borland",
+      recipients: "Natalie Borland",
+    });
+    const { db, under } = memoryDb([
+      gemNote(acted()),
+      { accountId: `${GEMS_NS}${OTHER}`, body: renderGemsBody([acted()]) },
+      send(ACCT),
+      send(OTHER),
+    ]);
+    assert.equal(await actedSweep(db, { accountId: ACCT }), 1);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0].actedDay, "2026-09-22");
+    assert.equal(gemsUnder(under(`${GEMS_NS}${OTHER}`))[0].actedDay, "", "another account waits");
+    // An account with no gems costs one read and stamps nothing; the run's
+    // own sweep still reaches every account.
+    assert.equal(await actedSweep(db, { accountId: "001TESTNOGEMS0000C" }), 0);
+    assert.equal(await actedSweep(db), 1);
+    assert.equal(gemsUnder(under(`${GEMS_NS}${OTHER}`))[0].actedDay, "2026-09-22");
+  });
+
+  test("the filing runs its account's sweep after the write, fails open and never holds the filing", () => {
+    // roomPaste gates on the session and the database, so its wiring is
+    // read from source, as tests/ingest-filing.test.ts reads it.
+    const actions = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+    const paste = actions.slice(
+      actions.indexOf("export async function roomPaste("),
+      actions.indexOf("async function fileClaimed("),
+    );
+    assert.match(paste, /return await fileClaimed\(\{[\s\S]*?\}\)\.then\(\(r\) => sweptAfter\(acct\.id, r\)\);/);
+    const helper = actions.slice(
+      actions.indexOf("function sweptAfter<"),
+      actions.indexOf("export async function roomPaste("),
+    );
+    assert.ok(helper.length > 0, "the helper sits before roomPaste");
+    // Only a filing that wrote rows, after it answered, on its own account.
+    assert.match(helper, /if \(r\.ok && r\.filed > 0\)/);
+    assert.match(helper, /after\(async \(\) => \{\s*try \{\s*await actedSweep\(getPrisma\(\), \{ accountId \}\);\s*\} catch \{/);
+    // Both the scheduling and the sweep fail open: neither can break or slow
+    // the filing, whose result goes back as it came.
+    assert.equal((helper.match(/\} catch \{/g) ?? []).length, 2);
+    assert.match(helper, /return r;\s*\}\s*$/);
   });
 
   test("the earliest row after the gem's day wins; the gem's own day and another person do not count", () => {

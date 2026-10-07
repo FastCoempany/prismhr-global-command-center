@@ -24,18 +24,20 @@ export const TRANSCRIBE_BYTES = 8 * 1024 * 1024;
 // No reader keeps a window of its own (ruled 2026-10-07, pass 8 call 3): the
 // transcription, the spreadsheet and the document are handed on whole, and
 // the read windows above are the only cuts, on what goes to the model. The
-// one exception is the transport, below.
+// transport cuts nothing either: a text too heavy for one request travels in
+// pieces and the server puts it back together whole (D4: the note keeps the
+// text whole at any size), below.
 
-/** The most a capture's text may weigh on its way to the server, in bytes of
- *  the encoded argument. The text travels as a server action argument, and
- *  the platform refuses a request over its cap: Vercel's 4.5 MB request
- *  limit, which next.config.ts's serverActions.bodySizeLimit ("4400kb")
- *  stays under. A text above it used to fail its filing outright, so
- *  nothing fanned out. Under it, every reader hands on the text whole (pass
- *  8 call 3); above it, the reader windows the text to fit, records the
- *  window like any other (D4: it shows on the receipt's amber line) and
- *  files, and the vault still keeps the whole file. 4 MB leaves room under
- *  the cap for the action's other arguments and its encoding. */
+/** The most a capture's text may weigh as one server action argument, in
+ *  bytes of the encoded argument: the platform refuses a request over its
+ *  cap, Vercel's 4.5 MB request limit, which next.config.ts's
+ *  serverActions.bodySizeLimit ("4400kb") stays under. A text at or under it
+ *  travels whole in one request; a text above it travels in pieces through
+ *  the vault's chunk store, and the server assembles it before it files or
+ *  routes (src/lib/ingest/carry.ts; D4, as the vault's files do under D8 as
+ *  amended 2026-10-05). It cuts nothing: it only says which way the text
+ *  goes. 4 MB leaves room under the cap for the action's other arguments and
+ *  its encoding. */
 export const TRANSPORT_BYTES = 4 * 1024 * 1024;
 
 /** What one UTF-16 code unit costs once the text is JSON-encoded as UTF-8:
@@ -60,25 +62,20 @@ function unitCost(text: string, i: number): number {
   return 3;
 }
 
-/** The text cut to what the transport carries (TRANSPORT_BYTES), head kept,
- *  never splitting a surrogate pair. The window is returned only when
- *  something was cut, so a text under the limit passes whole. */
-export function transportCut(
-  what: string,
-  text: string,
-  bytes: number = TRANSPORT_BYTES,
-): { text: string; window: Window | null } {
+/** Whether a text travels whole as one request's argument (TRANSPORT_BYTES),
+ *  costed as it travels: the encoded string's two quotes, JSON's escapes and
+ *  UTF-8's widths. A text that does not fit goes in pieces, never cut. */
+export function fitsTransport(text: string, bytes: number = TRANSPORT_BYTES): boolean {
   const t = text ?? "";
+  // Every unit costs at most six bytes: a text this short fits whatever it
+  // holds, and the count is skipped.
+  if (t.length * 6 + 2 <= bytes) return true;
   let used = 2; // the encoded string's two quotes
   for (let i = 0; i < t.length; i++) {
-    const cost = unitCost(t, i);
-    // A high surrogate that does not fit leaves with its low half, so the
-    // cut never splits a pair.
-    if (used + cost > bytes)
-      return { text: t.slice(0, i), window: { what, read: i, of: t.length } };
-    used += cost;
+    used += unitCost(t, i);
+    if (used > bytes) return false;
   }
-  return { text: t, window: null };
+  return true;
 }
 
 /** The most entries one read files, and the most the model is asked for. */
@@ -91,9 +88,9 @@ export const TEXT_FLOOR = 20;
 /** A window that cut something: what was cut, how much was read, how much
  *  arrived. Stored on the Filing row and read by the receipt (D4). */
 export type Window = {
-  /** The thing that was cut, as the receipt says it: "the paste", or "the
-   *  file" and "the text" when the transport cut a dropped file or a pasted
-   *  text (TRANSPORT_BYTES). */
+  /** The thing that was cut, as the receipt says it: "the paste" for the
+   *  model's read, or what a reader's own window names, should one report
+   *  one. The transport names none: it cuts nothing (TRANSPORT_BYTES). */
   what: string;
   read: number;
   of: number;

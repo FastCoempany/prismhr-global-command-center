@@ -152,7 +152,7 @@ describe("room client — every absorbed capability is wired", () => {
       what: "composer files notes/actions/schedules",
       action: "roomCompose",
       from: "room",
-      shows: /Action — open work on the sheet for Simploy\./,
+      shows: /Action\. Open work on the sheet for Simploy\./,
     },
     // The TODAY register rests folded (the Spring), so the sheet's own
     // controls open on a click and keep the server half alone here.
@@ -165,7 +165,7 @@ describe("room client — every absorbed capability is wired", () => {
       what: "paste files to the account",
       action: "roomPaste",
       from: "room",
-      shows: /The bolt — paste anything\. It reads and files to Simploy\./,
+      shows: /The bolt\. Paste anything\. It reads and files to Simploy\./,
     },
     { what: "a paste can be undone whole", action: "roomPasteUndo", from: "room" },
     // the shared door: the Drop files, holds a verdict and takes back through the hooks
@@ -173,7 +173,7 @@ describe("room client — every absorbed capability is wired", () => {
       what: "the Drop files through the shared door",
       action: "useIngest",
       from: "ingest",
-      shows: /File — email, PDF, transcript, spreadsheet, document, or image\./,
+      shows: /File\. Email, PDF, transcript, spreadsheet, document, or image\./,
     },
     { what: "a disputed paste is held for the pick", action: "useVerdict", from: "ingest" },
     { what: "the paste's take-back is the shared undo", action: "useUndo", from: "ingest" },
@@ -251,11 +251,13 @@ describe("room client — every absorbed capability is wired", () => {
     assert.ok(/\bTODAY\b/.test(text), "the TODAY kicker is missing");
     assert.ok(/EARLIER · 1/.test(text), "the EARLIER rule is missing");
     // The doors (decreed 2026-08-18): note and action are icon doors now,
-    // beside the bolt and the file door.
+    // beside the bolt and the file door. Rewritten in pass 9's tail (A12.5):
+    // the label dash went, so each tooltip names its door in a sentence.
     for (const door of [
-      "Note — a line for the record on Simploy.",
-      "Action — open work on the sheet for Simploy.",
-      "File — email, PDF, transcript, spreadsheet, document, or image.",
+      "The bolt. Paste anything. It reads and files to Simploy.",
+      "Note. A line for the record on Simploy.",
+      "Action. Open work on the sheet for Simploy.",
+      "File. Email, PDF, transcript, spreadsheet, document, or image.",
     ]) {
       assert.ok(board.includes(`title="${door}"`), `door missing: ${door}`);
     }

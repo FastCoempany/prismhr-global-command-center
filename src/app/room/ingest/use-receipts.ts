@@ -100,7 +100,8 @@ export function useReceipts() {
 
   /** Seat every dropped file the moment it lands, newest first, each with
    *  the batch it arrived in; the keys come back in drop order so the reads
-   *  can run in that order. */
+   *  can run in that order. A seated file waits its turn and says so with
+   *  its place (D11); `start` marks it reading when its turn comes. */
   const seat = (files: readonly File[], batch: number): { f: File; key: number }[] => {
     const seated = files.map((f) => ({ f, key: ++seq.current }));
     setItems((xs) => [
@@ -108,7 +109,7 @@ export function useReceipts() {
         .map(({ f, key }) => ({
           key,
           filename: f.name,
-          state: "reading" as const,
+          state: "queued" as const,
           batch,
           file: f,
         }))
@@ -118,6 +119,15 @@ export function useReceipts() {
     return seated;
   };
 
+  /** A seated file's turn came: it is one of the CHUTE_PARALLEL reads in
+   *  flight now, and "Reading…" is true of it (D11). */
+  const start = (key: number) =>
+    setItems((xs) =>
+      xs.map((x) =>
+        x.key === key && x.state === "queued" ? { ...x, state: "reading" } : x,
+      ),
+    );
+
   /** A settled receipt is the operator's to clear (decreed 2026-09-01); the
    *  gate is isSettled in chute-ledger.ts. Clear all clears every settled
    *  receipt at once (D12) and leaves what is still reading or held, because
@@ -126,5 +136,5 @@ export function useReceipts() {
   const dismiss = (key: number) => setItems((xs) => xs.filter((x) => x.key !== key));
   const dismissAll = () => setItems((xs) => xs.filter((x) => !isSettled(x.state)));
 
-  return { items, patch, seat, settled, dismiss, dismissAll, reconcile };
+  return { items, patch, seat, start, settled, dismiss, dismissAll, reconcile };
 }

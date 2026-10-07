@@ -154,7 +154,9 @@ describe("the hooks are the browser's, and ask for the fresh read", () => {
     }
     const door = read("src/app/room/ingest/use-ingest.ts");
     assert.match(door, /import \{ useRouter \} from "next\/navigation"/);
-    const filed = door.indexOf("await roomPaste(");
+    // Rewritten in pass 9's tail: the filing travels through the carriage,
+    // whole or in pieces the server assembles (carryFiling, D4).
+    const filed = door.indexOf("await carryFiling(");
     const refreshed = door.indexOf("router.refresh()", filed);
     assert.ok(filed > 0 && refreshed > filed, "router.refresh() follows the filing");
     assert.equal((door.match(/router\.refresh\(\)/g) ?? []).length, 1, "once");

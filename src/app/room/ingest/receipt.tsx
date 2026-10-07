@@ -109,6 +109,13 @@ export function receiptTail(r: LedgerRow): string {
 
 type Wrote = FilingWrote | "reading" | "none";
 
+/** A file waiting its turn says so, with its place in the line (D11): the
+ *  Chute reads three at once, and "Reading…" belongs to those three. */
+export function waitLine(ahead: number): string {
+  const n = Math.max(0, Math.floor(ahead));
+  return n === 0 ? "Waiting · next in line" : `Waiting · ${n} ahead`;
+}
+
 export function ReceiptLine({
   row,
   canWrite,
@@ -116,6 +123,7 @@ export function ReceiptLine({
   onClear,
   defaultOpen = false,
   wrote: given,
+  ahead = 0,
 }: {
   row: LedgerRow;
   canWrite: boolean;
@@ -127,6 +135,8 @@ export function ReceiptLine({
   defaultOpen?: boolean;
   /** What the filing wrote, when the caller already holds it. */
   wrote?: FilingWrote;
+  /** On a row waiting its turn, how many files wait ahead of it (D11). */
+  ahead?: number;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [wrote, setWrote] = useState<Wrote | null>(given ?? null);
@@ -421,9 +431,11 @@ export function ReceiptLine({
       settled = false;
       line = row.vault?.going
         ? `${name} · ⇪ ${row.vault.text}`
-        : row.state === "filing" && acct
-          ? `${name} · Filing to ${shortName(acct.name)}…`
-          : `${name} · Reading…`;
+        : row.state === "queued"
+          ? `${name} · ${waitLine(ahead)}`
+          : row.state === "filing" && acct
+            ? `${name} · Filing to ${shortName(acct.name)}…`
+            : `${name} · Reading…`;
   }
   // A filing that failed still backs its file up (pass 8 call 8), and the
   // receipt says so under the failure: in flight, landed with its door, or

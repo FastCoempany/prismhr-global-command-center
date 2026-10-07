@@ -5,7 +5,7 @@
 // first where the browser can decode it. Returns paste text the room's
 // readers understand, or the reason it couldn't.
 
-import { TEXT_FLOOR, transportCut, type Window } from "@/lib/ingest/windows";
+import { TEXT_FLOOR, type Window } from "@/lib/ingest/windows";
 import {
   emlToPaste,
   msgToPaste,
@@ -55,13 +55,12 @@ type ReadDoor = "drop" | "chute";
 
 const CSV_GOES_TO_THE_CHUTE = "The export goes in the Chute.";
 
-/** The paste text a file becomes, whole: every reader hands on the text
- *  whole, and only what goes to a model is windowed (ruled 2026-10-07, pass
- *  8 call 3; D4). roomPaste windows its own read and records that window.
- *  The one cut here is the transport's: a text too heavy for the server's
- *  request cap is windowed to fit (TRANSPORT_BYTES) and the window rides to
- *  the receipt, so the file still files and fans out; the vault keeps it
- *  whole. `windows` also carries a transcriber's own, should it report one. */
+/** The paste text a file becomes, whole at any size: every reader hands on
+ *  the text whole, and only what goes to a model is windowed (ruled
+ *  2026-10-07, pass 8 call 3; D4). roomPaste windows its own read and
+ *  records that window. Nothing is cut here: a text too heavy for one
+ *  request travels to the server in pieces it assembles (src/lib/ingest/
+ *  carry.ts). `windows` carries a transcriber's own, should it report one. */
 export async function readFileToText(
   f: File,
   readPdf: PdfReader,
@@ -159,11 +158,9 @@ export async function readFileToText(
     }
     if (text.length < TEXT_FLOOR)
       return { ok: false, reason: `${f.name} came back empty. Paste the text instead.` };
-    // Over the transport limit, the head that fits files and the receipt
-    // says how much (D4); under it, nothing is cut (pass 8 call 3).
-    const carried = transportCut("the file", text);
-    if (carried.window) windows.push(carried.window);
-    return { ok: true, text: carried.text, windows };
+    // Whole at any size (D4; pass 8 call 3): the carriage takes a heavy text
+    // in pieces, so nothing is cut on the way to the server.
+    return { ok: true, text, windows };
   } catch {
     return { ok: false, reason: `Reading ${f.name} failed. Paste the text instead.` };
   }
