@@ -53,7 +53,7 @@ The chain grew from 49 files after #336 to 62 in pass 7. The decree ledger's §F
 
 ## 3. Live violations
 
-Every violation the re-walk found on d119c52, merged across the ledgers and grouped by where the operator meets it. [inferred] marks a reading of the code that no run confirmed. The origin column says whether pass 7 introduced it; "before" means it predates pass 7 and pass 7 did not reach it. There are 51: 7 introduced by pass 7 (H1, C1, C2, C5, C6, G9, S2), 44 from before. None blocks a filing or loses data the record holds; R2 loses the operator's acted stamps on a take-back.
+**Pass 9 (2026-10-07, #368 to #382) fixed every row below; docs/architecture/pass-9-fixes.md maps each id to its PR.** Every violation the re-walk found on d119c52, merged across the ledgers and grouped by where the operator meets it. [inferred] marks a reading of the code that no run confirmed. The origin column says whether pass 7 introduced it; "before" means it predates pass 7 and pass 7 did not reach it. There are 51: 7 introduced by pass 7 (H1, C1, C2, C5, C6, G9, S2), 44 from before. None blocks a filing or loses data the record holds; R2 loses the operator's acted stamps on a take-back.
 
 ### The HomeRoom
 
