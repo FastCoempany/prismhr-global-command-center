@@ -129,7 +129,7 @@ export function PlaybookClient({
             )}
             {oursNotTheirs.length > 0 && (
               <p className={styles.kHint}>
-                Ours, not theirs. Bank questions no buyer has ever needed answered:{" "}
+                Bank questions no buyer has asked yet:{" "}
                 {oursNotTheirs.slice(0, 4).join(" · ")}
               </p>
             )}

@@ -175,13 +175,13 @@ export function PayrollDemoClient({
         </div>
         <div className={styles.searchBox}>
           <input
-            placeholder="Search steps and questions…"
+            placeholder="Search screens and questions…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Search"
           />
         </div>
-        <nav className={styles.stepList} aria-label="Demo steps">
+        <nav className={styles.stepList} aria-label="Demo screens">
           {filteredSteps.map((s) => {
             const idx = steps.indexOf(s);
             const qCount = questionsByStep.get(s.id)?.length ?? 0;
@@ -208,7 +208,7 @@ export function PayrollDemoClient({
             );
           })}
           {filteredSteps.length === 0 && (
-            <p className={styles.emptyNote}>No steps match “{query}”.</p>
+            <p className={styles.emptyNote}>No screens match “{query}”.</p>
           )}
         </nav>
         <div className={styles.sideFoot}>

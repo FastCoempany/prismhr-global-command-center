@@ -9,8 +9,25 @@
 /** What a partner is actually worried about, the five that recur. */
 type Issue = "compliance" | "control" | "speed" | "cost" | "oneplace";
 
-/** The rung a line stands on. Strongest first; nothing is ever faked. */
-export type Rung = "tape" | "filed" | "research" | "none";
+/** The rung a line stands on, the evidence ladder strongest first (the
+ *  playbook authoring canon, rule 14): a transcript, a filed thread or
+ *  document, call notes, a lesson, then research and team intel. Nothing is
+ *  ever faked: unproven ground is "none" and says so (∅). */
+export type Rung = "tape" | "filed" | "notes" | "lesson" | "research" | "intel" | "none";
+
+/** What each rung's chip says. The labels name the rung (rule 14: ON TAPE /
+ *  FILED THREAD / CALL NOTES / ❖ LESSON / RESEARCH / TEAM INTEL). "FILED"
+ *  stays short because the flyers sit on that rung beside the threads, and a
+ *  flyer is not a thread; its source says which. */
+export const RUNG_LABEL: Record<Rung, string> = {
+  tape: "ON TAPE",
+  filed: "FILED",
+  notes: "CALL NOTES",
+  lesson: "❖ LESSON",
+  research: "RESEARCH",
+  intel: "TEAM INTEL",
+  none: "∅",
+};
 
 /** [what it says, the rung, where it came from] */
 export type Cite = [text: string, rung: Rung, source?: string];
@@ -62,6 +79,10 @@ export type Product = {
   watch?: string;
   /** The questions to ask on this product. */
   ask: string[];
+  /** The rungs under the four blocks the flyer's own bullets do not carry:
+   *  how it runs, we do and they keep, time and price, and the asks. Every
+   *  block cites its rung (pass 8 X9). */
+  cites: { how: Cite[]; split: Cite[]; time: Cite[]; ask: Cite[] };
 };
 
 /** What they say about a product, and what we say back. */
@@ -268,6 +289,71 @@ export const PRODUCTS: Product[] = [
       "Are they working for someone else today, and what’s their notice?",
       "How many people, and roughly what is each of them paid today?",
     ],
+    cites: {
+      how: [
+        [
+          "Each employee gets their own login: their payments, time off and leave.",
+          "tape",
+          "8/27",
+        ],
+        [
+          "'We want all those reimbursable expenses to flow through us and not your clients.'",
+          "tape",
+          "8/27",
+        ],
+        [
+          "The employment contract sits between the employee and us, as the local employer of record.",
+          "tape",
+          "7/7",
+        ],
+      ],
+      split: [
+        [
+          "'We can sponsor work permits and visas, but it depends on the country.'",
+          "tape",
+          "8/27",
+        ],
+        [
+          "The client's manager approves reimbursements in the platform before the tenth.",
+          "tape",
+          "8/27",
+        ],
+        [
+          "Employ workers through local legal entities; clients manage employees while PrismHR Global serves as the legal employer.",
+          "filed",
+          "flyer",
+        ],
+      ],
+      time: [
+        [
+          "Two weeks from signed agreement and employee info, not first contact; a person's own notice can stretch it.",
+          "tape",
+          "8/27",
+        ],
+        [
+          "'We charge a setup fee per employee' for the in-country work; a deposit per employee, refunded at the end of employment.",
+          "tape",
+          "8/27",
+        ],
+      ],
+      ask: [
+        [
+          "'I think one lives in Spain.' 'Where they live is where they'd need to be employed.'",
+          "tape",
+          "7/7",
+        ],
+        [
+          "'Is the employee currently working for another company? In Italy those notice periods are long.'",
+          "tape",
+          "8/27",
+        ],
+        [
+          "'All we need is current headcount, anticipated headcount, and salaries. No RFP.'",
+          "filed",
+          "8/28",
+        ],
+      ],
+    },
   },
   {
     id: "payroll",
@@ -383,6 +469,58 @@ export const PRODUCTS: Product[] = [
       "How many people, and roughly what are they paid?",
       "What payroll cycle do they run today?",
     ],
+    cites: {
+      how: [
+        [
+          "'Not just a registered entity, but also payroll registration, and a bank account down there.'",
+          "tape",
+          "9/3",
+        ],
+        [
+          "'If they're the employer, they're responsible for the taxes and filings. We do the payroll processing.'",
+          "tape",
+          "9/3",
+        ],
+        [
+          "Centralized platform, multi-currency, reporting, integration with HR and finance systems.",
+          "filed",
+          "flyer",
+        ],
+      ],
+      split: [
+        [
+          "'If they're the employer, they're responsible for the taxes and filings. We do the payroll processing.'",
+          "tape",
+          "9/3",
+        ],
+        [
+          "Manage country-specific tax, statutory and compliance requirements.",
+          "filed",
+          "flyer",
+        ],
+      ],
+      time: [
+        [
+          "Global payroll two to three months, because in-country payroll is a much bigger build.",
+          "tape",
+          "8/27",
+        ],
+        ["'The payroll invoices are just our fees.'", "tape", "8/27"],
+      ],
+      ask: [
+        [
+          "'Not just a registered entity, but also payroll registration, and a bank account down there.'",
+          "tape",
+          "9/3",
+        ],
+        ["A partner live with manual tax filing outside the system.", "tape", "8/27"],
+        [
+          "Most countries pay monthly; Canada, Mexico and Puerto Rico pay twice a month.",
+          "tape",
+          "8/27",
+        ],
+      ],
+    },
   },
   {
     id: "cmgmt",
@@ -511,6 +649,58 @@ export const PRODUCTS: Product[] = [
       "How are they paid today, and in what currency?",
       "What did they sign, and with whom?",
     ],
+    cites: {
+      how: [
+        [
+          "'Contractors are immediate' once in the system with their information entered.",
+          "tape",
+          "8/27",
+        ],
+        [
+          "The wallet: withdraw in any currency, a virtual card; the client stops paying wire fees.",
+          "tape",
+          "7/7 \u00b7 9/10",
+        ],
+        [
+          "Onboard international contractors with streamlined workflows.",
+          "filed",
+          "flyer",
+        ],
+      ],
+      split: [
+        ["Support W-8, W-9 and 1099 documentation and reporting.", "filed", "flyer"],
+        [
+          "'We would advise what's best for that country. Ultimately it's the client's decision.'",
+          "tape",
+          "7/7",
+        ],
+      ],
+      time: [
+        [
+          "'Contractors are immediate' once in the system with their information entered.",
+          "tape",
+          "8/27",
+        ],
+        ["The rates, broken up by worker type, the contractor included.", "tape", "8/27"],
+      ],
+      ask: [
+        [
+          "'We are probably borderline their employees, because it's not project-based.'",
+          "tape",
+          "7/7",
+        ],
+        [
+          "'Twenty-five or so international employees that I pay directly. We do an international banking wire.'",
+          "tape",
+          "7/7",
+        ],
+        [
+          "'I'm pretty sure EOR. But don't put that in stone yet, let me double check.' Invoices in hand.",
+          "tape",
+          "9/2",
+        ],
+      ],
+    },
   },
   {
     id: "cor",
@@ -634,6 +824,53 @@ export const PRODUCTS: Product[] = [
       "How long has each of them been engaged, and what did they sign, with whom?",
       "How are they paid today: fixed amounts on a schedule, or against invoices?",
     ],
+    cites: {
+      how: [
+        [
+          "'We're going to make sure that classification is accurate. We're not going to sign our name to a contract for a contractor if we know they really should be classified as an employee.'",
+          "tape",
+          "8/27",
+        ],
+        [
+          "Serves as the contractor of record; manages contractor agreements and compliant payments; reduces worker misclassification risk; navigates country-specific contractor regulations.",
+          "filed",
+          "flyer",
+        ],
+      ],
+      split: [
+        [
+          "On Contractor Plus 'we are holding the contract' with the contractor.",
+          "tape",
+          "8/27",
+        ],
+        [
+          "'There are real consequences, fines, penalties, if the government finds out.' We advise; the client decides.",
+          "tape",
+          "7/7",
+        ],
+      ],
+      time: [
+        ["Contractors immediate; Contractor Plus is 'one step more'.", "tape", "8/27"],
+        [
+          "'The rates are higher because we're taking on more responsibility and liability for that classification.'",
+          "tape",
+          "8/27",
+        ],
+      ],
+      ask: [
+        [
+          "'Do you have a contractor of record available? If so, that would work best for us.' A client's new CFO, relayed.",
+          "tape",
+          "9/10",
+        ],
+        ["'The contractors in Poland will remain contractors.'", "tape", "9/10"],
+        [
+          "'We are probably borderline their employees, because it's not project-based.'",
+          "tape",
+          "7/7",
+        ],
+      ],
+    },
   },
   {
     id: "talent",
@@ -766,6 +1003,53 @@ export const PRODUCTS: Product[] = [
       "One person or a team?",
       "Do they want the person on their own systems day to day?",
     ],
+    cites: {
+      how: [
+        ["'They will send you a resume and a video of that individual.'", "tape", "9/10"],
+        [
+          "Transition seamlessly into Employer of Record services when needed.",
+          "filed",
+          "flyer",
+        ],
+      ],
+      split: [
+        [
+          "Staffing gives the client a seat we run; Global employs a person the client picked.",
+          "tape",
+          "9/10",
+        ],
+        [
+          "Source qualified candidates across global talent markets; target by country, industry and role; accelerate timelines.",
+          "filed",
+          "flyer",
+        ],
+      ],
+      time: [
+        [
+          "Two weeks from signed agreement and employee info, not first contact; a person's own notice can stretch it.",
+          "tape",
+          "8/27",
+        ],
+        ["'They will provide you with the cost for that individual.'", "tape", "9/10"],
+      ],
+      ask: [
+        [
+          "'I'm not sure why they were specifically interested in the Philippines.'",
+          "tape",
+          "9/10",
+        ],
+        [
+          "'If they already have somebody picked, that's where Global comes in.'",
+          "tape",
+          "9/10",
+        ],
+        [
+          "A partner asked about recruitment support for its own international hires.",
+          "notes",
+          "7/21",
+        ],
+      ],
+    },
   },
 ];
 
@@ -822,8 +1106,8 @@ export const CUES: Cue[] = [
       ],
       [
         "Two India contractors to reclassify; the level of direction puts them in a gray area.",
-        "tape",
-        "7/21 notes",
+        "notes",
+        "7/21",
       ],
     ],
     also: [["cor", "for the ones who genuinely run their own business"]],
@@ -1248,7 +1532,7 @@ export const CUES: Cue[] = [
         "tape",
         "9/10",
       ],
-      ["Contractor management plus: misclassification protection.", "tape", "7/21 notes"],
+      ["Contractor management plus: misclassification protection.", "notes", "7/21"],
     ],
     also: [["eor", "for anyone who leans employee"]],
   },
@@ -1393,7 +1677,12 @@ export const CUES: Cue[] = [
       [
         "The niche-talent example: a specific profile, found in the one part of the world where it exists.",
         "tape",
-        "9/3 · 7/21 notes",
+        "9/3",
+      ],
+      [
+        "Recruiting offered as a white-glove service, with food scientists found across several countries as the example.",
+        "notes",
+        "7/21",
       ],
     ],
     also: [],
@@ -1413,8 +1702,8 @@ export const CUES: Cue[] = [
     ev: [
       [
         "A partner asked about recruitment support for its own international hires.",
-        "tape",
-        "7/21 notes",
+        "notes",
+        "7/21",
       ],
     ],
     also: [],
@@ -1424,7 +1713,7 @@ export const CUES: Cue[] = [
     p: "talent",
     issue: "cost",
     cue: "They’re thinking a small team over there, mostly for the time zone.",
-    gist: "A team, not a person.",
+    gist: "A team for the time zone.",
     respond: [
       "Time zone is a staffing conversation. A specific person is employer of record. Cost is a different pitch. Don’t guess at the product.",
       "For a team: Talent Management adds workspace and housing where available, local HR administration and employee support.",

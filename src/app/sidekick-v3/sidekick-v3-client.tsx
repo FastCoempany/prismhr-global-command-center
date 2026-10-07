@@ -288,7 +288,7 @@ export function SidekickV3Client(props: Props) {
                 <form action={forkMasterFlow}>
                   {hidden(selected?.id)}
                   <button type="submit" className={styles.primaryBtn}>
-                    Fork the master flow ({flow.screenIds.length} steps)
+                    Fork the master flow ({flow.screenIds.length} screens)
                   </button>
                 </form>
                 <form action={createPlaybook} className={styles.rowForm}>

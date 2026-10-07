@@ -59,7 +59,15 @@
   background: var(--ds-blue-soft);
   color: #1d4ed8;
 }
-.research {
+/* Call notes and lessons sit on the record's own rungs beside the filed
+   threads; team intel beside research (pass 8 X9). */
+.notes,
+.lesson {
+  background: var(--ds-blue-soft);
+  color: #1d4ed8;
+}
+.research,
+.intel {
   background: var(--ds-surface-sunk);
   color: var(--ds-ink-faint);
 }

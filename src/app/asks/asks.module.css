@@ -117,6 +117,26 @@
   background: rgba(37, 99, 235, 0.08);
 }
 
+/* A playbook question the answer cites, opened in place (C13). */
+.fold {
+  margin-top: 10px;
+}
+.fold summary {
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: #2563eb;
+  cursor: pointer;
+}
+.foldQ {
+  margin-top: 6px;
+  font-weight: 600;
+}
+.foldWhy {
+  margin-top: 4px;
+  color: rgba(10, 28, 64, 0.66);
+}
+
 .empty {
   color: rgba(10, 28, 64, 0.42);
   padding: 40px 0;

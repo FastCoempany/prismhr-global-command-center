@@ -670,7 +670,7 @@
       "range": "≈00:57:58–end",
       "disposition": "follow-up-notes",
       "keepOrCut": "cut",
-      "reason": "Close and follow-up: action items from the source call (country allowances to confirm, residency to confirm, calculator data load, IP-agreement question), next steps, and goodbyes. Keep as follow-up notes, not core flow."
+      "reason": "Close and follow-up: action items from the source call (country allowances to confirm, residency to confirm, calculator data load, IP-agreement question), what happens next, and goodbyes. Keep as follow-up notes, not core flow."
     }
   ]
 }

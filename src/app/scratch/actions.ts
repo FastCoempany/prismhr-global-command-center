@@ -11,17 +11,26 @@ import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { redactMoney } from "@/lib/intel/lexicon";
-import { SCRATCH_GONE_NS, SCRATCH_NS, strikeLine } from "@/lib/scratch";
+import {
+  SCRATCH_GONE_NS,
+  SCRATCH_NS,
+  scratchPage,
+  strikeLine,
+  type ScratchCursor,
+  type ScratchLine,
+} from "@/lib/scratch";
 import { intranetAsk } from "@/app/intranet/actions";
 import { extractPending } from "@/app/intranet/runners";
-import { askLinks, type AskLink } from "@/lib/ask/links";
+import { askFolds, askLinks, type AskFold, type AskLink } from "@/lib/ask/links";
 import { liveReadFor } from "@/lib/ask/live";
 import { priceDeskDisplay } from "@/lib/pricing/quote";
 import { getPeo } from "@/lib/book";
 
 const ASKPAD_READ_KEY = "askpad:read";
 
-export type ScratchLine = { id: string; body: string; at: string };
+// The line's type lives in src/lib/scratch.ts beside the paging it rides;
+// a "use server" module re-exporting it would read as a value to the action
+// compiler.
 
 async function padAccess(): Promise<"write" | "read" | "none"> {
   if (!hasDatabaseEnv()) return "none";
@@ -30,31 +39,32 @@ async function padAccess(): Promise<"write" | "read" | "none"> {
   return access.canWrite ? "write" : "read";
 }
 
-export async function scratchList(): Promise<{
+// A page of the paper, newest first; `before` reads the page after the one
+// the pad already holds, so every line stays reachable (pass 8 X8: nothing on
+// the paper ever dies).
+export async function scratchList(before?: ScratchCursor | null): Promise<{
   ok: boolean;
   lines: ScratchLine[];
+  more: boolean;
   reason?: string;
 }> {
   const access = await padAccess();
   if (access === "none")
-    return { ok: false, lines: [], reason: "The pad needs a signed-in session." };
-  try {
-    const rows = await getPrisma().accountNote.findMany({
-      where: { accountId: SCRATCH_NS },
-      orderBy: { createdAt: "desc" },
-      take: 300,
-      select: { id: true, body: true, createdAt: true },
-    });
     return {
-      ok: true,
-      lines: rows.map((r) => ({
-        id: r.id,
-        body: r.body,
-        at: r.createdAt.toISOString(),
-      })),
+      ok: false,
+      lines: [],
+      more: false,
+      reason: "The pad needs a signed-in session.",
     };
+  try {
+    return { ok: true, ...(await scratchPage(getPrisma(), SCRATCH_NS, before ?? null)) };
   } catch {
-    return { ok: false, lines: [], reason: "The pad didn't load. Try again." };
+    return {
+      ok: false,
+      lines: [],
+      more: false,
+      reason: "The pad didn't load. Try again.",
+    };
   }
 }
 
@@ -97,6 +107,8 @@ export type PadAskEntry = {
   confidence: string;
   gaps: string[];
   links: AskLink[];
+  /** The playbook questions the answer cites, opened in place (C13). */
+  folds: AskFold[];
   at: string;
   // The honest line behind an empty answer: "read N lines, couldn't answer"
   // is not "nothing on file", and a reading backlog names itself.
@@ -112,24 +124,20 @@ type StoredCite = {
 
 const nameOf = (id: string) => getPeo(id)?.name ?? "";
 
+const citesOf = (cites: StoredCite[]) =>
+  cites.map((c) => ({
+    origin: c?.origin ?? "",
+    originRef: c?.originRef ?? "",
+    accountId: c?.accountId ?? "",
+    docTitle: c?.docTitle ?? "",
+  }));
+
 function linksFrom(
   question: string,
   cites: StoredCite[],
   accounts: { id: string; name: string }[],
 ): AskLink[] {
-  return askLinks(
-    {
-      question,
-      accounts,
-      citations: cites.map((c) => ({
-        origin: c?.origin ?? "",
-        originRef: c?.originRef ?? "",
-        accountId: c?.accountId ?? "",
-        docTitle: c?.docTitle ?? "",
-      })),
-    },
-    nameOf,
-  );
+  return askLinks({ question, accounts, citations: citesOf(cites) }, nameOf);
 }
 
 async function unreadDocs(): Promise<number> {
@@ -195,6 +203,7 @@ export async function padAsk(question: string): Promise<{
             ...linksFrom(r.question, r.citations, r.accounts),
           ]
         : linksFrom(r.question, r.citations, r.accounts),
+      folds: askFolds(citesOf(r.citations)),
       at: new Date().toISOString(),
       note: !r.answer.answer && !r.world ? emptyNote(r.considered, backlog) : "",
     },
@@ -251,6 +260,7 @@ export async function padAskFeed(): Promise<{
                 ...linksFrom(r.question, cites, []),
               ]
             : linksFrom(r.question, cites, []),
+        folds: askFolds(citesOf(cites)),
         at: r.askedAt.toISOString(),
         note:
           !r.answer && !r.world
@@ -327,31 +337,34 @@ export async function scratchDelete(
   }
 }
 
-export async function scratchStruckList(): Promise<{
+// The struck history pages the same way (X8): a crossed-out line is still
+// on the paper's record, and every one of them stays reachable.
+export async function scratchStruckList(before?: ScratchCursor | null): Promise<{
   ok: boolean;
   lines: ScratchLine[];
+  more: boolean;
   reason?: string;
 }> {
   const access = await padAccess();
   if (access === "none")
-    return { ok: false, lines: [], reason: "The pad needs a signed-in session." };
+    return {
+      ok: false,
+      lines: [],
+      more: false,
+      reason: "The pad needs a signed-in session.",
+    };
   try {
-    const rows = await getPrisma().accountNote.findMany({
-      where: { accountId: SCRATCH_GONE_NS },
-      orderBy: { createdAt: "desc" },
-      take: 300,
-      select: { id: true, body: true, createdAt: true },
-    });
     return {
       ok: true,
-      lines: rows.map((r) => ({
-        id: r.id,
-        body: r.body,
-        at: r.createdAt.toISOString(),
-      })),
+      ...(await scratchPage(getPrisma(), SCRATCH_GONE_NS, before ?? null)),
     };
   } catch {
-    return { ok: false, lines: [], reason: "The history didn't load. Try again." };
+    return {
+      ok: false,
+      lines: [],
+      more: false,
+      reason: "The history didn't load. Try again.",
+    };
   }
 }
 

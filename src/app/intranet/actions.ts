@@ -40,6 +40,7 @@ import {
 } from "@/lib/intranet/evals";
 import { accountsMentioned, promotionDraft } from "@/lib/intranet/bridges";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { askFolds, type AskFold } from "@/lib/ask/links";
 import {
   coverageOf,
   fallbackPlan,
@@ -745,6 +746,9 @@ export type PassageReply = {
   accountName: string;
   originGone: string;
   whole: string;
+  /** A playbook question cited: the bank's own question and its gloss, which
+   *  the drawer opens to above the mirrored passage (C13). */
+  bank: AskFold | null;
 };
 
 /** Level 2 and 3: the claim in its surrounding turns, and the whole document
@@ -762,6 +766,7 @@ export async function intranetPassage(claimId: string): Promise<PassageReply> {
     accountName: "",
     originGone: "",
     whole: "",
+    bank: null,
   };
   if (!(await canRead()) || !hasDatabaseEnv() || !claimId) return empty;
   try {
@@ -787,6 +792,10 @@ export async function intranetPassage(claimId: string): Promise<PassageReply> {
       accountName: acct?.name ?? "",
       originGone: doc.originGone ? doc.originGone.toISOString() : "",
       whole: doc.body.slice(0, 20_000),
+      bank:
+        askFolds([
+          { origin: doc.origin, originRef: doc.originRef, accountId: "", docTitle: "" },
+        ])[0] ?? null,
     };
   } catch {
     return empty;

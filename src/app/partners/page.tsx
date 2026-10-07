@@ -18,6 +18,7 @@ import type { DraftRecipient } from "@/lib/claude/prompt";
 import { LocalTime } from "../today-client";
 import { addPartnerNote, deletePartnerNote } from "./actions";
 import { DraftDesk } from "./draft-desk";
+import { visibleNotes } from "./visible";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -103,12 +104,14 @@ export default async function PartnersPage() {
   }
   const canWrite = access.canWrite && hasDatabaseEnv();
 
-  const [touches, partnerNotes, dispositions, acctNotes] = await Promise.all([
+  const [touches, partnerNotes, dispositions, allAcctNotes] = await Promise.all([
     loadTouches(),
     loadPartnerNotes(),
     loadDispositions(),
     loadAccountNotes(),
   ]);
+  // A ✕-parked entry leaves this room too: it never names a recipient (X1).
+  const acctNotes = visibleNotes(allAcctNotes, dispositions);
   // Not-mine accounts are excluded here too — same rule as Today/Accounts.
   const kickoff = partnerKickoff(
     accountIntel().filter((a) => dispositions.get(a.id)?.status !== "not-mine"),

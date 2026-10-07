@@ -16,7 +16,9 @@
 // shows and the move the room shows stand on the same reading of the same
 // row. The second record folds in through the read's own `secondRecord`.
 
+import { cleanExcerpt } from "@/lib/activity/excerpt";
 import { GLYPH_CLASS } from "@/lib/ingest/dialect";
+import { redactMoney } from "@/lib/intel/lexicon";
 import { isAcceptance } from "@/lib/intel/closer";
 import { MINE_RE } from "@/lib/intel/provenance";
 import { isMeetingNote } from "@/lib/intel/meeting";
@@ -52,6 +54,19 @@ const RUN_RESET_DAYS = 45;
 const DAY = 86_400_000;
 const CHI = "America/Chicago";
 
+/** The message an annotation reports. ↩ REPLIED and BOOKED each open to the
+ *  message behind them, one click deep (the click-depth law; pass 8 S2): who
+ *  wrote it, its subject, the words they wrote, and the moment. A reply the
+ *  weekly export carried has no body here (bodies never upload, D21), so it
+ *  opens to its writer and subject and says where it came from. */
+export type SendAnswer = {
+  at: string; // ISO, the same moment repliedAt or bookedAt carries
+  who: string;
+  head: string; // the subject, cleaned like the line's own clause
+  excerpt: string; // cleaned and money-redacted; "" when the record holds no body
+  from: "record" | "export";
+};
+
 type SendLine = {
   accountId: string;
   at: string; // ISO
@@ -62,6 +77,8 @@ type SendLine = {
   step: number; // position within its run, 1-based
   repliedAt: string; // ISO of the first genuine inbound after this send, or ""
   bookedAt: string; // ISO of their calendar acceptance after this send, or ""
+  reply: SendAnswer | null; // the message behind repliedAt
+  booking: SendAnswer | null; // the acceptance behind bookedAt
 };
 
 type AccountLane = "never-met" | "gone-cold";
@@ -203,13 +220,11 @@ export function warmDates(list: readonly RowOrDoc[]): string[] {
  *  meeting warms the lane but is not "they wrote back", and neither is
  *  "Thanks!". */
 export function inboundDates(list: readonly RowOrDoc[]): string[] {
-  const out: string[] = [];
-  for (const d of asDocs(list)) {
-    if (d.direction !== "in" || !theirVoice(d) || isMeetingDoc(d)) continue;
-    out.push(d.at);
-  }
-  return out;
+  return inboundDocs(list).map((d) => d.at);
 }
+
+const inboundDocs = (list: readonly RowOrDoc[]): RecordDoc[] =>
+  asDocs(list).filter((d) => d.direction === "in" && theirVoice(d) && !isMeetingDoc(d));
 
 /** Their calendar accepting a meeting: the BOOKED annotation reads these
  *  (decided 2026-10-06). An acceptance from their side, attributed and not
@@ -218,13 +233,31 @@ export function inboundDates(list: readonly RowOrDoc[]): string[] {
  *  the register's job. Our own side accepting their invite answers no send
  *  of ours. */
 export function acceptanceDates(list: readonly RowOrDoc[]): string[] {
-  const out: string[] = [];
-  for (const d of asDocs(list)) {
-    if (d.hidden || !d.sender || d.senderIsHome) continue;
-    if (!isAcceptance(d.text.split("\n")[0] ?? "")) continue;
-    out.push(d.at);
-  }
-  return out;
+  return acceptanceDocs(list).map((d) => d.at);
+}
+
+const acceptanceDocs = (list: readonly RowOrDoc[]): RecordDoc[] =>
+  asDocs(list).filter(
+    (d) =>
+      !d.hidden &&
+      !!d.sender &&
+      !d.senderIsHome &&
+      isAcceptance(d.text.split("\n")[0] ?? ""),
+  );
+
+/** The message a record doc is, as an annotation opens to it: the writer,
+ *  the subject off the head line, and the body cleaned of banners, quoted
+ *  trails and signatures (the meat law's one cleaner) with money redacted,
+ *  because this is rendered. */
+function answerOf(d: RecordDoc): SendAnswer {
+  const [head = "", ...body] = d.text.split("\n");
+  return {
+    at: d.at,
+    who: d.sender,
+    head: redactMoney(clauseFromHead(head)),
+    excerpt: redactMoney(cleanExcerpt(body.join("\n"), 280)),
+    from: "record",
+  };
 }
 
 // The record entry's head, cleaned into a short clause: glyph and routing
@@ -274,14 +307,28 @@ type SendbookInput = {
  *  live marketing cadence marks the line; it informs, never blocks. */
 export function orgSignalsOf(sr: SecondRecord | null | undefined): {
   theirsAt: string;
+  /** The same attributed inbound as the message ↩ REPLIED opens to: its
+   *  writer and subject from the export, no body (S2). */
+  theirs: SendAnswer | null;
   mktgLive: boolean;
 } {
-  const day = sr?.rollup?.lastTheirs?.day ?? "";
+  const last = sr?.rollup?.lastTheirs ?? null;
+  const day = last?.day ?? "";
   const theirsAt = /^\d{4}-\d{2}-\d{2}/.test(day)
     ? `${day.slice(0, 10)}T12:00:00.000Z`
     : "";
+  const theirs: SendAnswer | null =
+    theirsAt && last
+      ? {
+          at: theirsAt,
+          who: last.who,
+          head: redactMoney(last.subject),
+          excerpt: "",
+          from: "export",
+        }
+      : null;
   const mktgLive = (sr?.intent?.windows.w7?.s ?? 0) > 0;
-  return { theirsAt, mktgLive };
+  return { theirsAt, theirs, mktgLive };
 }
 
 export type Sendbook = {
@@ -305,13 +352,19 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
     // record's attributed inbound joins the warm and inbound sets, merged by
     // latest (D19 gates what counts). Runs reset on it, replies annotate from
     // it, and the lane flips on it.
-    const { theirsAt } = orgSignalsOf(read?.secondRecord);
+    const { theirsAt, theirs } = orgSignalsOf(read?.secondRecord);
     const warm = [...warmDates(docs), ...(theirsAt ? [theirsAt] : [])].sort();
-    const inbound = [...inboundDates(docs), ...(theirsAt ? [theirsAt] : [])].sort();
-    const accepted = acceptanceDates(docs).sort();
+    // Each annotation keeps the message behind it, so the line opens to it
+    // (S2). The moments are the same ones the dates were.
+    const byAt = (a: SendAnswer, b: SendAnswer) => a.at.localeCompare(b.at);
+    const inbound = [
+      ...inboundDocs(docs).map(answerOf),
+      ...(theirs ? [theirs] : []),
+    ].sort(byAt);
+    const accepted = acceptanceDocs(docs).map(answerOf).sort(byAt);
     laneById.set(id, warm.length > 0 ? "gone-cold" : "never-met");
 
-    type Raw = Omit<SendLine, "step" | "repliedAt" | "bookedAt">;
+    type Raw = Omit<SendLine, "step" | "repliedAt" | "bookedAt" | "reply" | "booking">;
     const raw: Raw[] = [];
     for (const n of inp.tapsById.get(id) ?? []) {
       const p = parseSendbookBody(n.body);
@@ -356,26 +409,32 @@ export function buildSendbook(inp: SendbookInput): Sendbook {
       const warmBetween = prevAt && warm.some((w) => w > prevAt && w < r.at);
       step = !prevAt || gapReset || warmBetween ? 1 : step + 1;
       prevAt = r.at;
-      return { ...r, step, repliedAt: "", bookedAt: "" };
+      return { ...r, step, repliedAt: "", bookedAt: "", reply: null, booking: null };
     });
 
     // Reply annotations: each genuine inbound answers the newest send before
     // it — one annotation per send, first inbound wins.
-    for (const inAt of inbound) {
+    for (const a of inbound) {
       let best: SendLine | null = null;
       for (const s of stepped) {
-        if (s.at < inAt && (!best || s.at > best.at)) best = s;
+        if (s.at < a.at && (!best || s.at > best.at)) best = s;
       }
-      if (best && !best.repliedAt) best.repliedAt = inAt;
+      if (best && !best.repliedAt) {
+        best.repliedAt = a.at;
+        best.reply = a;
+      }
     }
     // BOOKED, the same way: their acceptance answers the newest send before
     // it, one per send, the first acceptance wins.
-    for (const acAt of accepted) {
+    for (const a of accepted) {
       let best: SendLine | null = null;
       for (const s of stepped) {
-        if (s.at < acAt && (!best || s.at > best.at)) best = s;
+        if (s.at < a.at && (!best || s.at > best.at)) best = s;
       }
-      if (best && !best.bookedAt) best.bookedAt = acAt;
+      if (best && !best.bookedAt) {
+        best.bookedAt = a.at;
+        best.booking = a;
+      }
     }
 
     lines.push(...stepped);

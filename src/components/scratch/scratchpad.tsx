@@ -24,9 +24,15 @@ import {
   scratchRestore,
   scratchStruckList,
   type PadAskEntry,
-  type ScratchLine,
 } from "@/app/scratch/actions";
-import { dayLabelFor, editOutcome, timeLabelFor, type EditEvent } from "@/lib/scratch";
+import {
+  dayLabelFor,
+  editOutcome,
+  timeLabelFor,
+  type EditEvent,
+  type ScratchCursor,
+  type ScratchLine,
+} from "@/lib/scratch";
 import { cleanAskText } from "@/lib/ask/clean";
 import styles from "./scratchpad.module.css";
 
@@ -66,6 +72,12 @@ const readFeed = async (): Promise<Awaited<ReturnType<typeof padAskFeed>>> => {
   }
 };
 
+/** Where the next page starts: the last line of the page just read. */
+const cursorOf = (page: ScratchLine[]): ScratchCursor | null => {
+  const last = page[page.length - 1];
+  return last ? { at: last.at, id: last.id } : null;
+};
+
 export function Scratchpad() {
   const [open, setOpen] = useState(false);
   const [reg, setReg] = useState<"paper" | "ask">("paper");
@@ -79,6 +91,13 @@ export function Scratchpad() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const askRef = useRef<HTMLInputElement | null>(null);
   const fetched = useRef(false);
+  // Paging (pass 8 X8: nothing on the paper ever dies). The pad reads a page
+  // at a time; EARLIER at the foot reads the next. The cursor is the last
+  // line the server sent, kept apart from the list, so a line restored or
+  // kept since never moves where the next page starts.
+  const [paperNext, setPaperNext] = useState<ScratchCursor | null>(null);
+  const [struckNext, setStruckNext] = useState<ScratchCursor | null>(null);
+  const [paging, setPaging] = useState(false);
   // What the operator is looking at right now — async landings consult this:
   // an answer arriving while the register is open stamps itself read instead
   // of pulsing at someone already reading it.
@@ -97,8 +116,10 @@ export function Scratchpad() {
     if (fetched.current) return;
     fetched.current = true;
     void scratchList().then((r) => {
-      if (r.ok) setLines(r.lines);
-      else {
+      if (r.ok) {
+        setLines(r.lines);
+        setPaperNext(r.more ? cursorOf(r.lines) : null);
+      } else {
         setLines([]);
         setNote(r.reason ?? "The pad didn't load.");
       }
@@ -233,7 +254,37 @@ export function Scratchpad() {
     const opening = !struckOpen;
     setStruckOpen(opening);
     if (opening && struck === null)
-      void scratchStruckList().then((r) => setStruck(r.ok ? r.lines : []));
+      void scratchStruckList().then((r) => {
+        setStruck(r.ok ? r.lines : []);
+        setStruckNext(r.ok && r.more ? cursorOf(r.lines) : null);
+      });
+  };
+
+  // The next page under the paper or under the struck fold, appended once
+  // each: a line the list already holds is not added twice.
+  const readEarlier = async (which: "paper" | "struck") => {
+    const before = which === "paper" ? paperNext : struckNext;
+    if (!before || paging) return;
+    setPaging(true);
+    const r =
+      which === "paper" ? await scratchList(before) : await scratchStruckList(before);
+    setPaging(false);
+    if (!r.ok) {
+      setNote(r.reason ?? "The earlier lines didn't load.");
+      return;
+    }
+    const add = (xs: ScratchLine[] | null) => {
+      const have = new Set((xs ?? []).map((l) => l.id));
+      return [...(xs ?? []), ...r.lines.filter((l) => !have.has(l.id))];
+    };
+    const next = r.more ? cursorOf(r.lines) : null;
+    if (which === "paper") {
+      setLines(add);
+      setPaperNext(next);
+    } else {
+      setStruck(add);
+      setStruckNext(next);
+    }
   };
 
   const bringBack = async (id: string) => {
@@ -405,6 +456,16 @@ export function Scratchpad() {
                   </div>
                 ))}
               </div>
+              {paperNext && (
+                <button
+                  type="button"
+                  className={styles.struckKick}
+                  disabled={paging}
+                  onClick={() => void readEarlier("paper")}
+                >
+                  EARLIER ▾
+                </button>
+              )}
               <button type="button" className={styles.struckKick} onClick={toggleStruck}>
                 STRUCK {struckOpen ? "▾" : "▸"}
               </button>
@@ -432,6 +493,16 @@ export function Scratchpad() {
                       </button>
                     </div>
                   ))}
+                  {struckNext && (
+                    <button
+                      type="button"
+                      className={styles.struckKick}
+                      disabled={paging}
+                      onClick={() => void readEarlier("struck")}
+                    >
+                      EARLIER ▾
+                    </button>
+                  )}
                 </div>
               )}
               <div className={styles.hint}>
@@ -491,6 +562,17 @@ export function Scratchpad() {
                         ))}
                       </div>
                     )}
+                    {/* A playbook question the answer cites opens here, in
+                        place: the bank's question and its gloss, no page and
+                        no link (C13). An entry from before the field rides
+                        without it. */}
+                    {(a.folds ?? []).map((f) => (
+                      <details key={f.id} className={styles.askFold}>
+                        <summary>The playbook question it cites</summary>
+                        <div className={styles.askFoldQ}>{f.question}</div>
+                        {f.why && <div className={styles.askFoldWhy}>{f.why}</div>}
+                      </details>
+                    ))}
                   </div>
                 ))}
               </div>

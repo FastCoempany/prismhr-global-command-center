@@ -17,6 +17,7 @@ import {
   ISSUES,
   ISSUE_ORDER,
   PRODUCTS,
+  RUNG_LABEL,
   cue as cueById,
   cuesFor,
   product as productById,
@@ -27,13 +28,6 @@ import {
 } from "@/lib/playbook/products";
 import type { CountryCard, CountryRow } from "@/lib/playbook/countries";
 import styles from "./product-sheet.module.css";
-
-const RUNG_LABEL: Record<Rung, string> = {
-  tape: "ON TAPE",
-  filed: "FILED",
-  research: "RESEARCH",
-  none: "∅",
-};
 
 const VERDICT_WORD: Record<string, string> = {
   ok: "Yes.",
@@ -338,6 +332,7 @@ function ProductPanel({ p }: { p: Product }) {
             <li key={x}>{x}</li>
           ))}
         </ol>
+        <Cites ev={p.cites.how} />
       </section>
 
       <section className={styles.sec}>
@@ -360,6 +355,7 @@ function ProductPanel({ p }: { p: Product }) {
             </ul>
           </div>
         </div>
+        <Cites ev={p.cites.split} />
       </section>
 
       {p.tiers.length > 0 && (
@@ -398,6 +394,7 @@ function ProductPanel({ p }: { p: Product }) {
             {p.watch}
           </p>
         )}
+        <Cites ev={p.cites.time} />
       </section>
 
       <section className={styles.sec}>
@@ -407,6 +404,7 @@ function ProductPanel({ p }: { p: Product }) {
             <li key={x}>{x}</li>
           ))}
         </ul>
+        <Cites ev={p.cites.ask} />
       </section>
     </article>
   );
