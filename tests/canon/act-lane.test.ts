@@ -368,6 +368,17 @@ describe("the board lift reads a live deal (A4; A8.15)", () => {
     const on = textOf(await renderLane(laneAct({ onBoard: true })));
     assert.ok(on.includes("⌂ HOMEROOM"), on);
   });
+
+  test("off a live deal the lane never offers the HomeRoom, where no row would show it", async () => {
+    // The flip used to send an off-board move to the HomeRoom as a todo, and
+    // the HomeRoom has no row for an off-board account to show it on (an
+    // excluded account's seat reads there by C8 anyway). A live deal may
+    // still go to the wing instead.
+    const off = textOf(await renderLane(laneAct({ onBoard: false })));
+    assert.ok(!off.includes("the other room instead"), off);
+    const on = textOf(await renderLane(laneAct({ onBoard: true })));
+    assert.ok(on.includes("the other room instead"), on);
+  });
 });
 
 // ── the fork lands where its receipt says (A8.15) ───────────────────────────

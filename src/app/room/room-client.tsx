@@ -1753,7 +1753,7 @@ export function Row({
                     className={styles.askX}
                     disabled={closePending}
                     onClick={submitClose}
-                    title="Mark it done — checks the gate in the stage record."
+                    title="Mark it done. It checks the gate in the stage record."
                   >
                     {closePending ? "…" : "✓"}
                   </button>

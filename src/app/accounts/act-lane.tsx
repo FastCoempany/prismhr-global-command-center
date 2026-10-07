@@ -318,7 +318,7 @@ export default function ActLane({
           ) : (
             <>
               <span className={styles.actLaneForkWhy}>
-                Or file the follow-up where it belongs —{" "}
+                Or file the follow-up where it belongs:{" "}
                 <b>{act.onBoard ? "⌂ HOMEROOM" : "⚑ GROUNDWORK"}</b>{" "}
                 {act.onBoard ? "· the deal is live" : "· nobody's working it"}
               </span>
@@ -330,14 +330,19 @@ export default function ActLane({
               >
                 FILE IT · TODAY
               </button>
-              <button
-                type="button"
-                className={styles.actLaneForkAlt}
-                onClick={() => doFork(true)}
-                disabled={busy === "fork"}
-              >
-                the other room instead
-              </button>
+              {/* Only a live deal may go the other way, to the wing. Off a
+                  live deal the HomeRoom has no row to show the todo on, and
+                  an excluded account's seat reads there by C8 anyway. */}
+              {act.onBoard && (
+                <button
+                  type="button"
+                  className={styles.actLaneForkAlt}
+                  onClick={() => doFork(true)}
+                  disabled={busy === "fork"}
+                >
+                  the other room instead
+                </button>
+              )}
             </>
           )}
         </div>
