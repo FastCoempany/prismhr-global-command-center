@@ -1,9 +1,10 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { UserRole, type User } from "@/generated/prisma/client";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 
-export const ACCESS_COOKIE_NAME = "field_signal_access";
+const ACCESS_COOKIE_NAME = "field_signal_access";
 
 // 90 days — the operator signs in once per device, roughly four times a year.
 const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 24 * 90;
@@ -114,7 +115,11 @@ async function hasAccessSession() {
   return isValidAccessToken(cookieStore.get(ACCESS_COOKIE_NAME)?.value);
 }
 
-export async function getAppAccess(): Promise<AppAccess> {
+// The access read: the cookie, then the one user row. It upserts, and a page
+// load used to reach it four to six times (the page, its loaders, the layout's
+// pad and presence, every action's write gate), so it runs once per request
+// through getAppAccess below.
+async function readAppAccess(): Promise<AppAccess> {
   // Every page signs in (ruled 2026-09-25): there is no public mode, so the
   // cookie gate always runs.
   if (!(await hasAccessSession())) {
@@ -171,3 +176,9 @@ export async function getAppAccess(): Promise<AppAccess> {
     status: "active",
   };
 }
+
+/** The access read, once per request: React's cache shares the first call's
+ *  answer with every later caller in the same request (the dead-code ledger,
+ *  G1, ruled KEEP 2026-09-25). Where React holds no request cache, as in the
+ *  suite, every call reads fresh, as before. */
+export const getAppAccess = cache(readAppAccess);

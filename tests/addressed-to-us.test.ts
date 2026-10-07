@@ -43,7 +43,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { sanitizeAiResult } from "@/lib/intel/ai-clean";
-import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
+import { readRows } from "./helpers/account-read";
 import {
   isAddressedToUs,
   joinRecipients,
@@ -55,6 +55,7 @@ import { readDeal } from "@/lib/room/engine";
 // The names the app knows as ours. In the app this is the CSM column unioned
 // with everyone the record shows working across three or more accounts.
 const HOME = ["Anika Steenstra", "Lesha Cyphers", "Russell Jones"];
+const INF = { id: "INF", name: "Infiniti HR" };
 
 // The five entries the drop actually filed, verbatim from the store.
 const INFINITI = [
@@ -194,26 +195,23 @@ describe("the Infiniti row", () => {
   // This test exists so the limitation is visible in the suite rather than
   // discovered again in the room.
   test("a collapsed internal thread is still read as inbound — the known gap", () => {
-    const docs = corpusFor("INF", "Infiniti HR", {
-      acctNotes: INFINITI,
-      homeSide: HOME,
-    });
+    const { docs } = readRows(INF, INFINITI, { homeSide: HOME });
     const newest = docs.find((d) => d.text.includes("At proposal stage"))!;
     assert.equal(newest.direction, "in");
   });
 
   test("the same thread on a single-recipient line is not inbound", () => {
     // What the capture would give us if it kept one name instead of a count.
-    const docs = corpusFor("INF", "Infiniti HR", {
-      acctNotes: INFINITI.map((n) =>
+    const { docs, intel } = readRows(
+      INF,
+      INFINITI.map((n) =>
         n.id === "n5" ? { ...n, actors: "Tom Harrison → Javier Ramirez" } : n,
       ),
-      homeSide: HOME,
-    });
+      { homeSide: HOME },
+    );
     const newest = docs.find((d) => d.text.includes("At proposal stage"))!;
     assert.equal(newest.direction, undefined);
 
-    const intel = extractDealIntel(docs);
     assert.equal(intel.lastOutbound?.slice(0, 10), "2026-09-09");
 
     const read = readDeal({
@@ -232,8 +230,9 @@ describe("the Infiniti row", () => {
   });
 
   test("a real reply from Tom to the operator still owes an answer", () => {
-    const docs = corpusFor("INF", "Infiniti HR", {
-      acctNotes: [
+    const { intel } = readRows(
+      INF,
+      [
         ...INFINITI,
         {
           id: "n6",
@@ -243,9 +242,8 @@ describe("the Infiniti row", () => {
           body: "✉ OL Sep 15 5:10 PM — Re: Global prospect - quoting process · Tom Harrison → Antaeus Coe +1\nCan you send the quote over today?",
         },
       ],
-      homeSide: HOME,
-    });
-    const intel = extractDealIntel(docs);
+      { homeSide: HOME },
+    );
     assert.equal(intel.lastInbound?.slice(0, 10), "2026-09-15");
     assert.match(intel.lastInboundWho ?? "", /Tom Harrison/);
   });
@@ -310,7 +308,7 @@ describe("the recipient list, once the capture keeps one", () => {
         ? { ...n, recipients: "Javier Ramirez, Scott Smrkovski, Jennifer Hardesty" }
         : n,
     );
-    const docs = corpusFor("INF", "Infiniti HR", { acctNotes: withList, homeSide: HOME });
+    const { docs } = readRows(INF, withList, { homeSide: HOME });
     assert.equal(
       docs.find((d) => d.text.includes("At proposal stage"))!.direction,
       undefined,
@@ -319,7 +317,7 @@ describe("the recipient list, once the capture keeps one", () => {
     const withUs = INFINITI.map((n) =>
       n.id === "n5" ? { ...n, recipients: "Javier Ramirez, Antaeus Coe" } : n,
     );
-    const docs2 = corpusFor("INF", "Infiniti HR", { acctNotes: withUs, homeSide: HOME });
+    const docs2 = readRows(INF, withUs, { homeSide: HOME }).docs;
     assert.equal(
       docs2.find((d) => d.text.includes("At proposal stage"))!.direction,
       "in",
@@ -411,21 +409,17 @@ describe("storing the list", () => {
 
 describe("the fix does not widen past the receiving side", () => {
   test("the operator's own send is still outbound, whoever it went to", () => {
-    const docs = corpusFor("INF", "Infiniti HR", {
-      acctNotes: INFINITI,
-      homeSide: HOME,
-    });
+    const { docs } = readRows(INF, INFINITI, { homeSide: HOME });
     const own = docs.find((d) => d.text.includes("Calendar invite sent"))!;
     assert.equal(own.direction, "out");
   });
 
-  test("with no roster handed in, the read is unchanged from before", () => {
-    // Every caller that has not been taught the roster yet keeps its old
-    // behavior rather than silently losing replies.
-    const docs = corpusFor("INF", "Infiniti HR", {
-      acctNotes: INFINITI,
-      homeSide: undefined,
-    });
+  test("with an empty roster, a collapsed line still keeps the reply", () => {
+    // The read takes a declared roster, never an optional one (E9); the
+    // corpus's "no roster handed in" retired with corpusFor (pass 8
+    // housekeeping). A roster that names nobody keeps the old behavior rather
+    // than silently losing replies.
+    const { docs } = readRows(INF, INFINITI, { homeSide: [] });
     const newest = docs.find((d) => d.text.includes("At proposal stage"))!;
     assert.equal(newest.direction, "in");
   });

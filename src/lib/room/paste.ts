@@ -1,14 +1,18 @@
 // roomPaste's pure decisions, kept out of the server action so the suite can
-// pin them as behavior: which dialect a capture speaks, what source column it
-// files under, the misfile guard's read-free rung, and the transcriber's ask.
+// pin them as behavior: the misfile guard's read-free rung and the
+// transcriber's ask. Which dialect a capture speaks and what source column it
+// files under are the dialect module's (sniffHead and SOURCE_OF,
+// src/lib/ingest/dialect.ts), which roomPaste calls directly; dialectOf and
+// sourceFor, the wrappers over them, retired with their last caller (pass 8
+// housekeeping).
 
-import { HEADS, SOURCE_OF, sniffHead, type Dialect } from "@/lib/ingest/dialect";
+import { HEADS } from "@/lib/ingest/dialect";
 import { judgeFiling } from "@/lib/intel/misfile";
 import type { RouteAccount } from "@/lib/route-capture";
 
 /** The refusal roomPaste hands back when the guard objects: nothing filed,
  *  nothing opened, the dispute carried for the banner. */
-export type PasteRefusal = {
+type PasteRefusal = {
   ok: false;
   filed: 0;
   how: "";
@@ -45,22 +49,6 @@ export function readFreeVerdict(
     },
     reason: `This reads like ${early.claim}, not ${acct.name} — ${early.why}.`,
   };
-}
-
-/** The capture's dialect, read off its head token. An Outlook thread must
- *  never masquerade as Salesforce activity. The alphabet, the sniff and the
- *  source table live in src/lib/ingest/dialect.ts; these two keep their names
- *  and their answers for roomPaste's callers and the suites that pin them. */
-export type { Dialect } from "@/lib/ingest/dialect";
-
-export function dialectOf(rawText: string): Dialect {
-  return sniffHead(rawText).dialect;
-}
-
-/** The source column a filed entry carries: the dialect's own name, with the
- *  model's suffix when the read was the model's. */
-export function sourceFor(dialect: Dialect, how: string): string {
-  return SOURCE_OF(dialect, null, how);
 }
 
 /** The document transcriber's ask. Claude reads a PDF or an image to the

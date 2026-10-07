@@ -15,7 +15,7 @@ import { isMachineSender, isMachinery, isMeetingResponse } from "../src/lib/inte
 import { effectiveAt } from "../src/lib/intel/clock";
 import { meetingRead, speakersIn } from "../src/lib/intel/meeting";
 import { settledByRecord } from "../src/lib/room/settled";
-import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
+import { readRows } from "./helpers/account-read";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { readDeal } from "../src/lib/room/engine";
 
@@ -86,9 +86,9 @@ describe("a calendar response is machinery, not a person writing", () => {
   });
 
   test("the acceptance never flips the court — the last real inbound stands", () => {
-    const intel = extractDealIntel(
-      corpusFor("acct", "My HR Professionals", { acctNotes: NOTES, homeSide: undefined }),
-    );
+    const { intel } = readRows({ id: "acct", name: "My HR Professionals" }, NOTES, {
+      homeSide: [],
+    });
     // Joseph's 10:22 AM message is his last real one — and the operator
     // answered it at 10:32, so nothing is owed back.
     const read = readDeal({

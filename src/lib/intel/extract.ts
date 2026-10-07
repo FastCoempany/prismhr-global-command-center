@@ -1,7 +1,10 @@
 // The Deal Intel engine — Phase 1. Pure, deterministic: given one account's
-// full corpus (notes, partner notes, filed SF activities, sheet notes, touch
-// log, plus the digest seed), emit DealIntel. Derived at render, never
-// stored — always exactly as fresh as the latest paste.
+// docs (the single account read's, src/lib/record/read.ts: notes, filed
+// activities, sheet lines, the touch log, plus the digest seed), emit
+// DealIntel. Derived at render, never stored — always exactly as fresh as the
+// latest paste. The read builds the docs (src/lib/record/docs.ts); the corpus
+// assembler that used to live here, corpusFor, retired with its last caller
+// (pass 8 housekeeping).
 
 import {
   COMMERCIAL_TERMS,
@@ -12,11 +15,7 @@ import {
   countriesIn,
   countryNear,
 } from "./lexicon";
-import { digestFor, digestForCardName, type DigestEntry } from "./digest";
-import { GLYPH_RE, TAPE_HEAD_IN_BODY_RE } from "@/lib/ingest/dialect";
-import { isCloser, isMachinery } from "./closer";
-import { effectiveAt } from "./clock";
-import { MINE_RE, inferActors, isAddressedToUs, splitRecipients } from "./provenance";
+import type { DigestEntry } from "./digest";
 import { EMPTY_INTEL, type DealIntel, type ProductKey, type SourcedFact } from "./types";
 
 const MONTHS: Record<string, number> = {
@@ -50,11 +49,6 @@ function futureDay(mon: string, day: number, ref: Date): string | undefined {
 // A record is written in paragraphs and line-broken notes, so a "sentence"
 // ends at .!? OR a newline — without the newline rule a bulleted note is one
 // sentence from top to bottom and the containment check buys nothing.
-// A filed transcript announces itself: the Chute writes "☰ Call transcript —"
-// and the body carries the CALL TRANSCRIPT head (the dialect table,
-// src/lib/ingest/dialect.ts; src/lib/intel/meeting.ts reads the same line).
-const TRANSCRIPT_BODY_RE = TAPE_HEAD_IN_BODY_RE;
-
 const SENT_EDGE = /[.!?\n]/;
 export function dateNear(text: string, at: number, ref: Date): string | undefined {
   const s = text ?? "";
@@ -78,169 +72,15 @@ export type CorpusDoc = {
   src: string; // "sf-activity 7/21" | "note 7/24" | …
   direction?: "in" | "out";
   people?: string[];
-  sender?: string; // the inbound doc's own author — "" when it's the operator
+  /** Who wrote it, as the actors column names them (RecordDoc's own field);
+   *  read only off an inbound doc, so it is always theirs here. */
+  sender?: string;
   /** A raw call transcript. The tape is every voice in the room at once,
    *  including our own demo narration, so a fact appearing ONLY there is
    *  speech rather than a deal fact — the same line the outcomes reader
    *  already draws between the tape and the read's distillation of it. */
   tape?: boolean;
 };
-
-const short = (iso: string) => {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "";
-  const d = new Date(t);
-  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
-};
-
-// Assemble every store the app holds for one account into a doc list.
-// Loaders' shapes are the app's own (overlay.ts): keep this signature loose
-// so callers can pass exactly what they loaded.
-export function corpusFor(
-  accountId: string,
-  accountName: string,
-  stores: {
-    acctNotes?: {
-      id: string;
-      body: string;
-      createdAt: string;
-      kind: string;
-      actors?: string;
-      /** Every recipient the capture kept, our own side included. "" or absent
-       *  on every row filed before the field existed. */
-      recipients?: string | null;
-    }[];
-    partnerNotes?: { id: string; body: string; createdAt: string }[];
-    todos?: { id: string; body: string; createdAt: string }[]; // pre-filtered to this account
-    touches?: {
-      subjectKey: string;
-      label: string;
-      contactedAt: string;
-      message?: string;
-      log: { at: string; body: string }[];
-    }[];
-    // Everyone who counts as our side: the CSM column unioned with whoever the
-    // record shows working across several accounts (pipeline/build's
-    // homeSideFrom). Only the inbound test reads it, and only to tell a reply
-    // that reached us from a thread between two of the account's own people.
-    // A caller must SAY what it knows (ruled 2026-09-25, E2): the roster it
-    // holds, or `undefined` — which is not "an empty roster" but "this caller
-    // has not been taught who we are", and leaves the old read standing so a
-    // reply to a colleague is kept rather than quietly lost.
-    homeSide: readonly string[] | undefined;
-  },
-): CorpusDoc[] {
-  const docs: CorpusDoc[] = [];
-  // Undefined is not "an empty roster" — it is "this caller has not been
-  // taught who we are", and the inbound test sits out entirely rather than
-  // demoting a reply to a colleague it cannot recognise.
-  const homeSide = stores.homeSide;
-  for (const n of stores.acctNotes ?? []) {
-    const isSf = GLYPH_RE.test(n.body);
-    // Direction from the ACTORS line's sender side — the head's em-dash slot
-    // holds the subject, so the old /—\s*Antaeus/ test classified the
-    // operator's own sends as inbound and pacified every went-dark detector.
-    const actors = n.actors || inferActors(n.body);
-    const sender = actors.split("→")[0] ?? "";
-    // A doc with no attributed sender is NOT inbound — a filed transcript or
-    // an unattributed activity must never fire "the reply is owed" (Ted
-    // doctrine). An auto-reply is machinery, not the client writing. And a
-    // courtesy sign-off ("No problem!", "thanks!") is transparent (founder-
-    // decreed 2026-08-22): it never counts as inbound, so it never opens a
-    // reply-owed and never resets the motion clocks — the ledger reads
-    // through it to the last substantive message.
-    const attributed = sender.trim().length > 0;
-    // ...and it has to have reached us. Direction used to be read off the
-    // sender alone: not the operator, has a name, not machinery, not a
-    // sign-off, therefore inbound — the receiving half of the line was never
-    // consulted. So a thread between two of the account's OWN people, which we
-    // were merely copied on, registered exactly like a reply addressed to us
-    // (Infiniti HR, 2026-09-15: "Answer Tom. They wrote today." — Tom had
-    // written to Javier). A message to a colleague still counts as reaching
-    // us; a message to the PEO's own people does not.
-    const toUs =
-      homeSide === undefined ||
-      isAddressedToUs(actors, homeSide, splitRecipients(n.recipients));
-    // One predicate for everything that arrives without a person deciding to
-    // write it — auto-replies, calendar responses, routed-lead alerts,
-    // delivery notices (src/lib/intel/closer.ts). Rebuilding this rule one
-    // exception at a time is how a marketing MQL took the court on HR Hawaii.
-    const machinery = isMachinery({ body: n.body, actors });
-    const closer = isSf && isCloser(n.body.split("\n").slice(1).join("\n"));
-    const tape = TRANSCRIPT_BODY_RE.test(n.body);
-
-    docs.push({
-      text: n.body,
-      tape,
-      // The stored stamp, refined by the OL head's own clock — same-day
-      // entries order by when they actually happened, not by a noon tie
-      // the outbound always won (the Trend 10:39 read, 2026-09-02).
-      at: effectiveAt(n.createdAt, n.body),
-      src: `${isSf ? "sf-activity" : "note"} ${short(n.createdAt)}`,
-      direction: !isSf
-        ? undefined
-        : MINE_RE.test(sender) || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
-          ? "out"
-          : attributed && !machinery && !closer && toUs
-            ? "in"
-            : undefined,
-      people: actors ? peopleFromActors(actors) : peopleIn(n.body),
-      sender: attributed && !MINE_RE.test(sender) ? sender.trim() : "",
-    });
-  }
-  for (const n of stores.partnerNotes ?? [])
-    docs.push({
-      text: n.body,
-      at: n.createdAt,
-      src: `partner-note ${short(n.createdAt)}`,
-    });
-  for (const t of stores.todos ?? [])
-    docs.push({ text: t.body, at: t.createdAt, src: `sheet ${short(t.createdAt)}` });
-  for (const t of stores.touches ?? []) {
-    if (t.message)
-      docs.push({
-        text: t.message,
-        at: t.contactedAt,
-        src: `touch ${short(t.contactedAt)}`,
-        direction: "out",
-      });
-    for (const e of t.log)
-      docs.push({ text: e.body, at: e.at, src: `touch-log ${short(e.at)}` });
-  }
-  // Digest seed rides as docs too (facts are searchable) — matched by id,
-  // falling back to name alias.
-  const dig = digestFor(accountId) ?? digestForCardName(accountName);
-  if (dig)
-    for (const f of dig.facts)
-      docs.push({
-        text: f,
-        at: `${dig.asOf}T00:00:00Z`,
-        src: `digest ${dig.asOf.slice(5)}`,
-      });
-  return docs.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
-}
-
-// The actors column is the authority when it exists: "Sender → Target +n",
-// possibly with semicolon/comma lists. The head-line regex is the fallback
-// for legacy notes filed before actors were stamped.
-function peopleFromActors(actors: string): string[] {
-  return actors
-    .split(/→|;|,/)
-    .map((s) => s.replace(/\+\d+\s*$/, "").trim())
-    .filter((s) => s.length > 1);
-}
-
-// "Name → Name" / "From: Name" headers inside filed activities.
-function peopleIn(text: string): string[] {
-  const out: string[] = [];
-  const head = text.split("\n")[0] ?? "";
-  const m =
-    /·\s*([A-Z][\w.'-]+(?: [A-Z][\w.'-]+)+)\s*→\s*([A-Z][\w.'-]+(?: [A-Z][\w.'-]+)+)/.exec(
-      head,
-    );
-  if (m) out.push(m[1], m[2]);
-  return out;
-}
 
 function push<T>(
   list: SourcedFact<T>[],
@@ -434,14 +274,4 @@ export function extractDealIntel(docs: CorpusDoc[], seedEntry?: DigestEntry): De
     intel.direction = { line: "Global payroll", confidence: "low" };
 
   return intel;
-}
-
-// One call for surfaces: corpus + seed → intel.
-export function dealIntelFor(
-  accountId: string,
-  accountName: string,
-  stores: Parameters<typeof corpusFor>[2],
-): DealIntel {
-  const dig = digestFor(accountId) ?? digestForCardName(accountName);
-  return extractDealIntel(corpusFor(accountId, accountName, stores), dig);
 }

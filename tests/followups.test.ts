@@ -23,7 +23,7 @@ import { fileFollowUpToAccounts } from "../src/lib/today/followup-file";
 import { bindDismiss, type DismissTarget } from "../src/components/use-dismiss";
 import { TOOLS, teamsBookmarklet } from "../src/app/intake/grabs";
 import { parseSfTimeline } from "../src/lib/sf-timeline";
-import { dialectOf, sourceFor } from "../src/lib/room/paste";
+import { SOURCE_OF, sniffHead } from "../src/lib/ingest/dialect";
 import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 import {
   captureShelf,
@@ -496,18 +496,30 @@ describe("the Teams bookmarklet", () => {
     // The SF anchor grammar refuses the dialect outright, so a Teams capture
     // never parses as Salesforce activity…
     assert.deepEqual(parseSfTimeline(paste), [], "the SF parser tried a Teams capture");
-    // …roomPaste files it as TM, under its own source column.
-    assert.equal(dialectOf(paste), "TM", "a Teams paste files as Salesforce activity");
-    assert.equal(sourceFor("TM", "rules"), "teams", "the source column lies");
-    assert.equal(sourceFor("TM", "ai"), "teams-ai");
-    assert.equal(dialectOf("OUTLOOK THREAD - captured"), "OL");
-    assert.equal(sourceFor("OL", "rules"), "outlook");
-    assert.equal(dialectOf("CALL TRANSCRIPT — dropped file x.vtt"), "CT");
-    assert.equal(sourceFor("CT", "ai"), "call-ai");
-    assert.equal(dialectOf("SALESNAV ACCOUNTS - captured"), "SN");
-    assert.equal(sourceFor("SN", "rules"), "salesnav");
-    assert.equal(dialectOf("Lesha Cyphers to Kim Bartolotti\nRE: PrismOne"), "SF");
-    assert.equal(sourceFor("SF", "ai"), "sf-ai");
+    // …roomPaste files it as TM, under its own source column. These are
+    // roomPaste's own two calls (src/app/room/actions.ts): the sniff, then the
+    // source table with the sniffed head. dialectOf and sourceFor, which
+    // wrapped them, retired with their last caller (pass 8 housekeeping).
+    const filed = (text: string, how: string) => {
+      const { dialect, head } = sniffHead(text);
+      return { dialect, source: SOURCE_OF(dialect, head, how) };
+    };
+    assert.equal(
+      filed(paste, "rules").dialect,
+      "TM",
+      "a Teams paste files as Salesforce activity",
+    );
+    assert.equal(filed(paste, "rules").source, "teams", "the source column lies");
+    assert.equal(filed(paste, "ai").source, "teams-ai");
+    assert.equal(filed("OUTLOOK THREAD - captured", "rules").dialect, "OL");
+    assert.equal(filed("OUTLOOK THREAD - captured", "rules").source, "outlook");
+    assert.equal(filed("CALL TRANSCRIPT — dropped file x.vtt", "ai").dialect, "CT");
+    assert.equal(filed("CALL TRANSCRIPT — dropped file x.vtt", "ai").source, "call-ai");
+    assert.equal(filed("SALESNAV ACCOUNTS - captured", "rules").dialect, "SN");
+    assert.equal(filed("SALESNAV ACCOUNTS - captured", "rules").source, "salesnav");
+    const sf = filed("Lesha Cyphers to Kim Bartolotti\nRE: PrismOne", "ai");
+    assert.equal(sf.dialect, "SF");
+    assert.equal(sf.source, "sf-ai");
   });
 });
 

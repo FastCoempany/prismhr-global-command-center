@@ -7,7 +7,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { createAccountNoteRow, type AccountNoteData } from "../../src/lib/notes/write";
 import { latestResearchAt } from "../../src/lib/intel/deep-research";
-import { corpusFor } from "../../src/lib/intel/extract";
+import { readAccount, type RecordNote } from "../../src/lib/record/read";
 import { lastTouchRead } from "../../src/lib/room/touch";
 
 // ── E3 · "Money figures never appear in anything stored" (:582-583) meets
@@ -151,46 +151,69 @@ describe("the research chip reads the latest of both stores (CLAUDE.md:374-376)"
 });
 
 // ── E2 · "derived facts ... must read the WIDEST live source" (:394-397):
-// the corpus carries the actors column, and a caller declares its homeSide
-// (enforced by type — corpusFor's `homeSide` key is required) ─────────────
+// the read's docs carry the actors column, and a caller declares its homeSide
+// (enforced by type — readAccount's `homeSide` is required, E9). This pin
+// called corpusFor until corpusFor retired with its last caller (pass 8
+// housekeeping); the single account read holds the decree now. ────────────
 describe("every corpus carries actors and a homeSide (CLAUDE.md:394-397)", () => {
-  test("a note with actors produces a doc carrying those actors as its people and sender", () => {
-    const docs = corpusFor("A1", "Acme", {
-      homeSide: ["Anika Patel"],
-      acctNotes: [
-        {
-          id: "1",
-          kind: "account",
-          body: "✉ OL Sep 2 10:39 AM — Re: Canada · Dana Ellis → Antaeus Coe\nWe have two clients asking. Can you walk us through it?",
-          createdAt: "2026-09-02T12:00:00Z",
-          actors: "Dana Ellis → Antaeus Coe",
-          recipients: "Antaeus Coe",
-        },
-      ],
+  const readOne = (homeSide: readonly string[], note: RecordNote) =>
+    readAccount({
+      account: { id: "A1", name: "Acme" },
+      notes: [note],
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      homeSide,
+      now: new Date("2026-09-03T12:00:00Z"),
     });
+  const row = (
+    o: Pick<RecordNote, "id" | "body" | "actors" | "recipients">,
+  ): RecordNote => ({
+    accountId: "A1",
+    partner: "",
+    kind: "account",
+    lane: "mine",
+    source: "",
+    createdAt: "2026-09-02T12:00:00Z",
+    ...o,
+  });
+
+  test("a note with actors produces a doc carrying those actors as its people and sender", () => {
+    const read = readOne(
+      ["Anika Patel"],
+      row({
+        id: "1",
+        body: "✉ OL Sep 2 10:39 AM — Re: Canada · Dana Ellis → Antaeus Coe\nWe have two clients asking. Can you walk us through it?",
+        actors: "Dana Ellis → Antaeus Coe",
+        recipients: "Antaeus Coe",
+      }),
+    );
+    const docs = read.docs;
     assert.equal(docs.length, 1);
     assert.ok(docs[0].people?.includes("Dana Ellis"), JSON.stringify(docs[0].people));
     assert.ok(docs[0].people?.includes("Antaeus Coe"));
     assert.equal(docs[0].sender, "Dana Ellis");
     assert.equal(docs[0].direction, "in");
+    assert.equal(read.lastInbound?.who, "Dana Ellis");
   });
 
   test("the operator's own send reads out, and the actors still ride", () => {
-    const docs = corpusFor("A1", "Acme", {
-      homeSide: undefined,
-      acctNotes: [
-        {
-          id: "2",
-          kind: "account",
-          body: "✉ OL Sep 2 9:44 AM — Re: Canada · Antaeus Coe → Dana Ellis\nSending the model now.",
-          createdAt: "2026-09-02T12:00:00Z",
-          actors: "Antaeus Coe → Dana Ellis",
-        },
-      ],
-    });
+    const read = readOne(
+      [],
+      row({
+        id: "2",
+        body: "✉ OL Sep 2 9:44 AM — Re: Canada · Antaeus Coe → Dana Ellis\nSending the model now.",
+        actors: "Antaeus Coe → Dana Ellis",
+        recipients: "",
+      }),
+    );
+    const docs = read.docs;
     assert.equal(docs[0].direction, "out");
     assert.ok(docs[0].people?.includes("Dana Ellis"));
-    assert.equal(docs[0].sender, "");
+    // The operator is our side, never the account's author: the read keeps the
+    // actors whole and flags the side, so no inbound reads off our own send.
+    assert.equal(docs[0].senderIsHome, true);
+    assert.equal(read.lastInbound, null);
   });
 });
 
