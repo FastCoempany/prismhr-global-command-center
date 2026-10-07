@@ -18,6 +18,8 @@ import { settledByRecord } from "../src/lib/room/settled";
 import { readRows } from "./helpers/account-read";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { readDeal } from "../src/lib/room/engine";
+import { readAccount, type RecordNote } from "../src/lib/record/read";
+import { acceptedForMove } from "../src/app/room/room-reads";
 
 const NOON = "2026-09-04T12:00:00.000Z";
 
@@ -528,5 +530,85 @@ describe("the move line counts in days, never to zero", () => {
     });
     assert.equal(r.move, "Stamp the outcome. Every gate is closed.");
     assert.ok(!/0 days/i.test(r.move), r.move);
+  });
+});
+
+// H2 (pass 8): when a colleague on the invite accepts it, the read leaves the
+// acceptance's name empty, because our own side is never the person who
+// accepted. The row used to fill the empty name with the relationship's, and
+// read "Wait for the meeting. Joseph accepted." for a man who had accepted
+// nothing. Nobody stands in for the empty name.
+describe("our own side's acceptance names nobody on the move line (H2)", () => {
+  const now = new Date("2026-09-04T23:00:00Z");
+  const note = (o: Partial<RecordNote> & { id: string; body: string }): RecordNote => ({
+    accountId: "A1",
+    partner: "",
+    kind: "account",
+    lane: "mine",
+    actors: "",
+    source: "outlook-ai",
+    recipients: "",
+    createdAt: NOON,
+    ...o,
+  });
+  const notes = [
+    note({
+      id: "c2",
+      body: "✉ OL 09/04 3:49 PM — Accepted: Initial Chat | Intro to PrismHR Global · Lesha Cyphers → Antaeus Coe",
+      actors: "Lesha Cyphers → Antaeus Coe",
+    }),
+    note({
+      id: "c1",
+      body: "✉ OL 09/04 3:34 PM — Initial Chat | Intro to PrismHR Global · Antaeus Coe → Joseph Lyon +1\nAntaeus Coe is inviting you to a scheduled Zoom meeting.",
+      actors: "Antaeus Coe → Joseph Lyon +1",
+      recipients: "Joseph Lyon, Lesha Cyphers",
+    }),
+    note({
+      id: "c0",
+      body: "✉ OL 09/03 10:22 AM — Re: Intro · Joseph Lyon → Antaeus Coe\nHappy to talk. What does Thursday look like?",
+      actors: "Joseph Lyon → Antaeus Coe",
+      recipients: "Antaeus Coe",
+      createdAt: "2026-09-03T12:00:00.000Z",
+    }),
+  ];
+  const read = readAccount({
+    account: { id: "A1", name: "My HR Professionals" },
+    notes,
+    touches: [],
+    todos: [],
+    dispositions: new Map(),
+    homeSide: ["Lesha Cyphers"],
+    now,
+  });
+
+  test("the read leaves the name empty, and the room keeps it empty", () => {
+    assert.ok(read.lastAccepted, "the acceptance is on the record");
+    assert.equal(read.lastAccepted.who, "");
+    assert.equal(read.relationship.name, "Joseph Lyon", "the relationship is Joseph");
+    assert.equal(acceptedForMove(read.lastAccepted)?.who, "");
+  });
+
+  test("the move line never names the relationship for it", () => {
+    const r = readDeal({
+      accountName: "My HR Professionals",
+      step: null,
+      timing: null,
+      whoseMove: read.whoseMove,
+      lastTouch: read.lastTouch
+        ? { at: read.lastTouch.at, awaitingReply: read.lastTouch.awaitingReply, who: "Joseph" }
+        : null,
+      lastAccepted: acceptedForMove(read.lastAccepted),
+      lastRecordAt: read.lastRecordAt,
+      now,
+    });
+    assert.ok(!/Joseph accepted/.test(r.move), r.move);
+  });
+
+  test("a person of theirs who accepts is still named, by first name", () => {
+    assert.deepEqual(acceptedForMove({ at: NOON, who: "Melanie Llanes" }), {
+      at: NOON,
+      who: "Melanie",
+    });
+    assert.equal(acceptedForMove(null), null);
   });
 });

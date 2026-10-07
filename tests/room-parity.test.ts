@@ -114,7 +114,16 @@ const eye = await render(
   }),
 );
 const followUps = await render(createElement(room.FollowUpBlock, { rows: [followUpRow()] }));
-const all = board + drawer + eye + followUps;
+// The check-ins tab with nothing due: its empty state is drawer copy too.
+const checkinsEmpty = await render(
+  createElement(room.CadenceDrawer, {
+    cadence: [],
+    checkins: [],
+    onClose: () => {},
+    defaultTab: "checkins",
+  }),
+);
+const all = board + drawer + eye + followUps + checkinsEmpty;
 
 // The operator-facing copy of a render: its text plus every title, placeholder
 // and button label the markup carries.
@@ -178,7 +187,9 @@ describe("room client — every absorbed capability is wired", () => {
       what: "mute partner",
       action: "muteRoundupPartner",
       from: "ledger",
-      shows: /title="mute cadence"/,
+      // "Cadence" is a retired name (standing decree; H8): the button says
+      // what it mutes. Rewritten from title="mute cadence" in pass 9.
+      shows: /title="mute this partner&#x27;s roundups"/,
     },
     { what: "unmute partner", action: "unmuteRoundupPartner", from: "ledger", shows: />restore</ },
     // check-ins
@@ -270,7 +281,10 @@ describe("room client — every absorbed capability is wired", () => {
     assert.ok(text.includes("ROUNDUPS"));
     assert.ok(text.includes("CHECK-INS"));
     assert.ok(copyOf(all).includes("Keep an eye out"));
-    assert.ok(!/\bCadence\b/.test(copyOf(all)), "a drawer was named Cadence");
+    // Any case, titles included: "mute cadence" and "The cadence is quiet."
+    // slipped past a capitalized check (H8).
+    assert.ok(!/cadence/i.test(copyOf(all)), "the drawer copy says cadence");
+    assert.ok(textOf(checkinsEmpty).includes("No check-ins due."));
   });
 
   test("operator copy never says steps, and MULTI is the whole badge", () => {
@@ -291,5 +305,117 @@ describe("room stylesheet — every class the client asks for exists", () => {
     // define, so a dangling styles.x paints as class="undefined".
     const dangling = classesOf(all).filter((c) => c === "undefined" || c === "null");
     assert.deepEqual(dangling, [], "classes missing from room.module.css");
+  });
+});
+
+// H5 (pass 8): UNKNOWN's "· N queued" and the STAGE GATE chip opened nothing.
+// The click-depth law: every compression opens, one click deep.
+describe("the UNKNOWN register's compressions open (H5)", () => {
+  const ask = (id: string, question: string) => ({ id, question, at: "2026-10-01T15:00:00Z" });
+  const askRow = roomRow({
+    gaps: [ask("g1", "Which countries come first?")],
+    gapsQueued: [ask("g2", "Who signs for the client?"), ask("g3", "When is the first hire?")],
+    outstanding: {
+      item: "Book the room",
+      node: "first_meeting",
+      index: 0,
+      doneKey: "morning:1",
+      closedCount: 2,
+    },
+  });
+  const paint = (defaultSpring: "unknown" | null) =>
+    render(
+      createElement(room.Row, {
+        row: askRow,
+        collapsed: false,
+        onToggle: () => {},
+        defaultSpring,
+      }),
+    );
+
+  test("folded, the queued count is a button that opens the queued asks", async () => {
+    const html = await paint(null);
+    assert.match(html, /<button type="button" class="sumDoor"[^>]*>· 2 queued<\/button>/);
+  });
+
+  test("sprung, the queued count still opens them, and says whether it is open", async () => {
+    const html = await paint("unknown");
+    assert.match(
+      html,
+      /<button type="button" class="sumDoor [^"]*" aria-expanded="false"[^>]*>· 2 queued<\/button>/,
+    );
+    // Shut until asked: the queued asks surface only through the door.
+    assert.ok(!textOf(html).includes("Who signs for the client?"));
+  });
+
+  test("the STAGE GATE chip is a door to the stage's checklist", async () => {
+    const html = await paint("unknown");
+    assert.match(
+      html,
+      /<button type="button" class="gateTag" title="Open the stage&#x27;s checklist">STAGE GATE · 2 BEHIND IT<\/button>/,
+    );
+  });
+});
+
+// H8 and X6, the room's part: the brand palette by role, no ad-hoc forest.
+describe("the room's marks wear the brand palette (H8, X6)", () => {
+  test("no forest stroke anywhere in the markup", () => {
+    assert.ok(!/#1E5B46/i.test(all), "the forest green is back in the markup");
+  });
+  test("a briefed partner's mark lights by class, the brand's green", async () => {
+    const html = await render(
+      createElement(room.RoomClient, {
+        rows: [roomRow({ briefed: true })],
+        cadence: [],
+        checkins: [],
+        followUps: [],
+        warming: [],
+        later: [],
+        canWrite: true,
+        dbUnavailable: false,
+        boardNames: [],
+        pipeline: [],
+        pipelineDay: "",
+        pipelineStale: "",
+      }),
+    );
+    assert.match(html, /class="briefed briefedOn"/);
+    assert.match(html, /stroke="currentColor" stroke-width="2.4"/);
+  });
+  test("the due count carries its own class so it lights amber on hover", () => {
+    assert.match(board, /class="edgeCount edgeDue">2</);
+  });
+});
+
+// Pass 8 call 1: a row off the board has no card, so it keys by its account
+// and paints with no stage.
+describe("a row off the board (pass 8 call 1)", () => {
+  const offBoard = roomRow({
+    accountId: "001F000000OFFB01",
+    cardId: "",
+    name: "Gulf Coast PEO",
+    stages: [],
+    outstanding: null,
+    climb: {
+      frac: 0,
+      capTone: "ok",
+      label: "NOT ON THE BOARD",
+      why: ["No card on the board.", "A fresh message from them or a meeting is on file."],
+    },
+  });
+
+  test("two rows off the board never share a key or a fold", () => {
+    const other = { ...offBoard, accountId: "001F000000OFFB02" };
+    assert.notEqual(room.rowKey(offBoard), room.rowKey(other));
+    assert.equal(room.rowKey(roomRow()), "card-simploy", "a board row keys by its card");
+  });
+
+  test("it paints in the existing face with no stage nodes", async () => {
+    const html = await render(
+      createElement(room.Row, { row: offBoard, collapsed: false, onToggle: () => {} }),
+    );
+    assert.ok(textOf(html).includes("NOT ON THE BOARD"));
+    assert.ok(!classesOf(html).includes("node"), "a stage node painted");
+    assert.ok(textOf(html).includes("Mark it done ✓"), "the move still answers");
   });
 });

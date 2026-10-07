@@ -2,7 +2,10 @@
    brand air; the record side is glass. Stage nodes live on the climb; the
    roundups + check-ins engine and the eye live in glass drawers off the
    right margin. Tokens from the Antaeus system: bright field, navy ink
-   ladder, forest working green, orange rationed to the one move. */
+   ladder, orange rationed to the one move, and the accents by role — green
+   real health, amber caution, red real risk, blue system intelligence. The
+   ad-hoc forest green retired (pass 8, X6): its work went to the ink ladder
+   and its health to the brand's green. */
 
 .room {
   --field: #f5f7fb;
@@ -16,8 +19,6 @@
   --green: #22c55e;
   --amber: #f59e0b;
   --red: #ef4444;
-  --forest: #1e5b46;
-  --forest2: #2e7a5f;
   position: relative;
   min-height: 100vh;
   padding: 14px 44px 70px 24px;
@@ -27,7 +28,7 @@
   line-height: 1.6;
   background:
     radial-gradient(720px 460px at 10% 4%, rgba(37, 99, 235, 0.12), transparent 62%),
-    radial-gradient(820px 560px at 92% 22%, rgba(30, 91, 70, 0.13), transparent 62%),
+    radial-gradient(820px 560px at 92% 22%, rgba(10, 28, 64, 0.07), transparent 62%),
     radial-gradient(640px 520px at 34% 96%, rgba(10, 28, 64, 0.09), transparent 62%),
     var(--field);
 }
@@ -40,7 +41,7 @@
   width: 100%;
 }
 
-/* ── header: mark left, forest add center, clock right ──────────────── */
+/* ── header: mark left, ink add center, clock right ─────────────────── */
 .bar {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -78,7 +79,7 @@
 }
 .addBtn {
   border: 0;
-  background: linear-gradient(135deg, var(--forest), var(--forest2));
+  background: var(--ink);
   color: #fff;
   border-radius: 999px;
   padding: 8px 22px;
@@ -88,7 +89,7 @@
   letter-spacing: 0.02em;
   cursor: pointer;
   box-shadow:
-    0 6px 18px rgba(30, 91, 70, 0.32),
+    0 6px 18px rgba(10, 28, 64, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transition:
     transform 0.12s ease,
@@ -97,7 +98,7 @@
 .addBtn:hover {
   transform: translateY(-1px);
   box-shadow:
-    0 9px 24px rgba(30, 91, 70, 0.38),
+    0 9px 24px rgba(10, 28, 64, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .car {
@@ -133,7 +134,7 @@
   line-height: 1.4;
 }
 .mi:hover {
-  background: rgba(30, 91, 70, 0.08);
+  background: rgba(10, 28, 64, 0.05);
 }
 .mi b {
   display: block;
@@ -143,7 +144,7 @@
   flex: none;
   width: 20px;
   text-align: center;
-  color: var(--forest);
+  color: var(--soft);
   font-size: 14px;
   padding-top: 1px;
 }
@@ -234,8 +235,7 @@
   border-bottom: 2px solid var(--quiet);
 }
 .nmLink:hover {
-  color: var(--forest);
-  border-color: var(--forest);
+  border-color: var(--ink);
 }
 /* The name's left column: the partner notifier stacked over the SF door,
    capped to the name's own height (founder-decreed 2026-08-19). */
@@ -255,6 +255,11 @@
   padding: 0;
   line-height: 0;
   cursor: pointer;
+  color: var(--quiet);
+}
+/* Briefed is real health: the brand's green, as a mark (X6). */
+.briefedOn {
+  color: var(--green);
 }
 .bfWrap {
   position: relative;
@@ -287,7 +292,7 @@
   white-space: nowrap;
 }
 .bfOpt input {
-  accent-color: #1e5b46;
+  accent-color: var(--ink);
   margin: 0;
 }
 .bfClear {
@@ -322,9 +327,13 @@
   color: var(--blue, #2563eb);
   border-color: var(--blue, #2563eb);
 }
+/* The chip is a door to the stage's checklist (H5): a button that keeps the
+   chip's face and lights its ink on hover. */
 .gateTag {
   display: inline-block;
   margin-left: 8px;
+  background: none;
+  cursor: pointer;
   font:
     700 8.5px/1.4 var(--f-mono),
     Menlo,
@@ -336,6 +345,9 @@
   padding: 1px 7px;
   vertical-align: 1px;
   white-space: nowrap;
+}
+.gateTag:hover {
+  color: var(--ink);
 }
 
 .chips {
@@ -450,7 +462,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: 3px 0 0 3px;
-  background: linear-gradient(90deg, var(--forest), var(--forest2));
+  background: var(--faint);
 }
 .cap {
   position: absolute;
@@ -466,7 +478,7 @@
   background: var(--amber);
 }
 .capOk {
-  background: var(--forest2);
+  background: var(--green);
 }
 .node {
   position: absolute;
@@ -482,10 +494,10 @@
   z-index: 3;
 }
 .node:hover {
-  box-shadow: 0 0 0 4px rgba(30, 91, 70, 0.18);
+  box-shadow: 0 0 0 4px rgba(10, 28, 64, 0.18);
 }
 .nodeDone {
-  background: var(--forest2);
+  background: var(--ink);
   border-color: rgba(255, 255, 255, 0.8);
 }
 .nodeCur {
@@ -545,7 +557,7 @@
   -webkit-backdrop-filter: blur(12px) saturate(1.4);
   backdrop-filter: blur(12px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.75);
-  border-left: 3px solid var(--forest);
+  border-left: 3px solid var(--ink);
   border-radius: 9px;
   box-shadow: 0 6px 18px rgba(10, 28, 64, 0.08);
   padding: 9px 14px;
@@ -604,11 +616,11 @@ button.sdRadio {
   cursor: pointer;
 }
 button.sdRadio:hover {
-  border-color: var(--forest);
+  border-color: var(--ink);
 }
 .sdRadioOn {
-  border-color: var(--forest);
-  background: var(--forest);
+  border-color: var(--ink);
+  background: var(--ink);
   box-shadow: inset 0 0 0 2px #fff;
 }
 .sdItem {
@@ -656,8 +668,8 @@ button.sdRadio:hover {
   cursor: pointer;
 }
 .sdTag:hover {
-  border-color: var(--forest);
-  color: var(--forest);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 .sdJudg {
   display: flex;
@@ -826,11 +838,12 @@ button.sdRadio:hover {
 .kDone {
   color: var(--green);
 }
+/* Delayed and owed are caution: the brand's amber (X6). */
 .kDly {
-  color: #8a5a00;
+  color: var(--amber);
 }
 .kOwed {
-  color: #8a5a00;
+  color: var(--amber);
 }
 .dayrule {
   display: flex;
@@ -857,7 +870,7 @@ button.sdRadio:hover {
   text-align: left;
 }
 .dayruleBtn:hover {
-  color: var(--forest);
+  color: var(--ink);
 }
 .recEdit {
   flex: 1;
@@ -879,7 +892,7 @@ button.sdRadio:hover {
   outline: none;
 }
 .recEdit input:focus {
-  border-color: var(--forest);
+  border-color: var(--ink);
 }
 .st {
   flex: none;
@@ -896,12 +909,14 @@ button.sdRadio:hover {
   color: var(--ink);
 }
 .stSched {
-  background: rgba(138, 90, 0, 0.1);
-  color: #8a5a00;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--ink);
 }
+/* Done is real health: the brand's green as the tint, ink for the words,
+   the kit's own pattern for a semantic chip (--color-low-fg is ink). */
 .stDone {
   background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
+  color: var(--ink);
 }
 
 .gAct {
@@ -911,7 +926,7 @@ button.sdRadio:hover {
   color: var(--green) !important;
 }
 .gDly {
-  color: #8a5a00 !important;
+  color: var(--amber) !important;
 }
 .gNote {
   color: var(--soft) !important;
@@ -947,7 +962,7 @@ button.sdRadio:hover {
   color: var(--soft);
 }
 .rcpt b {
-  color: var(--forest);
+  color: var(--ink);
   font-weight: 700;
 }
 .rcptU {
@@ -989,7 +1004,7 @@ button.sdRadio:hover {
   text-decoration: none;
 }
 .more a:hover {
-  color: var(--forest);
+  color: var(--ink);
 }
 .it {
   display: flex;
@@ -1004,7 +1019,7 @@ button.sdRadio:hover {
   width: 16px;
   text-align: center;
   font-size: 12px;
-  color: var(--forest2);
+  color: var(--soft);
 }
 .tx {
   flex: 1;
@@ -1047,17 +1062,19 @@ button.sdRadio:hover {
 .itEmpty .ic {
   color: var(--quiet);
 }
+/* A line that just landed: it filed, which is real, so the brand's green
+   at its soft weight (X6). */
 .fresh {
-  background: rgba(30, 91, 70, 0.09);
+  background: rgba(34, 197, 94, 0.1);
 }
 
 .logbox {
   margin-top: 10px;
-  border-top: 1.5px solid rgba(30, 91, 70, 0.7);
+  border-top: 1.5px solid var(--faint);
   padding-top: 7px;
 }
 .logbox:focus-within {
-  border-top-color: var(--forest);
+  border-top-color: var(--ink);
 }
 .lk {
   font-family: var(--f-mono), Menlo, monospace;
@@ -1085,7 +1102,7 @@ button.sdRadio:hover {
 .logta {
   width: 100%;
   min-height: 42px;
-  border: 1px dashed rgba(30, 91, 70, 0.5);
+  border: 1px dashed var(--quiet);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.6);
   padding: 8px 10px;
@@ -1098,7 +1115,7 @@ button.sdRadio:hover {
 }
 .logta:focus {
   border-style: solid;
-  border-color: var(--forest);
+  border-color: var(--ink);
 }
 .logta::placeholder {
   color: var(--quiet);
@@ -1125,7 +1142,7 @@ button.sdRadio:hover {
   justify-content: flex-end;
 }
 .file {
-  background: var(--forest);
+  background: var(--ink);
   border: 0;
   color: #fff;
   border-radius: 6px;
@@ -1198,7 +1215,7 @@ button.sdRadio:hover {
 }
 .dpTabOn {
   color: var(--ink);
-  border-bottom-color: var(--forest);
+  border-bottom-color: var(--ink);
 }
 .dpClose {
   margin-left: auto;
@@ -1228,7 +1245,7 @@ button.sdRadio:hover {
   gap: 7px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--forest);
+  color: var(--ink);
 }
 
 /* partner roundup cards inside the drawer */
@@ -1293,7 +1310,7 @@ button.sdRadio:hover {
   cursor: pointer;
 }
 .pcAccts input {
-  accent-color: var(--forest);
+  accent-color: var(--ink);
 }
 .pcMsg {
   white-space: pre-wrap;
@@ -1315,7 +1332,7 @@ button.sdRadio:hover {
 }
 .pcPrimary {
   display: inline-block;
-  background: var(--forest);
+  background: var(--ink);
   border: 0;
   color: #fff;
   border-radius: 7px;
@@ -1326,7 +1343,7 @@ button.sdRadio:hover {
   text-decoration: none;
 }
 .pcPrimary:hover {
-  background: var(--forest2);
+  background: var(--soft);
 }
 .pcBtn {
   border: 1px solid var(--hair);
@@ -1371,11 +1388,15 @@ button.sdRadio:hover {
   color: var(--soft);
   font-size: 12.5px;
 }
+/* Quiet days on a check-in are caution: an amber chip, ink text (X6). */
 .chkOwed {
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 9.5px;
   font-weight: 700;
-  color: #8a5a00;
+  color: var(--ink);
+  background: rgba(245, 158, 11, 0.12);
+  border-radius: 4px;
+  padding: 0 5px;
 }
 .chkCtl {
   display: inline-flex;
@@ -1415,21 +1436,33 @@ button.sdRadio:hover {
 .edge > span {
   writing-mode: vertical-rl;
 }
+/* Thin and inconspicuous: quiet ink at rest, color on hover only (standing
+   decree). The hover lifts the tab to solid ink; the count rests quiet and
+   lights on hover, the due count in the brand's amber because due is
+   caution (H8, X6). */
 .edge:hover {
-  color: var(--forest);
+  color: var(--ink);
 }
 .edgeDot {
   font-size: 10px;
 }
 .edgeCount {
   writing-mode: horizontal-tb !important;
-  background: var(--forest);
-  color: #fff;
+  background: rgba(10, 28, 64, 0.08);
+  color: var(--soft);
   border-radius: 8px;
   font-size: 8.5px;
   letter-spacing: 0;
   padding: 1px 4px;
   text-align: center;
+}
+.edge:hover .edgeCount {
+  background: var(--ink);
+  color: #fff;
+}
+.edge:hover .edgeDue {
+  background: var(--amber);
+  color: var(--ink);
 }
 
 /* ── STILL UNKNOWN — the asks ─────────────────────────────────────────────────
@@ -1449,19 +1482,29 @@ button.sdRadio:hover {
   line-height: 1.5;
   color: var(--soft);
 }
+/* An ask queued behind the shown few, opened from "· N queued" (H5). */
+.askQueued .askQ {
+  color: var(--faint);
+}
 
 /* A wall that already passed is real risk, and the contingency that rode in
-   with the commitment becomes the move. */
+   with the commitment becomes the move. The brand's red carries the risk as
+   the chip's tint and rule and as the fallback's rule; the words stay ink,
+   because the kit has no darker red for text on the field (--color-high-fg
+   is ink). */
 .stWall {
   background: rgba(239, 68, 68, 0.12);
-  color: #b42318;
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.55);
+  color: var(--ink);
 }
 .fallback {
   display: block;
   margin-top: 2px;
   font-size: 12px;
   line-height: 1.45;
-  color: #b42318;
+  color: var(--ink);
+  border-left: 2px solid var(--red);
+  padding-left: 6px;
 }
 
 /* ── the research control ─────────────────────────────────────────────────────
@@ -1497,7 +1540,7 @@ button.sdRadio:hover {
   padding: 0 4px;
   border-radius: 999px;
   background: var(--amber);
-  color: #3a2600;
+  color: var(--ink);
   font-family: var(--f-mono), ui-monospace, monospace;
   font-size: 10.5px;
   font-weight: 700;
@@ -1527,7 +1570,7 @@ button.sdRadio:hover {
   border-color: var(--quiet);
 }
 .fuOpenLive {
-  color: #7a4b00;
+  color: var(--ink);
   border-color: rgba(245, 158, 11, 0.5);
   background: rgba(245, 158, 11, 0.1);
 }
@@ -1579,7 +1622,7 @@ button.sdRadio:hover {
   padding: 4px 7px;
   border-radius: 7px;
   background: rgba(37, 99, 235, 0.07);
-  color: #1e3a8a;
+  color: var(--ink);
   font-size: 11.5px;
 }
 .fuYes,
@@ -2115,6 +2158,23 @@ button.sdRadio:hover {
   color: var(--soft);
   white-space: nowrap;
 }
+/* "· N queued" is a door to the queued asks (H5): the count's own face, a
+   dotted underline on hover, solid ink while open. */
+.sumDoor {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.sumDoor:hover {
+  color: var(--ink);
+  text-decoration: underline dotted;
+}
+.sumDoorOn {
+  color: var(--ink);
+}
 .sumtx {
   font-size: 12.5px;
   color: var(--soft);
@@ -2300,8 +2360,8 @@ button.sdRadio:hover {
   white-space: nowrap;
 }
 
-/* Four doors, each its own thing: the bolt orange, the note forest, the
-   action ink, the file blue — glyph and accent both distinct. */
+/* Four doors, each its own thing: the bolt orange, the note soft ink, the
+   action solid ink, the file blue — glyph and accent both distinct. */
 .door {
   border: 1px solid var(--hair);
   background: rgba(255, 255, 255, 0.7);
@@ -2330,8 +2390,8 @@ button.sdRadio:hover {
   background: rgba(230, 112, 30, 0.1);
 }
 .doorNote:hover {
-  color: var(--forest);
-  border-color: var(--forest);
+  color: var(--ink);
+  border-color: var(--faint);
 }
 .doorAct:hover {
   color: var(--ink);
@@ -2489,12 +2549,13 @@ button.sdRadio:hover {
   color: var(--ink);
 }
 
-/* The day's mark. Forest, because it is real work done — and on the title
-   line, so a folded board still says who has been worked. */
+/* The day's mark. The brand's green as the mark, because it is real work
+   done, with ink for the words — and on the title line, so a folded board
+   still says who has been worked. */
 .worked {
-  border: 1px solid rgba(30, 91, 70, 0.4);
+  border: 1px solid var(--green);
   background: rgba(34, 197, 94, 0.1);
-  color: var(--forest);
+  color: var(--ink);
   border-radius: 5px;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 9.5px;
@@ -2504,7 +2565,7 @@ button.sdRadio:hover {
   cursor: pointer;
 }
 .worked:hover:not(:disabled) {
-  border-color: var(--forest);
+  border-color: var(--ink);
 }
 .worked:disabled {
   opacity: 0.6;
@@ -2700,7 +2761,7 @@ button.sdRadio:hover {
   padding: 1px 5px;
   margin-left: 6px;
   border: 1px solid rgba(245, 158, 11, 0.55);
-  color: #b45309;
+  color: var(--ink);
   border-radius: 2px;
 }
 
@@ -2769,9 +2830,10 @@ button.sdRadio:hover {
   border-color: var(--orange);
   color: #fff;
 }
+/* The move's hover is the kit's own pressed orange. */
 .pipeCopyPrimary:hover {
-  background: #cf6318;
-  border-color: #cf6318;
+  background: var(--ds-orange-strong);
+  border-color: var(--ds-orange-strong);
   color: #fff;
 }
 .pipeCopyDid {

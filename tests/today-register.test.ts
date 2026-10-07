@@ -17,6 +17,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { todayRegister } from "@/lib/room/springs";
+import { roomClient, roomRow } from "./helpers/room-render";
 
 describe("the TODAY register counts what it shows", () => {
   test("the Trend row: an owed line and no commitment counts as one", () => {
@@ -92,5 +93,86 @@ describe("the row reads one derivation, not two", () => {
   test("the text comes from the same call as the count", () => {
     assert.ok(client.includes("const topToday = today.top;"));
     assert.ok(!/const topToday = liveOpen\[0\]/.test(client));
+  });
+});
+
+// H4 (pass 8): "Filing or composing anything springs TODAY open so receipts
+// never land behind a fold" (the Spring). A Chute filing, a note promoted from
+// the record fold and an owed item accepted all added to TODAY and left it
+// folded, so nothing visibly landed.
+const room = await roomClient();
+
+describe("whatever lands in TODAY springs it open (H4)", () => {
+  const client = readFileSync(join(cwd(), "src/app/room/room-client.tsx"), "utf8");
+  /** One handler's body: from its declaration to the next one at its depth. */
+  const handler = (name: string): string => {
+    const at = client.indexOf(`  const ${name} = `);
+    assert.ok(at >= 0, `${name} is gone`);
+    const next = client.indexOf("\n  const ", at + 1);
+    return client.slice(at, next < 0 ? undefined : next);
+  };
+
+  test("a Chute filing's to-do arriving on the next paint is a landing", () => {
+    // The Chute holds no row state: its filing reaches the row only when the
+    // page re-derives, and the row compares what its register holds.
+    const before = room.todayLines(roomRow());
+    const after = room.todayLines(
+      roomRow({
+        sheetOpen: [
+          { id: "todo-9", body: "Send the Canada numbers." },
+          { id: "todo-1", body: "Send the model." },
+        ],
+      }),
+    );
+    assert.equal(room.landedSince(before, after), true);
+  });
+
+  test("an owed line the filing found is a landing too", () => {
+    const before = room.todayLines(roomRow());
+    const after = room.todayLines(
+      roomRow({ owed: [{ noteId: "n9", key: "owed-1", text: "the invoices", src: "9/25" }] }),
+    );
+    assert.equal(room.landedSince(before, after), true);
+  });
+
+  test("a line moving between zones, or leaving, lands nothing", () => {
+    const before = room.todayLines(roomRow());
+    // todo-1 delayed to tomorrow: the same ids, held instead of open.
+    const moved = room.todayLines(
+      roomRow({
+        sheetOpen: [],
+        sheetDelayed: [
+          { id: "todo-1", body: "Send the model.", when: "THU" },
+          { id: "todo-2", body: "Call the CSM.", when: "tomorrow" },
+        ],
+      }),
+    );
+    assert.equal(room.landedSince(before, moved), false);
+    const left = room.todayLines(roomRow({ sheetOpen: [] }));
+    assert.equal(room.landedSince(before, left), false);
+  });
+
+  test("every fresh line enters through one door, and the door springs TODAY", () => {
+    const land = handler("landToday");
+    assert.ok(land.includes('setSpring("today")'), "landToday springs TODAY");
+    assert.equal(
+      client.split("setFreshCaps((f) => [").length - 1,
+      1,
+      "a fresh line is added outside landToday",
+    );
+  });
+
+  test("the record fold's promote and the owed accept land through it", () => {
+    assert.ok(handler("promoteNote").includes("landToday("), "promoteNote");
+    assert.ok(handler("owedAccept").includes("landToday("), "owedAccept");
+    assert.ok(handler("submitCompose").includes("landToday("), "submitCompose");
+    assert.ok(handler("promoteCap").includes('setSpring("today")'), "promoteCap");
+  });
+
+  test("the row springs TODAY when the next paint holds a line it did not", () => {
+    assert.ok(
+      /if \(landedSince\(seenLines, lines\)\) setSpring\("today"\);/.test(client),
+      "the row compares its register across paints",
+    );
   });
 });

@@ -98,6 +98,7 @@ export type RoomRow = {
   /** The THEIRS line (decreed 2026-08-20): the second record's verified
    *  read — null when the drop holds no live gems for this account. */
   theirs: { label: string; gems: TheirsGem[] } | null;
+  /** The board card's id; "" for a row off the board (pass 8 call 1). */
   cardId: string;
   name: string;
   meta: string;
@@ -156,7 +157,9 @@ export type RoomRow = {
   owed: { noteId: string; key: string; text: string; src: string }[];
   outcome: { status: "won" | "lost"; phrase: string; at: string } | null;
   gaps: { id: string; question: string; at: string }[];
-  gapsQueued: number;
+  /** The asks waiting behind the shown few, in the carousel's order. "· N
+   *  queued" opens to them and N is their length (the click-depth law; H5). */
+  gapsQueued: { id: string; question: string; at: string }[];
   /** What prospects in comparable situations asked (C7) — inherited, not owed. */
   peers: { question: string; shared: string; findHref: string }[];
   /** The same brain, the question pre-scoped to this deal. */
@@ -238,9 +241,11 @@ function Briefed({
     : "Partner not briefed yet. Click to set the status by hand; it also turns green when a partner-brief item closes in the stage record.";
   return (
     <span className={styles.bfWrap}>
+      {/* The mark takes the palette by role: green when the partner is
+          briefed, which is real health, quiet ink when not (X6). */}
       <button
         type="button"
-        className={styles.briefed}
+        className={`${styles.briefed} ${lit ? styles.briefedOn : ""}`}
         title={title}
         onClick={() => canWrite && setOpen((v) => !v)}
       >
@@ -249,7 +254,7 @@ function Briefed({
           width="13"
           height="13"
           fill="none"
-          stroke={lit ? "#1E5B46" : "rgba(10,28,64,.25)"}
+          stroke="currentColor"
           strokeWidth="2.4"
           strokeLinecap="butt"
           strokeLinejoin="miter"
@@ -326,14 +331,49 @@ type FreshEntry = { text: string; receipt?: undefined } | { receipt: LedgerRow }
 /** Today, M/D in Chicago: the day a receipt shows. */
 const receiptDay = (): string => monthDay(new Date());
 
-function Row({
+/** A row's key for the fold and the list: its card, or its account for a row
+ *  off the board, which has no card (pass 8 call 1). */
+export const rowKey = (r: Pick<RoomRow, "cardId" | "accountId">): string =>
+  r.cardId || `account:${r.accountId}`;
+
+/** Every line the TODAY register holds, by id: the open, the rest behind
+ *  the cap, the held, the done today, and the owed lines. */
+export function todayLines(
+  r: Pick<
+    RoomRow,
+    "sheetOpen" | "sheetRest" | "sheetDelayed" | "sheetDoneToday" | "owed"
+  >,
+): string[] {
+  return [
+    ...[...r.sheetOpen, ...r.sheetRest, ...r.sheetDelayed, ...r.sheetDoneToday].map(
+      (t) => t.id,
+    ),
+    ...r.owed.map((o) => `owed:${o.key}`),
+  ];
+}
+
+/** Whether a line landed between two paints: one the register holds now
+ *  that it did not hold before. A line moving between zones, or leaving,
+ *  lands nothing. */
+export function landedSince(
+  before: readonly string[],
+  after: readonly string[],
+): boolean {
+  const had = new Set(before);
+  return after.some((id) => !had.has(id));
+}
+
+export function Row({
   row,
   collapsed,
   onToggle,
+  defaultSpring = null,
 }: {
   row: RoomRow;
   collapsed: boolean;
   onToggle: () => void;
+  /** The register sprung on first paint, for the suite. */
+  defaultSpring?: "unknown" | "peers" | "today" | null;
 }) {
   // The shared door (src/app/room/ingest, slice 8 of the Chute brains
   // refactor plan): this row is the Drop, bound to its account, reading
@@ -373,7 +413,27 @@ function Row({
   const [editId, setEditId] = useState<string | null>(null);
   // The Spring (triptych winner, 2026-08-13): each register rests as one
   // summary line; ⊕ springs it out in place, one register out at a time.
-  const [spring, setSpring] = useState<"unknown" | "peers" | "today" | null>(null);
+  const [spring, setSpring] = useState<"unknown" | "peers" | "today" | null>(
+    defaultSpring,
+  );
+  // Filing or composing anything springs TODAY open so receipts never land
+  // behind a fold (the Spring, 2026-08-13). Every fresh line this row adds
+  // enters through here (H4).
+  const landToday = (cap: FreshCap) => {
+    setFreshCaps((f) => [cap, ...f]);
+    setSpring("today");
+  };
+  // A filing through another door, the Chute above all, reaches this row only
+  // when the page re-derives, so the row springs TODAY itself when the
+  // register holds a line it did not hold at the last paint (H4).
+  const lines = todayLines(row);
+  const [seenLines, setSeenLines] = useState(lines);
+  if (seenLines.join("\n") !== lines.join("\n")) {
+    setSeenLines(lines);
+    if (landedSince(seenLines, lines)) setSpring("today");
+  }
+  // The asks queued behind the shown few, opened from "· N queued" (H5).
+  const [queuedOpen, setQueuedOpen] = useState(false);
   // ✎ on a sheet line — the operator rewrites it in place.
   const [todoEditId, setTodoEditId] = useState<string | null>(null);
   const [todoEditText, setTodoEditText] = useState("");
@@ -454,17 +514,13 @@ function Row({
         await roomCompose(row.accountId, text, { kind: mode, urgency: urg }),
       );
       if (r.ok && r.kind) {
-        setFreshCaps((f) => [
-          {
-            body: text.replace(/^(?:▢|\[\s?\])\s*/, "").replace(/^⏲\s*\S+\s*/, ""),
-            kind: r.kind as FreshCap["kind"],
-            todoId: r.todoId,
-          },
-          ...f,
-        ]);
+        landToday({
+          body: text.replace(/^(?:▢|\[\s?\])\s*/, "").replace(/^⏲\s*\S+\s*/, ""),
+          kind: r.kind as FreshCap["kind"],
+          todoId: r.todoId,
+        });
         setLogText("");
         setNote(null);
-        setSpring("today");
       } else if (!r.ok) setNote(r.reason ?? "That didn't save.");
     });
   };
@@ -484,11 +540,12 @@ function Row({
     const todoId = c.todoId;
     start(async () => {
       const r = took(await roomNoteToAction(row.accountId, { todoId }));
-      if (r.ok)
+      if (r.ok) {
         setFreshCaps((f) =>
           f.map((x, i) => (i === idx ? { ...x, kind: "action", promoted: true } : x)),
         );
-      else setNote(r.reason ?? "That didn't save.");
+        setSpring("today");
+      } else setNote(r.reason ?? "That didn't save.");
     });
   };
   const promoteNote = (noteId: string, text: string) => {
@@ -497,10 +554,13 @@ function Row({
       const r = took(await roomNoteToAction(row.accountId, { noteId }));
       if (r.ok) {
         setPromotedNotes((s) => new Set(s).add(noteId));
-        setFreshCaps((f) => [
-          { body: text.replace(/^[✉✓☰✎⚡▢✔☎]\s?/, ""), kind: "action", promoted: true },
-          ...f,
-        ]);
+        // Promoted from the record fold, where TODAY may sit folded: the
+        // line lands in the open register (H4).
+        landToday({
+          body: text.replace(/^[✉✓☰✎⚡▢✔☎]\s?/, ""),
+          kind: "action",
+          promoted: true,
+        });
       } else setNote(r.reason ?? "That didn't save.");
     });
   };
@@ -854,7 +914,7 @@ function Row({
       const r = took(await roomOwedAccept(row.accountId, o.text, o.key));
       if (r.ok) {
         setOwedGone((s) => new Set(s).add(o.key));
-        setFreshCaps((f) => [{ body: o.text, kind: "action", promoted: true }, ...f]);
+        landToday({ body: o.text, kind: "action", promoted: true });
       } else setNote(r.reason ?? "That didn't save.");
     });
   };
@@ -954,6 +1014,7 @@ function Row({
   // The springs' counts — each numeral is the length of exactly the list its
   // register shows. One derivation, no second bookkeeping.
   const liveAsks = row.gaps.filter((g) => !askGone.has(g.id));
+  const liveQueued = row.gapsQueued.filter((g) => !askGone.has(g.id));
   const liveOpen = row.sheetOpen.filter((t) => !gone.has(t.id) && !doneIds.has(t.id));
   // The register shows a ranked eight; the rest are a door, never a
   // disappearance (decreed 2026-09-03).
@@ -1400,7 +1461,24 @@ function Row({
             <span className={styles.sumk}>UNKNOWN</span>
             <span className={styles.sumn}>
               {(row.outstanding && !closed ? 1 : 0) + liveAsks.length}
-              {row.gapsQueued > 0 ? ` · ${row.gapsQueued} queued` : ""}
+              {/* The count is a door (the click-depth law; H5): it springs
+                  the register out with the queued asks open. */}
+              {liveQueued.length > 0 && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    className={styles.sumDoor}
+                    title="Show the asks waiting behind these"
+                    onClick={() => {
+                      setSpring("unknown");
+                      setQueuedOpen(true);
+                    }}
+                  >
+                    · {liveQueued.length} queued
+                  </button>
+                </>
+              )}
             </span>
             <span className={styles.sumtx}>
               {row.outstanding && !closed
@@ -1437,7 +1515,24 @@ function Row({
               <span className={`${styles.sumk} ${styles.sumkOn}`}>STILL UNKNOWN</span>
               <span className={styles.sumn}>
                 {liveAsks.length}
-                {row.gapsQueued > 0 ? ` · ${row.gapsQueued} queued` : ""}
+                {liveQueued.length > 0 && (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      className={`${styles.sumDoor} ${queuedOpen ? styles.sumDoorOn : ""}`}
+                      aria-expanded={queuedOpen}
+                      title={
+                        queuedOpen
+                          ? "Hide the asks waiting behind these"
+                          : "Show the asks waiting behind these"
+                      }
+                      onClick={() => setQueuedOpen((v) => !v)}
+                    >
+                      · {liveQueued.length} queued
+                    </button>
+                  </>
+                )}
               </span>
               <Link href={row.askHref} className={styles.sic} title="Ask the brain">
                 ⌕
@@ -1468,12 +1563,20 @@ function Row({
               <div className={styles.askRow}>
                 <span className={styles.askQ}>
                   {row.outstanding.item}
-                  <span className={styles.gateTag}>
+                  {/* The chip is a door (the click-depth law; H5): it opens
+                      the stage's own checklist, the gate and the ones
+                      behind it. */}
+                  <button
+                    type="button"
+                    className={styles.gateTag}
+                    title="Open the stage's checklist"
+                    onClick={() => setStageOpen(row.outstanding?.node ?? null)}
+                  >
                     STAGE GATE
                     {row.outstanding.closedCount > 0
                       ? ` · ${row.outstanding.closedCount} BEHIND IT`
                       : ""}
-                  </span>
+                  </button>
                 </span>
                 {row.canWrite && (
                   <button
@@ -1488,13 +1591,18 @@ function Row({
                 )}
               </div>
             )}
-            {liveAsks.length === 0 && (!row.outstanding || closed) && (
-              <span className={styles.askQ}>
-                Nothing of this deal&apos;s own yet. File a paste, or mint asks.
-              </span>
-            )}
-            {liveAsks.map((g) => (
-              <div key={g.id} className={styles.askRow}>
+            {liveAsks.length === 0 &&
+              !(queuedOpen && liveQueued.length > 0) &&
+              (!row.outstanding || closed) && (
+                <span className={styles.askQ}>
+                  Nothing of this deal&apos;s own yet. File a paste, or mint asks.
+                </span>
+              )}
+            {[...liveAsks, ...(queuedOpen ? liveQueued : [])].map((g, i) => (
+              <div
+                key={g.id}
+                className={`${styles.askRow} ${i >= liveAsks.length ? styles.askQueued : ""}`}
+              >
                 <span className={styles.askQ}>{g.question}</span>
                 {row.canWrite && (
                   <button
@@ -2285,9 +2393,13 @@ function PartnerCard({ c }: { c: CadenceRow }) {
         >
           <input type="hidden" name="partner" value={c.partner} />
           <input type="hidden" name="returnTo" value="/room" />
+          {/* "Cadence" is a retired name (standing decree); the button
+              says what it mutes. */}
           <button
             className={styles.muteBtn}
-            title={c.muted ? "unmute cadence" : "mute cadence"}
+            title={
+              c.muted ? "unmute this partner's roundups" : "mute this partner's roundups"
+            }
           >
             {c.muted ? "🔕" : "🔔"}
           </button>
@@ -2373,12 +2485,15 @@ export function CadenceDrawer({
   cadence,
   checkins,
   onClose,
+  defaultTab = "roundups",
 }: {
   cadence: CadenceRow[];
   checkins: CheckinRow[];
   onClose: () => void;
+  /** The tab open on first paint, for the suite. */
+  defaultTab?: "roundups" | "checkins";
 }) {
-  const [tab, setTab] = useState<"roundups" | "checkins">("roundups");
+  const [tab, setTab] = useState<"roundups" | "checkins">(defaultTab);
   const visible = cadence.filter((c) => !c.muted);
   const muted = cadence.filter((c) => c.muted);
   return (
@@ -2460,9 +2575,7 @@ export function CadenceDrawer({
               </span>
             </div>
           ))}
-          {checkins.length === 0 && (
-            <p className={styles.dpEmpty}>No check-ins due. The cadence is quiet.</p>
-          )}
+          {checkins.length === 0 && <p className={styles.dpEmpty}>No check-ins due.</p>}
         </>
       )}
     </div>
@@ -2571,7 +2684,7 @@ export function EyeDrawer({
             width="15"
             height="15"
             fill="none"
-            stroke="#1E5B46"
+            stroke="currentColor"
             strokeWidth="2"
           >
             <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
@@ -2669,7 +2782,7 @@ export function RoomClient({
   );
   const [shutPref, setShutPref] = useState<Set<string>>(() => readShut());
   const shut = hydrated ? shutPref : EMPTY_SHUT;
-  const allShut = rows.length > 0 && rows.every((r) => shut.has(r.cardId));
+  const allShut = rows.length > 0 && rows.every((r) => shut.has(rowKey(r)));
   const writeShut = (next: Set<string>) => {
     setShutPref(next);
     try {
@@ -2678,14 +2791,13 @@ export function RoomClient({
       /* private mode — the fold still works, it just won't survive a reload */
     }
   };
-  const toggleRow = (cardId: string) => {
+  const toggleRow = (key: string) => {
     const next = new Set(shut);
-    if (next.has(cardId)) next.delete(cardId);
-    else next.add(cardId);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
     writeShut(next);
   };
-  const toggleAll = () =>
-    writeShut(allShut ? new Set() : new Set(rows.map((r) => r.cardId)));
+  const toggleAll = () => writeShut(allShut ? new Set() : new Set(rows.map(rowKey)));
   // Click away (or press Escape) to leave any of them — the trigger lives
   // inside each wrapper, so its own toggle still works.
   const addRef = useDismiss<HTMLSpanElement>(menuOpen, () => setMenuOpen(false));
@@ -2785,7 +2897,7 @@ export function RoomClient({
         </p>
       )}
       {rows.map((r, i) => (
-        <Fragment key={r.cardId}>
+        <Fragment key={rowKey(r)}>
           {!!r.outcome && !rows[i - 1]?.outcome && (
             <div className={styles.closedRule}>
               <span>
@@ -2796,8 +2908,8 @@ export function RoomClient({
           )}
           <Row
             row={r}
-            collapsed={shut.has(r.cardId)}
-            onToggle={() => toggleRow(r.cardId)}
+            collapsed={shut.has(rowKey(r))}
+            onToggle={() => toggleRow(rowKey(r))}
           />
         </Fragment>
       ))}
@@ -2864,7 +2976,9 @@ export function RoomClient({
           <span>ROUNDUPS</span>
           <span className={styles.edgeDot}>·</span>
           <span>CHECK-INS</span>
-          {dueCount > 0 && <span className={styles.edgeCount}>{dueCount}</span>}
+          {dueCount > 0 && (
+            <span className={`${styles.edgeCount} ${styles.edgeDue}`}>{dueCount}</span>
+          )}
         </button>
         <button
           type="button"

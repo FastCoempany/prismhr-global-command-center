@@ -581,6 +581,44 @@ describe("the room wires every new mechanism", () => {
       "closing must not archive the card",
     );
   });
+  // H8 and X6 (pass 8), the room's part: the palette is the brand's, by role.
+  // The ad-hoc forest green (#1e5b46, #2e7a5f and its rgba) and the brown
+  // #8a5a00 on the delayed and scheduled tags retired for the ink ladder,
+  // the brand's green (real health) and its amber (caution).
+  test("the room's stylesheet carries no ad-hoc palette", () => {
+    for (const off of [
+      /--forest/,
+      /#1e5b46/i,
+      /#2e7a5f/i,
+      /rgba\(30,\s*91,\s*70/,
+      /#8a5a00/i,
+      /rgba\(138,\s*90,\s*0/,
+    ])
+      assert.ok(!off.test(css), `room.module.css still carries ${off}`);
+    assert.ok(!/#1e5b46/i.test(client), "room-client.tsx still strokes the forest green");
+  });
+  // The darker per-hue text shades the room carried (green-700, amber-700,
+  // red-700, two browns, blue-900 and a hand-mixed orange hover) are not the
+  // brand's. The kit's own pattern holds instead: a semantic chip keeps its
+  // accent as the tint or the rule and its words in ink, and the move's hover
+  // is the kit's --ds-orange-strong (pass 9, after H8 and X6).
+  test("the room's text shades are the brand's, by role", () => {
+    const shades = ["#15803d", "#b45309", "#b42318", "#7a4b00", "#3a2600", "#1e3a8a", "#cf6318"];
+    for (const off of shades)
+      assert.ok(!css.toLowerCase().includes(off), `room.module.css still carries ${off}`);
+    assert.match(css, /\.pipeCopyPrimary:hover \{\s*background: var\(--ds-orange-strong\);/);
+  });
+  test("the edge tabs rest in quiet ink and take color on hover only", () => {
+    const rule = (sel: string): string => {
+      const at = css.indexOf(`\n${sel} {`);
+      assert.ok(at >= 0, `${sel} is gone`);
+      return css.slice(at, css.indexOf("}", at));
+    };
+    assert.match(rule(".edge"), /color: var\(--quiet\)/);
+    assert.match(rule(".edgeCount"), /background: rgba\(10, 28, 64, 0\.08\)/);
+    assert.match(rule(".edge:hover .edgeCount"), /background: var\(--ink\)/);
+    assert.match(rule(".edge:hover .edgeDue"), /background: var\(--amber\)/);
+  });
   test("operator copy still never says steps", () => {
     const strings = client.match(/(["'`>])([^"'`<>{}]*)\1?/g) ?? [];
     assert.ok(!strings.some((s) => /\bsteps?\b/i.test(s)));
