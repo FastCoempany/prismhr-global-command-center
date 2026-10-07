@@ -17,6 +17,7 @@ Current files:
 - design-system.md
 - field-glyphs.md
 - pass-8-rewalk.md
+- pass-9-fixes.md
 - product-lexicon.md
 - rulings-sheet.md
 - scaffold-pass.md
@@ -82,7 +83,10 @@ the re-walk of every ledger above against main d119c52 after pass 7. Each
 ledger carries its own re-walk section; the scoreboard's rows are
 re-scored; the pass-8 file holds the evidence behind those moves, the 51
 live violations found, the fourteen questions for the founder, and the
-housekeeping. Twenty-five hand-run suites are still outside the chain.
+housekeeping. pass-9-fixes.md is pass 9 (2026-10-07): the fixes, #368 to
+#382, every pass 8 violation and call with the PR that closed it, what
+stays open, and the scoreboard after. Every test file now runs in the
+chain.
 
 Likely future files:
 
