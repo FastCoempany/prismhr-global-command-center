@@ -134,8 +134,16 @@ describe("the vault waits on the verdict", () => {
       archive: [vtt],
       hold: [],
     });
-    // A filing that failed for any other reason sends nothing anywhere.
+    // A filing that failed for any other reason still backs its file up
+    // (ruled 2026-10-07, pass 8 call 8; this pin said "sends nothing
+    // anywhere" until pass 9): the file rides as failed, and the door backs
+    // it up and says so. A duplicate vaults nothing new.
     assert.deepEqual(vaultAfterVerdict({ ok: false }, [vtt]), {
+      archive: [],
+      hold: [],
+      failed: [vtt],
+    });
+    assert.deepEqual(vaultAfterVerdict({ ok: false, duplicate: true }, [vtt]), {
       archive: [],
       hold: [],
     });

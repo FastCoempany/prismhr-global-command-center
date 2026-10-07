@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { MODEL_READ } from "../src/lib/intranet/doctrine";
+import { readAccount } from "../src/lib/record/read";
 import { WAYFINDER_ROUTES } from "../src/components/wayfinder-routes";
 import { actionBody, splitFallback, urgencyForDue } from "../src/lib/room/deliverables";
 import { gapDismissKey, gapNs, parseGapBody, readGaps } from "../src/lib/room/gaps";
@@ -557,13 +558,58 @@ describe("the room wires every new mechanism", () => {
   // Rewritten for slice 18a (the face approved 2026-10-06): the receipt's
   // opened-action chips, whose ✕ called roomActionUndo, retired into the one
   // receipt line. The to-dos show in TODAY with their own controls, and the
-  // receipt's ↺ takes the whole filing back through the shared undo. The
-  // action stays on the server, guarded below.
-  test("roomActionUndo exists on the server; the receipt's chips that called it are retired", () => {
-    assert.ok(actions.includes("export async function roomActionUndo"));
+  // receipt's ↺ takes the whole filing back through the shared undo.
+  // Rewritten again in pass 9: roomActionUndo itself is gone (no client had
+  // called it since #360), so the pin holds the door that replaced it, the
+  // receipt's undo by the filing's id.
+  test("the receipt's undo takes the filing back by its id; the per-action undo is gone", () => {
+    assert.ok(!actions.includes("export async function roomActionUndo"));
     assert.ok(!client.includes("openedChip"), "the opened chips are back on the receipt");
     assert.ok(client.includes("<ReceiptLine"), "the Drop paints the one receipt");
     assert.ok(client.includes("useUndo()"), "and takes the filing back through the shared undo");
+    const hook = readFileSync(join(root, "src/app/room/ingest/use-undo.ts"), "utf8");
+    assert.ok(
+      hook.includes("return [accountId, row.noteIds ?? [], row.todoIds ?? [], row.filingId];"),
+      "the shared undo hands the filing's id",
+    );
+    assert.ok(actions.includes("await undoFiling(filing, acct.id)"), "and the server takes back by it");
+  });
+  // Pass 8, X1: the research prompt named the people of rows the operator
+  // ✕-parked, because the pass read the newest sixty raw rows on the
+  // account's id. Hidden is hidden: it names the account read's people, and
+  // the read's hide filter has already taken a parked row's people out.
+  test("the research pass names no one from a ✕-parked row (X1)", () => {
+    const row = (id: string, actors: string) => ({
+      id,
+      accountId: "A1",
+      partner: "",
+      kind: "account" as const,
+      lane: "mine" as const,
+      body: `✉ OL 9/3 9:00 AM — Renewal · ${actors}`,
+      actors,
+      source: "OL",
+      recipients: "",
+      createdAt: "2026-09-03T14:00:00Z",
+    });
+    const read = readAccount({
+      account: { id: "A1", name: "Acme PEO" },
+      notes: [row("kept", "Dana Ellis → Antaeus Coe"), row("parked", "Wrong Person → Antaeus Coe")],
+      touches: [],
+      todos: [],
+      dispositions: new Map([["hide:note:parked", { status: "parked" }]]),
+      homeSide: [],
+      now: new Date("2026-09-05T17:00:00Z"),
+    });
+    const names = read.people.map((p) => p.name);
+    assert.ok(names.includes("Dana Ellis"));
+    assert.ok(!names.includes("Wrong Person"), "a parked row's person is named");
+    const research = actions.slice(
+      actions.indexOf("export async function roomResearch("),
+      actions.indexOf("export async function roomGapsRefill("),
+    );
+    assert.match(research, /const people = readFromStores\(/, "the pass names the read's people");
+    assert.match(research, /\.people\.map\(\(p\) => p\.name\)/);
+    assert.ok(!/where: \{ accountId: acct\.id \},\s*orderBy: \{ createdAt: "desc" \},\s*take: 60/.test(research), "the raw sixty rows are read again");
   });
   test("the research control states when it last ran", () => {
     // The Spring's chip grammar (2026-08-13), amended since: the label is the
@@ -744,7 +790,6 @@ describe("the repairs hold", () => {
     const actions = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
     // Every new writer binds to the book before it writes.
     for (const fn of [
-      "roomActionUndo",
       "roomGapDismiss",
       "roomGapsRefill",
       "roomResearch",
@@ -756,9 +801,8 @@ describe("the repairs hold", () => {
       assert.ok(body.includes("bindAccountId"), `${fn} doesn't bind`);
       assert.ok(body.includes("requireWrite"), `${fn} doesn't check write access`);
     }
-    // An action already closed is history, not a mistake to erase.
-    assert.ok(actions.includes("already closed. Undo it on the row."));
-    // One completion line, not two.
+    // One completion line, not two. (The per-action undo that refused an
+    // action already closed retired in pass 9 with roomActionUndo.)
     assert.ok(actions.includes("if (wasRouted) await fileCompletion"));
   });
 

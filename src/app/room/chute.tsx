@@ -6,7 +6,7 @@
 // many as you like; each one is read on the spot, routed to its account on
 // the server by the book's signals and the record's (a known contact's
 // email, a company domain, a person the record or the book binds to one
-// account, the account's name — C2, D12; the roster never ships here), and
+// account, the account's name — C2, D13; the roster never ships here), and
 // filed through the same pipeline a paste takes. The misfile guard runs on
 // the text's own evidence with or without the key; the model's judgment
 // rides when the key is on. Nothing files blind: an unroutable file waits
@@ -30,7 +30,7 @@ import { chuteBook, type BookName } from "./route-actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import type { Window } from "@/lib/ingest/windows";
 import { shortName } from "@/lib/ingest/short-name";
-import { monthDay } from "@/lib/ingest/wrote";
+import { ALREADY_ON_FILE, monthDay } from "@/lib/ingest/wrote";
 import type { HeldVerdict } from "./chute-ledger";
 import {
   HELD_X_TITLE,
@@ -81,7 +81,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   // The second record's book: names only, from the router's door. The
   // routing signals themselves — addresses, domains, people — stay on the
-  // server (D12); the held box fetches the same names when it searches.
+  // server (D13); the held box fetches the same names when it searches.
   const [book, setBook] = useState<BookName[]>([]);
   useEffect(() => {
     void chuteBook().then((b) => {
@@ -123,8 +123,10 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
       waiting: srcFile ? [srcFile] : [],
       door,
     });
-    // The same verdict gate the row's Drop runs: the file vaults only once the
-    // filing is accepted; a dispute keeps it on the row for the pick.
+    // The same verdict gate the row's Drop runs: the file vaults once the
+    // filing is accepted; a dispute keeps it on the row for the pick; a
+    // duplicate vaults nothing new; a filing that failed for any other reason
+    // still backs its file up (pass 8 call 8), below.
     const [vaulting] = r.vault.archive;
     if (vaulting) void vaultTo(key, account, vaulting, false);
     if (r.ok)
@@ -145,7 +147,13 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         day: today(),
       });
     else if (r.duplicate)
-      patch(key, { state: "dupe", reason: r.reason ?? "Already on file.", day: today() });
+      // The decree's line, and the earlier filing it opens to (pass 8, C2).
+      patch(key, {
+        state: "dupe",
+        reason: r.reason ?? ALREADY_ON_FILE,
+        prior: r.prior,
+        day: today(),
+      });
     else {
       // The row already carries the text and the windows; the verdict adds
       // the claim, its reason and the grounds the held box opens to (D9 as
@@ -158,13 +166,34 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
           reason: held.reason,
           verdict: heldOf(held),
         });
-      else
+      else {
         patch(key, {
           state: "error",
           reason: r.reason ?? "The file didn't take.",
           day: today(),
         });
+        const [failed] = r.vault.failed ?? [];
+        if (failed) void backUp(key, failed, account);
+      }
     }
+  };
+
+  // A readable file whose filing failed still vaults (ruled 2026-10-07, pass
+  // 8 call 8): to the account it was filing to, or under accounts/_unfiled/
+  // when it had none or that backup was refused, so git stays the home for
+  // every dropped file (D8). The row keeps the failure as its line, and the
+  // receipt says the file is backed up beneath it.
+  const backUp = async (key: number, f: File, account?: { id: string; name: string }) => {
+    const progress = (sent: number, total: number) =>
+      patch(key, {
+        vault: { text: `Backing up ${f.name}… ${sent} of ${total}`, going: true },
+      });
+    patch(key, { vault: { text: `Backing up ${f.name}…`, going: true } });
+    let r = account ? await ingest.vault(account.id, f, progress) : null;
+    if (!r?.ok) r = await ingest.vaultUnfiled(f, progress);
+    patch(key, {
+      vault: r.ok ? { text: r.detail, url: r.url } : { text: r.reason, bad: true },
+    });
   };
 
   // The vault ride (founder-decreed 2026-09-02; canon since 2026-09-25, D8,
@@ -252,7 +281,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
 
   // A choice in the held box is final: the filing re-runs with force and the
   // row's windows, the read runs again, nothing is re-judged (D5). The batch
-  // sibling's suggestion keeps its own rung on the receipt (D6).
+  // sibling's suggestion keeps its own rung on the receipt (D5).
   const pickHeld = (it: Receipt, account: HeldAccount, how: HeldChoice) => {
     const batch = how === "batch";
     const why = batch ? "the rest of this drop went there" : "your call";
@@ -273,7 +302,9 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   };
 
   // ↺ takes the whole filing back by its id (use-undo.ts), and the receipt
-  // says what went.
+  // says what went and opens to it (pass 8, C5): the server reads the
+  // filing's lines before it takes them back, and the row holds them while
+  // the tab lives.
   const takeBack = (it: Receipt) => {
     const acct = it.account;
     if (!acct) return;
@@ -282,6 +313,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         patch(it.key, {
           state: "undone",
           reason: `Taken back from ${shortName(acct.name)}. ${r.removed + r.retired} removed.`,
+          took: r.took,
           day: today(),
         });
       else patch(it.key, { note: r.reason ?? "The take-back didn't go through." });
@@ -296,7 +328,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     patch(key, {
       state: "activity",
       act: true,
-      reason: "The activity report. Reading it here — blasts tally in the browser.",
+      reason: "Reading the activity report here. Blasts tally in this browser.",
     });
     try {
       const res = await uploadActivityReport({
@@ -312,7 +344,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
       if (res.reply?.unchanged) {
         patch(key, {
           state: "dupe",
-          reason: "Nothing changed — the record already holds this drop.",
+          reason: "Nothing changed. The record already holds this drop.",
         });
         return;
       }
@@ -335,18 +367,18 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
             // 2026-08-28 drop passed for a success (2026-08-28).
             reason: r.ok
               ? (r.receipt[r.receipt.length - 1] ?? "The second record is distilled.")
-              : (r.reason ?? "The run stopped — the Intranet dock holds the receipt."),
+              : (r.reason ?? "The run stopped. The receipt is on the Intranet dock."),
           });
           return;
         }
         patch(key, {
-          reason: `Distilling — ${r.remaining} account${r.remaining === 1 ? "" : "s"} to go.`,
+          reason: `Distilling. ${r.remaining} account${r.remaining === 1 ? "" : "s"} to go.`,
         });
       }
     } catch {
       patch(key, {
         state: "error",
-        reason: "The drop broke midway. Drop it again — staging replaces wholesale.",
+        reason: "The drop broke midway. Drop it again.",
       });
     }
   };
@@ -355,12 +387,15 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   // reader cannot open: it skips the read and goes to the vault by its
   // filename or waits for the pick.
   const swallow = async (f: File, key: number, vaultOnly: boolean) => {
+    // The account the file was filing to, once the route names one: a filing
+    // that breaks backs its file up there (pass 8 call 8).
+    let filingTo: { id: string; name: string } | undefined;
     try {
       if (/\.csv$/i.test(f.name) && (await probeActivityReport(f))) {
         await swallowActivity(f, key);
         return;
       }
-      // The route runs on the server over the joined roster (C2, D12); what
+      // The route runs on the server over the joined roster (C2, D13); what
       // comes back is the verdict and the picker's names.
       const routed = async (text: string) => {
         const r = await ingest.route(text);
@@ -381,22 +416,26 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
       }
       const { best, candidates, refused } = await routed(read.text);
       if (refused) patch(key, { state: "error", reason: refused });
-      else if (best)
+      else if (best) {
+        filingTo = { id: best.id, name: best.name };
         await fileTo(
           key,
           read.text,
-          { id: best.id, name: best.name },
+          filingTo,
           best.why,
           best.rung,
           false,
           f,
           read.windows,
         );
-      else
+      } else
         patch(key, { state: "pick", text: read.text, candidates, windows: read.windows });
     } catch {
-      // Nothing dies silently — a broken filing says so.
+      // Nothing dies silently: a broken filing says so, and its file still
+      // backs up, to the account it was filing to or under accounts/_unfiled/
+      // (pass 8 call 8).
       patch(key, { state: "error", reason: "The filing broke. Drop it again." });
+      void backUp(key, f, filingTo);
     }
   };
 
@@ -421,7 +460,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
 
   // Files thrown together are almost always one account's export. When a
   // held file's batch-mates filed somewhere, that account is the suggestion
-  // the held box offers, never a rung (D6).
+  // the held box offers, never a rung (D5).
   const batchMate = (it: Receipt): { id: string; name: string } | null => {
     if (it.batch == null) return null;
     const counts = new Map<string, { id: string; name: string; n: number }>();
@@ -457,7 +496,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
             className={styles.chuteUndo}
             title={
               it.armed
-                ? "Press again to clear it. Earlier drops are not kept, so nothing is restored."
+                ? "Press again to clear it. No earlier drop comes back."
                 : "Take this drop back. Clears every account's second-record read."
             }
             onClick={() => {
@@ -470,7 +509,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
                 patch(it.key, {
                   state: "undone",
                   reason: r.ok
-                    ? `${r.lines[0]} Nothing was restored — earlier drops are not kept.`
+                    ? `${r.lines[0]} No earlier drop came back.`
                     : (r.reason ?? "The take-back failed."),
                 });
               });
@@ -664,22 +703,19 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         />
       </div>
 
+      {/* The pact (pass 8, C3): what the pipeline does today, in plain
+          sentences, written to the writing canon and the plain-speech law.
+          Large files go up in pieces the server assembles, and git is the
+          home for every dropped file (D8 as amended 2026-10-05). */}
       <p className={styles.chutePact}>
-        <b>The pact:</b> Emails, call transcripts (.vtt), spreadsheets, Word documents,
-        and text read free in your browser; PDFs and images — screenshots included, HEIC
-        converts on the way in — read through Claude. Every file routes by the book and
-        the record — contact email, then company domain, then a known person, then account
-        name — and files like a paste: with the API key on, Claude splits the thread into
-        dated entries, opens the commitments it finds, queues the unknowns as asks, files
-        competitor intel and lessons to the Playbook, detects Closed Won or Lost, and
-        flags a file that reads like the wrong account; without the key the record still
-        files by rules. Nothing files blind — no sure match waits for your pick — nothing
-        files twice — a re-drop of something already on file is refused — receipts survive
-        a reload, and HomeRoom, Groundwork, Accounts, and Today re-read the record at
-        once, the Intranet mirroring it on its next sync. Every file also lands in the
-        GitHub vault under its account — recordings and other files the reader can&apos;t
-        open route by their filename or wait for your pick, and anything past 25MB rides
-        as a pre-release (2GB is the ceiling per file).
+        <b>The pact:</b> Mail, call transcripts, sheets, documents and text read here in
+        the browser. PDFs and images go to the reader. Each file finds its account by a
+        contact&apos;s address, the company&apos;s domain, a known person or the
+        account&apos;s name, and files like a paste. With the API key on, the read also
+        opens to-dos, their promises, asks and playbook lines. A file with no sure
+        account, or one that names another, waits for your pick. Nothing files twice.
+        Every file is backed up whole in git under its account. The day&apos;s receipts
+        survive a reload.
       </p>
 
       {ledger}

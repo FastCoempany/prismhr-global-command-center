@@ -7,7 +7,6 @@
 // from tests alike.
 
 import { HEADS, HEAD_LINE_RE, sniffHead } from "@/lib/ingest/dialect";
-import { SHEET_WINDOW, type Window } from "@/lib/ingest/windows";
 
 type PasteKind = "outlook" | "teams" | "salesnav" | "sf" | "transcript" | "note";
 
@@ -594,17 +593,13 @@ export function readerFor(filename: string): DropReader {
   return "unsupported";
 }
 
-// A spreadsheet as paste text: sheet by sheet, tab-separated, capped hard so
-// a 40k-row export can't flood the read (SHEET_WINDOW, src/lib/ingest/
-// windows.ts; four sheets, four hundred rows each). The reader downstream
-// treats it as plain text intelligence like anything else. The trim is a
-// window, and every window that cut something is on the receipt (D4): the
-// text is built twice, once under the caps and once with every row, and the
-// second build's length is what the sheet would have been.
+// A spreadsheet as paste text: sheet by sheet, tab-separated, every sheet and
+// every row. The reader hands the text on whole (ruled 2026-10-07, pass 8
+// call 3: every reader hands on the text whole, and only what goes to a model
+// is windowed). roomPaste windows its own read of a long sheet and the
+// receipt says so (D4); the note and the vault keep it whole. The reader
+// downstream treats it as plain text intelligence like anything else.
 type Sheet = { name: string; rows: unknown[][] };
-
-const SHEET_CAP = 4;
-const ROW_CAP = 400;
 
 const rowLine = (row: unknown[]): string =>
   row
@@ -612,46 +607,14 @@ const rowLine = (row: unknown[]): string =>
     .join("\t")
     .replace(/\t+$/g, "");
 
-function buildSheetText(
-  sheets: Sheet[],
-  filename: string,
-  caps: { sheets: number; rows: number; budget: number },
-): string {
+export function sheetToPaste(sheets: Sheet[], filename: string): { text: string } {
   const out: string[] = [`SPREADSHEET — ${filename}`];
-  let budget = caps.budget;
-  for (const s of sheets.slice(0, caps.sheets)) {
+  for (const s of sheets) {
     out.push(`\n== sheet: ${s.name} ==`);
-    for (const row of s.rows.slice(0, caps.rows)) {
+    for (const row of s.rows) {
       const line = rowLine(row);
-      if (!line.trim()) continue;
-      budget -= line.length;
-      if (budget <= 0) {
-        out.push("[trimmed — the sheet continues]");
-        return out.join("\n");
-      }
-      out.push(line);
+      if (line.trim()) out.push(line);
     }
-    if (s.rows.length > caps.rows)
-      out.push(`[${s.rows.length - caps.rows} more rows trimmed]`);
   }
-  return out.join("\n");
-}
-
-export function sheetToPaste(
-  sheets: Sheet[],
-  filename: string,
-): { text: string; window: Window | null } {
-  const text = buildSheetText(sheets, filename, {
-    sheets: SHEET_CAP,
-    rows: ROW_CAP,
-    budget: SHEET_WINDOW,
-  });
-  const whole = buildSheetText(sheets, filename, {
-    sheets: Infinity,
-    rows: Infinity,
-    budget: Infinity,
-  });
-  const window =
-    text === whole ? null : { what: "the sheet", read: text.length, of: whole.length };
-  return { text, window };
+  return { text: out.join("\n") };
 }

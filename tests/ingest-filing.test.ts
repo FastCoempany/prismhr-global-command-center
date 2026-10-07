@@ -5,7 +5,7 @@
 // getAppAccess and getPrisma, so, as tests/ingest-defects.test.ts does, the
 // sequencing inside it is read from the slice between
 // `export async function roomPaste(` and `export async function
-// roomActionUndo(`, and the fan-out from its own module (slice 6).
+// roomMoveDone(`, and the fan-out from its own module (slice 6).
 //
 // D4 (CLAUDE.md, The Chute): the note keeps the text whole at any size; only
 // the model's read is windowed, and every window that cut something is on the
@@ -19,24 +19,32 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 import { Prisma } from "../src/generated/prisma/client";
 import {
+  CLAIM_STALE_MS,
+  CLAIM_STATUS,
+  claimCapture,
   fileFiling,
   findFiling,
   readOfNote,
+  releaseCapture,
   undoFiling,
+  wroteOfFiling,
+  type ClaimClient,
   type FilingClient,
   type FilingData,
+  type WroteClient,
 } from "../src/lib/ingest/filing";
+import { PLAYBOOK_LESSONS, PLAYBOOK_MARKET, playbookBody } from "../src/lib/playbook/store";
+import { gapNs } from "../src/lib/room/gaps";
 import {
-  DOCX_WINDOW,
   DUPE_CHECK_SKIPPED,
   ENTRY_CAP,
   READ_WINDOW,
   READ_WINDOW_TAPE,
-  SHEET_WINDOW,
   TEXT_FLOOR,
   TRANSCRIBE_BYTES,
-  TRANSCRIBE_WINDOW,
+  TRANSPORT_BYTES,
   cut,
+  transportCut,
   filingSentences,
   windowSentences,
   windowsOf,
@@ -48,6 +56,8 @@ import {
   sanitizeAiResult,
 } from "../src/lib/intel/ai-clean";
 import { sheetToPaste } from "../src/lib/paste-files";
+import { readFileToText } from "../src/app/room/read-file";
+import { filingRequest } from "../src/app/room/ingest/use-ingest";
 import {
   createAccountNoteRow,
   createTodoRow,
@@ -86,7 +96,9 @@ function callArgs(src: string, open: number): string {
 const roomPaste = slice(
   actions,
   "export async function roomPaste(",
-  "export async function roomActionUndo(",
+  // roomActionUndo, the old tail, retired in pass 9 (no client had called it
+  // since #360); the next action is the tail now.
+  "export async function roomMoveDone(",
 );
 const absorbRead = slice(
   fanoutSrc,
@@ -494,17 +506,14 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
     const fit = cut("the paste", "short", READ_WINDOW);
     assert.equal(fit.text, "short");
     assert.equal(fit.window, null);
-    const exact = cut("the document", "y".repeat(DOCX_WINDOW), DOCX_WINDOW);
+    const exact = cut("the paste", "y".repeat(READ_WINDOW), READ_WINDOW);
     assert.equal(exact.window, null);
   });
 
   test("the named windows are the pipeline's, and no literal cap stays inline", () => {
     assert.equal(READ_WINDOW, 60000);
     assert.equal(READ_WINDOW_TAPE, 400000);
-    assert.equal(TRANSCRIBE_WINDOW, 60000);
     assert.equal(TRANSCRIBE_BYTES, 8 * 1024 * 1024);
-    assert.equal(SHEET_WINDOW, 30000);
-    assert.equal(DOCX_WINDOW, 60000);
     assert.equal(ENTRY_CAP, 40);
     assert.equal(TEXT_FLOOR, 20);
     for (const f of [
@@ -529,40 +538,44 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
     // The model-facing truncation note keeps its text.
     assert.ok(roomPaste.includes("[NOTE: paste truncated — "));
     assert.ok(roomPaste.includes("more characters omitted]"));
-    // The transcriber's window rides back with the text, and the reader hands
-    // it to roomPaste with the document's own.
-    assert.ok(actions.includes('cut("the transcription", text, TRANSCRIBE_WINDOW)'));
+    // Rewritten in pass 9 (ruled 2026-10-07, pass 8 call 3: every reader
+    // hands on the text whole, and only what goes to a model is windowed).
+    // The transcriber and the document reader used to cut before filing;
+    // neither cuts now, and roomPaste's read window is the one cut.
+    assert.ok(!actions.includes('cut("the transcription"'), "the transcriber cuts nothing");
+    assert.ok(actions.includes("return { ok: true, text, window: null };"));
     const reader = read("src/app/room/read-file.ts");
-    assert.ok(reader.includes('cut("the document", `DOCUMENT — ${f.name}\\n\\n${raw}`, DOCX_WINDOW)'));
+    assert.ok(!/\bcut\(/.test(reader), "the file reader cuts nothing but the transport's");
+    assert.ok(reader.includes("`DOCUMENT — ${f.name}\\n\\n${raw}`"), "the document whole");
     assert.ok(reader.includes("if (r.window) windows.push(r.window);"));
-    assert.ok(reader.includes("return { ok: true, text, windows };"));
-    assert.ok(roomPaste.includes("const windows: Window[] = [...(opts?.windows ?? [])];"));
+    assert.ok(reader.includes('const carried = transportCut("the file", text);'));
+    assert.ok(reader.includes("return { ok: true, text: carried.text, windows };"));
+    assert.ok(roomPaste.includes("const windows: Window[] = [...(opts.windows ?? [])];"));
   });
 
-  test("the sheet's trim is a window: read is what was emitted, of is every row", () => {
+  // Rewritten in pass 9 (pass 8 call 3): the sheet's trim was a window cut
+  // before filing; the reader now hands the sheet on whole, every sheet and
+  // every row, and only roomPaste's read of it is windowed.
+  test("the sheet is handed on whole: every sheet, every row, no trim", () => {
     const rows = Array.from({ length: 500 }, (_, i) => [`Account ${i}`, "Mexico", `${i}`]);
     const big = sheetToPaste([{ name: "Accounts", rows }], "book.xlsx");
-    assert.ok(big.window, "four hundred of five hundred rows is a cut");
-    assert.equal(big.window.what, "the sheet");
-    assert.equal(big.window.read, big.text.length);
-    assert.ok(big.window.of > big.window.read);
-    assert.ok(big.text.includes("[100 more rows trimmed]"));
-    // Every row, formatted the same way, is what the sheet would have been.
     const whole = ["SPREADSHEET — book.xlsx", "\n== sheet: Accounts ==", ...rows.map((r) => r.join("\t"))].join("\n");
-    assert.equal(big.window.of, whole.length);
+    assert.equal(big.text, whole, "all five hundred rows");
+    assert.ok(!big.text.includes("trimmed"));
     const wide = sheetToPaste(
       [{ name: "Notes", rows: Array.from({ length: 300 }, () => ["x".repeat(200)]) }],
       "notes.xlsx",
     );
-    assert.ok(wide.window, "the character budget is a cut too");
-    assert.ok(wide.text.includes("[trimmed — the sheet continues]"));
-    assert.ok(wide.window.read <= SHEET_WINDOW + 200);
-    assert.equal(wide.window.of, "SPREADSHEET — notes.xlsx\n\n== sheet: Notes ==\n".length + 300 * 201 - 1);
+    assert.equal(wide.text.length, "SPREADSHEET — notes.xlsx\n\n== sheet: Notes ==\n".length + 300 * 201 - 1);
+    const many = sheetToPaste(
+      Array.from({ length: 6 }, (_, i) => ({ name: `S${i}`, rows: [[`row ${i}`]] })),
+      "six.xlsx",
+    );
+    for (let i = 0; i < 6; i++) assert.ok(many.text.includes(`== sheet: S${i} ==\nrow ${i}`), `sheet ${i}`);
     const small = sheetToPaste([{ name: "Accounts", rows: [["Simploy", "Mexico"]] }], "a.xlsx");
-    assert.equal(small.window, null);
     assert.equal(small.text, "SPREADSHEET — a.xlsx\n\n== sheet: Accounts ==\nSimploy\tMexico");
     const reader = read("src/app/room/read-file.ts");
-    assert.ok(reader.includes("if (s.window) windows.push(s.window);"));
+    assert.ok(reader.includes("text = sheetToPaste(sheets, f.name).text;"));
   });
 
   test("windows read back from storage drop anything that is not a window", () => {
@@ -776,5 +789,254 @@ describe("the receipt sentences read from the result (D4, D7)", () => {
     assert.equal((chute.match(/\bit\.windows,\n/g) ?? []).length, 1);
     assert.ok(client.includes("filePaste(mismatch.text, true, mismatch.files, mismatch.windows, to)"));
     assert.ok(client.includes("filePaste(read.text, false, waiting, read.windows)"));
+  });
+});
+
+// ── what a filing wrote, by its id (pass 8 call 9, C1) ─────────────────────
+describe("the receipt's read takes every namespace the filing wrote to, by its id", () => {
+  type NoteRow = { body: string; createdAt: Date; accountId: string; filingId: string };
+  const at = new Date("2026-10-06T15:00:00Z");
+  const notes: NoteRow[] = [
+    { body: "✉ OL 10/6 9:00 AM — Re: renewal · Lesha Cyphers", createdAt: at, accountId: "A1", filingId: "f1" },
+    { body: "? Which countries are first?", createdAt: at, accountId: gapNs("A1"), filingId: "f1" },
+    { body: playbookBody("market", "Remote asks for a deposit up front.", { a: "A1", n: "Acme", w: "Lesha" }), createdAt: at, accountId: PLAYBOOK_MARKET, filingId: "f1" },
+    { body: playbookBody("lesson", "Security review slowed the close.", { a: "A1", n: "Acme", w: "" }), createdAt: at, accountId: PLAYBOOK_LESSONS, filingId: "f1" },
+    // A playbook line under the same filing id that names another account:
+    // the playbook is one namespace, so only the tail admits a line.
+    { body: playbookBody("lesson", "Someone else's lesson entirely.", { a: "B2", n: "Other", w: "" }), createdAt: at, accountId: PLAYBOOK_LESSONS, filingId: "f1" },
+    // Another account's rows and another filing's rows never come back.
+    { body: "✉ OL 10/6 — Not ours · Someone", createdAt: at, accountId: "B2", filingId: "f1" },
+    { body: "? Another filing's ask?", createdAt: at, accountId: gapNs("A1"), filingId: "f9" },
+  ];
+  const asked: { notes?: unknown; todos?: unknown } = {};
+  const client: WroteClient = {
+    accountNote: {
+      findMany: async (args) => {
+        asked.notes = args.where;
+        return notes
+          .filter((n) => n.filingId === args.where.filingId && args.where.accountId.in.includes(n.accountId))
+          .map(({ body, createdAt, accountId }) => ({ body, createdAt, accountId }));
+      },
+    },
+    todo: {
+      findMany: async (args) => {
+        asked.todos = args.where;
+        return args.where.filingId === "f1" && args.where.accountId === "A1"
+          ? [{ body: "Send the census.\n⚑[k:a]" }, { body: "Send the plan.\n⚑[o:them,b:Lesha Cyphers]" }]
+          : [];
+      },
+    },
+  };
+
+  test("the entries, the to-dos, their promises, the asks and the playbook lines", async () => {
+    const wrote = await wroteOfFiling("A1", "f1", client);
+    assert.deepEqual(wrote, {
+      filed: ["Re: renewal · Lesha Cyphers · 10/6"],
+      todos: ["Send the census."],
+      promises: ["Lesha Cyphers · Send the plan."],
+      asks: ["Which countries are first?"],
+      learned: ["Remote asks for a deposit up front.", "Security review slowed the close."],
+    });
+    assert.deepEqual(asked.notes, {
+      filingId: "f1",
+      accountId: { in: ["A1", gapNs("A1"), PLAYBOOK_MARKET, PLAYBOOK_LESSONS] },
+    });
+    assert.deepEqual(asked.todos, { filingId: "f1", accountId: "A1" });
+  });
+
+  test("the server door reads through it, so the asks and the playbook lines open", () => {
+    const door = read("src/app/room/filing-actions.ts");
+    assert.ok(door.includes("return await wroteOfFiling(acct.id, id);"));
+    assert.ok(!door.includes("prisma.accountNote.findMany"), "no narrow read of the account's own id");
+  });
+});
+
+// ── the duplicate guard's claim (pass 8, the duplicate race) ───────────────
+describe("two filings of one capture in flight cannot both pass the duplicate check", () => {
+  type Row = { status: string; reason: string };
+  /** The disposition table as its unique key behaves: a second create on a
+   *  key throws Prisma's P2002, and every call yields to the event loop so
+   *  two claims interleave the way two requests do. */
+  const table = () => {
+    const rows = new Map<string, Row>();
+    const tick = () => new Promise<void>((r) => setImmediate(r));
+    const client: ClaimClient = {
+      accountDisposition: {
+        create: async ({ data }) => {
+          await tick();
+          if (rows.has(data.accountId)) throw Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+          rows.set(data.accountId, { status: data.status, reason: data.reason });
+          return data;
+        },
+        findUnique: async ({ where }) => {
+          await tick();
+          return rows.get(where.accountId) ?? null;
+        },
+        updateMany: async ({ where, data }) => {
+          await tick();
+          const r = rows.get(where.accountId);
+          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          r.reason = data.reason;
+          return { count: 1 };
+        },
+        deleteMany: async ({ where }) => {
+          await tick();
+          const r = rows.get(where.accountId);
+          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          rows.delete(where.accountId);
+          return { count: 1 };
+        },
+      },
+    };
+    return { rows, client };
+  };
+  const KEY = "pastehash:A1:abc123";
+  const NOW = new Date("2026-10-07T15:00:00Z");
+
+  test("of two at once, one holds the capture and the other is refused as in flight", async () => {
+    const { rows, client } = table();
+    const [a, b] = await Promise.all([claimCapture(KEY, NOW, client), claimCapture(KEY, NOW, client)]);
+    const kinds = [a.kind, b.kind].sort();
+    assert.deepEqual(kinds, ["claimed", "inflight"]);
+    assert.equal(rows.get(KEY)?.status, CLAIM_STATUS);
+  });
+
+  test("a landed filing is on file; a ✕-parked one keeps its marker and stays on file (D7)", async () => {
+    const { rows, client } = table();
+    const first = await claimCapture(KEY, NOW, client);
+    assert.equal(first.kind, "claimed");
+    // roomPaste's stampPasteMark turns the claim into the filed marker.
+    rows.set(KEY, { status: "filed", reason: "2026-10-03T14:00:00.000Z·n1" });
+    if (first.kind === "claimed") await releaseCapture(KEY, first.token, client);
+    assert.equal(rows.get(KEY)?.status, "filed", "the release leaves a filed marker alone");
+    const again = await claimCapture(KEY, NOW, client);
+    assert.deepEqual(again, { kind: "filed", reason: "2026-10-03T14:00:00.000Z·n1" });
+  });
+
+  test("a filing that files nothing lets the capture go, and only its own claim", async () => {
+    const { rows, client } = table();
+    const first = await claimCapture(KEY, NOW, client);
+    assert.equal(first.kind, "claimed");
+    if (first.kind !== "claimed") return;
+    await releaseCapture(KEY, "someone-else's-token", client);
+    assert.ok(rows.has(KEY), "another token releases nothing");
+    await releaseCapture(KEY, first.token, client);
+    assert.ok(!rows.has(KEY));
+    assert.equal((await claimCapture(KEY, NOW, client)).kind, "claimed", "the re-drop files");
+  });
+
+  test("a claim left by a filing that died is taken over once it is stale", async () => {
+    const { rows, client } = table();
+    const dead = new Date(NOW.getTime() - CLAIM_STALE_MS - 1000);
+    rows.set(KEY, { status: CLAIM_STATUS, reason: `${dead.toISOString()}·claim:dead` });
+    const [a, b] = await Promise.all([claimCapture(KEY, NOW, client), claimCapture(KEY, NOW, client)]);
+    assert.deepEqual([a.kind, b.kind].sort(), ["claimed", "inflight"], "one takes it over, never both");
+    const fresh = new Date(NOW.getTime() - 60_000);
+    rows.set(KEY, { status: CLAIM_STATUS, reason: `${fresh.toISOString()}·claim:live` });
+    assert.equal((await claimCapture(KEY, NOW, client)).kind, "inflight");
+  });
+
+  test("a store that errors fails open, and the filing says so (D7)", async () => {
+    const broken: ClaimClient = {
+      accountDisposition: {
+        create: async () => {
+          throw new Error("connection reset");
+        },
+        findUnique: async () => null,
+        updateMany: async () => ({ count: 0 }),
+        deleteMany: async () => ({ count: 0 }),
+      },
+    };
+    assert.deepEqual(await claimCapture(KEY, NOW, broken), { kind: "skipped" });
+  });
+
+  test("roomPaste claims before any read, refuses a twin, and always lets an unfiled claim go", () => {
+    assert.match(roomPaste, /const claim = await claimCapture\(pasteKey, new Date\(\)\);/);
+    assert.match(roomPaste, /if \(claim\.kind === "inflight"\)\s*return \{ ok: false, filed: 0, how: "", duplicate: true, reason: ALREADY_FILING \};/);
+    assert.match(roomPaste, /\} finally \{[\s\S]*?if \(claim\.kind === "claimed"\) await releaseCapture\(pasteKey, claim\.token\);/);
+    assert.ok(roomPaste.indexOf("claimCapture(") < roomPaste.indexOf("aiCleanTimeline("), "the claim precedes the read");
+    assert.match(roomPaste, /const dupeCheck: DupeCheck = claim\.kind === "skipped" \? "skipped" : "ran";/);
+  });
+});
+
+// ── the transport's window (pass 8 call 3, the coordinator's follow-up) ────
+// Under the server's request cap every reader hands on the text whole; above
+// it, a text used to fail its filing with nothing fanned out. The reader now
+// windows it to fit, the window rides to the receipt (D4), and it files.
+describe("a text too heavy for the transport is windowed to fit and still files", () => {
+  const encoded = (t: string) => new TextEncoder().encode(JSON.stringify(t)).length;
+
+  test("the limit is named once, under the platform's request cap", () => {
+    assert.equal(TRANSPORT_BYTES, 4 * 1024 * 1024);
+    const config = read("next.config.ts");
+    const kb = Number(/bodySizeLimit:\s*"(\d+)kb"/.exec(config)?.[1] ?? "0");
+    assert.ok(kb > 0, "the server action body limit is set");
+    assert.ok(TRANSPORT_BYTES < kb * 1024, "the window stays under the server's cap");
+    assert.ok(kb * 1024 < 4.5 * 1024 * 1024, "and the cap under the platform's 4.5 MB");
+    // Both doors take the module's limit, never one of their own.
+    assert.ok(read("src/app/room/read-file.ts").includes('transportCut("the file", text)'));
+    assert.ok(read("src/app/room/ingest/use-ingest.ts").includes('transportCut("the text", text)'));
+  });
+
+  test("under the limit nothing is cut; over it the head that fits is kept and the window says how much", () => {
+    assert.deepEqual(transportCut("the file", "short", 100), { text: "short", window: null });
+    const exact = "x".repeat(98);
+    assert.equal(transportCut("the file", exact, 100).window, null, "98 characters and two quotes fit 100 bytes");
+    const over = transportCut("the file", "x".repeat(250), 100);
+    assert.equal(over.text, "x".repeat(98));
+    assert.deepEqual(over.window, { what: "the file", read: 98, of: 250 });
+    // Every kind of character is costed as it travels: escapes, UTF-8's
+    // widths, a pair never split, a control character's \u escape.
+    for (const unit of ["—", "\n", '"', "é", "😀", "\u0001", "a\\b"]) {
+      const text = unit.repeat(200);
+      const r = transportCut("the file", text, 101);
+      assert.ok(r.window, `${JSON.stringify(unit)} is cut`);
+      assert.ok(encoded(r.text) <= 101, `${JSON.stringify(unit)} fits: ${encoded(r.text)}`);
+      assert.ok(encoded(text.slice(0, r.text.length + unit.length)) > 101, `${JSON.stringify(unit)} keeps all that fits`);
+      assert.ok(!/[\uD800-\uDBFF]$/.test(r.text), "no half of a pair");
+    }
+  });
+
+  test("the reader windows a file past the limit, records the window and hands on what fits", async () => {
+    const noPdf = async () => ({ ok: false, reason: "no reader in the suite" });
+    const line = "Dana Ellis: the board meets Thursday — we sign after.\n";
+    const big = line.repeat(Math.ceil((TRANSPORT_BYTES + 400_000) / line.length));
+    const r = await readFileToText(new File([big], "export.txt", { type: "text/plain" }), noPdf);
+    assert.ok(r.ok);
+    if (!r.ok) return;
+    // The text reader trims the file, so the whole is the trimmed text.
+    const whole = big.trim();
+    assert.equal(r.windows.length, 1);
+    assert.deepEqual(r.windows[0], { what: "the file", read: r.text.length, of: whole.length });
+    assert.ok(encoded(r.text) <= TRANSPORT_BYTES, "what travels fits the transport");
+    assert.ok(encoded(whole) > TRANSPORT_BYTES, "and the whole would not have");
+    assert.ok(whole.startsWith(r.text), "the head is kept");
+    // The receipt's amber line says it, beside roomPaste's own read window.
+    const read60 = { what: "the paste", read: READ_WINDOW, of: r.text.length };
+    assert.deepEqual(filingSentences({ windows: [...r.windows, read60] }), [
+      `Read ${r.text.length.toLocaleString("en-US")} of ${whole.length.toLocaleString("en-US")} characters of the file.`,
+      `Read 60,000 of ${r.text.length.toLocaleString("en-US")} characters of the paste.`,
+    ]);
+    // A file under the limit passes whole, with no window.
+    const small = await readFileToText(new File([line.repeat(40)], "note.txt"), noPdf);
+    assert.ok(small.ok);
+    if (small.ok) {
+      assert.deepEqual(small.windows, []);
+      assert.equal(small.text, line.repeat(40).trim());
+    }
+  });
+
+  test("a pasted text past the limit is windowed in the filing request, and one that fits is untouched", () => {
+    const fits = filingRequest("drop", "A1", "The board meets Thursday.", { windows: [] });
+    assert.deepEqual(fits, ["A1", "The board meets Thursday.", { force: false, door: "drop", windows: [] }]);
+    const heavy = "y".repeat(TRANSPORT_BYTES + 10);
+    const [, text, opts] = filingRequest("drop", "A1", heavy, {
+      windows: [{ what: "the file", read: 5, of: 9 }],
+    });
+    assert.equal(text.length, TRANSPORT_BYTES - 2);
+    assert.deepEqual(opts.windows, [
+      { what: "the file", read: 5, of: 9 },
+      { what: "the text", read: TRANSPORT_BYTES - 2, of: heavy.length },
+    ]);
   });
 });

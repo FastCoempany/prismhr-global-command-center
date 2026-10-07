@@ -8,7 +8,7 @@
 // inbound. One pipeline wherever a capture enters (D1): the filing is
 // roomPaste with the intranet door, so every row it writes carries the door
 // in its own column (P3). Routing runs here, on the server, over the joined
-// roster (D12): the lib's routeText, never the action's, because this already
+// roster (D13): the lib's routeText, never the action's, because this already
 // is the server, and the reply carries an account's name and nothing else.
 //
 // The capture files when routing is sure. One box holds a disputed or unsure
@@ -18,7 +18,7 @@
 // accounts and no sure one (ordered 2026-10-06). Nothing writes here. The
 // reply carries what the held row needs: for a dispute, the routed account
 // and the verdict; for an unsure route, the candidates by id, name and rung
-// (D12). The Send-it box hands them to the Chute mounted above it, whose
+// (D13). The Send-it box hands them to the Chute mounted above it, whose
 // held box files the pick through roomPaste with the intranet door. The
 // held box's ✕ comes back through intranetKeep, which takes the brain's own
 // road with no route and no filing. A capture that names no account takes
@@ -75,7 +75,7 @@ export type CaptureReply = {
    *  and the guard's verdict; an unsure route (ordered 2026-10-06) carries
    *  the router's candidates, which the held row offers as its choices. The
    *  text stays with the client that sent it, and the roster never travels
-   *  (D12). */
+   *  (D13). */
   held?:
     | {
         account: { id: string; name: string };
@@ -113,7 +113,7 @@ export async function intranetCapture(
 
   let kept = keptLine();
   if (!opts?.keep) {
-    // The route, on the server over the joined roster (D12, C2). The raw
+    // The route, on the server over the joined roster (D13, C2). The raw
     // text routes, as a dropped file's does: the addresses are the
     // strongest rung.
     const verdict = captureVerdict(await routeText(text));
@@ -155,7 +155,7 @@ export async function intranetCapture(
     // router found candidate accounts and no sure one, so nothing writes
     // here until the operator's pick in the Chute, or the ✕ that brings it
     // back down the brain's road. The candidates travel as ids, names and
-    // rungs (D12).
+    // rungs (D13).
     if (verdict.hold)
       return {
         ok: true,
@@ -182,7 +182,8 @@ export async function intranetCapture(
       });
       return {
         ok: true,
-        receipt: "Already in the brain — nothing new to add.",
+        // Plain words, no dash aside (pass 8, C6).
+        receipt: "Already in the brain. Nothing new to add.",
         captureId: seen.id,
         space: cap.space,
         origin: cap.origin,
@@ -259,7 +260,7 @@ export async function intranetCapture(
     };
   } catch {
     return refused(
-      "The brain's tables aren't there yet — run docs/intranet-tables.sql in Supabase.",
+      "The brain's tables aren't there yet. Run docs/intranet-tables.sql in Supabase.",
     );
   }
 }

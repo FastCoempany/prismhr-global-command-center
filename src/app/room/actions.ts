@@ -24,11 +24,21 @@ import { guardPlan, type GuardVerdict } from "@/lib/ingest/guard";
 import { EXCERPT_CAP, readRungVerdict } from "@/lib/ingest/verdict-reason";
 import { HEADS, SOURCE_OF, sniffHead } from "@/lib/ingest/dialect";
 import {
+  claimCapture,
   fileFiling,
+  findFiling,
+  releaseCapture,
   undoFiling,
+  wroteOfFiling,
   type DupeCheck,
   type FilingHow,
 } from "@/lib/ingest/filing";
+import {
+  ALREADY_FILING,
+  ALREADY_ON_FILE,
+  monthDay,
+  type FilingWrote,
+} from "@/lib/ingest/wrote";
 import { absorbRead, fileCompletion, undoCompletions } from "@/lib/ingest/fanout";
 import {
   ENTRY_CAP,
@@ -36,7 +46,6 @@ import {
   READ_WINDOW_TAPE,
   TEXT_FLOOR,
   TRANSCRIBE_BYTES,
-  TRANSCRIBE_WINDOW,
   cut,
   type Window,
 } from "@/lib/ingest/windows";
@@ -200,11 +209,12 @@ export async function roomPaste(
   accountId: string,
   raw: string,
   // The door the capture came through stamps every row the filing writes
-  // (P3): the Chute says "chute"; a paste or file on the account's own row
-  // is the Drop, the default. `windows` carries what a reader cut before the
-  // text arrived — the transcriber's, the document's — so the Filing row
-  // and the receipt hold every window (D4).
-  opts?: { force?: boolean; door?: Door; windows?: Window[] },
+  // (P3): the Chute says "chute", a paste or file on the account's own row
+  // says "drop", the Intranet's Send-it says "intranet". Required, so no
+  // caller files under a door it did not name (pass 8 housekeeping).
+  // `windows` carries what a reader cut before the text arrived, so the
+  // Filing row and the receipt hold every window (D4).
+  opts: { force?: boolean; door: Door; windows?: Window[] },
 ): Promise<{
   ok: boolean;
   filed: number;
@@ -219,12 +229,11 @@ export async function roomPaste(
   dupeCheck?: DupeCheck;
   // The actions the read opened, by id: the undo's other reach.
   todoIds?: string[];
-  // The model's judgment fanned out (actions, asks, lessons, outcome),
-  // whichever reader filed the entries. `how` is the entries' provenance
-  // alone: a model read that found no dated entries hands the record to the
-  // rules and keeps its judgment (decided 2026-09-24, audit pass 1 bug 5).
-  judged?: boolean;
-  // What the read did beyond filing the record:
+  // What the read did beyond filing the record, whichever reader filed the
+  // entries: `how` is the entries' provenance alone, and a model read that
+  // found no dated entries hands the record to the rules and keeps its
+  // judgment (decided 2026-09-24, audit pass 1 bug 5), so the counts below
+  // are the model's whenever they are not zero.
   opened?: { id: string; text: string }[]; // auto-created actions (undo one by one)
   promises?: number; // their commitments filed as loops on their side (D10)
   asks?: number; // new STILL UNKNOWN questions queued
@@ -250,13 +259,17 @@ export async function roomPaste(
     candidates?: { id: string; name: string; rung: RouteRung }[];
   };
   readFailed?: boolean; // the read errored; the rule parser filed the record
-  // The duplicate guard: this exact capture already filed to this account.
+  // The duplicate guard: this exact capture already filed to this account,
+  // or a twin of it is filing now.
   duplicate?: boolean;
+  // The earlier filing a duplicate is refused for: its day and, when the
+  // Filing table holds it, its id, so the receipt opens to it (pass 8, C2).
+  prior?: { day?: string; filingId?: string };
   // A call transcript's full text was archived alongside the read's entries.
   archived?: boolean;
 }> {
   const acct = bindAccountId(accountId, peos);
-  const door: Door = opts?.door ?? "drop";
+  const door: Door = opts.door;
   const rawText = typeof raw === "string" ? raw.trim() : "";
   // The capture's true dialect travels into the head token and source column —
   // an Outlook thread must never masquerade as Salesforce activity. The head
@@ -278,7 +291,7 @@ export async function roomPaste(
   const text = readCut.window
     ? `${readCut.text}\n[NOTE: paste truncated — ${rawText.length - readCut.window.read} more characters omitted]`
     : readCut.text;
-  const windows: Window[] = [...(opts?.windows ?? [])];
+  const windows: Window[] = [...(opts.windows ?? [])];
   if (readCut.window) windows.push(readCut.window);
   if (!acct)
     return {
@@ -294,38 +307,92 @@ export async function roomPaste(
 
   // The duplicate guard — app-wide, since every door (row paste, the Drop,
   // the Chute) files through here. The same capture filed to the same account
-  // twice is refused BEFORE any read spends a cent. A guard that errors never
-  // blocks a filing — it fails open, and the Filing row and the receipt say
-  // so (ruled 2026-09-25, D7).
+  // twice is refused BEFORE any read spends a cent. The check claims the
+  // capture rather than reading for it, so two filings of one capture in
+  // flight together cannot both pass (pass 8, the duplicate race;
+  // claimCapture in src/lib/ingest/filing.ts); the claim becomes the filed
+  // marker when the filing lands and is released below when it files
+  // nothing. A guard that errors never blocks a filing — it fails open, and
+  // the Filing row and the receipt say so (ruled 2026-09-25, D7).
   const fingerprint = pasteFingerprint(rawText);
   const pasteKey = `pastehash:${acct.id}:${fingerprint}`.slice(0, 191);
-  let dupeCheck: DupeCheck = "ran";
-  try {
-    const prior = await getPrisma().accountDisposition.findUnique({
-      where: { accountId: pasteKey },
-    });
-    if (prior) {
-      const at = Date.parse((prior.reason ?? "").split("·")[0] ?? "");
-      const when = Number.isNaN(at)
-        ? ""
-        : ` Filed ${new Date(at).toLocaleDateString("en-US", {
-            month: "numeric",
-            day: "numeric",
-            timeZone: "America/Chicago",
-          })}.`;
-      return {
-        ok: false,
-        filed: 0,
-        how: "",
-        duplicate: true,
-        reason: `Already on file.${when} Nothing filed twice.`,
-      };
-    }
-  } catch {
-    // guard unavailable — file anyway
-    dupeCheck = "skipped";
+  const claim = await claimCapture(pasteKey, new Date());
+  if (claim.kind === "inflight")
+    return { ok: false, filed: 0, how: "", duplicate: true, reason: ALREADY_FILING };
+  if (claim.kind === "filed") {
+    // The decree's line verbatim (B48), and the earlier filing beside it:
+    // the day the marker carries and the Filing row's id, the receipt's
+    // door to what that filing wrote (pass 8, C2).
+    const at = Date.parse(claim.reason.split("·")[0] ?? "");
+    const earlier = await findFiling(acct.id, fingerprint);
+    const day = !Number.isNaN(at)
+      ? monthDay(new Date(at))
+      : earlier
+        ? monthDay(earlier.createdAt)
+        : "";
+    return {
+      ok: false,
+      filed: 0,
+      how: "",
+      duplicate: true,
+      reason: ALREADY_ON_FILE,
+      prior: {
+        ...(day ? { day } : {}),
+        ...(earlier ? { filingId: earlier.id } : {}),
+      },
+    };
   }
+  const dupeCheck: DupeCheck = claim.kind === "skipped" ? "skipped" : "ran";
 
+  try {
+    return await fileClaimed({
+      acct,
+      rawText,
+      text,
+      dialect,
+      sniffedHead,
+      windows,
+      door,
+      opts,
+      fingerprint,
+      pasteKey,
+      dupeCheck,
+    });
+  } finally {
+    // A filing that filed nothing lets the capture go; one that landed has
+    // already turned the claim into the filed marker, which this leaves.
+    if (claim.kind === "claimed") await releaseCapture(pasteKey, claim.token);
+  }
+}
+
+// Everything after the duplicate guard's claim: the misfile guard's rungs,
+// the read, the rows. Its own function so roomPaste can let the claim go
+// whatever happens in here (the duplicate race, pass 8).
+async function fileClaimed({
+  acct,
+  rawText,
+  text,
+  dialect,
+  sniffedHead,
+  windows,
+  door,
+  opts,
+  fingerprint,
+  pasteKey,
+  dupeCheck,
+}: {
+  acct: { id: string; name: string };
+  rawText: string;
+  text: string;
+  dialect: ReturnType<typeof sniffHead>["dialect"];
+  sniffedHead: ReturnType<typeof sniffHead>["head"];
+  windows: Window[];
+  door: Door;
+  opts: { force?: boolean };
+  fingerprint: string;
+  pasteKey: string;
+  dupeCheck: DupeCheck;
+}): Promise<Awaited<ReturnType<typeof roomPaste>>> {
   // The misfile guard's FIRST rung runs before the read spends a cent. The
   // evidence in the text — a known address, a company domain, a person the
   // book binds to one account — needs no model at all, so a capture dropped
@@ -336,9 +403,9 @@ export async function roomPaste(
   // 2026-10-05); this rung's reason is built from the rule's own why, so a
   // keyless session gets this rung alone, as before. Both rungs read the
   // joined roster — the book's signals and the record's actors and
-  // recipients (C2) — read once here on the server (D12).
+  // recipients (C2) — read once here on the server (D13).
   const roster = await joinedRoster();
-  if (!opts?.force) {
+  if (!opts.force) {
     const refused = refusal(
       guardPlan({
         text: rawText,
@@ -414,7 +481,7 @@ export async function roomPaste(
   // never re-judges (D5) — and the read above ran again all the same, to be
   // sure (§7 item 4).
   const plan = guardPlan({
-    force: Boolean(opts?.force),
+    force: Boolean(opts.force),
     text: rawText,
     claim: read?.accountName ?? "",
     bound: { id: acct.id, name: acct.name },
@@ -611,7 +678,6 @@ export async function roomPaste(
       todoIds: [...fanout.opened.map((o) => o.id), ...loops.map((l) => l.id)],
       // The receipt counts their promises beside the to-dos (slice 18a).
       promises: loops.length,
-      judged: read !== null,
       filingId,
       windows,
       dupeCheck,
@@ -624,39 +690,6 @@ export async function roomPaste(
       how,
       reason: "Filing failed partway. Check the account page.",
     };
-  }
-}
-
-// ✕ on ONE auto-created action. The paste's own undo removes the record it
-// filed; the work it opened is retired one commitment at a time, because a
-// paste that got three actions right and one wrong should keep the three.
-export async function roomActionUndo(
-  accountId: string,
-  todoId: string,
-): Promise<{ ok: boolean; reason?: string }> {
-  const acct = bindAccountId(accountId, peos);
-  const id = typeof todoId === "string" ? todoId.trim().slice(0, 40) : "";
-  if (!acct || !id) return { ok: false, reason: "Not a bound row." };
-  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
-  try {
-    const prisma = getPrisma();
-    const t = await prisma.todo.findUnique({
-      where: { id },
-      select: { accountId: true, done: true, body: true },
-    });
-    if (!t) return { ok: false, reason: "That action is already gone." };
-    if ((t.accountId ?? "") !== acct.id)
-      return { ok: false, reason: "That action belongs to a different account." };
-    // Taking back a bad read is one thing; erasing work the operator has since
-    // finished is another. Once it's done, the record owns it.
-    if (t.done || splitTags(t.body).tags.doneAt)
-      return { ok: false, reason: "That one's already closed. Undo it on the row." };
-    await prisma.todo.delete({ where: { id } });
-    // A completion line the row filed before it was reopened goes with it.
-    await undoCompletions(acct.id, [id]);
-    return { ok: true };
-  } catch {
-    return { ok: false, reason: "The undo didn't take. Try again." };
   }
 }
 
@@ -836,7 +869,9 @@ export async function roomUnlog(
 // account, the asks in its gaps: namespace, the playbook lines whose tail
 // names it, and the actions the read opened. Every delete is scoped to the
 // ids the paste returned AND to this account or its own namespaces, so a
-// stale or forged id list can't reach anyone else's record.
+// stale or forged id list can't reach anyone else's record. What the filing
+// wrote is read by its id before anything goes and handed back as `took`,
+// so "N removed." opens to it (pass 8, C5); the rows are gone after this.
 export async function roomPasteUndo(
   accountId: string,
   noteIds: string[],
@@ -845,7 +880,13 @@ export async function roomPasteUndo(
   // still carrying its id goes with it, and then the row itself. The id
   // lists stay the undo's reach until the doors send the id (slice 8).
   filingId?: string,
-): Promise<{ ok: boolean; removed: number; retired: number; reason?: string }> {
+): Promise<{
+  ok: boolean;
+  removed: number;
+  retired: number;
+  reason?: string;
+  took?: FilingWrote;
+}> {
   const acct = bindAccountId(accountId, peos);
   const clean = (xs: string[]): string[] =>
     Array.isArray(xs)
@@ -864,6 +905,10 @@ export async function roomPasteUndo(
     return { ok: false, removed: 0, retired: 0, reason: "Read-only session." };
   try {
     const prisma = getPrisma();
+    // What the filing wrote, read while it is still there (pass 8, C5).
+    const took = filing
+      ? await wroteOfFiling(acct.id, filing).catch(() => undefined)
+      : undefined;
     // The account's own rows and its asks.
     const r = ids.length
       ? await prisma.accountNote.deleteMany({
@@ -930,6 +975,7 @@ export async function roomPasteUndo(
       ok: true,
       removed: r.count + playbook + byFiling.notes + completions,
       retired: t.count + byFiling.todos,
+      ...(took ? { took } : {}),
     };
   } catch {
     return {
@@ -1077,22 +1123,32 @@ export async function roomResearch(
       .catch(() => [] as { body: string }[]);
     const previous = prior[0] ? parseResearchBody(prior[0].body) : null;
 
-    const notes = await prisma.accountNote
-      .findMany({
-        where: { accountId: acct.id },
-        orderBy: { createdAt: "desc" },
-        take: 60,
-        select: { body: true, actors: true },
-      })
-      .catch(() => [] as { body: string; actors: string }[]);
-    const people = [
-      ...new Set(
-        notes
-          .flatMap((n) => (n.actors ?? "").split(/→|\+|,/))
-          .map((x) => x.replace(/\s*\d+\s*(others?)?/gi, "").trim())
-          .filter((x) => x.length > 2 && !MINE_RE.test(x)),
-      ),
-    ].slice(0, 6);
+    // The people the pass looks into are the account read's (src/lib/record/
+    // read.ts), as the minter's asks are: the full visible record, folded
+    // under the canonical id. The pass used to read the newest sixty raw
+    // rows on the account's id, so a row the operator ✕-parked still named
+    // its people to the research prompt. Hidden is hidden (pass 8, X1): the
+    // read's hide filter takes them out before anyone is named.
+    const [notesById, todos, touches, dispositions] = await Promise.all([
+      loadAccountNotes(),
+      loadTodos(),
+      loadTouches(),
+      loadDispositions(),
+    ]);
+    const people = readFromStores(
+      {
+        notesById,
+        touches,
+        todos,
+        dispositions,
+        homeSide: declaredHomeSide(homeSideFrom(notesById)),
+      },
+      acct,
+      { now },
+    )
+      .people.map((p) => p.name)
+      .filter((x) => x.length > 2 && !MINE_RE.test(x))
+      .slice(0, 6);
 
     // The book knows their site; bindAccountId only carries id + name, so read
     // the fuller record for the one field the pass wants.
@@ -1793,10 +1849,10 @@ async function transcribePdf(
       .trim();
     if (text.length < TEXT_FLOOR)
       return { ok: false, reason: "Nothing readable came back from the document." };
-    // The transcriber's window rides back with the text (D4): the door hands
-    // it to roomPaste, which records it on the Filing row and the receipt.
-    const c = cut("the transcription", text, TRANSCRIBE_WINDOW);
-    return { ok: true, text: c.text, window: c.window };
+    // The transcription is handed on whole (ruled 2026-10-07, pass 8 call 3:
+    // every reader hands on the text whole, and only what goes to a model is
+    // windowed). roomPaste windows its own read and records that window.
+    return { ok: true, text, window: null };
   } catch {
     return { ok: false, reason: "The document read failed. Paste the text instead." };
   }

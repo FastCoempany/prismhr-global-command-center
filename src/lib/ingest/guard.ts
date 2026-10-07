@@ -148,7 +148,9 @@ function primaries(why: string, claim: string): string[] {
   if ((m = HEAD_WHY.exec(w)))
     return [`“${m[1]}” in the text points to ${claim}.`, `“${m[1]}” points to ${claim}.`];
   if ((m = INITIALS_WHY.exec(w))) return [`“${m[1]}” matches ${claim}'s initials.`];
-  return [`This reads like ${claim}.`];
+  // An unrecognized why: report what the read found, never a hedge (ruled
+  // 2026-10-07, pass 8 call 13: the fallback reads "The read names {claim}.").
+  return [`The read names ${claim}.`];
 }
 
 /** The reason, nine words or fewer, built from the rung's why alone: why the
@@ -176,8 +178,9 @@ export function reasonFromWhy(
       if (wordsOf(p) + wordsOf(tail) <= REASON_WORDS) return `${p} ${tail}`;
   for (const p of options) if (wordsOf(p) <= REASON_WORDS) return p;
   // A name too long for any sentence: the shortest sentence over its first
-  // words. The full name rides in the verdict's claim for the doors.
-  return `This reads like ${clip(other, REASON_WORDS - 3)}.`;
+  // words. The full name rides in the verdict's claim for the doors. The
+  // same plain report as above (pass 8 call 13).
+  return `The read names ${clip(other, REASON_WORDS - 3)}.`;
 }
 
 export function guardPlan(inp: {

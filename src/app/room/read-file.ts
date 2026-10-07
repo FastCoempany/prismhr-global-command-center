@@ -5,7 +5,7 @@
 // first where the browser can decode it. Returns paste text the room's
 // readers understand, or the reason it couldn't.
 
-import { DOCX_WINDOW, TEXT_FLOOR, cut, type Window } from "@/lib/ingest/windows";
+import { TEXT_FLOOR, transportCut, type Window } from "@/lib/ingest/windows";
 import {
   emlToPaste,
   msgToPaste,
@@ -55,9 +55,13 @@ type ReadDoor = "drop" | "chute";
 
 const CSV_GOES_TO_THE_CHUTE = "The export goes in the Chute.";
 
-/** The paste text a file becomes, and every window that cut something on
- *  the way (D4): the document's own cap, or the transcriber's. The windows
- *  ride to roomPaste so the Filing row and the receipt carry them. */
+/** The paste text a file becomes, whole: every reader hands on the text
+ *  whole, and only what goes to a model is windowed (ruled 2026-10-07, pass
+ *  8 call 3; D4). roomPaste windows its own read and records that window.
+ *  The one cut here is the transport's: a text too heavy for the server's
+ *  request cap is windowed to fit (TRANSPORT_BYTES) and the window rides to
+ *  the receipt, so the file still files and fans out; the vault keeps it
+ *  whole. `windows` also carries a transcriber's own, should it report one. */
 export async function readFileToText(
   f: File,
   readPdf: PdfReader,
@@ -94,9 +98,7 @@ export async function readFileToText(
           raw: false,
         }) as unknown[][],
       }));
-      const s = sheetToPaste(sheets, f.name);
-      text = s.text;
-      if (s.window) windows.push(s.window);
+      text = sheetToPaste(sheets, f.name).text;
     } else if (kind === "docx") {
       const mammoth = await import("mammoth");
       const r = await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() });
@@ -105,15 +107,10 @@ export async function readFileToText(
       // reads as a transcript either way — otherwise the call arrives as a
       // nameless document and the room learns nothing from it.
       const doc = parseTranscriptDoc(raw);
-      // A transcript is never truncated — the close is at the end, and the
-      // 8/27 call runs past 70,000 characters. The .vtt path has never
-      // capped; the two captures of one recording behave alike.
-      if (doc) text = transcriptDocToPaste(doc, f.name);
-      else {
-        const c = cut("the document", `DOCUMENT — ${f.name}\n\n${raw}`, DOCX_WINDOW);
-        text = c.text;
-        if (c.window) windows.push(c.window);
-      }
+      // Neither is cut before it files (pass 8 call 3): a transcript's close
+      // is at the end, and the 8/27 call runs past 70,000 characters; a
+      // document is the whole document. roomPaste windows the model's read.
+      text = doc ? transcriptDocToPaste(doc, f.name) : `DOCUMENT — ${f.name}\n\n${raw}`;
     } else if (kind === "image") {
       const img = await normalizeImage(f);
       if (!img)
@@ -162,7 +159,11 @@ export async function readFileToText(
     }
     if (text.length < TEXT_FLOOR)
       return { ok: false, reason: `${f.name} came back empty. Paste the text instead.` };
-    return { ok: true, text, windows };
+    // Over the transport limit, the head that fits files and the receipt
+    // says how much (D4); under it, nothing is cut (pass 8 call 3).
+    const carried = transportCut("the file", text);
+    if (carried.window) windows.push(carried.window);
+    return { ok: true, text: carried.text, windows };
   } catch {
     return { ok: false, reason: `Reading ${f.name} failed. Paste the text instead.` };
   }

@@ -15,7 +15,7 @@
 // third line is the choices: the app's best guess as the solid ink button,
 // the row it was dropped on as a text button, every other account behind
 // one door (the candidates by rung, the batch sibling marked as the
-// suggestion it is and never a rung, D6, then a search of the book), and a
+// suggestion it is and never a rung, D5, then a search of the book), and a
 // hover ✕ that files nothing. Every choice is final and files with force;
 // the read runs again and nothing is re-judged (D5). Amber marks the hold;
 // no orange here, because the row's move owns the page's one orange.
@@ -208,7 +208,7 @@ export function HeldBox({
   const hasGrounds = !!verdict && !!(verdict.why || verdict.boundWhy || verdict.reasonBy);
   // The book's names arrive once, the first time the list opens or the
   // search takes focus; names only, the routing signals stay on the server
-  // (D12).
+  // (D13).
   const loadBook = () => {
     if (book !== null) return;
     setBook([]);

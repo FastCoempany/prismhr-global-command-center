@@ -1,6 +1,6 @@
 // The router on the server (the Chute brains refactor plan, §2.4 and slice
 // 7). Routing runs here and the roster never ships to the browser (ruled
-// 2026-09-25, D12 — CLAUDE.md, The Chute): a door hands the text to a server
+// 2026-09-25, D13 — CLAUDE.md, The Chute): a door hands the text to a server
 // action, the action hands it here, and what goes back is the verdict and
 // the picker's names, never an address, a domain or a person.
 //

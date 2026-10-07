@@ -32,16 +32,17 @@ import { dismissHeld } from "../src/app/room/ingest/use-verdict";
 import { UNFILED_FOLDER, archiveFileToGitHub } from "../src/lib/github/archive";
 import { claimAccountId } from "../src/lib/ingest/guard";
 import { UNFILED, sendUnfiled, type VaultDoors } from "../src/lib/ingest/vault";
-import { wroteFrom } from "../src/lib/ingest/wrote";
+import { ALREADY_FILING, ALREADY_ON_FILE, wroteFrom } from "../src/lib/ingest/wrote";
+import { vaultAfterVerdict } from "../src/lib/room/drop-plan";
 import { HELD_LINE, heldLine, keptLine } from "../src/lib/intranet/capture-door";
 import type { RouteAccount } from "../src/lib/route-capture";
-import { classesOf, held, receipt, render, textOf } from "./helpers/room-render";
+import { chute, classesOf, held, receipt, render, textOf } from "./helpers/room-render";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
 
 const { HeldBox, HELD_X_TITLE, HELD_X_TITLE_BRAIN, NO_SURE_MATCH } = await held();
-const { ReceiptLine, rungWord } = await receipt();
+const { ReceiptLine, receiptCounts, rungWord } = await receipt();
 
 const SIMPLOY = { id: "001F000000w38BOIAY", name: "Simploy" };
 const REGIS = { id: "001F000000w38OHIAY", name: "Regis HR Group" };
@@ -221,7 +222,8 @@ describe("the receipt line: the account, the counts, the day, the rung", () => {
     const html = await receiptLine(filed({ promises: 1, asks: 2, learned: 1 }));
     assert.equal(
       textOf(html),
-      "✓ Regis HR Group · 3 filed · 1 to-do · 1 their promise · 2 asks · 1 to the playbook · 10/6 · address ↺ ✕",
+      // "1 their promise" became plain words in pass 9 (pass 8, C6).
+      "✓ Regis HR Group · 3 filed · 1 to-do · 1 promise from them · 2 asks · 1 to the playbook · 10/6 · address ↺ ✕",
     );
     // The account is a plain link, no glyph beside it.
     assert.match(html, /<a class="rcptAcct" href="\/accounts\?focus=001F000000w38OHIAY">Regis HR Group<\/a>/);
@@ -284,6 +286,10 @@ describe("the receipt line: the account, the counts, the day, the rung", () => {
       filed: ["Re: renewal timing · Lesha Cyphers · 10/3", "Call transcript · Pricing call · 2 voices · 10/6"],
       todos: ["Send the census template."],
       promises: ["Lesha Cyphers · Send the plan summary."],
+      // The asks and the playbook lines open too since pass 9 (pass 8 call
+      // 9); this filing wrote none.
+      asks: [],
+      learned: [],
     });
     const html = await receiptLine(filed({ vault: { text: "accounts/Regis HR Group/regis-renewal.eml", url: "https://github.com/o/vault/x" } }), { defaultOpen: true, wrote });
     const copy = textOf(html);
@@ -323,7 +329,10 @@ describe("the second line speaks only when something needs saying", () => {
       vault: { text: "accounts/Regis HR Group/activity-export-oct-6.csv", url: "https://github.com/o/vault/y" },
       note: DROP_CSV_RECEIPT,
     });
-    assert.equal(textOf(html), "⇪ activity-export-oct-6.csv · 10/6 ✕ Not filed here. Backed up. Drop the export in the Chute.");
+    // The backup's "open" door rides this line again (pass 8, C5): the
+    // decreed note took it away in #360.
+    assert.equal(textOf(html), "⇪ activity-export-oct-6.csv · 10/6 · open ✕ Not filed here. Backed up. Drop the export in the Chute.");
+    assert.match(html, /<a href="https:\/\/github\.com\/o\/vault\/y" target="_blank" rel="noreferrer">open<\/a>/);
     assert.match(html, /<p class="rcptCaveat">Not filed here\. Backed up\. Drop the export in the Chute\.<\/p>/);
   });
 });
@@ -618,5 +627,234 @@ describe("the faces' copy obeys the writing canon", () => {
         if (/\s/.test(s)) assert.ok(!/\([^)]*\)/.test(s), `${f}: a parenthetical in "${s}"`);
       }
     }
+  });
+});
+
+// ── pass 9: every count opens, and every settled line has its door ─────────
+// Pass 8 found the receipt counting asks and playbook lines it never opened
+// to (C1, ruled 2026-10-07 call 9), the duplicate, the take-back and the
+// refused export's lines opening to nothing (C2, C5), a filing that failed
+// leaving its file out of git (call 8), and copy that broke the canon (C3,
+// C4, C6, B48).
+
+describe("the receipt opens every count it shows (pass 8 call 9, C1)", () => {
+  test("the asks and the playbook lines open under their own kickers, in the line's order", async () => {
+    const wrote = wroteFrom(
+      [{ body: "✉ OL 10/3 9:14 AM — Re: renewal timing · Lesha Cyphers", createdAt: new Date("2026-10-03T12:00:00Z") }],
+      [{ body: "Send the census template.\n⚑[d:2026-10-08,k:a]" }],
+      {
+        asks: ["Which countries are first?", "Who signs for the client at lesha@regis.example?"],
+        learned: ["At Remote, a deposit was required."],
+      },
+    );
+    assert.deepEqual(wrote.asks, ["Which countries are first?", "Who signs for the client at ?"]);
+    assert.deepEqual(wrote.learned, ["At Remote, a deposit was required."]);
+    const row = filed({ asks: 2, learned: 1 });
+    const html = await receiptLine(row, { defaultOpen: true, wrote });
+    const copy = textOf(html);
+    assert.ok(copy.includes("2 asks · 1 to the playbook"), "the line counts them");
+    for (const s of ["Asks Which countries are first?", "To the playbook At Remote, a deposit was required."])
+      assert.ok(copy.includes(s), s);
+    const at = (k: string) => copy.indexOf(k);
+    assert.ok(at("To-do Send") < at("Asks Which") && at("Asks Which") < at("To the playbook At"), "the line's order");
+    assert.ok(!html.includes("@"), "no address on a settled row (D12)");
+    // One ask reads under the singular kicker.
+    const one = textOf(await receiptLine(filed({ asks: 1 }), { defaultOpen: true, wrote: { ...wrote, asks: ["Which countries are first?"], learned: [] } }));
+    assert.ok(one.includes("Ask Which countries are first?"));
+  });
+
+  test("every count on the line has its list when the filing wrote it", async () => {
+    const wrote = wroteFrom(
+      [{ body: "✉ OL 10/3 9:14 AM — Re: renewal · Lesha Cyphers", createdAt: new Date("2026-10-03T12:00:00Z") }],
+      [{ body: "Send the census.\n⚑[k:a]" }, { body: "Send the plan.\n⚑[o:them,b:Lesha Cyphers]" }],
+      { asks: ["Which countries are first?"], learned: ["Deposits run a month."] },
+    );
+    const row = filed({ filed: 1, opened: 1, promises: 1, asks: 1, learned: 1 });
+    const copy = textOf(await receiptLine(row, { defaultOpen: true, wrote }));
+    const kicker: Record<string, string> = {
+      filed: "Filed",
+      "to-do": "To-do",
+      "promise from them": "Their promise",
+      ask: "Ask",
+      "to the playbook": "To the playbook",
+    };
+    for (const count of receiptCounts(row)) {
+      const kind = count.replace(/^\d+\s+/, "");
+      assert.ok(kicker[kind], `a count with no kicker: ${count}`);
+      assert.ok(copy.includes(`${kicker[kind]} `), `${count} opens to nothing`);
+    }
+  });
+});
+
+describe("a duplicate opens to the earlier filing (pass 8, C2)", () => {
+  const dupe = (over: Partial<LedgerRow> = {}): LedgerRow => ({
+    key: 4,
+    filename: "regis-renewal.eml",
+    state: "dupe",
+    account: REGIS,
+    reason: ALREADY_ON_FILE,
+    prior: { day: "10/3", filingId: "f0" },
+    day: "10/6",
+    ...over,
+  });
+
+  test("the decree's line verbatim, the account it is on file under, and the day that opens", async () => {
+    assert.equal(ALREADY_ON_FILE, "Already on file. Nothing filed twice.");
+    const html = await receiptLine(dupe(), { onTakeBack: undefined });
+    assert.equal(textOf(html), "regis-renewal.eml · Already on file. Nothing filed twice. · Regis HR Group · Filed 10/3 ✕");
+    assert.match(html, /<a class="rcptAcct" href="\/accounts\?focus=001F000000w38OHIAY">Regis HR Group<\/a>/);
+    assert.match(html, /<button type="button" class="rcptOpen" aria-expanded="false" title="Show what the earlier filing wrote">Filed 10\/3<\/button>/);
+    assert.ok(!html.includes("Take back"), "a duplicate has nothing to take back");
+    const wrote = wroteFrom([{ body: "✉ OL 10/3 9:14 AM — Re: renewal timing · Lesha Cyphers", createdAt: new Date("2026-10-03T12:00:00Z") }], []);
+    const open = textOf(await receiptLine(dupe(), { defaultOpen: true, wrote }));
+    assert.ok(open.includes("Filed Re: renewal timing · Lesha Cyphers · 10/3"), open);
+    assert.ok(!textOf(html).includes("Re: renewal timing"), "shut, nothing of it shows");
+  });
+
+  test("with no Filing row the day is said plainly and the account is the door; the ledger keeps the earlier filing", async () => {
+    const html = await receiptLine(dupe({ prior: { day: "8/12" } }));
+    assert.equal(textOf(html), "regis-renewal.eml · Already on file. Nothing filed twice. · Regis HR Group · Filed 8/12 ✕");
+    assert.ok(!/<button[^>]*>Filed/.test(html));
+    assert.deepEqual(storedRow(dupe()).prior, { day: "10/3", filingId: "f0" });
+    // A twin in flight says so, under the same decree's second sentence.
+    assert.equal(ALREADY_FILING, "Already filing. Nothing filed twice.");
+    // The server hands the line and the earlier filing apart: no day spliced
+    // between the decree's two sentences (B48).
+    const actions = read("src/app/room/actions.ts");
+    assert.ok(!actions.includes("Already on file.${when}"));
+    assert.match(actions, /reason: ALREADY_ON_FILE,\s*prior: \{/);
+    assert.match(actions, /const earlier = await findFiling\(acct\.id, fingerprint\);/);
+    assert.match(read("src/app/room/chute.tsx"), /state: "dupe",\s*reason: r\.reason \?\? ALREADY_ON_FILE,\s*prior: r\.prior,/);
+  });
+});
+
+describe("a take-back and a backup open to what they report (pass 8, C5)", () => {
+  const undone = (over: Partial<LedgerRow> = {}): LedgerRow =>
+    filed({ state: "undone", reason: "Taken back from Regis HR Group. 4 removed.", ...over });
+
+  test("the take-back opens to the lines it took while the tab holds them", async () => {
+    const took = wroteFrom(
+      [{ body: "✉ OL 10/3 9:14 AM — Re: renewal timing · Lesha Cyphers", createdAt: new Date("2026-10-03T12:00:00Z") }],
+      [{ body: "Send the census.\n⚑[k:a]" }],
+      { asks: ["Which countries are first?"] },
+    );
+    const shut = await receiptLine(undone({ took }));
+    assert.match(shut, /<button type="button" class="rcptOpen" aria-expanded="false" title="Show what was taken back">Taken back from Regis HR Group\. 4 removed\.<\/button>/);
+    assert.ok(!textOf(shut).includes("Send the census."));
+    const open = textOf(await receiptLine(undone({ took }), { defaultOpen: true }));
+    for (const s of ["Filed Re: renewal timing", "To-do Send the census.", "Ask Which countries are first?"])
+      assert.ok(open.includes(s), s);
+    // The lines are body text: the ledger never keeps them (D12).
+    assert.equal(storedRow(undone({ took })).took, undefined);
+  });
+
+  test("after a reload it opens to the counts it kept, and with nothing kept it is plain", async () => {
+    const open = textOf(await receiptLine(undone({ asks: 2 }), { defaultOpen: true }));
+    assert.ok(open.endsWith("3 filed · 1 to-do · 2 asks"), open);
+    const bare = await receiptLine({ key: 2, filename: "", state: "undone", reason: "Taken back from Regis HR Group. 3 removed." });
+    assert.ok(!bare.includes("rcptOpen"), "nothing to open, no door drawn");
+    assert.equal(textOf(bare), "↺ Taken back from Regis HR Group. 3 removed. ✕");
+  });
+
+  test("the Chute hands the take-back's lines to its row, read before the rows go", () => {
+    assert.match(read("src/app/room/chute.tsx"), /took: r\.took,/);
+    const actions = read("src/app/room/actions.ts");
+    const undo = actions.slice(actions.indexOf("export async function roomPasteUndo("), actions.indexOf("// --- Closing a deal"));
+    const tookAt = undo.indexOf("await wroteOfFiling(acct.id, filing)");
+    assert.ok(tookAt > 0 && tookAt < undo.indexOf("await undoFiling(filing, acct.id)"), "read before the take-back");
+    assert.ok(undo.includes("...(took ? { took } : {}),"));
+  });
+});
+
+describe("a readable file whose filing fails still backs up (pass 8 call 8)", () => {
+  const eml = new File(["From: a"], "regis-renewal.eml");
+
+  test("the plan hands a failed filing's file to the backup; a duplicate vaults nothing new", () => {
+    assert.deepEqual(vaultAfterVerdict({ ok: false }, [eml]), { archive: [], hold: [], failed: [eml] });
+    assert.deepEqual(vaultAfterVerdict({ ok: false, duplicate: true }, [eml]), { archive: [], hold: [] });
+    assert.deepEqual(vaultAfterVerdict({ ok: false, mismatch: { claim: "Simploy" } }, [eml]), { archive: [], hold: [eml] });
+    assert.deepEqual(vaultAfterVerdict({ ok: false }, []), { archive: [], hold: [] });
+  });
+
+  test("the receipt says the filing failed and the file is backed up, with its door", async () => {
+    const failed = (vault: LedgerRow["vault"]): LedgerRow => ({
+      key: 7,
+      filename: "regis-renewal.eml",
+      state: "error",
+      account: REGIS,
+      reason: "Filing failed partway. Check the account page.",
+      day: "10/6",
+      vault,
+    });
+    const landed = await receiptLine(failed({ text: "accounts/Regis HR Group/regis-renewal.eml", url: "https://github.com/o/vault/z" }));
+    assert.equal(textOf(landed), "regis-renewal.eml · Filing failed partway. Check the account page. ✕ ⇪ Not filed. Backed up. · open");
+    assert.match(landed, /<a href="https:\/\/github\.com\/o\/vault\/z" target="_blank" rel="noreferrer">open<\/a>/);
+    const going = textOf(await receiptLine(failed({ text: "Backing up regis-renewal.eml… 1 of 3", going: true })));
+    assert.ok(going.endsWith("⇪ Backing up regis-renewal.eml… 1 of 3"), going);
+    const bad = await receiptLine(failed({ text: "The backup didn't land. Drop it again.", bad: true }));
+    assert.match(bad, /<p class="rcptCaveat">The backup didn&#x27;t land\. Drop it again\.<\/p>/);
+    assert.ok(!textOf(bad).includes("Backed up"));
+  });
+
+  test("the Chute backs the file up to the account it was filing to, or under accounts/_unfiled/", () => {
+    const src = read("src/app/room/chute.tsx");
+    assert.match(src, /const \[failed\] = r\.vault\.failed \?\? \[\];\s*if \(failed\) void backUp\(key, failed, account\);/);
+    assert.match(src, /let r = account \? await ingest\.vault\(account\.id, f, progress\) : null;\s*if \(!r\?\.ok\) r = await ingest\.vaultUnfiled\(f, progress\);/);
+    assert.match(src, /reason: "The filing broke\. Drop it again\." \}\);\s*void backUp\(key, f, filingTo\);/);
+  });
+});
+
+describe("the Chute's own copy obeys the writing canon (pass 8, C3, C4, C6, B48)", () => {
+  test("the pact is short, plain and true to today's pipeline", async () => {
+    const { Chute } = await chute();
+    const html = await render(createElement(Chute, { canWrite: true }));
+    const pact = textOf(/<p class="chutePact">([\s\S]*?)<\/p>/.exec(html)?.[1] ?? "");
+    assert.ok(pact.startsWith("The pact:"), pact);
+    const words = pact.split(/\s+/).filter(Boolean).length;
+    assert.ok(words <= 100, `${words} words`);
+    assert.ok(!pact.includes("—"), "an em-dash aside");
+    assert.ok(!/\([^)]*\)/.test(pact), "a parenthetical");
+    assert.ok(!/\bToday\b/.test(pact), "names a retired page");
+    assert.ok(!/pre-release|25MB|2GB/i.test(pact), "the retired large-file lane");
+    assert.ok(!/\bClaude\b/.test(pact), "a model name");
+    for (const fact of ["git", "Nothing files twice.", "waits for your pick", "survive a reload"])
+      assert.ok(pact.includes(fact), fact);
+  });
+
+  test("the activity drop's lines carry no dash aside and no closer", () => {
+    const code = read("src/app/room/chute.tsx")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
+    const literals = [...code.matchAll(/"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'|`((?:[^`\\]|\\.)*)`/g)].map((m) =>
+      (m[1] ?? m[2] ?? m[3] ?? "").replace(/\$\{[^}]*\}/g, ""),
+    );
+    for (const s of literals) {
+      assert.ok(!s.includes("—"), `an em-dash in "${s}"`);
+      if (/\s/.test(s)) assert.ok(!/\([^)]*\)/.test(s), `a parenthetical in "${s}"`);
+    }
+    assert.ok(!/staging replaces wholesale/.test(code));
+    // The take-back's lines state the fact flat, with no consequence closer
+    // ("… not kept, so nothing is restored"), as the dock's do.
+    assert.ok(!/nothing (is|was) restored/i.test(code));
+    assert.ok(code.includes('"Press again to clear it. No earlier drop comes back."'));
+    assert.ok(code.includes("`${r.lines[0]} No earlier drop came back.`"));
+    assert.ok(code.includes('"Nothing changed. The record already holds this drop."'));
+  });
+
+  test("their promises count in plain words, and Send-it's duplicate line has no dash", () => {
+    assert.deepEqual(receiptCounts({ promises: 1 }), ["1 promise from them"]);
+    assert.deepEqual(receiptCounts({ promises: 2 }), ["2 promises from them"]);
+    const capture = read("src/app/intranet/capture-actions.ts");
+    assert.ok(capture.includes('receipt: "Already in the brain. Nothing new to add."'));
+    assert.ok(!capture.includes("Already in the brain —"));
+  });
+
+  test("a read a reload cut short comes back in the decree's own words (B48)", () => {
+    const storage = memory();
+    const now = new Date("2026-10-06T15:00:00Z");
+    saveLedger([{ key: 1, filename: "call.vtt", state: "reading" }], storage, now);
+    const back = loadLedger(storage, now).items[0];
+    assert.equal(back.state, "interrupted");
+    assert.equal(back.reason, "interrupted — drop it again");
   });
 });

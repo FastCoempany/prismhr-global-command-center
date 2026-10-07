@@ -28,6 +28,7 @@ import type { Door } from "@/lib/ingest/doors";
 import { redactMoney } from "@/lib/intel/lexicon";
 import type { Lane } from "@/lib/intel/provenance";
 import { urgencyForDue } from "@/lib/room/deliverables";
+import { chicagoDay } from "@/lib/tz";
 import { NO_TAGS, withTags, type NoteTags } from "@/lib/today/route-notes";
 
 type NewAccountNote = {
@@ -196,8 +197,8 @@ export type NewTodo = {
   tags?: Partial<NoteTags>;
   /** A dated commitment's wall, yyyy-mm-dd or "". It rides as the date tag, sets
    *  the urgency on the composer's ladder (urgencyForDue), and, when no
-   *  `remindAt` is given, puts the reminder at noon UTC that day — or at the
-   *  filing moment when the wall is "". */
+   *  `remindAt` is given, puts the reminder at the start of that Chicago day
+   *  (chicagoDayStart) — or at the filing moment when the wall is "". */
   due?: string;
   /** The clock the ladder reads; the filing moment when omitted. */
   now?: Date;
@@ -209,6 +210,25 @@ export type NewTodo = {
    *  by id reaches it. Only the paste pipeline's fan-out sets it. */
   filingId?: string;
 };
+
+/** The first moment of a Chicago day, yyyy-mm-dd: midnight there, which is
+ *  05:00 or 06:00 UTC by the season. A commitment due that day is due from
+ *  this moment, so one due today reads as due whenever it files. Noon UTC
+ *  read as 7 AM Chicago, and a commitment due today and filed before then
+ *  read as scheduled (pass 8, H11; the closer rule: all days are Chicago
+ *  days). Undefined for a string that is not a day. */
+export function chicagoDayStart(day: string): Date | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
+  // Midnight never falls in a daylight-saving gap (the switch is at 2 AM),
+  // so exactly one of the two offsets lands on the day's first moment.
+  for (const hour of ["05", "06"]) {
+    const at = new Date(`${day}T${hour}:00:00Z`);
+    if (Number.isNaN(at.getTime())) return undefined;
+    const before = new Date(at.getTime() - 1);
+    if (chicagoDay(at) === day && chicagoDay(before) !== day) return at;
+  }
+  return undefined;
+}
 
 export async function createTodoRow(
   t: NewTodo,
@@ -225,7 +245,7 @@ export async function createTodoRow(
       // The wall itself — the sheet reads this to know the date passed.
       tags.date = t.due;
       tags.urgency = urgencyForDue(t.due, t.now ?? new Date());
-      remindAt ??= t.due ? new Date(`${t.due}T12:00:00Z`) : new Date();
+      remindAt ??= t.due ? (chicagoDayStart(t.due) ?? new Date()) : new Date();
     }
     body = withTags(body, tags);
   }

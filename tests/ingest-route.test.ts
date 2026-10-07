@@ -299,7 +299,7 @@ describe("routing runs on the server; the roster never ships to the browser", ()
   test("roomPaste's two rungs read the joined roster, read once", () => {
     const actions = read("src/app/room/actions.ts");
     const a = actions.indexOf("export async function roomPaste(");
-    const b = actions.indexOf("export async function roomActionUndo(", a);
+    const b = actions.indexOf("export async function roomMoveDone(", a);
     const roomPaste = actions.slice(a, b);
     assert.ok(!actions.includes("routingRoster("), "actions.ts no longer builds the book's roster alone");
     assert.equal((roomPaste.match(/await joinedRoster\(\)/g) ?? []).length, 1);
