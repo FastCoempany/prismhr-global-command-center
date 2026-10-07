@@ -18,8 +18,12 @@ export function relationshipFor(
   notes: NoteForPeople[],
   contacts: ContactForPeople[],
   book: { name?: string; email?: string },
+  // Our own side, declared, when the caller holds it: a colleague is never
+  // the relationship, however often they appear (ruled 2026-10-07, pass 8
+  // call 7). Omitted, only the operator is left out, as before.
+  isHome?: (name: string) => boolean,
 ): Relationship {
-  const people = peopleFor(notes, contacts, 12);
+  const people = peopleFor(notes, contacts, 12, isHome);
   const top =
     people.find((p) => p.inMine && p.email) ?? people.find((p) => p.inMine) ?? people[0];
   if (top) return { name: top.name, email: top.email, source: "record" };

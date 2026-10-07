@@ -12,6 +12,7 @@
 // (src/lib/ingest/dialect.ts).
 
 import { GLYPHS, TAPE_HEAD_RE, isCall, isTape } from "@/lib/ingest/dialect";
+import { chicagoDay } from "@/lib/tz";
 
 const MEETING_RE =
   /\b(met with|meeting with|call with|demo(?:'d)? (?:with|for|to)|walked (?:them|him|her) through)\b/i;
@@ -36,23 +37,30 @@ const NOT_HELD_RE =
 const TRANSCRIPT_HEAD_RE = TAPE_HEAD_RE;
 const SPEAKER_LINE_RE = /^([^:\n]{2,30}):\s\S/;
 
+/** An archive under the tape's source that reads as a call. The room's
+ *  zero-entry fallback files ANY unstructured paste under source
+ *  "transcript" — a typed one-liner is not a call (the Axcet "i did not meet
+ *  with them today" read, caught 2026-08-18). Source alone proves nothing;
+ *  the body has to read like a call: a transcript header, or two-plus
+ *  speaker-labeled voices. The one spelling: the meeting read, the drawer's
+ *  dated calls and the evidence ladder's tape rung all read it, so a
+ *  fallback archive is never a call and never "On tape" (evidence or
+ *  nothing; pass 8 X3). */
+export function isCallArchive(n: { body?: string; source?: string }): boolean {
+  if (!isTape(n.source)) return false;
+  const lines = (n.body ?? "").split("\n", 40);
+  if (lines.some((l) => TRANSCRIPT_HEAD_RE.test(l))) return true;
+  const speakers = new Set(
+    lines.map((l) => SPEAKER_LINE_RE.exec(l)?.[1]?.trim()).filter(Boolean),
+  );
+  return speakers.size >= 2;
+}
+
 export function isMeetingNote(n: { body?: string; source?: string }): boolean {
   const body = n.body ?? "";
   const src = n.source ?? "";
   if (isCall(src)) return true;
-  if (isTape(src)) {
-    // The room's zero-entry fallback files ANY unstructured paste under
-    // source "transcript" — a typed one-liner is not a call (the Axcet
-    // "i did not meet with them today" read, caught 2026-08-18). Source
-    // alone proves nothing; the body has to read like a call: a transcript
-    // header, or two-plus speaker-labeled voices.
-    const lines = body.split("\n", 40);
-    if (lines.some((l) => TRANSCRIPT_HEAD_RE.test(l))) return true;
-    const speakers = new Set(
-      lines.map((l) => SPEAKER_LINE_RE.exec(l)?.[1]?.trim()).filter(Boolean),
-    );
-    if (speakers.size >= 2) return true;
-  }
+  if (isCallArchive(n)) return true;
   const head = body.slice(0, 200);
   if (NOT_HELD_RE.test(head)) return false;
   return MEETING_RE.test(head) || LOGGED_ACTIVITY_RE.test(head);
@@ -162,7 +170,9 @@ export function meetingRead(
   const meetings = (notes ?? []).filter((n) => isMeetingNote(n));
   const first = meetings[0];
   if (!first) return null;
-  const day = (iso: string) => (iso ?? "").slice(0, 10);
+  // The same meeting is the same Chicago day: an evening call and its
+  // archive straddle the UTC midnight, never the Chicago one (pass 8 X5).
+  const day = (iso: string) => chicagoDay(iso ?? "");
   // 1 — this meeting's own actors.
   let who = otherSide(first.actors ?? "", isHome);
   // 2 — a sibling note for the same meeting that does carry actors. The

@@ -7,10 +7,21 @@
 
 import { splitMarker, splitTags, visibleText } from "@/lib/today/route-notes";
 import { sameLocalDayIso } from "@/lib/today/ledger";
+import {
+  isCloser,
+  isMachineSender,
+  isMachinery,
+  readRelease,
+  type Relief,
+} from "@/lib/intel/closer";
+import { effectiveAt } from "@/lib/intel/clock";
 import { redactMoney } from "@/lib/intel/lexicon";
+import { MINE_RE, normPerson } from "@/lib/intel/provenance";
 import { parseSeatBody } from "@/lib/act/lane";
+import { LEGACY_HEAD_START_RE } from "@/lib/ingest/dialect";
 import { splitFallback } from "@/lib/room/deliverables";
 import { clip } from "@/lib/room/move-line";
+import { dayBlown } from "@/lib/room/owed";
 import { settledByRecord } from "@/lib/room/settled";
 import { recordSends } from "@/lib/sendbook/read";
 import { chicagoDay } from "@/lib/tz";
@@ -39,6 +50,7 @@ type AccountSheet = {
     // The wall belongs to a commitment the operator SPOKE — a paste-opened
     // promise whose date passed reads "PROMISED 8/21", not a generic wall:
     // the counterparty heard the day and the day ended (decreed 2026-08-22).
+    // A typed line reads it too when it names its hearer (D28).
     promised?: boolean;
     fallback?: string;
     // The commitment's own date, wall passed or not — the stage ranks by it
@@ -56,6 +68,11 @@ type AccountSheet = {
   rest?: AccountSheet["open"];
   delayed: { id: string; body: string; edit: string; when: string }[];
   doneToday: { id: string; body: string; edit: string; at: string }[];
+  /** Commitments the record shows they let go of (the closer rule: a promise
+   *  closes by delivery or explicit release; pass 8 H6). Closed, so never
+   *  open, never instructed, never PROMISED; listed so nothing vanishes
+   *  without a trace. `why` says who released it and when. */
+  released: { id: string; body: string; edit: string; why: string }[];
 };
 
 /** How many open commitments the register shows before the door. */
@@ -122,25 +139,150 @@ function displayLine(body: string): string {
   return clip(bare, LINE_CAP).text;
 }
 
-function tagsOf(body: string): { kind: string; doneAt: string; date: string } {
+function tagsOf(body: string): {
+  kind: string;
+  doneAt: string;
+  date: string;
+  hearer: string;
+} {
   try {
-    const { kind, doneAt, date } = splitTags(splitMarker(body ?? "").text).tags;
-    return { kind, doneAt, date };
+    const { kind, doneAt, date, hearer } = splitTags(splitMarker(body ?? "").text).tags;
+    return { kind, doneAt, date, hearer };
   } catch {
-    return { kind: "", doneAt: "", date: "" };
+    return { kind: "", doneAt: "", date: "", hearer: "" };
   }
 }
 
+// "10/3" for a yyyy-mm-dd day.
+const passedMD = (day: string): string =>
+  /^\d{4}-\d{2}-\d{2}$/.test(day)
+    ? `${Number(day.slice(5, 7))}/${Number(day.slice(8, 10))}`
+    : "";
+
 // M/D of a wall that has already passed — "" while the date is still ahead.
+// The wall passes when its Chicago day ends, never at a UTC midnight: a
+// commitment due today still stands at 8 PM Chicago (the closer rule: all
+// days are Chicago days; pass 8 X5).
 function passedWall(dateIso: string, now: Date): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) return "";
-  const t = Date.parse(`${dateIso}T23:59:59Z`);
-  if (Number.isNaN(t) || t >= now.getTime()) return "";
-  return new Date(`${dateIso}T12:00:00Z`).toLocaleDateString("en-US", {
-    timeZone: "America/Chicago",
-    month: "numeric",
-    day: "numeric",
-  });
+  return dayBlown(dateIso, now) ? passedMD(dateIso) : "";
+}
+
+// ── who heard it (ruled 2026-09-25, D28; pass 8 H7) ─────────────────────────
+// PROMISED needs a hearer. A paste-provenance line has one by construction; a
+// typed line has one when it names the person it was promised to: the tag
+// line's own hearer, or a person the account's record already knows, named
+// in the line by first name or in full. The operator and a mailbox are never
+// a hearer. Conservative: a name the record has never seen proves nothing,
+// and the line stays a wall.
+
+type RecordPerson = { first: string; full: string };
+
+const nameRe = (name: string): RegExp =>
+  new RegExp(`(?<![\\w'’-])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w'’-])`);
+
+/** Everyone the account's record names, as a line would name them. */
+function recordPeople(notes: readonly { actors?: string }[]): RecordPerson[] {
+  const out = new Map<string, RecordPerson>();
+  for (const n of notes)
+    for (const raw of (n.actors ?? "").split(/→|;|,/)) {
+      const full = normPerson(raw.replace(/\+\d+\s*$/, "")).trim();
+      if (!full || MINE_RE.test(full) || isMachineSender(full)) continue;
+      const first = full.split(/\s+/)[0] ?? "";
+      if (!/^[A-Z][a-z'’-]{2,}$/.test(first)) continue;
+      out.set(full.toLowerCase(), { first, full });
+    }
+  return [...out.values()];
+}
+
+/** The person a typed line names as the one it was promised to, "" when it
+ *  names nobody the record knows. */
+function hearerNamed(line: string, people: readonly RecordPerson[]): string {
+  const hit = people.find((p) => nameRe(p.full).test(line) || nameRe(p.first).test(line));
+  return hit ? hit.full : "";
+}
+
+// ── a release or a reschedule (the closer rule; pass 8 H6) ──────────────────
+// "A promise closes only by delivery or explicit release; 'no rush, next
+// month' is a reschedule." A substantive message from their side, after the
+// commitment was made, that lets it go closes it; one that pushes it out
+// reschedules it: never PROMISED, still open, dayless or on the new day the
+// message names. The message has to be a person writing (machinery and a
+// sign-off never release anything), and it has to speak to THIS commitment:
+// the line names the person who wrote it, or the sentence and the line share
+// words of substance ("no rush on the census" against "Send the census"). A
+// reschedule only softens, so one shared word is enough; a release closes,
+// so it takes two ("no need for the census template"), and "we no longer
+// need the Mexico pricing" never closes "Send the Mexico census". A bare "no
+// rush" to someone the line never names releases nothing.
+
+type ReliefFrom = { at: number; first: string; day: string; relief: Relief };
+
+// Words too common to tie a sentence to a commitment.
+const PLAIN = new Set(
+  [
+    "that this these those them they their there here with from your have will would",
+    "could should please thanks thank just also still need needs send sent share give",
+    "make take rush hurry time fine okay good great next week month later until till",
+    "about what when then than been more some anymore before after back over into",
+    "once worry",
+  ]
+    .join(" ")
+    .split(" "),
+);
+const substance = (text: string): Set<string> =>
+  new Set(
+    (text.toLowerCase().match(/[a-z][a-z'’-]{3,}/g) ?? []).filter((w) => !PLAIN.has(w)),
+  );
+
+/** Every substantive message from their side that releases or reschedules
+ *  something, oldest first. */
+function reliefsIn(
+  notes: readonly { body: string; createdAt: string; actors?: string }[],
+): ReliefFrom[] {
+  const out: ReliefFrom[] = [];
+  for (const n of notes) {
+    const body = n.body ?? "";
+    if (!LEGACY_HEAD_START_RE.test(body)) continue;
+    const full = normPerson(
+      (n.actors ?? "")
+        .split("→")[0]
+        ?.replace(/\+\d+\s*$/, "")
+        .trim() ?? "",
+    ).trim();
+    if (!full || MINE_RE.test(full) || isMachinery({ body, actors: n.actors })) continue;
+    const said = body.split("\n").slice(1).join("\n");
+    if (isCloser(said)) continue;
+    // The head clock orders it against the commitment; the stored stamp
+    // names its day, because the clock's shift is ordinal, not a wall clock.
+    const at = Date.parse(effectiveAt(n.createdAt, body));
+    const day = chicagoDay(n.createdAt);
+    if (Number.isNaN(at) || !day) continue;
+    const relief = readRelease(said, day);
+    if (!relief) continue;
+    out.push({ at, first: full.split(/\s+/)[0] ?? "", day, relief });
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+
+/** The newest release or reschedule that speaks to this commitment, made
+ *  after it; null when none does. */
+function reliefFor(
+  line: string,
+  madeAt: string,
+  reliefs: readonly ReliefFrom[],
+): ReliefFrom | null {
+  const made = Date.parse(madeAt);
+  if (Number.isNaN(made)) return null;
+  const core = splitFallback(line).text.replace(/\s+·\s+from\s.*$/i, "");
+  const words = substance(core);
+  let hit: ReliefFrom | null = null;
+  for (const r of reliefs) {
+    if (r.at <= made) continue;
+    const named = !!r.first && nameRe(r.first).test(core);
+    const shared = [...substance(r.relief.sentence)].filter((w) => words.has(w)).length;
+    if (named || shared >= (r.relief.kind === "release" ? 2 : 1)) hit = r;
+  }
+  return hit;
 }
 
 // The weekday of the reminder's Chicago day ("WED"), read off the one day key
@@ -175,14 +317,16 @@ export function buildAccountSheet(
   /** The Act Lane's seat, when the account holds one (C8). */
   seat: SeatForSheet | null = null,
 ): AccountSheet {
-  const out: AccountSheet = { open: [], delayed: [], doneToday: [] };
+  const out: AccountSheet = { open: [], delayed: [], doneToday: [], released: [] };
+  const people = recordPeople(notes);
+  const reliefs = reliefsIn(notes);
   for (const t of todos) {
     if (!todoBelongsTo(t, accountId, accountNoteIds)) continue;
     if (dispositions.has(`${HIDE}todo:${t.id}`)) continue;
     const body = displayLine(t.body);
     if (!body) continue;
     const edit = fullLine(t.body);
-    const { kind, doneAt, date } = tagsOf(t.body);
+    const { kind, doneAt, date, hearer } = tagsOf(t.body);
     const isAction = kind === "action";
     const remindT = t.remindAt ? Date.parse(t.remindAt) : NaN;
     const remindFuture = !Number.isNaN(remindT) && remindT > now.getTime();
@@ -195,11 +339,34 @@ export function buildAccountSheet(
       else if (isAction && delayedToday)
         out.delayed.push({ id: t.id, body, edit, when: "HELD" });
       else if (isAction) {
-        const wall = passedWall(date, now);
+        // Their release closes it and their reschedule moves it (the closer
+        // rule; pass 8 H6): a released commitment leaves the open list, and
+        // a rescheduled one keeps the day they named, or none.
+        const relief = reliefFor(edit, t.createdAt, reliefs);
+        if (relief?.relief.kind === "release") {
+          out.released.push({
+            id: t.id,
+            body,
+            edit,
+            why: `${relief.first || "They"} released it ${passedMD(relief.day)}.`,
+          });
+          continue;
+        }
+        const deferred = relief?.relief.kind === "defer";
+        const dueDay = relief?.relief.kind === "defer" ? relief.relief.day : date;
+        const wall = passedWall(dueDay, now);
         // The fallback reads from the FULL line — the display cap must never
         // swallow the contingency.
         const fallback = wall ? splitFallback(edit).fallback : "";
-        const promised = !!wall && /·\s*from\s+\d{1,2}\/\d{1,2}\s+paste/i.test(edit);
+        // PROMISED needs a hearer (D28): the paste's by construction, the
+        // tag line's, or a person of the record the typed line names. A day
+        // they named themselves when they pushed it out was promised to
+        // nobody, so it passes as a plain wall.
+        const heard =
+          /·\s*from\s+\d{1,2}\/\d{1,2}\s+paste/i.test(edit) ||
+          !!hearer ||
+          !!hearerNamed(splitFallback(edit).text, people);
+        const promised = !!wall && !deferred && heard;
         const landed = settledByRecord({ text: edit, at: t.createdAt }, notes);
         out.open.push({
           id: t.id,
@@ -208,7 +375,7 @@ export function buildAccountSheet(
           ...(wall ? { wall } : {}),
           ...(promised ? { promised } : {}),
           ...(fallback ? { fallback } : {}),
-          ...(date ? { due: date } : {}),
+          ...(dueDay ? { due: dueDay } : {}),
           ...(landed ? { settled: landed.why } : {}),
         });
       }
@@ -282,5 +449,6 @@ export function buildAccountSheet(
     rest: ranked.slice(OPEN_SHOWN),
     delayed: out.delayed.slice(0, 5),
     doneToday: out.doneToday.slice(0, 6),
+    released: out.released,
   };
 }

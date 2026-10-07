@@ -581,11 +581,13 @@ describe("our own side's acceptance names nobody on the move line (H2)", () => {
     now,
   });
 
-  test("the read leaves the name empty, and the room keeps it empty", () => {
-    assert.ok(read.lastAccepted, "the acceptance is on the record");
-    assert.equal(read.lastAccepted.who, "");
+  test("our own side's acceptance books nothing, so the room has no name to fill", () => {
+    // The BOOKED decree: our own side accepting books nothing. The read
+    // carries an acceptance only from their side (pass 9, the read slice),
+    // so the room never holds an empty name to stand someone in for.
+    assert.equal(read.lastAccepted, null, "our own acceptance is not booked");
     assert.equal(read.relationship.name, "Joseph Lyon", "the relationship is Joseph");
-    assert.equal(acceptedForMove(read.lastAccepted)?.who, "");
+    assert.equal(acceptedForMove(read.lastAccepted), null);
   });
 
   test("the move line never names the relationship for it", () => {

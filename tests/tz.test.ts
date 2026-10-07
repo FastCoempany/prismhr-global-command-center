@@ -23,6 +23,11 @@ import { dayLabelFor } from "../src/lib/scratch";
 import { parseChatPaste } from "../src/lib/intel/rules-read";
 import { dayStamp, morningDoneKey, weekStamp } from "../src/lib/today/build";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
+import { daysBetween, readDeal } from "../src/lib/room/engine";
+import { meetingRead } from "../src/lib/intel/meeting";
+import { MINE_RE } from "../src/lib/intel/provenance";
+import { readAccount, type RecordNote } from "../src/lib/record/read";
+import { buildPipelineReport } from "../src/lib/pipeline/build";
 
 // Two midnights, one in each half of the year. `evening` is 7:30 PM Chicago on
 // the day before; `night` is 12:30 AM Chicago on the day after. Both are
@@ -177,4 +182,143 @@ describe("the morning done key reads the Chicago day (plan §7 item 9, answered 
     assert.equal(weekStamp(at), "2026-W39");
     assert.equal(weekStamp(Date.parse("2026-09-28T12:00:00Z")), "2026-W40");
   });
+});
+
+// ── the read's own day math (pass 8 X5) ─────────────────────────────────────
+// The engine's day counts, the sheet's wall, the meeting read's sibling day
+// and the drawer's dates all counted UTC days or 24-hour spans. Every one of
+// them now names the Chicago day: a reply at 7:30 PM is yesterday's reply at
+// 12:30 AM, a commitment due today still stands at 7:30 PM, and an evening
+// call is that day's call.
+
+describe("the read's day math names the Chicago day (pass 8 X5)", () => {
+  for (const m of MIDNIGHTS) {
+    test(`${m.label}: the engine counts Chicago days, so the evening reply is yesterday's`, () => {
+      assert.equal(daysBetween(m.evening, new Date(m.night)), 1);
+      assert.equal(daysBetween(m.evening, new Date(m.evening)), 0);
+      const r = readDeal({
+        accountName: "Simploy",
+        step: null,
+        timing: null,
+        lastTouch: null,
+        lastInbound: { at: m.evening, who: "Tom" },
+        lastRecordAt: m.evening,
+        now: new Date(m.night),
+      });
+      assert.equal(r.move, "Answer Tom. They wrote yesterday.");
+    });
+
+    test(`${m.label}: a dated wall passes when its Chicago day ends`, () => {
+      const at = (now: string) =>
+        readDeal({
+          accountName: "Simploy",
+          step: null,
+          timing: { phrase: "the target date", dateIso: m.before },
+          lastTouch: { at: now, awaitingReply: true, who: "Tom" },
+          lastRecordAt: now,
+          now: new Date(now),
+        }).health;
+      assert.notEqual(at(m.evening), "red", "the day is still on in Chicago");
+      assert.equal(at(m.night), "red");
+    });
+
+    test(`${m.label}: the sheet's wall stands until the Chicago day ends`, () => {
+      const todo = {
+        id: "t",
+        body: withTags("Send the census.", {
+          ...NO_TAGS,
+          kind: "action",
+          date: m.before,
+        }),
+        done: false,
+        accountId: "esc",
+        remindAt: "",
+        createdAt: "2026-09-01T15:00:00Z",
+        updatedAt: "2026-09-01T15:00:00Z",
+      };
+      const wall = (now: string) =>
+        buildAccountSheet([todo], "esc", new Set(), new Map(), new Date(now)).open[0]
+          ?.wall;
+      assert.equal(wall(m.evening), undefined);
+      assert.equal(wall(m.night), m.beforeMD);
+    });
+
+    test(`${m.label}: the meeting read finds the sibling filed the same Chicago day`, () => {
+      const read = meetingRead(
+        [
+          {
+            id: "tape",
+            body: "☰ Call transcript — Kickoff · full text under the fold\nWe walked through Mexico.",
+            source: "transcript",
+            createdAt: m.evening,
+          },
+          {
+            id: "entry",
+            body: "☎ CT Kickoff — Mexico EOR · Chassie Smith → Antaeus Coe\nWalked through EOR for Mexico.",
+            source: "call",
+            actors: "Chassie Smith → Antaeus Coe",
+            createdAt: `${m.before}T15:00:00Z`,
+          },
+        ],
+        (n) => MINE_RE.test(n),
+      );
+      assert.equal(read?.who, "Chassie Smith");
+    });
+
+    test(`${m.label}: the drawer dates an evening call by its Chicago day`, () => {
+      const notes: RecordNote[] = [
+        {
+          id: "call",
+          accountId: "A1",
+          partner: "",
+          kind: "account",
+          lane: "mine",
+          body: "☎ CT Kickoff — Mexico EOR · Chassie Smith → Antaeus Coe\nWalked through EOR for Mexico.",
+          actors: "Chassie Smith → Antaeus Coe",
+          source: "call",
+          recipients: "",
+          createdAt: m.evening,
+        },
+      ];
+      const now = new Date(m.night);
+      const read = readAccount({
+        account: { id: "A1", name: "Simploy" },
+        notes,
+        touches: [],
+        todos: [],
+        dispositions: new Map(),
+        homeSide: [],
+        now,
+      });
+      const [rec] = buildPipelineReport({
+        accounts: [
+          {
+            id: "A1",
+            name: "Simploy",
+            csm: "",
+            stageLabel: "",
+            notes: notes.map((n) => ({
+              id: n.id,
+              createdAt: n.createdAt,
+              body: n.body,
+              lane: "mine" as const,
+              actors: n.actors,
+              source: n.source,
+            })),
+            todos: [],
+            gaps: [],
+            support: null,
+            actors: [],
+            read,
+          },
+        ],
+        csms: [],
+        me: "Antaeus Coe",
+        now,
+      });
+      assert.deepEqual(rec.events, [{ at: m.before, kind: "Call" }]);
+      assert.equal(rec.lastTouch?.date, m.before);
+      assert.equal(rec.quietDays, 1);
+    });
+  }
 });

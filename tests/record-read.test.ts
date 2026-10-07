@@ -44,6 +44,7 @@ import type { Gem } from "../src/lib/activity/stores";
 import { ALIASES, canonicalAccountId } from "../src/lib/book/merge";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
 import { buildPipelineReport, type PipelineAccount } from "../src/lib/pipeline/build";
+import { evidenceRung } from "../src/lib/record/docs";
 import { liveLines } from "../src/lib/ask/live";
 
 const NOW = new Date("2026-09-05T17:00:00Z");
@@ -2068,5 +2069,381 @@ describe("the five whose-move fixtures of pass 2 B rows 1 to 5 give one answer e
     assert.equal(afternoon.read.whoseMove.rung, "send");
     assert.equal(afternoon.engine.move, "Wait on Melanie Dreyer. You wrote today.");
     assert.ok(afternoon.inbound[0] < afternoon.sends[0].at);
+  });
+});
+
+// ── pass 9, the read slice ──────────────────────────────────────────────────
+// The fixes for what audit pass 8 found in the read (docs/architecture/
+// pass-8-rewalk.md §3) and the two calls it rules on (§4, calls 6 and 7).
+
+const OCT = new Date("2026-10-07T17:00:00Z");
+
+/** The read and the drawer's record over the same stores. */
+function drawerOf(
+  notes: RecordNote[],
+  o: {
+    todos?: {
+      id: string;
+      body: string;
+      done: boolean;
+      accountId: string;
+      createdAt: string;
+      filingId?: string;
+    }[];
+    homeSide?: string[];
+    now?: Date;
+  } = {},
+) {
+  const now = o.now ?? OCT;
+  const todos = o.todos ?? [];
+  const read = readAccount({
+    account: { id: "A1", name: "Simploy, Inc." },
+    notes,
+    touches: [],
+    todos,
+    dispositions: new Map(),
+    homeSide: o.homeSide ?? ["Lesha Cyphers"],
+    now,
+  });
+  const account: PipelineAccount = {
+    id: "A1",
+    name: "Simploy, Inc.",
+    csm: "Lesha Cyphers",
+    stageLabel: "",
+    notes: notes.map((n) => ({
+      id: n.id,
+      createdAt: n.createdAt,
+      body: n.body,
+      lane: n.lane,
+      actors: n.actors,
+      source: n.source,
+    })),
+    todos: todos.map((t) => ({
+      ...t,
+      remindAt: "",
+      updatedAt: t.createdAt,
+    })),
+    gaps: [],
+    support: null,
+    actors: [],
+    read,
+  };
+  const [rec] = buildPipelineReport({
+    accounts: [account],
+    csms: o.homeSide ?? ["Lesha Cyphers"],
+    me: "Antaeus Coe",
+    now,
+  });
+  return { read, rec };
+}
+
+const theirLoop = (
+  id: string,
+  text: string,
+  tags: Partial<typeof NO_TAGS>,
+  over: Partial<{ createdAt: string; filingId: string }> = {},
+) => ({
+  id,
+  body: withTags(text, { ...NO_TAGS, owner: "them", ...tags }),
+  done: false,
+  accountId: "A1",
+  createdAt: "2026-10-01T15:00:00Z",
+  ...over,
+});
+
+describe("direction is who sent it, never a name in the subject (pass 8 H3)", () => {
+  const SEND = row({
+    id: "out",
+    body: "✉ OL Oct 5 2:00 PM — Mexico census · Antaeus Coe → Tom Harrison\nSending the census template over now.",
+    actors: "Antaeus Coe → Tom Harrison",
+    source: "outlook-ai",
+    createdAt: "2026-10-05T12:00:00Z",
+  });
+  const REPLY = row({
+    id: "in",
+    body: "✉ OL Oct 6 9:10 AM — Antaeus, quick question on the census · Tom Harrison → Antaeus Coe\nDoes the Mexico census need the start dates as well, or just the salaries?",
+    actors: "Tom Harrison → Antaeus Coe",
+    source: "outlook-ai",
+    createdAt: "2026-10-06T12:00:00Z",
+  });
+  const read = readAccount({
+    account: { id: "A1", name: "Infiniti HR" },
+    notes: [REPLY, SEND],
+    touches: [],
+    todos: [],
+    dispositions: new Map(),
+    homeSide: [],
+    now: OCT,
+  });
+
+  test("their reply titled \"Antaeus, …\" is inbound, and the move is ours", () => {
+    assert.equal(read.docs.find((d) => d.noteId === "in")?.direction, "in");
+    assert.equal(read.lastInbound?.who, "Tom Harrison");
+    assert.equal(read.whoseMove.rung, "reply");
+    assert.equal(read.lastOutbound?.noteId, "out");
+  });
+
+  test("the operator's own send still reads as out, from the actors", () => {
+    assert.equal(read.docs.find((d) => d.noteId === "out")?.direction, "out");
+  });
+});
+
+describe("a colleague is never the relationship (pass 8 call 7)", () => {
+  // No roster at all: nothing but the declared home side can tell the CSM,
+  // who is on three threads, from the account's own person, who is on one.
+  const notes = [
+    row({
+      id: "l1",
+      body: "✉ OL Oct 1 9:00 AM — Simploy intro · Lesha Cyphers → Antaeus Coe\nIntroducing you to Chassie at Simploy.",
+      actors: "Lesha Cyphers → Antaeus Coe",
+      source: "outlook-ai",
+      createdAt: "2026-10-01T12:00:00Z",
+    }),
+    row({
+      id: "l2",
+      body: "✉ OL Oct 2 9:00 AM — Re: Simploy intro · Antaeus Coe → Lesha Cyphers\nThanks, I will reach out to Chassie today.",
+      actors: "Antaeus Coe → Lesha Cyphers",
+      source: "outlook-ai",
+      createdAt: "2026-10-02T12:00:00Z",
+    }),
+    row({
+      id: "l3",
+      body: "✉ OL Oct 3 9:00 AM — Simploy status · Lesha Cyphers → Antaeus Coe\nChassie says they are moving forward with Mexico.",
+      actors: "Lesha Cyphers → Antaeus Coe",
+      source: "outlook-ai",
+      createdAt: "2026-10-03T12:00:00Z",
+    }),
+    row({
+      id: "c1",
+      body: "✉ OL Oct 4 9:00 AM — Mexico EOR · Chassie Smith → Antaeus Coe\nWe would like to talk about two hires in Mexico.",
+      actors: "Chassie Smith → Antaeus Coe",
+      source: "outlook-ai",
+      createdAt: "2026-10-04T12:00:00Z",
+    }),
+  ];
+  const read = readAccount({
+    account: { id: "A1", name: "Simploy" },
+    notes,
+    touches: [],
+    todos: [],
+    dispositions: new Map(),
+    homeSide: ["Lesha Cyphers"],
+    now: OCT,
+  });
+
+  test("the relationship is the account's person, not the CSM on more threads", () => {
+    assert.equal(read.relationship.name, "Chassie Smith");
+    assert.equal(read.relationship.source, "record");
+  });
+
+  test("the people read leaves our own side out", () => {
+    assert.ok(
+      !read.people.some((p) => /Lesha/.test(p.name)),
+      JSON.stringify(read.people),
+    );
+    assert.ok(read.people.some((p) => p.name === "Chassie Smith"));
+  });
+});
+
+describe("the drawer's their side is the read's own list (pass 8 call 6)", () => {
+  // Lesha, the CSM, relays two promises of the account's in one mail. The
+  // read files them as loops naming her as the promiser: she is the via,
+  // never the owner (#364).
+  const RELAY = row({
+    id: "relay",
+    body: "✉ OL Oct 1 10:00 AM — Simploy next steps · Lesha Cyphers → Antaeus Coe\nChassie said they will send the census and confirm the Mexico headcount.",
+    actors: "Lesha Cyphers → Antaeus Coe",
+    source: "outlook-ai",
+    createdAt: "2026-10-01T12:00:00Z",
+    filingId: "f1",
+  });
+  const loops = [
+    theirLoop(
+      "t1",
+      "Send the census for the Mexico hires",
+      { by: "Lesha Cyphers", hearer: "Antaeus Coe", date: "2026-10-05" },
+      { filingId: "f1" },
+    ),
+    theirLoop(
+      "t2",
+      "Confirm the Mexico headcount",
+      { by: "Lesha Cyphers", hearer: "Antaeus Coe", date: "2026-10-09" },
+      { filingId: "f1", createdAt: "2026-10-01T15:01:00Z" },
+    ),
+  ];
+
+  test("two relayed promises both name the account, never the colleague (H1)", () => {
+    const { read, rec } = drawerOf([RELAY], { todos: loops });
+    assert.equal(read.theirPromises.length, 2);
+    assert.equal(rec.theirSide.length, 2, JSON.stringify(rec.theirSide));
+    for (const t of rec.theirSide) {
+      assert.equal(t.who, "Simploy", JSON.stringify(t));
+      assert.ok(!/Lesha Cyphers/.test(t.who));
+      assert.match(t.text, / · via Lesha/);
+    }
+  });
+
+  test("each line says where the promise stands, in the move line's words", () => {
+    const { rec } = drawerOf([RELAY], { todos: loops });
+    const census = rec.theirSide.find((t) => /census/.test(t.text));
+    const headcount = rec.theirSide.find((t) => /headcount/.test(t.text));
+    assert.match(census?.text ?? "", / · PROMISED 10\/5$/);
+    assert.match(headcount?.text ?? "", / · Promised Friday$/);
+  });
+
+  test("a later message of theirs over forty characters answers nothing (H12)", () => {
+    const LATER = row({
+      id: "later",
+      body: "✉ OL Oct 6 9:00 AM — Re: Simploy · Chassie Smith → Antaeus Coe\nThanks for the time last week, we are still reviewing the proposal internally with the team.",
+      actors: "Chassie Smith → Antaeus Coe",
+      source: "outlook-ai",
+      createdAt: "2026-10-06T12:00:00Z",
+    });
+    const { rec } = drawerOf([LATER, RELAY], { todos: loops });
+    assert.ok(
+      rec.theirSide.some((t) => /census/.test(t.text)),
+      `the promise was dropped: ${JSON.stringify(rec.theirSide)}`,
+    );
+    assert.ok(rec.theirSide.some((t) => /headcount/.test(t.text)));
+  });
+
+  test("a promise the read closed is gone from the drawer too", () => {
+    const done = loops.map((l) => (l.id === "t1" ? { ...l, done: true } : l));
+    const { rec } = drawerOf([RELAY], { todos: done });
+    assert.ok(!rec.theirSide.some((t) => /census/.test(t.text)));
+    assert.ok(rec.theirSide.some((t) => /headcount/.test(t.text)));
+  });
+});
+
+describe("a fallback archive is no call and no tape (pass 8 X3)", () => {
+  // The room's zero-entry fallback files any unstructured paste under the
+  // tape's source with its own head. A typed line filed that way is not a
+  // call: no dated "Call" in the drawer, no "On tape" cite.
+  const FALLBACK = row({
+    id: "fb",
+    body: "☰ transcript — filed from the room\nquick note: they want Mexico pricing next week",
+    source: "transcript",
+    createdAt: "2026-10-03T15:00:00Z",
+    filingId: "f9",
+  });
+  const TAPE = row({
+    id: "tape",
+    body: "☰ Call transcript — Kickoff · 2 voices · full text under the fold\nChassie Smith: We have two hires in Mexico.\nAntaeus Coe: Let us walk through EOR.",
+    source: "transcript",
+    createdAt: "2026-10-02T15:00:00Z",
+  });
+
+  test("the fallback prints no dated call in the drawer", () => {
+    const { rec } = drawerOf([FALLBACK]);
+    assert.deepEqual(rec.events, []);
+    assert.equal(rec.lastTouch, null);
+  });
+
+  test("the fallback's rung is call notes, never the tape", () => {
+    const { read } = drawerOf([FALLBACK]);
+    const doc = read.docs.find((d) => d.noteId === "fb");
+    assert.ok(doc);
+    assert.equal(evidenceRung(doc!), "notes");
+  });
+
+  test("a promise filed off the fallback never cites \"On tape\" on the door", () => {
+    const loop = theirLoop(
+      "t9",
+      "Send the Mexico salaries",
+      { by: "Chassie Smith", hearer: "Antaeus Coe" },
+      { filingId: "f9", createdAt: "2026-10-03T15:01:00Z" },
+    );
+    const { read } = drawerOf([FALLBACK], { todos: [loop] });
+    assert.equal(read.theirPromises[0]?.entry?.rung, "notes");
+    const r = readDeal({
+      accountName: "Simploy",
+      whoseMove: read.whoseMove,
+      step: null,
+      timing: null,
+      lastTouch: null,
+      theirPromises: read.theirPromises,
+      lastRecordAt: read.lastRecordAt,
+      now: OCT,
+    });
+    assert.ok(!/On tape/.test(r.moveFull ?? ""), r.moveFull);
+    assert.match(r.moveFull ?? "", /Call notes 10\/3/);
+  });
+
+  test("a real call archive is still a dated call on the tape", () => {
+    const { read, rec } = drawerOf([TAPE]);
+    assert.deepEqual(rec.events, [{ at: "2026-10-02", kind: "Call" }]);
+    const doc = read.docs.find((d) => d.noteId === "tape");
+    assert.equal(evidenceRung(doc!), "tape");
+  });
+});
+
+describe("our own side accepting books nothing (BOOKED; pass 8 H2)", () => {
+  // The operator sent the invite and waits on Joseph. A colleague on the
+  // invite accepting it, or the operator accepting an invite of theirs, is
+  // not the account saying yes: no acceptance rung, no acceptance fact, and
+  // the row never says "Wait for the meeting." under anyone's name.
+  const SEND = row({
+    id: "invite",
+    body: "✉ OL Oct 5 2:00 PM — Initial Chat · Antaeus Coe → Joseph Lyon\nSending the invite for Thursday.",
+    actors: "Antaeus Coe → Joseph Lyon",
+    source: "outlook-ai",
+    createdAt: "2026-10-05T12:00:00Z",
+  });
+  const accepted = (id: string, actors: string) =>
+    row({
+      id,
+      body: `✉ OL Oct 6 9:00 AM — Accepted: Initial Chat · ${actors}`,
+      actors,
+      source: "outlook-ai",
+      createdAt: "2026-10-06T12:00:00Z",
+    });
+  const readOf = (notes: RecordNote[]) =>
+    readAccount({
+      account: { id: "A1", name: "Joseph's PEO" },
+      notes,
+      touches: [],
+      todos: [],
+      dispositions: new Map(),
+      homeSide: ["Lesha Cyphers"],
+      now: OCT,
+    });
+  const moveOf = (read: ReturnType<typeof readOf>) =>
+    readDeal({
+      accountName: "Joseph's PEO",
+      whoseMove: read.whoseMove,
+      step: null,
+      timing: null,
+      lastTouch: read.lastTouch
+        ? {
+            at: read.lastTouch.at,
+            awaitingReply: read.lastTouch.awaitingReply,
+            who: "Joseph",
+          }
+        : null,
+      lastAccepted: read.lastAccepted
+        ? { at: read.lastAccepted.at, who: read.lastAccepted.who || "Joseph" }
+        : null,
+      lastRecordAt: read.lastRecordAt,
+      now: OCT,
+    }).move;
+
+  for (const [label, actors] of [
+    ["a colleague on the invite", "Lesha Cyphers → Antaeus Coe"],
+    ["the operator", "Antaeus Coe → Joseph Lyon"],
+  ] as const)
+    test(`${label} accepting books nothing`, () => {
+      const read = readOf([accepted("acc", actors), SEND]);
+      assert.equal(read.lastAccepted, null);
+      assert.notEqual(read.whoseMove.rung, "acceptance");
+      assert.equal(read.whoseMove.rung, "send");
+      assert.ok(!/Wait for the meeting/.test(moveOf(read)), moveOf(read));
+    });
+
+  test("their acceptance still books the meeting, under their own name", () => {
+    const read = readOf([accepted("acc", "Joseph Lyon → Antaeus Coe"), SEND]);
+    assert.equal(read.lastAccepted?.who, "Joseph Lyon");
+    assert.equal(read.whoseMove.rung, "acceptance");
+    assert.equal(read.whoseMove.who, "Joseph Lyon");
+    assert.equal(moveOf(read), "Wait for the meeting. Joseph Lyon accepted.");
   });
 });

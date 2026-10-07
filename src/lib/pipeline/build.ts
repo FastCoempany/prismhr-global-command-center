@@ -13,7 +13,7 @@
 import { contactsFor } from "@/lib/book/contacts";
 import { isCall, isTape } from "@/lib/ingest/dialect";
 import { shortName } from "@/lib/ingest/short-name";
-import { speakersIn } from "@/lib/intel/meeting";
+import { isCallArchive, speakersIn } from "@/lib/intel/meeting";
 import { peopleFor } from "@/lib/intel/people";
 import type { AccountRead } from "@/lib/record/read";
 import { isHomeSideName, MINE_RE } from "@/lib/intel/provenance";
@@ -26,18 +26,17 @@ import {
   demandNear,
   redactMoney,
 } from "@/lib/intel/lexicon";
+import { ownerOf, promiseStands } from "@/lib/room/engine";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { moveFromCommitment } from "@/lib/room/move-line";
 import { splitFallback } from "@/lib/room/deliverables";
-import { owedByThem } from "@/lib/room/owed";
+import { chicagoDay } from "@/lib/tz";
 import {
-  answeredSince,
   fyiFromSupport,
   gatedByThem,
   isOtherTeamWork,
   ownerClause,
   ownersFrom,
-  theirTurnFrom,
   type ActorRead,
   type LaneOwner,
   type SupportRead,
@@ -104,8 +103,15 @@ const PRODUCT: Record<string, string> = {
 /** The book's close date until the operator files a real one, per account. */
 const BOOK_CLOSE_DATE = "2026-12-25";
 
-const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
-const dayOf = (iso: string) => (iso ?? "").slice(0, 10);
+// Every day the report prints or counts is a Chicago day, theirs or ours (the
+// closer rule; pass 8 X5): a call at 8 PM Chicago is that day's call, never
+// the next UTC day's. A bare yyyy-mm-dd is already a day and stays one.
+const dayOf = (iso: string): string =>
+  /^\d{4}-\d{2}-\d{2}$/.test(iso ?? "") ? iso : chicagoDay(iso ?? "");
+const md = (iso: string) => {
+  const d = dayOf(iso);
+  return d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}` : "";
+};
 const daysBetween = (a: string, b: string) =>
   Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 86400000);
 
@@ -311,7 +317,7 @@ const OPEN_CAP = 4;
 const QUIET_RISK_DAYS = 21;
 
 export function buildPipelineReport(input: PipelineInput): PipelineRecord[] {
-  const today = dayOf(input.now.toISOString());
+  const today = chicagoDay(input.now);
 
   // Who is ours. The CSM roster names a handful; the record names the rest —
   // a person who turns up as an actor on three or more different accounts is
@@ -382,10 +388,8 @@ function record(
   // the row itself, its actors line and the tape's own speaker labels.
   const m = a.read.lastMeeting;
   const mNote = m ? ns.find((n) => n.id === m.noteId) : undefined;
-  // The day the report prints is the row's stored stamp, as it always was.
-  // The read's `at` is the row's effective moment, and a day read off it
-  // would carry an evening meeting across the UTC midnight the stored stamp
-  // never crosses.
+  // The day the report prints is the row's stored stamp, as it always was,
+  // read as its Chicago day.
   const mAt = mNote?.createdAt ?? m?.at ?? "";
   const inRoom = mNote
     ? tidyPeople([
@@ -400,11 +404,15 @@ function record(
         .slice(0, 5)
     : [];
 
-  // Dated calls, off the read's docs: the archive and the call read's entries
-  // by the dialect predicates, each at the doc's own effective moment. The
-  // filter already decided the kind.
+  // Dated calls, off the read's docs: the call read's entries, and an
+  // archive only when it reads as a call. The room's zero-entry fallback
+  // files any unstructured paste under the tape's source, and a typed line
+  // filed that way is no call (evidence or nothing; pass 8 X3). Each at the
+  // doc's own effective moment, as its Chicago day.
+  const isCallDoc = (d: { text: string; source: string }): boolean =>
+    isCall(d.source) || isCallArchive({ body: d.text, source: d.source });
   const events = a.read.docs
-    .filter((d) => !d.hidden && d.noteId && (isTape(d.source) || isCall(d.source)))
+    .filter((d) => !d.hidden && d.noteId && isCallDoc(d))
     .map((d) => ({ at: dayOf(d.at), kind: "Call" }))
     .filter((e, i, arr) => arr.findIndex((x) => x.at === e.at) === i)
     .slice(0, 4);
@@ -500,38 +508,31 @@ function record(
     });
   }
 
-  // Their turn, three rungs: what the read says they said they would do
-  // (field 14 — their loops, the call read's Owed line, the newest inbound's
-  // own promise, a colleague never named as the one who owes it), the rest of
-  // the loops and Owed lines, then an inbound note's own first person. Four
-  // of eleven accounts carry the last and not the others.
-  const promise = a.read.theirPromise;
-  const theirSide = [
-    ...(promise && promise.text
-      ? [
-          {
-            // The record names nobody on their side, or only the colleague
-            // who relayed it: the account owes it (the founder, 2026-10-06).
-            who: promise.who || shortName(a.name),
-            text: clean(promise.text),
-            at: dayOf(promise.at),
-            src: `record ${md(promise.at)}`,
-          },
-        ]
-      : []),
-    ...owedByThem(ns, input.now, a.todos).map((o) => ({
-      who: o.who,
-      text: clean(o.text),
-      at: dayOf(o.at),
-      src: `record ${md(o.at)}`,
-    })),
-    ...theirTurnFrom(ns, isHome).map((t) => ({ ...t, text: clean(t.text) })),
-  ]
-    .filter((t, i, arr) => arr.findIndex((x) => x.text === t.text) === i)
-    // A promise they have since answered is finished. Trend Personnel was
-    // gated all week on "I will check with our Sales Director" that a
-    // colleague answered the next day.
-    .filter((t) => !answeredSince(t.at, ns, isHome));
+  // Their turn is the read's own list of open promises (field 14) and
+  // nothing the drawer counts for itself (ruled 2026-10-07, pass 8 call 6).
+  // The drawer used to merge the raw loops and Owed lines beside the read's
+  // head, so a relayed promise named the colleague who carried it (pass 8
+  // H1), and to drop a promise of theirs on any later message over forty
+  // characters (H12); a promise closes only by delivery or explicit release
+  // (the closer rule), and the read is where that is decided. The owner is
+  // the account person the record names, else the account, never the
+  // colleague (the founder, 2026-10-06); the colleague rides as "via", and
+  // the day reads as the move line reads it.
+  const theirSide = a.read.theirPromises
+    .filter((p) => clean(p.text))
+    .map((p) => {
+      const via = (p.via ?? "").trim().split(/\s+/)[0] ?? "";
+      const stands = promiseStands(p, input.now);
+      return {
+        who: ownerOf(p) || shortName(a.name),
+        text: [clean(p.text).replace(/[.!]$/, ""), via ? `via ${via}` : "", stands]
+          .filter(Boolean)
+          .join(" · "),
+        at: dayOf(p.at),
+        src: `record ${md(p.at)}`,
+      };
+    })
+    .filter((t, i, arr) => arr.findIndex((x) => x.text === t.text) === i);
 
   // Nothing owed either way, and the move is theirs on our send: the ball
   // is still theirs — they owe a reply. Whose move it is comes from the read
@@ -597,7 +598,10 @@ function record(
     lastTouch: m
       ? {
           date: dayOf(mAt),
-          kind: isTape(mNote?.source) || isCall(mNote?.source) ? "Call" : "Meeting",
+          kind:
+            mNote && isCallDoc({ text: mNote.body, source: mNote.source })
+              ? "Call"
+              : "Meeting",
           room: inRoom.map((p) => ({ name: p, title: titleOf(p) })),
         }
       : null,

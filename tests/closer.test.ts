@@ -6,8 +6,9 @@
 
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
-import { isCloser } from "../src/lib/intel/closer";
+import { isCloser, readRelease } from "../src/lib/intel/closer";
 import { readRows } from "./helpers/account-read";
+import { owedToMe } from "../src/lib/room/owed";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
 
@@ -122,8 +123,9 @@ describe("their promise is an await, never a reply owed", () => {
       lastInbound: { at: ago(1), who: "Lesha", promise: true },
     });
     // "Hold for their follow-up" retired into the approved wait line
-    // (the face approved 2026-10-06).
-    assert.match(r.move, /^Wait on Lesha\. Promised yesterday\.$/);
+    // (the face approved 2026-10-06). A dayless promise says when it was
+    // made, never a day that reads as due (pass 8 G9).
+    assert.match(r.move, /^Wait on Lesha\. Promise made yesterday\.$/);
     assert.ok(!/Answer/.test(r.move));
   });
 
@@ -134,7 +136,7 @@ describe("their promise is an await, never a reply owed", () => {
       lastInbound: { at: ago(8), who: "Lesha", promise: true },
     });
     // "Chase the follow-up" retired into the approved chase line.
-    assert.match(r.move, /^Chase Lesha\. Promised 8 days ago\.$/);
+    assert.match(r.move, /^Chase Lesha\. Promise made 8 days ago\.$/);
   });
 
   test("a real ask still demands the answer", async () => {
@@ -199,6 +201,152 @@ describe("an overdue paste-opened promise reads PROMISED", () => {
     );
     assert.equal(sheet.open[0].wall, "8/21");
     assert.equal(sheet.open[0].promised, undefined);
+  });
+});
+
+// ── a release or a reschedule (the closer rule; pass 8 H6) ──────────────────
+// "A promise closes only by delivery or explicit release; 'no rush, next
+// month' is a reschedule." The reader is conservative like the classifier:
+// a sentence counts only when it says the thing outright, and a question
+// never counts.
+
+describe("readRelease: a release closes, a reschedule moves, a question is neither", () => {
+  // 2026-10-06 is a Tuesday.
+  const DAY = "2026-10-06";
+
+  test("'no rush, next month' is a reschedule that names no day", () => {
+    assert.deepEqual(readRelease("No rush, next month is fine.", DAY), {
+      kind: "defer",
+      day: "",
+      sentence: "No rush, next month is fine.",
+    });
+    assert.equal(readRelease("Take your time on the census.", DAY)?.kind, "defer");
+    assert.equal(readRelease("No need to rush the agreements.", DAY)?.kind, "defer");
+    assert.equal(
+      readRelease("We don't need the census until November.", DAY)?.kind,
+      "defer",
+    );
+  });
+
+  test("a reschedule that names a day carries the new day", () => {
+    const day = (text: string) => {
+      const r = readRelease(text, DAY);
+      return r?.kind === "defer" ? r.day : null;
+    };
+    assert.equal(day("No rush on the census, Friday works."), "2026-10-09");
+    assert.equal(day("It can wait until 10/20."), "2026-10-20");
+    assert.equal(day("Take your time, November 3 is fine."), "2026-11-03");
+    assert.equal(day("No rush, Monday is fine."), "2026-10-12");
+  });
+
+  test("an explicit release lets the promise go", () => {
+    for (const text of [
+      "No need to send the census, we are holding off on Mexico.",
+      "Please disregard my request for the deck.",
+      "We no longer need the pricing model.",
+      "Never mind on the agreements.",
+    ])
+      assert.equal(readRelease(text, DAY)?.kind, "release", text);
+  });
+
+  test("a question releases nothing; the sentence after it still counts", () => {
+    assert.equal(readRelease("No rush?", DAY), null);
+    assert.equal(readRelease("Is there any rush on the census?", DAY), null);
+    assert.equal(
+      readRelease("Can you send it next month? No rush.", DAY)?.kind,
+      "defer",
+      "the question is skipped, the plain sentence reads",
+    );
+  });
+
+  test("content with no release in it reads nothing", () => {
+    for (const text of [
+      "Thanks, we are still reviewing the proposal internally with the team.",
+      "Please send the census by Friday.",
+      "We need the pricing before the board meets.",
+      "",
+    ])
+      assert.equal(readRelease(text, DAY), null, text);
+  });
+});
+
+// ── machinery is never a person (pass 8 H10) ────────────────────────────────
+// A campaign alert says "would you please follow up" in its own template.
+// It arrives without a person deciding to write it, so it never raises a
+// "{first} asked" suggestion and never feeds the move's owed list.
+
+describe("owedToMe reads asks from people, never from machinery", () => {
+  const now = new Date("2026-10-07T17:00:00Z");
+  const note = (id: string, body: string, actors: string) => ({
+    id,
+    body,
+    actors,
+    createdAt: "2026-10-06T14:00:00Z",
+  });
+
+  test("a campaign alert raises no suggestion", () => {
+    const out = owedToMe(
+      [
+        note(
+          "m1",
+          "✉ OL Oct 6 9:00 AM — 📣 New website or campaign response lead · Marketing → Antaeus Coe\nWould you please follow up with this lead from Acme Staffing about global payroll.",
+          "Marketing → Antaeus Coe",
+        ),
+      ],
+      new Set(),
+      [],
+      now,
+    );
+    assert.deepEqual(out, []);
+  });
+
+  test("a campaign alert under a person's name raises none either", () => {
+    const out = owedToMe(
+      [
+        note(
+          "m2",
+          "✉ OL Oct 6 9:00 AM — New website or campaign response lead · Dana Webb → Antaeus Coe\nCould you please reach out to the contact below within one business day.",
+          "Dana Webb → Antaeus Coe",
+        ),
+      ],
+      new Set(),
+      [],
+      now,
+    );
+    assert.deepEqual(out, []);
+  });
+
+  test("an auto-reply raises none", () => {
+    const out = owedToMe(
+      [
+        note(
+          "m3",
+          "✉ OL Oct 6 9:00 AM — Automatic reply: Mexico census · Chassie Smith → Antaeus Coe\nI am out of the office. Could you please resend anything urgent to my colleague.",
+          "Chassie Smith → Antaeus Coe",
+        ),
+      ],
+      new Set(),
+      [],
+      now,
+    );
+    assert.deepEqual(out, []);
+  });
+
+  test("a person asking still raises one, with their name", () => {
+    const out = owedToMe(
+      [
+        note(
+          "p1",
+          "✉ OL Oct 6 9:00 AM — Mexico census · Chassie Smith → Antaeus Coe\nCould you please send the census template for the Mexico hires.",
+          "Chassie Smith → Antaeus Coe",
+        ),
+      ],
+      new Set(),
+      [],
+      now,
+    );
+    assert.equal(out.length, 1);
+    assert.match(out[0].src, /^Chassie asked, 10\/6$/);
   });
 });
 

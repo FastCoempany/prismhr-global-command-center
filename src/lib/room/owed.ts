@@ -4,6 +4,7 @@
 // the operator ("Will you please coordinate…"). Accept ✓ opens it on the
 // register; dismiss ✕ retires the suggestion durably. Pure.
 
+import { isMachinery } from "@/lib/intel/closer";
 import { MINE_RE } from "@/lib/intel/provenance";
 import { splitMarker, splitTags } from "@/lib/today/route-notes";
 import { chicagoDay } from "@/lib/tz";
@@ -50,10 +51,15 @@ function senderOf(actors: string): string {
   );
 }
 
-// Is this inbound TO the operator? (sender is someone else)
-function isInbound(actors: string): boolean {
-  const from = senderOf(actors);
-  return !!from && !MINE_RE.test(from);
+// Is this inbound TO the operator, from a person? The sender is someone
+// else, and the note is not machinery: a campaign alert, an auto-reply or a
+// calendar response arrives without a person deciding to write it, so it
+// never asks anything of the operator (machinery is never a person; pass 8
+// H10). The doc read's own predicate (src/lib/intel/closer.ts), never a
+// second spelling.
+function isInbound(n: { body?: string; actors?: string }): boolean {
+  const from = senderOf(n.actors ?? "");
+  return !!from && !MINE_RE.test(from) && !isMachinery(n);
 }
 
 // ── the client's side of the Owed line (the Simploy call, 2026-09-03) ──────
@@ -108,6 +114,23 @@ export function theirLoopOf(body: string): TheirLoop | null {
  *  Chicago days, theirs or ours)? False with no day, or a day still ahead. */
 export function dayBlown(day: string, now: Date): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(day) && day < chicagoDay(now);
+}
+
+/** How many Chicago days back a moment sits from now: 0 today, 1 yesterday,
+ *  never negative, null on a clock nobody can read. Days are calendar days
+ *  in Chicago, never 24-hour spans of UTC, so a 9 PM message reads as
+ *  yesterday at 8 the next morning (the closer rule: all days are Chicago
+ *  days, theirs or ours; pass 8 X5). A bare yyyy-mm-dd is that day. */
+export function chicagoDaysSince(iso: string, now: Date): number | null {
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(iso ?? "")
+    ? iso
+    : Number.isNaN(Date.parse(iso ?? ""))
+      ? ""
+      : chicagoDay(iso);
+  const today = chicagoDay(now);
+  if (!day || !today) return null;
+  const span = Date.parse(`${today}T12:00:00Z`) - Date.parse(`${day}T12:00:00Z`);
+  return Math.max(0, Math.round(span / 86_400_000));
 }
 
 // One Owed line can carry several segments split on ";" — each ends with
@@ -236,7 +259,7 @@ export function owedToMe(
     if (out.length >= CAP) break;
 
     // Dialect 2: a direct inbound ask ("Will you please coordinate…").
-    if (isInbound(n.actors ?? "")) {
+    if (isInbound(n)) {
       const d = DIRECT_ASK_RE.exec(body);
       if (d) {
         const who = senderOf(n.actors ?? "").split(/\s+/)[0] || "they";

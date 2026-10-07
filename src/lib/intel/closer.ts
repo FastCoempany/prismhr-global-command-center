@@ -204,3 +204,95 @@ export function isMachinery(n: { body?: string; actors?: string }): boolean {
   if (isMeetingResponse(head)) return true;
   return isMachineSender((n.actors ?? "").split("→")[0] ?? "");
 }
+
+// ── a release or a reschedule (the closer rule; pass 8 H6) ──────────────────
+// "A promise closes only by delivery or explicit release; 'no rush, next
+// month' is a reschedule." Nothing read either: a promise the client let go
+// of, or pushed out, still turned PROMISED the moment its day passed, and the
+// room told the operator to chase a thing the client had already waived.
+//
+// Conservative in the classifier's own way: a sentence counts only when it
+// says the thing outright, and a sentence that asks anything never counts.
+// The caller decides which promise a sentence speaks to; this reads only
+// what the sentence says. A reschedule is read before a release, because
+// "no need to rush" is a reschedule however it starts, and it is the softer
+// read: the promise stays open.
+
+export type Relief =
+  | { kind: "release"; sentence: string }
+  /** `day` is the new day the sentence names, yyyy-mm-dd; "" when it names
+   *  none ("next month"), and the promise goes dayless. */
+  | { kind: "defer"; day: string; sentence: string };
+
+const DEFER_RE =
+  /\b(?:no (?:rush|hurry)|no need to (?:rush|hurry)|take your time|(?:hold off|wait)(?: on (?:it|that|this|the [a-z]+))? (?:until|till|til)|can wait (?:until|till|til|for|a (?:week|month|bit|few))|(?:don'?t|do not) need (?:it|that|this|them|the [a-z]+) (?:until|till|til|before)|(?:next (?:week|month)|after the holidays|later this month|end of (?:the )?month) (?:is|works|would be) (?:fine|ok|okay|good|great|better)|(?:push|move) (?:it|that|this) (?:out |back )?to)\b/i;
+
+const RELEASE_RE =
+  /\b(?:no need (?:to|for)|disregard|never ?mind|(?:we|i) (?:no longer|don'?t|do not) need (?:it|that|this|those|them|the)|no longer (?:needed|necessary|required)|not (?:needed|necessary|required) (?:anymore|any more)|(?:cancel|scratch) (?:that|it|this)|you can (?:skip|drop) (?:it|that|this|the))\b/i;
+
+const MONTHS = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+] as const;
+const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** The day a reschedule names, read against the Chicago day it was said:
+ *  a numeric date, a month and a day, or a weekday (the next one after the
+ *  day it was said). "" when it names none. */
+function newDayIn(sentence: string, base: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(base)) return "";
+  const year = Number(base.slice(0, 4));
+  const onOrAfter = (m: number, d: number): string => {
+    if (m < 1 || m > 12 || d < 1 || d > 31) return "";
+    const day = `${year}-${pad(m)}-${pad(d)}`;
+    return day >= base ? day : `${year + 1}-${pad(m)}-${pad(d)}`;
+  };
+  const numeric = /\b(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?\b/.exec(sentence);
+  if (numeric) return onOrAfter(Number(numeric[1]), Number(numeric[2]));
+  const named =
+    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b/i.exec(
+      sentence,
+    );
+  if (named)
+    return onOrAfter(
+      MONTHS.indexOf(named[1].toLowerCase() as (typeof MONTHS)[number]) + 1,
+      Number(named[2]),
+    );
+  const weekday = /\b(monday|tuesday|wednesday|thursday|friday)\b/i.exec(sentence);
+  if (weekday) {
+    const want = WEEKDAYS.indexOf(weekday[1].toLowerCase());
+    const t = new Date(`${base}T12:00:00Z`);
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(t.getTime() + i * 86_400_000);
+      if (d.getUTCDay() === want) return d.toISOString().slice(0, 10);
+    }
+  }
+  return "";
+}
+
+/** Does this message let go of a promise, or push it out? `day` is the
+ *  Chicago day the message was written, the day a named weekday counts
+ *  from. The first sentence that says either outright is the answer; a
+ *  question never is. */
+export function readRelease(text: string, day: string): Relief | null {
+  for (const raw of (text ?? "").split(/\n|(?<=[.!?])\s+/)) {
+    const sentence = raw.replace(/\s+/g, " ").trim();
+    if (!sentence || sentence.includes("?")) continue;
+    if (DEFER_RE.test(sentence))
+      return { kind: "defer", day: newDayIn(sentence, day), sentence };
+    if (RELEASE_RE.test(sentence)) return { kind: "release", sentence };
+  }
+  return null;
+}

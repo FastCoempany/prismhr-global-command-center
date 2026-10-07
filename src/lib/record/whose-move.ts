@@ -24,7 +24,7 @@
 import { isAcceptance } from "@/lib/intel/closer";
 import { meetingRead } from "@/lib/intel/meeting";
 import { MINE_RE } from "@/lib/intel/provenance";
-import { owedByThem } from "@/lib/room/owed";
+import { chicagoDaysSince, owedByThem } from "@/lib/room/owed";
 import { lastTouchRead } from "@/lib/room/touch";
 import type { RecordDoc } from "./docs";
 
@@ -54,7 +54,8 @@ export type MoveFacts = {
   inbound: { at: string; who: string } | null;
   /** The newest meeting and who it was with. */
   meeting: { at: string; who: string } | null;
-  /** The newest invitation acceptance; `who` is "" when our own side accepted. */
+  /** The newest invitation acceptance from their side; our own side
+   *  accepting books nothing (BOOKED, ship order 2026-10-06). */
   accepted: { at: string; who: string } | null;
   /** The newest open loop on their side (D10). */
   loop: { at: string; who: string } | null;
@@ -77,18 +78,11 @@ export type WhoseMoveOptions = {
   isHomeSide?: (name: string) => boolean;
 };
 
-const DAY = 86_400_000;
-
 /** A meeting's recap stays the move this long; past it the meeting is history
  *  and the ordinary rungs speak again. The one copy: the engine reads the
- *  rung, never the window. */
+ *  rung, never the window. Counted in Chicago days, as the engine counts
+ *  "You met N days ago" (pass 8 X5), so the window and the line agree. */
 export const RECAP_DAYS = 5;
-
-const daysBetween = (iso: string, now: Date): number | null => {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return null;
-  return Math.max(0, Math.floor((now.getTime() - t) / DAY));
-};
 
 const ms = (iso: string): number => Date.parse(iso);
 
@@ -120,7 +114,7 @@ export function whoseMoveFrom(f: MoveFacts, now: Date): WhoseMove {
     return { whose: "you", since: f.inbound.at, who: f.inbound.who, rung: "reply" };
 
   if (f.meeting && after(f.meeting.at, false)) {
-    const days = daysBetween(f.meeting.at, now);
+    const days = chicagoDaysSince(f.meeting.at, now);
     if (days != null && days <= RECAP_DAYS)
       return { whose: "you", since: f.meeting.at, who: f.meeting.who, rung: "meeting" };
   }
@@ -142,6 +136,13 @@ export function whoseMoveFrom(f: MoveFacts, now: Date): WhoseMove {
   if (f.loop) return { whose: "them", since: f.loop.at, who: f.loop.who, rung: "loop" };
 
   return { whose: "none", since: "", who: "", rung: "none" };
+}
+
+/** An invitation acceptance from their side: a filed row whose attributed
+ *  sender is not ours. The one test the read's acceptance fact and the
+ *  acceptance rung both read. */
+export function isTheirAcceptance(d: RecordDoc): boolean {
+  return !!d.noteId && !!d.sender && !d.senderIsHome && isAcceptance(d.text);
 }
 
 /** The facts off the docs, then the rungs. */
@@ -170,9 +171,13 @@ export function whoseMove(
   // The newest meeting, and who it was with, as the shared reader says it.
   const meeting = meetingRead(rows, isHome);
 
-  // The newest invitation acceptance: machinery, so it never opens a
-  // reply-owed, but proof the meeting exists (HR Hawaii, 2026-09-04).
-  const accepted = live.find((d) => d.noteId && isAcceptance(d.text));
+  // The newest invitation acceptance from their side: machinery, so it never
+  // opens a reply-owed, but proof the meeting exists (HR Hawaii, 2026-09-04).
+  // Our own side accepting books nothing (CLAUDE.md, the Sendbook, BOOKED):
+  // a colleague on the invite, or the operator answering their invite, is
+  // not the account saying yes, and an unattributed one says nobody did.
+  // The Sendbook's BOOKED reads the same doc flags (acceptanceDates).
+  const accepted = live.find((d) => isTheirAcceptance(d));
 
   const loop = owedByThem(rows, now, todos)[0];
 
@@ -183,9 +188,7 @@ export function whoseMove(
         : null,
       inbound: inbound ? { at: inbound.at, who: inbound.sender } : null,
       meeting: meeting ? { at: meeting.at, who: meeting.who } : null,
-      accepted: accepted
-        ? { at: accepted.at, who: accepted.senderIsHome ? "" : accepted.sender }
-        : null,
+      accepted: accepted ? { at: accepted.at, who: accepted.sender } : null,
       loop: loop ? { at: loop.at, who: loop.who } : null,
     },
     now,

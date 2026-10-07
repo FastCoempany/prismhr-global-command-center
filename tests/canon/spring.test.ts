@@ -74,6 +74,6 @@ describe("the move line carries who and when (D25)", () => {
     });
     // The retired "Hold for their follow-up" became the approved wait line,
     // which names who owes it (the face approved 2026-10-06).
-    assert.equal(r.move, "Wait on Adam. Promised yesterday.");
+    assert.equal(r.move, "Wait on Adam. Promise made yesterday.");
   });
 });
