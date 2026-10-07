@@ -3,8 +3,24 @@
 // one-builder guarantee between the readout and the file's To-Russ tab.
 
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
+import { createElement } from "react";
 import { buildQueue, currentBand, moveKey, QUEUE_CAP } from "../src/lib/groundwork/day";
+import { stampSubtext } from "../src/lib/groundwork/stamp";
+import {
+  chipGems,
+  collisionCite,
+  csmPrepRows,
+  prepKicker,
+  spikeCites,
+} from "../src/lib/groundwork/chips";
+import { seatWorked, tapOfStamp } from "../src/lib/groundwork/worked";
+import { readAccount, type RecordNote } from "../src/lib/record/read";
+import type { Gem } from "../src/lib/activity/stores";
+import type { StagedRow } from "../src/lib/activity/types";
+import type { SecondRecord } from "../src/lib/activity/read";
+import type { Rollup } from "../src/lib/activity/rollup";
 import {
   businessDaysBetween,
   intentFor,
@@ -201,17 +217,21 @@ describe("groundwork queue", () => {
   test("one rule holds at most two leading slots; the rest sink below other rules", () => {
     // Three real book ids with demand above the gate, each with its OWN stale
     // research pass; a fourth account carries a different, lower-weight rule.
+    // Rewritten in pass 9 (G7): the research age is the newer of the account's
+    // own pass and the sweep, so the day sits past the sweep's 90 days too;
+    // on 7/30 the sweep (7/2) still held these accounts fresh.
     const s1 = acct({ id: "001F000000w38ItIAI", name: "Stale One", csm: "Unassigned" });
     const s2 = acct({ id: "001F000000w38OIIAY", name: "Stale Two", csm: "Unassigned" });
     const s3 = acct({ id: "001F000000w38BOIAY", name: "Stale Three", csm: "Unassigned" });
     const gap = acct({ id: "G0000000000000001", name: "Thin Book", csm: "Unassigned" });
     const { all } = buildQueue({
       ...base,
+      now: new Date("2026-10-15T15:00:00Z"),
       contactCountById: (id: string) => (id === gap.id ? 1 : 5),
       accounts: [s1, s2, s3, gap],
       intelById: new Map(),
       notesById: new Map([
-        [gap.id, [{ body: "note", source: "room", createdAt: "2026-07-29T12:00:00Z" }]],
+        [gap.id, [{ body: "note", source: "room", createdAt: "2026-10-14T12:00:00Z" }]],
       ]),
       researchAtById: new Map([
         [s1.id, "2026-04-01T12:00:00Z"],
@@ -769,5 +789,630 @@ describe("groundwork institutions", () => {
 describe("groundwork moveKey", () => {
   test("is stable per account and rule", () => {
     assert.equal(moveKey({ accountId: "A1", ruleId: "intent-warm" }), "A1:intent-warm");
+  });
+});
+
+// ═══ Pass 9: the fixes pass 8 found (docs/architecture/pass-8-rewalk.md §3) ═══
+// Every block below pins one row of the re-walk or one of the fourteen calls.
+// Each failed on main at 03872cc before the fix that follows it landed.
+
+const P9 = acct({ id: "P9000000000000001", name: "Pass Nine", csm: "Unassigned" });
+
+const recordRow = (
+  o: Partial<RecordNote> & { id: string; body: string },
+): RecordNote => ({
+  accountId: P9.id,
+  partner: "",
+  kind: "account",
+  lane: "mine",
+  actors: "",
+  source: "",
+  recipients: "",
+  createdAt: "2026-07-20T12:00:00Z",
+  ...o,
+});
+
+const touchRow = (contactedAt: string, status = "awaiting") => ({
+  subjectKey: `outreach:${P9.id}`,
+  label: "",
+  contactedAt,
+  followUpAt: "",
+  status,
+  log: [] as { at: string; body: string }[],
+});
+
+/** The page's call: one read per account, built from the same rows the
+ *  queue's notes come from. */
+const p9Read = (notes: RecordNote[], touches: ReturnType<typeof touchRow>[] = []) =>
+  readAccount({
+    account: { id: P9.id, name: P9.name, contacts: [] },
+    notes,
+    touches,
+    todos: [],
+    dispositions: new Map(),
+    homeSide: ["Anika Steenstra"],
+    now: NOW,
+  });
+
+// A self-assigned Salesforce task: the operator addressed it to themselves.
+const SELF_TASK = recordRow({
+  id: "self1",
+  body: "✔ SF Jul 28 — Follow up with Pass Nine · Antaeus Coe → Antaeus Coe",
+  actors: "Antaeus Coe → Antaeus Coe",
+  source: "sf",
+  createdAt: "2026-07-28T12:00:00Z",
+});
+
+const gemOf = (over: Partial<Gem>): Gem => ({
+  dropSha: "037742a0",
+  verdict: "CONFIRMED",
+  createdDay: "2026-07-29",
+  actedDay: "",
+  who: ["Dana Ellis"],
+  whoKind: "account",
+  term: "CANADA ASK",
+  what: "Dana asked about Canada",
+  whenDay: "2026-07-28",
+  signal: "asked",
+  act: "Send the Canada one-pager.",
+  reason: "Jul 28 reply asks about Canada.",
+  cites: [{ k: "k-dana", day: "2026-07-28", who: "Dana Ellis", subject: "Re: Canada" }],
+  ...over,
+});
+
+const stagedOf = (over: Partial<StagedRow> & { k: string }): StagedRow => ({
+  d: "2026-07-28",
+  s: "Re: Global",
+  a: "",
+  lane: "human",
+  sub: "Email",
+  rt: "",
+  ct: "",
+  fl: "",
+  ...over,
+});
+
+const rollupOf = (over: Partial<Rollup>): Rollup => ({
+  dropSha: "037742a0",
+  dropDay: "2026-07-29",
+  window: { from: "2026-05-01", to: "2026-07-29" },
+  lanes: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  emails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  intent: { s: 0, o: 0, c: 0 },
+  receipts: 0,
+  lastHuman: null,
+  lastOrgInbound: "",
+  lastTheirs: null,
+  actors: [],
+  threads: [],
+  verdict: "",
+  ...over,
+});
+
+const srOf = (over: Partial<SecondRecord>): SecondRecord => ({
+  rollup: null,
+  gems: [],
+  support: null,
+  intent: null,
+  ...over,
+});
+
+const ENI_FUEL = srOf({
+  support: {
+    dropSha: "x",
+    total: 40,
+    spike: null,
+    themes: [
+      {
+        label: "Update Provided",
+        n: 20,
+        firstDay: "2026-07-01",
+        lastDay: "2026-07-28",
+        examples: [],
+      },
+    ],
+  },
+});
+
+describe("G1 · a colleague's gem reaches nothing under the stage (C6 as amended)", () => {
+  test("the chip row's gems leave out a colleague's gem and an acted one", () => {
+    const colleague = gemOf({
+      who: ["Anika Steenstra"],
+      whoKind: "colleague",
+      term: "HANDOFF",
+      act: "Ask Anika what they said.",
+    });
+    const acted = gemOf({ term: "OLD ASK", actedDay: "2026-07-29" });
+    const theirs = gemOf({});
+    assert.deepEqual(
+      chipGems([colleague, acted, theirs]).map((g) => g.term),
+      ["CANADA ASK"],
+    );
+    assert.deepEqual(chipGems([colleague]), [], "a colleague's gem alone shows no chip");
+  });
+});
+
+describe("G2 · a worked seat retires until taken back (the Act Lane decree)", () => {
+  const SEAT_AT = "2026-07-28T15:00:00.000Z";
+  test("a tap or a Copy stamp from yesterday worked the seat", () => {
+    const stamps = new Map([
+      [`groundwork:2026-07-29:${P9.id}:seated`, "2026-07-29T16:00:00.000Z"],
+    ]);
+    assert.equal(seatWorked(P9.id, SEAT_AT, stamps, []), true);
+  });
+  test("taken back, the stamp is gone and the seat leads again", () => {
+    assert.equal(seatWorked(P9.id, SEAT_AT, new Map(), []), false);
+  });
+  test("a seat filed after the stamp is a new seat", () => {
+    const stamps = new Map([
+      [`groundwork:2026-07-27:${P9.id}:seated`, "2026-07-27T16:00:00.000Z"],
+    ]);
+    assert.equal(seatWorked(P9.id, SEAT_AT, stamps, []), false);
+  });
+  test("another move's stamp on the account does not work the seat", () => {
+    const stamps = new Map([
+      [`groundwork:2026-07-29:${P9.id}:wire-trigger`, "2026-07-29T16:00:00.000Z"],
+      [`groundwork:2026-07-29:X${P9.id}:seated`, "2026-07-29T16:00:00.000Z"],
+    ]);
+    assert.equal(seatWorked(P9.id, SEAT_AT, stamps, []), false);
+  });
+  test("the record's send after the seat still retires it", () => {
+    assert.equal(
+      seatWorked(P9.id, SEAT_AT, new Map(), [{ at: "2026-07-29T14:00:00Z" }]),
+      true,
+    );
+    assert.equal(
+      seatWorked(P9.id, SEAT_AT, new Map(), [{ at: "2026-07-27T14:00:00Z" }]),
+      false,
+    );
+  });
+});
+
+describe("G3 · the drumbeat, the carry and the readout read the read's own last send", () => {
+  test("a self-assigned task never resets No reply since", () => {
+    const touches = [touchRow("2026-07-15T12:00:00Z")];
+    const read = p9Read([SELF_TASK], touches);
+    assert.equal(read.lastOutbound, null, "the read: no send");
+    const { all } = buildQueue({
+      accounts: [P9],
+      intelById: new Map([[P9.id, read.intel]]),
+      moveById: new Map([[P9.id, read.whoseMove]]),
+      readById: new Map([[P9.id, read]]),
+      notesById: new Map([[P9.id, [SELF_TASK]]]),
+      touches,
+      contactCountById: () => 5,
+      now: NOW,
+    });
+    const bump = all.find((q) => q.accountId === P9.id);
+    assert.equal(bump?.ruleId, "silence-bump");
+    assert.equal(bump?.reason, "No reply since July 15.");
+  });
+
+  test("a self-assigned task filed today never clears yesterday's carry", () => {
+    const grab = {
+      ...salesnavNote("high buyer intent", "2026-07-28T12:00:00Z"),
+      id: "sn1",
+      accountId: P9.id,
+      partner: "",
+      kind: "account" as const,
+      lane: "mine" as const,
+      actors: "",
+      recipients: "",
+    };
+    const today = { ...SELF_TASK, createdAt: "2026-07-30T13:00:00Z" };
+    const read = p9Read([today, grab]);
+    const { items } = buildQueue({
+      accounts: [P9],
+      intelById: new Map([[P9.id, read.intel]]),
+      readById: new Map([[P9.id, read]]),
+      notesById: new Map([[P9.id, [today, grab]]]),
+      touches: [],
+      contactCountById: () => 5,
+      doneKeys: new Set<string>(),
+      now: NOW,
+    });
+    assert.equal(items[0]?.ruleId, "intent-warm");
+    assert.equal(items[0]?.carried, true, "nothing was sent: it carries");
+  });
+
+  test("the readout says they wrote last when only a self-task followed their mail", () => {
+    const inbound = recordRow({
+      id: "in1",
+      body: "✉ OL Jul 20 — Re: Canada · Dana Ellis → Antaeus Coe\nCan you walk us through Canada?",
+      actors: "Dana Ellis → Antaeus Coe",
+      recipients: "Antaeus Coe",
+      source: "outlook",
+    });
+    const read = p9Read([SELF_TASK, inbound]);
+    const intent = {
+      level: "high" as const,
+      activities: null,
+      at: "2026-07-29T12:00:00Z",
+    };
+    const r = buildReadout({
+      accounts: [P9],
+      queue: [],
+      intelById: new Map([[P9.id, read.intel]]),
+      readById: new Map([[P9.id, read]]),
+      intentById: new Map([[P9.id, intent]]),
+      outreachAccountIds: new Set(),
+      partnerUpdatesSent: 0,
+      partnerUpdatesReplied: 0,
+      now: NOW,
+    });
+    const para = r.sections
+      .flatMap((s) => s.paragraphs)
+      .find((p) => p.accountId === P9.id);
+    assert.match(para?.text ?? "", /wrote to us last, on July 20/);
+  });
+});
+
+describe("G4 · engaged-never-introduced reads the read's conversationExists", () => {
+  const second = new Map([[P9.id, ENI_FUEL]]);
+  test("a glyph row with no direction is no conversation, as Accounts reads it", () => {
+    // A thread between two of their own people, which we were copied on.
+    const theirs = recordRow({
+      id: "th1",
+      body: "✉ OL Jul 20 — Re: payroll · Dana Ellis → Sam Ortiz",
+      actors: "Dana Ellis → Sam Ortiz",
+      recipients: "Sam Ortiz",
+      source: "outlook",
+    });
+    const read = p9Read([theirs]);
+    assert.equal(read.conversationExists, false);
+    const { all } = buildQueue({
+      accounts: [P9],
+      intelById: new Map([[P9.id, read.intel]]),
+      readById: new Map([[P9.id, read]]),
+      notesById: new Map([[P9.id, [theirs]]]),
+      touches: [],
+      contactCountById: () => 5,
+      secondById: second,
+      now: NOW,
+    });
+    assert.ok(all.some((q) => q.ruleId === "engaged-never-introduced"));
+  });
+
+  test("a send of ours is a conversation, and the rule stays quiet", () => {
+    const sent = recordRow({
+      id: "s1",
+      body: "✉ OL Jul 21 — Global · Antaeus Coe → Dana Ellis",
+      actors: "Antaeus Coe → Dana Ellis",
+      recipients: "Dana Ellis",
+      source: "outlook",
+      createdAt: "2026-07-21T12:00:00Z",
+    });
+    const read = p9Read([sent]);
+    assert.equal(read.conversationExists, true);
+    const { all } = buildQueue({
+      accounts: [P9],
+      intelById: new Map([[P9.id, read.intel]]),
+      readById: new Map([[P9.id, read]]),
+      notesById: new Map([[P9.id, [sent]]]),
+      touches: [],
+      contactCountById: () => 5,
+      secondById: second,
+      now: NOW,
+    });
+    assert.equal(
+      all.some((q) => q.ruleId === "engaged-never-introduced"),
+      false,
+    );
+  });
+});
+
+describe("G5 · every chip drills to row-level evidence (the meat law)", () => {
+  const rows = [
+    stagedOf({
+      k: "k-sup1",
+      d: "2026-07-22",
+      s: "PrismHR Case 01234567: W-2 reprint",
+      a: "Pat Lee",
+      lane: "support",
+    }),
+    stagedOf({
+      k: "k-sup2",
+      d: "2026-07-22",
+      s: "PrismHR Case 01234568: login",
+      a: "Pat Lee",
+      lane: "support",
+    }),
+    stagedOf({
+      k: "k-sup3",
+      d: "2026-07-21",
+      s: "PrismHR Case 01234569: tax",
+      a: "Pat Lee",
+      lane: "support",
+    }),
+    stagedOf({
+      k: "k-anika",
+      d: "2026-07-28",
+      s: "Re: Global intro",
+      a: "Anika Steenstra",
+      lane: "csm",
+    }),
+    stagedOf({
+      k: "k-lesha",
+      d: "2026-07-27",
+      s: "Quarterly check-in",
+      a: "Lesha Cyphers",
+      lane: "csm",
+    }),
+    stagedOf({
+      k: "k-lesha2",
+      d: "2026-07-20",
+      s: "Benefits renewal",
+      a: "Lesha Cyphers",
+      lane: "csm",
+    }),
+  ];
+
+  test("the collision chip's colleague names the row it stands on", () => {
+    const cite = collisionCite(rows, { who: "Anika Steenstra", day: "2026-07-28" });
+    assert.equal(cite?.k, "k-anika");
+    assert.equal(cite?.who, "Anika Steenstra");
+    assert.equal(collisionCite(rows, null), null);
+  });
+
+  test("SPIKE's day opens to that day's support rows", () => {
+    assert.deepEqual(
+      spikeCites(rows, "2026-07-22").map((c) => c.k),
+      ["k-sup1", "k-sup2"],
+    );
+  });
+
+  test("the CSM prep lines carry their row keys", () => {
+    assert.deepEqual(
+      csmPrepRows(rows, "Lesha Cyphers").map((c) => c.k),
+      ["k-lesha", "k-lesha2"],
+    );
+  });
+
+  test("SPIKE is its own door on the chip row", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { default: EvidenceChips } =
+      await import("../src/app/groundwork/evidence-chips");
+    const html = await render(
+      createElement(EvidenceChips, {
+        accountId: P9.id,
+        support: {
+          total: 14,
+          spikeDay: "2026-07-22",
+          spikeN: 2,
+          spikeCites: spikeCites(rows, "2026-07-22"),
+        },
+        intent: null,
+        collision: null,
+        gems: [],
+      }),
+    );
+    const buttons = [...html.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)].map((m) =>
+      textOf(m[1]),
+    );
+    assert.ok(
+      buttons.some((b) => /^SPIKE 07\/22\b/.test(b)),
+      `no SPIKE door in ${JSON.stringify(buttons)}`,
+    );
+    assert.ok(buttons.some((b) => /SUPPORT 14$/.test(b)));
+  });
+
+  test("a cited row renders as a door to its excerpt", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { CiteRows } = await import("../src/app/groundwork/evidence-chips");
+    const html = await render(
+      createElement(CiteRows, {
+        accountId: P9.id,
+        rows: [collisionCite(rows, { who: "Anika Steenstra", day: "2026-07-28" })!],
+      }),
+    );
+    const buttons = [...html.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)].map((m) =>
+      textOf(m[1]),
+    );
+    assert.deepEqual(buttons, ["07/28 · Anika Steenstra · Re: Global intro ▸ read it"]);
+  });
+});
+
+describe("G6 · the CSM prep kicker says the real count", () => {
+  test("two to four rows are counted, one is a row, five are five", () => {
+    assert.equal(prepKicker(1), "THE CSM’S OWN LAST ROW · SHARPEN THE ASK");
+    assert.equal(prepKicker(3), "THE CSM’S OWN LAST 3 ROWS · SHARPEN THE ASK");
+    assert.equal(prepKicker(5), "THE CSM’S OWN LAST 5 ROWS · SHARPEN THE ASK");
+  });
+});
+
+describe("G7 · the queue's demand reads the latest of both research stores", () => {
+  // research.json scores this account 18, under the gate, as of the sweep (7/2).
+  const LOW = acct({ id: "001F000000w38PPIAY", name: "Low Sweep", csm: "Unassigned" });
+  const OCT = new Date("2026-10-15T15:00:00Z");
+  const run = (at: string, signals: number) =>
+    buildQueue({
+      accounts: [LOW],
+      intelById: new Map(),
+      notesById: new Map([[LOW.id, [{ body: "note", source: "room", createdAt: at }]]]),
+      touches: [],
+      contactCountById: () => 5,
+      researchAtById: new Map([[LOW.id, at]]),
+      researchSignalsById: new Map([[LOW.id, signals]]),
+      now: OCT,
+    }).all.filter((q) => q.accountId === LOW.id);
+
+  test("the account's own later pass that found demand clears the gate", () => {
+    const [hit] = run("2026-07-10T12:00:00Z", 2);
+    assert.equal(hit?.ruleId, "stale-above-gate");
+    assert.equal(hit?.action, "Refresh the account research.");
+    assert.equal(hit?.reason, "Real demand. Research 97 days old.");
+  });
+
+  test("a later pass that found nothing is silent, and the sweep's score stands", () => {
+    assert.deepEqual(run("2026-07-10T12:00:00Z", 0), []);
+  });
+
+  test("a pass older than the sweep yields to the sweep", () => {
+    assert.deepEqual(run("2026-06-01T12:00:00Z", 2), []);
+  });
+
+  test("the research age is the newer of the two passes, as the Spring's chip reads it", () => {
+    // The account's own pass is 120 days old, but the sweep read it on 7/2.
+    const big = acct({ id: "001F000000w38ItIAI", name: "Big Demand", csm: "Unassigned" });
+    const { all } = buildQueue({
+      accounts: [big],
+      intelById: new Map(),
+      notesById: new Map([
+        [big.id, [{ body: "note", source: "room", createdAt: "2026-07-29T12:00:00Z" }]],
+      ]),
+      touches: [],
+      contactCountById: () => 5,
+      researchAtById: new Map([[big.id, "2026-04-01T12:00:00Z"]]),
+      now: NOW,
+    });
+    assert.equal(
+      all.some((q) => q.ruleId === "stale-above-gate"),
+      false,
+    );
+  });
+});
+
+describe("G8 · the take-back withdraws the move's own tap", () => {
+  const taps = [
+    { id: "tap-wire", createdAt: "2026-07-30T16:00:00.000Z" },
+    { id: "tap-early", createdAt: "2026-07-30T14:00:00.000Z" },
+  ];
+  test("a stamp takes back the tap filed with it, not today's newest", () => {
+    assert.equal(tapOfStamp(taps, "2026-07-30T14:00:00.000Z")?.id, "tap-early");
+    assert.equal(tapOfStamp(taps, "2026-07-30T16:00:00.000Z")?.id, "tap-wire");
+  });
+  test("a Copy stamp filed no tap, and takes none back", () => {
+    assert.equal(tapOfStamp(taps, "2026-07-30T16:30:00.000Z"), null);
+  });
+});
+
+describe("pass 8 call 4 · only an attributed inbound row quiets the drumbeat", () => {
+  const touches = [touchRow("2026-07-15T12:00:00Z")];
+  const run = (rollup: Rollup) =>
+    buildQueue({
+      accounts: [P9],
+      intelById: new Map(),
+      notesById: new Map(),
+      touches,
+      contactCountById: () => 5,
+      secondById: new Map([[P9.id, srOf({ rollup })]]),
+      now: NOW,
+    }).all.find((q) => q.accountId === P9.id);
+
+  test("the account-level Last Email Received alone leaves the bump standing", () => {
+    const hit = run(rollupOf({ lastOrgInbound: "2026-07-25 09:00" }));
+    assert.equal(hit?.ruleId, "silence-bump");
+  });
+
+  test("their attributed reply after our send answers the thread", () => {
+    const hit = run(
+      rollupOf({
+        lastOrgInbound: "2026-07-25 09:00",
+        lastTheirs: { day: "2026-07-25", who: "Dana Ellis", subject: "Re: Global" },
+      }),
+    );
+    assert.equal(hit, undefined);
+  });
+});
+
+describe("pass 8 call 11 · the burn bar turns red and pulses in the last five minutes", () => {
+  const css = readFileSync("src/app/groundwork/groundwork.module.css", "utf8");
+  // The body of every `@media (prefers-reduced-motion: no-preference)` block.
+  const motionBlocks: string[] = [];
+  let outside = css;
+  for (const m of css.matchAll(/@media \(prefers-reduced-motion: no-preference\) \{/g)) {
+    let depth = 1;
+    let i = (m.index ?? 0) + m[0].length;
+    const start = i;
+    while (depth > 0 && i < css.length) {
+      if (css[i] === "{") depth += 1;
+      if (css[i] === "}") depth -= 1;
+      i += 1;
+    }
+    motionBlocks.push(css.slice(start, i - 1));
+    outside = outside.replace(css.slice(m.index ?? 0, i), "");
+  }
+  test("the bar is red whatever the motion setting", () => {
+    assert.match(outside, /\.kxLate \.kxBurn i\s*\{[^}]*background:\s*var\(--ds-red\)/);
+  });
+  test("the bar pulses with the count only where motion is welcome", () => {
+    const pulse = motionBlocks.join("\n");
+    assert.match(pulse, /\.kxLate \.kxBurn i[^{]*\{[^}]*animation:\s*kxThrob/);
+    assert.match(pulse, /\.kxLate \.kxCount[^{]*\{[^}]*animation:\s*kxThrob/);
+    assert.equal(/\.kxBurn i[^{]*\{[^}]*animation/.test(outside), false);
+  });
+});
+
+describe("the nudge's business days are Chicago days (all days are Chicago days)", () => {
+  test("a Friday 10 PM read is still fresh Monday morning", () => {
+    // 03:00 UTC Saturday is 10:00 PM Friday in Chicago.
+    assert.equal(
+      businessDaysBetween("2026-07-25T03:00:00Z", new Date("2026-07-27T14:00:00Z")),
+      0,
+    );
+    assert.equal(
+      businessDaysBetween("2026-07-25T03:00:00Z", new Date("2026-07-28T14:00:00Z")),
+      1,
+    );
+  });
+
+  test("a grab pasted at 8 PM never reads its own Chicago date as a riding lane", () => {
+    // 01:00 UTC on 7/31 is 8:00 PM on 7/30 in Chicago, the day the row names.
+    const late = salesnavNote("Amplify: ClearCo 7/30/2026", "2026-07-31T01:00:00Z");
+    assert.equal(ridingLaneDate([late], new Date("2026-07-31T02:00:00Z")), null);
+  });
+});
+
+describe("the stamp words are plain (the plain-speech law; the stamp words, 2026-10-06)", () => {
+  test("the intent note and the colleague's deal say what was done, flat", () => {
+    for (const ctx of [{}, { intentActivities: 11 }, { ridingLaneCloses: "August 20" }]) {
+      for (const id of ["intent-warm", "riding-lane"]) {
+        const s = stampSubtext(id, ctx);
+        assert.equal(/READING-US|ASKED INTO/.test(s), false, s);
+      }
+    }
+    assert.equal(
+      stampSubtext("intent-warm", { intentActivities: 11 }),
+      "SENT THEM A NOTE · 11 SALES NAV READS",
+    );
+    assert.equal(
+      stampSubtext("riding-lane", { ridingLaneCloses: "August 20" }),
+      "ASKED THE COLLEAGUE ON THE DEAL TO BRING US IN · CLOSES AUGUST 20",
+    );
+  });
+
+  test("the intent move's own line says it plainly too", () => {
+    const { all } = buildQueue({
+      accounts: [P9],
+      intelById: new Map(),
+      notesById: new Map([
+        [P9.id, [salesnavNote("high buyer intent", "2026-07-29T12:00:00Z")]],
+      ]),
+      touches: [],
+      contactCountById: () => 5,
+      now: NOW,
+    });
+    const hit = all.find((q) => q.ruleId === "intent-warm");
+    assert.equal(hit?.action, "Send them a note.");
+  });
+
+  test("no title on the Groundwork page hangs an aside on an em-dash", () => {
+    const page = readFileSync("src/app/groundwork/page.tsx", "utf8");
+    const titles = [...page.matchAll(/title="([^"]*)"/g)].map((m) => m[1]);
+    assert.ok(titles.length > 5);
+    assert.deepEqual(
+      titles.filter((t) => t.includes("—")),
+      [],
+    );
+  });
+});
+
+describe("D15 reaches every action (pass 8 call 2): Groundwork's actions refresh Groundwork only", () => {
+  test("no action revalidates another surface", () => {
+    const actions = readFileSync("src/app/groundwork/actions.ts", "utf8");
+    const paths = [...actions.matchAll(/revalidatePath\(\s*"([^"]*)"/g)].map((m) => m[1]);
+    assert.ok(paths.length > 0);
+    assert.deepEqual([...new Set(paths)], ["/groundwork"]);
+    assert.equal(/revalidateTag\(/.test(actions), false);
   });
 });

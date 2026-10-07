@@ -10,6 +10,7 @@
 // dead, not dormant.
 
 import { HEADS, isSalesNav as isSalesNavSource } from "@/lib/ingest/dialect";
+import { USER_TZ, userDayKey } from "@/lib/tz";
 
 const DECAY_DAYS = 7;
 
@@ -71,15 +72,26 @@ function newestReadIso(notesByAccount: Map<string, NoteLike[]>): string | null {
   return newest;
 }
 
-// Weekday count between two instants (UTC-day granularity, endpoints open) —
-// the same shape the morning brief uses, kept local so this module stays pure.
+// The day of the week in Chicago, where the operator's weekend falls (all
+// days are Chicago days, theirs or ours). The UTC weekday read a Friday 10 PM
+// read as Saturday and nagged for a new grab on Monday morning (pass 8 X5).
+const chicagoWeekend = (t: number): boolean => {
+  const day = new Date(t).toLocaleDateString("en-US", {
+    timeZone: USER_TZ,
+    weekday: "short",
+  });
+  return day === "Sat" || day === "Sun";
+};
+
+// Whole business days between two instants: each full day after `from` that
+// ends on a Chicago weekday counts (endpoints open) — the same shape the
+// morning brief uses, kept local so this module stays pure.
 export function businessDaysBetween(fromIso: string, to: Date): number {
   const from = Date.parse(fromIso);
   if (Number.isNaN(from) || from >= to.getTime()) return 0;
   let n = 0;
   for (let t = from + 86_400_000; t <= to.getTime(); t += 86_400_000) {
-    const dow = new Date(t).getUTCDay();
-    if (dow !== 0 && dow !== 6) n++;
+    if (!chicagoWeekend(t)) n++;
   }
   return n;
 }
@@ -107,7 +119,9 @@ export function ridingLaneDate(
 ): string | null {
   for (const n of notes ?? []) {
     if (!isSalesNav(n)) continue;
-    const noteDay = n.createdAt.slice(0, 10);
+    // The paste's own day is a Chicago day: a grab pasted at 8 PM lands after
+    // midnight UTC, and its clock line names the Chicago date (pass 8 X5).
+    const noteDay = userDayKey(n.createdAt);
     const lines = n.body.split("\n").filter((l) => !GRAB_HEAD_RE.test(l));
     for (const line of lines) {
       for (const m of line.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)) {

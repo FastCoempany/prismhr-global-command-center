@@ -77,16 +77,19 @@ export function stampSubtext(ruleId: QueueRuleId | string, ctx: StampContext): s
         : "SENT A NOTE ABOUT THEIR NEWS";
     }
     case "intent-warm": {
+      // Plain words (pass 9; the plain-speech law bans coined phrasing): the
+      // move said "Send them a note." because their people are reading us.
       const n = ctx.intentActivities;
       return n
-        ? `SENT THE READING-US NOTE · ${n} SALES NAV READS`
-        : "SENT THE READING-US NOTE · SALES NAV SHOWS THEM READING US";
+        ? `SENT THEM A NOTE · ${n} SALES NAV READS`
+        : "SENT THEM A NOTE · THEY'VE BEEN READING OUR MATERIAL";
     }
     case "riding-lane": {
+      // The ask went to the colleague who owns the open opportunity.
       const d = ctx.ridingLaneCloses ?? "";
       return d
-        ? `ASKED INTO THE COLLEAGUE'S OPEN DEAL · CLOSES ${d.toUpperCase()}`
-        : "ASKED INTO THE COLLEAGUE'S OPEN DEAL";
+        ? `ASKED THE COLLEAGUE ON THE DEAL TO BRING US IN · CLOSES ${d.toUpperCase()}`
+        : "ASKED THE COLLEAGUE ON THE DEAL TO BRING US IN";
     }
     case "silence-bump": {
       const s = ctx.threadSubject ?? "";

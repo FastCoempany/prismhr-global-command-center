@@ -24,6 +24,7 @@ import {
   type SecondRecord,
 } from "../src/lib/activity/read";
 import { buildQueue } from "../src/lib/groundwork/day";
+import { readAccount } from "../src/lib/record/read";
 
 import { dropQueues } from "../src/lib/activity/harness";
 import { buildSendbook, docsFromRows } from "../src/lib/sendbook/read";
@@ -365,6 +366,32 @@ const baseInput = (over: Record<string, unknown>) => ({
   ...over,
 });
 
+/** The single account read over one row, as the page builds it: the queue
+ *  asks it whether a conversation exists (field 16; pass 9, G4). */
+const readOver = (body: string, actors = "") =>
+  readAccount({
+    account: { id: "TEST0000000000001", name: "Test Partner", contacts: [] },
+    notes: [
+      {
+        id: "n1",
+        accountId: "TEST0000000000001",
+        partner: "",
+        kind: "account",
+        lane: "mine",
+        body,
+        actors,
+        source: actors ? "outlook" : "room",
+        recipients: actors ? (actors.split("→")[1] ?? "").trim() : "",
+        createdAt: "2026-08-10T12:00:00Z",
+      },
+    ],
+    touches: [],
+    todos: [],
+    dispositions: new Map(),
+    homeSide: [],
+    now: NOW,
+  });
+
 describe("the queue reads the second record", () => {
   test("intent-warm fires from the store at 84 with the opens reason", () => {
     const second = new Map([
@@ -421,22 +448,18 @@ describe("the queue reads the second record", () => {
       }) as never,
     ).all.find((q) => q.ruleId === "engaged-never-introduced");
     assert.equal(boarded, undefined);
-    // First-record motion kills it.
+    // First-record motion kills it. Rewritten in pass 9 (G4): the read says
+    // whether a conversation exists, so the motion is a send the read sees,
+    // not a bare glyph row with no sender.
+    const sent = readOver(
+      "✉ OL Aug 18 — Global · Antaeus Coe → Pat Example",
+      "Antaeus Coe → Pat Example",
+    );
+    assert.equal(sent.conversationExists, true);
     const moved = buildQueue(
       baseInput({
         secondById: second,
-        notesById: new Map([
-          [
-            "TEST0000000000001",
-            [
-              {
-                body: "✉ sent a note",
-                source: "room",
-                createdAt: "2026-08-18T12:00:00Z",
-              },
-            ],
-          ],
-        ]),
+        readById: new Map([["TEST0000000000001", sent]]),
       }) as never,
     ).all.find((q) => q.ruleId === "engaged-never-introduced");
     assert.equal(moved, undefined);
@@ -447,13 +470,17 @@ describe("the queue reads the second record", () => {
     // export says the account answered, into a colleague's inbox. The thread is
     // answered — no bump, no revival — and the retired coordination move
     // ("Ask Anika what they said.") stages nowhere: a colleague's motion
-    // produces nothing for the operator to do.
+    // produces nothing for the operator to do. Rewritten in pass 9 (pass 8
+    // call 4): the answer is the export's attributed inbound row, lastTheirs;
+    // the account-level datetime alone never quiets the drumbeat
+    // (tests/groundwork.test.ts pins that half).
     const second = new Map([
       [
         "TEST0000000000001",
         sr({
           rollup: rollup({
             lastOrgInbound: "2026-08-18 09:00",
+            lastTheirs: { day: "2026-08-18", who: "Pat Example", subject: "Re: global" },
             lastHuman: {
               day: "2026-08-18",
               how: "email",
@@ -799,9 +826,16 @@ describe("the adversarial patches hold", () => {
         }),
       ],
     ]);
+    // Rewritten in pass 9 (G4): the read says whether a conversation exists
+    // (field 16, a doc with a direction or a touch), as Accounts' ENGAGED
+    // reads it. A ☰ head with no sender carries no direction, so it no longer
+    // silences the rule on a glyph test of Groundwork's own.
+    const archive = readOver("☰ filed case intel from the export");
+    assert.equal(archive.conversationExists, false);
     const bg = buildQueue(
       baseInput({
         secondById: second,
+        readById: new Map([["TEST0000000000001", archive]]),
         notesById: new Map([
           [
             "TEST0000000000001",
@@ -816,8 +850,6 @@ describe("the adversarial patches hold", () => {
         ]),
       }) as never,
     ).all.find((q) => q.ruleId === "engaged-never-introduced");
-    // ☰ heads are meeting/thread glyphs — that IS conversation motion; use a
-    // plain intel note instead for the background case.
     const bg2 = buildQueue(
       baseInput({
         secondById: second,
@@ -836,22 +868,15 @@ describe("the adversarial patches hold", () => {
       }) as never,
     ).all.find((q) => q.ruleId === "engaged-never-introduced");
     assert.ok(bg2, "plain filed intel does not silence the rule");
-    assert.equal(bg, undefined, "a send/meeting head is a conversation");
+    assert.ok(bg, "an archive head with no sender is no conversation");
+    const send = readOver(
+      "✉ OL Aug 10 — Sent the first note · Antaeus Coe → Pat Example",
+      "Antaeus Coe → Pat Example",
+    );
     const sent = buildQueue(
       baseInput({
         secondById: second,
-        notesById: new Map([
-          [
-            "TEST0000000000001",
-            [
-              {
-                body: "✉ Sent the first note",
-                source: "room",
-                createdAt: "2026-08-10T12:00:00Z",
-              },
-            ],
-          ],
-        ]),
+        readById: new Map([["TEST0000000000001", send]]),
       }) as never,
     ).all.find((q) => q.ruleId === "engaged-never-introduced");
     assert.equal(sent, undefined, "a filed send is a conversation");

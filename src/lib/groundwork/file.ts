@@ -15,6 +15,7 @@ import type { QueueItem } from "./day";
 import { composeFor, WIDENING_LINE, type Composed } from "./compose";
 import { paragraphFor } from "./readout";
 import { WIRE_NS, type WireItem } from "./wire";
+import type { Cite } from "./chips";
 
 type FilePerson = { name: string; title: string; flag: "csm" | "contact" | "" };
 type FileHistoryLine = { atIso: string; line: string };
@@ -23,8 +24,9 @@ type FileModel = {
   accountId: string;
   /** The collision guard's quiet flag — informs, never blocks. "" = clear. */
   collisionLine: string;
-  /** The CSM's own recent motion — the brief's prep, folded (5.3). */
-  csmPrep: { day: string; subject: string }[];
+  /** The CSM's own recent motion — the brief's prep, folded (5.3), each row
+   *  a door to its excerpt (the meat law; pass 8 G5). */
+  csmPrep: Cite[];
   name: string;
   csm: string;
   sourcesLine: string; // computed provenance — only stores that contributed
@@ -76,6 +78,9 @@ export function buildFile(
     // The relationship read, when the caller derived one from the record —
     // it outranks the book primary in the people head and the compose.
     relationship?: { name: string; email: string; source: "record" | "book" } | null;
+    /** The read's own last send (field 2), for the To-Russ paragraph — the
+     *  same fact the full readout reads (one builder; pass 8 G3). */
+    lastOutbound?: string;
     /** The second record's fuel for the composer and the collision gate. */
     second?: {
       supportCases?: number;
@@ -85,8 +90,8 @@ export function buildFile(
         colleague: { who: string; day: string } | null;
       } | null;
       /** roundup-slot only: the CSM's own last five rows on this account —
-       *  date and subject head, from the staged slice. */
-      csmPrep?: { day: string; subject: string }[];
+       *  key, date and subject head, from the staged slice. */
+      csmPrep?: Cite[];
     } | null;
     now: Date;
   },
@@ -228,7 +233,7 @@ export function buildFile(
     // beats the wrong address; the draft button simply doesn't render.
     contactEmail:
       rel.source === "record" ? rel.email : rel.email || (p.contactEmail ?? ""),
-    russ: paragraphFor(p, { intel, intent, queueItem }),
+    russ: paragraphFor(p, { intel, intent, queueItem, lastOutbound: deps.lastOutbound }),
     history: hist.slice(-HISTORY_CAP),
   };
 }

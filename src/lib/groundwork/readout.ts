@@ -10,6 +10,7 @@
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { redactMoney } from "@/lib/intel/lexicon";
+import type { AccountRead } from "@/lib/record/read";
 import type { IntentSignal } from "./signals";
 import type { QueueItem } from "./day";
 
@@ -21,6 +22,9 @@ type ReadoutInput = {
   accounts: Peo[];
   queue: QueueItem[]; // the FULL ranked list (uncapped) — counts stay real
   intelById: Map<string, DealIntel>;
+  /** The single account read's last send per account (field 2) — the one
+   *  reader of "we wrote after them" (pass 8 G3). */
+  readById?: Map<string, Pick<AccountRead, "lastOutbound">>;
   intentById: Map<string, IntentSignal>;
   outreachAccountIds: Set<string>; // accounts with a LIVE outreach thread
   partnerUpdatesSent: number; // partner-manager updates sent, last 7 days
@@ -71,9 +75,14 @@ export function paragraphFor(
     intel?: DealIntel;
     intent?: IntentSignal | null;
     queueItem?: QueueItem | null;
+    /** The read's own last send (field 2), "" or absent when there is none.
+     *  The deal facts' `lastOutbound` counts a self-assigned task or a logged
+     *  meeting as a send, so it never decides who wrote last (pass 8 G3). */
+    lastOutbound?: string;
   },
 ): string {
   const bits: string[] = [];
+  const lastOut = args.lastOutbound ?? "";
   const dateIso = args.intel?.timing?.value.dateIso;
   const rule = args.queueItem?.ruleId;
 
@@ -96,7 +105,7 @@ export function paragraphFor(
   } else if (
     !rule &&
     args.intel?.lastInbound &&
-    (!args.intel.lastOutbound || args.intel.lastInbound > args.intel.lastOutbound)
+    (!lastOut || Date.parse(args.intel.lastInbound) > Date.parse(lastOut))
   ) {
     bits.push(
       `${identityClause(p)} — wrote to us last, on ${monthDay(args.intel.lastInbound)}; the reply lives in the HomeRoom.`,
@@ -155,6 +164,7 @@ export function buildReadout(inp: ReadoutInput): Readout {
         intel: inp.intelById.get(id),
         intent: inp.intentById.get(id) ?? null,
         queueItem: queueById.get(id) ?? null,
+        lastOutbound: inp.readById?.get(id)?.lastOutbound?.at ?? "",
       }),
     };
   };

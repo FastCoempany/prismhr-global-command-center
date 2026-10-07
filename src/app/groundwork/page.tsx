@@ -17,7 +17,11 @@ import type { DealIntel } from "@/lib/intel/types";
 import { readAccount, secondRecordFor, type AccountRead } from "@/lib/record/read";
 import { readFromStores } from "@/lib/record/stores";
 import { homeSideFrom } from "@/lib/pipeline/build";
-import { RESEARCH_NS } from "@/lib/intel/deep-research";
+import {
+  RESEARCH_NS,
+  latestResearchAt,
+  parseResearchBody,
+} from "@/lib/intel/deep-research";
 import {
   isNamespacedAccountId,
   loadAccountNotes,
@@ -29,7 +33,14 @@ import {
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
 import { sfAccountUrl } from "@/lib/salesforce";
-import { buildQueue, heatOf, liveMotionIds, moveKey } from "@/lib/groundwork/day";
+import {
+  buildQueue,
+  heatOf,
+  liveMotionIds,
+  moveKey,
+  secondOnlyMotionIds,
+  sweepAtFor,
+} from "@/lib/groundwork/day";
 import { stampSubtext } from "@/lib/groundwork/stamp";
 import {
   collisionFor,
@@ -43,8 +54,15 @@ import {
   DROP_STALE_DAYS,
   type SecondRecord,
 } from "@/lib/activity/read";
-import { cleanSubject } from "@/lib/activity/excerpt";
-import EvidenceChips from "./evidence-chips";
+import EvidenceChips, { CiteRows } from "./evidence-chips";
+import {
+  chipGems,
+  collisionCite,
+  csmPrepRows,
+  prepKicker,
+  spikeCites,
+} from "@/lib/groundwork/chips";
+import { seatWorked } from "@/lib/groundwork/worked";
 import { loadDashboard } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
@@ -149,7 +167,10 @@ export default async function GroundworkPage({
   >();
   const wireItems: WireItem[] = [];
   const institutions: Institution[] = [];
-  const researchByAccount = new Map<string, { at: string; line: string }>();
+  const researchByAccount = new Map<
+    string,
+    { at: string; line: string; signals: number }
+  >();
   const sendTapsById = new Map<string, SendNote[]>();
   for (const [id, notes] of notesMap) {
     if (id.startsWith(SENDBOOK_NS)) {
@@ -190,6 +211,9 @@ export default async function GroundworkPage({
         researchByAccount.set(accountId, {
           at: newest.createdAt,
           line: line.slice(0, 160),
+          // The signals the pass found: the queue's demand reads them beside
+          // the sweep's score, the later store speaking (G7).
+          signals: parseResearchBody(newest.body)?.signals.length ?? 0,
         });
       }
       continue;
@@ -331,7 +355,11 @@ export default async function GroundworkPage({
     }
   }
   const researchAtById = new Map<string, string>();
-  for (const [id, r] of researchByAccount) researchAtById.set(id, r.at);
+  const researchSignalsById = new Map<string, number>();
+  for (const [id, r] of researchByAccount) {
+    researchAtById.set(id, r.at);
+    researchSignalsById.set(id, r.signals);
+  }
 
   // What the board already knows: a deal at demo or later is the HomeRoom's
   // to work, and a stamped outcome is over. Groundwork prospects the book it
@@ -372,6 +400,12 @@ export default async function GroundworkPage({
     if (d.status === "not-mine" || d.status === "parked") excludedIds.add(id);
   }
   for (const id of snoozes.keys()) if (!id.includes(":")) excludedIds.add(id);
+  // An off-board account excluded for nothing but the second record's live
+  // motion has no HomeRoom row (pass 8 call 1; C6), so its seat stays on the
+  // wing while its rules stay out (C8).
+  const seatStaysIds = new Set<string>();
+  for (const id of secondOnlyMotionIds(accountNotes, intelById, now, secondFolded))
+    if (!excludedIds.has(id) && !boardIds.has(id)) seatStaysIds.add(id);
   // The record's live motion excludes too: a recent inbound or a fresh
   // meeting on file means the deal is being WORKED — the HomeRoom's job,
   // whatever the lagging board says. Both records speak (C6): the export's
@@ -382,7 +416,10 @@ export default async function GroundworkPage({
 
   // The Act Lane's seats (founder-decreed 2026-08-21): a move the operator
   // filed from the accounts sheet leads the wing until it is worked, taken
-  // back, or the record shows the outbound after the seat.
+  // back, or the record shows the outbound after the seat. Worked is the
+  // seated move's stamp on any day since the seat, a tap or a Copy: a seat
+  // worked yesterday stays off the wing until its stamp is taken back
+  // (seatWorked; pass 8 G2).
   const seats = new Map<string, { act: string; term: string; day: string }>();
   for (const [id, notes] of notesMap) {
     if (!id.startsWith(SEAT_NS)) continue;
@@ -394,11 +431,13 @@ export default async function GroundworkPage({
     // ✕ on the register parks the seat like any record entry (C8); a parked
     // seat stays off the wing until the Archive restores it.
     if (dispositions.has(`hide:note:${seatNote.id}`)) continue;
-    const seatAt = Date.parse(seatNote.createdAt);
     // The read's docs, so a ✕-parked send retires no seat (the one hide
     // filter, inside the read).
-    const worked = recordSends(readById.get(accountId)?.docs ?? []).some(
-      (s) => Date.parse(s.at) > seatAt,
+    const worked = seatWorked(
+      accountId,
+      seatNote.createdAt,
+      doneTimes,
+      recordSends(readById.get(accountId)?.docs ?? []),
     );
     if (!worked) seats.set(accountId, seat);
   }
@@ -411,6 +450,8 @@ export default async function GroundworkPage({
     accounts: peos,
     intelById,
     moveById,
+    // The read's own last send and conversation (fields 2 and 16; G3, G4).
+    readById,
     notesById: accountNotes,
     touches: touchesForRead,
     // The widest people count the app holds (Ted doctrine): the frozen SF
@@ -420,8 +461,10 @@ export default async function GroundworkPage({
       Math.max(contactCount(id), intelById.get(id)?.threads.people.length ?? 0),
     wireAtById,
     researchAtById,
+    researchSignalsById,
     doneKeys: new Set(doneTimes.keys()),
     excludedIds,
+    seatStaysIds,
     secondById,
     boardIds,
     seats,
@@ -487,6 +530,9 @@ export default async function GroundworkPage({
   };
   const ruleSub = (id: string, ruleId: string): string => {
     const r = researchByAccount.get(id);
+    // The age the move spoke: the newer of the account's own pass and the
+    // sweep, as the queue reads it (G7). No own pass means the book-wide one.
+    const researchAt = r ? (latestResearchAt(r.at, sweepAtFor(id)) ?? r.at) : "";
     const lane = ridingLaneDate(accountNotes.get(id), now);
     const gem = stampGem(id);
     return stampSubtext(ruleId, {
@@ -496,8 +542,8 @@ export default async function GroundworkPage({
       threadSubject: threadSubjectOf(id),
       lastSendDate: lastSendDateOf(id),
       csm: getPeo(id)?.csm ?? "",
-      researchAgeDays: r
-        ? Math.floor((now.getTime() - Date.parse(r.at)) / 86_400_000)
+      researchAgeDays: researchAt
+        ? Math.floor((now.getTime() - Date.parse(researchAt)) / 86_400_000)
         : null,
       seatDay: seatDayOf(id),
       gemTerm: gem?.term ?? "",
@@ -555,6 +601,22 @@ export default async function GroundworkPage({
     : null;
   const fileOpen = fileParam === "1";
 
+  // The rows the stage's doors open to (the meat law; pass 8 G5): the support
+  // spike's day, the colleague's thread behind the collision flag, and the
+  // roundup brief's prep. The staged slice is read for this one account,
+  // only when a door needs it; the doors carry row keys, and every excerpt
+  // comes down from the evidence route on click.
+  const stageSr = stageItem ? secondById.get(stageItem.accountId) : undefined;
+  const stageCollision = stageSr ? collisionFor(stageSr, now) : null;
+  const stageRows =
+    stageItem &&
+    stageSr &&
+    ((stageItem.ruleId === "roundup-slot" && !!stageAccount?.csm) ||
+      !!stageCollision?.colleague ||
+      !!stageSr.support?.spike)
+      ? await fetchStageRows(stageItem.accountId).catch(() => [])
+      : [];
+
   const file =
     stageItem && stageAccount
       ? buildFile(stageAccount, {
@@ -582,26 +644,24 @@ export default async function GroundworkPage({
               name: stageAccount.contactName,
               email: stageAccount.contactEmail,
             }),
-          second: await (async () => {
-            const sr = secondById.get(stageItem.accountId);
+          lastOutbound: readById.get(stageItem.accountId)?.lastOutbound?.at ?? "",
+          second: (() => {
+            const sr = stageSr;
             if (!sr) return null;
             const gem = outreachGem(sr);
             // The roundup brief's prep (5.3): the CSM's own last five rows on
-            // this account — heads only, from the staged slice, read for this
-            // one account only when the slot is on stage.
+            // this account, each a door to its excerpt, from the staged slice
+            // read above only when the slot is on stage.
             const csmPrep =
-              stageItem.ruleId === "roundup-slot" && stageAccount.csm
-                ? (await fetchStageRows(stageItem.accountId).catch(() => []))
-                    .filter((r) => r.a === stageAccount.csm)
-                    .slice(0, 5)
-                    .map((r) => ({ day: r.d, subject: cleanSubject(r.s).slice(0, 70) }))
+              stageItem.ruleId === "roundup-slot"
+                ? csmPrepRows(stageRows, stageAccount.csm)
                 : [];
             return {
               supportCases: engagedNeverIntroduced(sr, now)?.cases ?? sr.support?.total,
               gem: gem
                 ? { act: gem.act, reason: gem.reason, term: gem.term, who: gem.who }
                 : null,
-              collision: collisionFor(sr, now),
+              collision: stageCollision,
               csmPrep,
             };
           })(),
@@ -622,8 +682,12 @@ export default async function GroundworkPage({
   }
   // The record's threads count too (Ted doctrine): a filed conversation is
   // as open as a logged one — the number spoken to Russ must not undercount.
-  for (const [id, intel] of intelById)
-    if (intel.lastInbound || intel.lastOutbound) outreachAccountIds.add(id);
+  // Our side of it is the read's own last send (field 2), so a self-assigned
+  // task opens no conversation (G3).
+  for (const id of intelById.keys()) {
+    const r = readById.get(id);
+    if (r?.lastInbound || r?.lastOutbound) outreachAccountIds.add(id);
+  }
   // And the Sendbook's tapped touches — a LinkedIn message is an open door.
   for (const id of sendTapsById.keys()) outreachAccountIds.add(id);
   const weekAgo = now.getTime() - 7 * 86_400_000;
@@ -672,6 +736,7 @@ export default async function GroundworkPage({
     accounts: peos,
     queue: rankedAll,
     intelById,
+    readById,
     intentById,
     outreachAccountIds,
     partnerUpdatesSent: partnerTouches.length,
@@ -742,7 +807,7 @@ export default async function GroundworkPage({
                       <button
                         className={styles.wingUndo}
                         type="submit"
-                        title="Take it back. The move returns to the queue; the tapped touch comes out of the register. A filed email stays — the record is never unwritten."
+                        title="Take it back. The move returns to the queue, and the tap it filed leaves the register. A filed email stays on the record."
                       >
                         ↺
                       </button>
@@ -779,10 +844,10 @@ export default async function GroundworkPage({
                 <h1 className={styles.stgAct}>{stageItem.action}</h1>
                 <p className={styles.stgWhy}>{stageItem.reason}</p>
                 {(() => {
-                  const sr = secondById.get(stageItem.accountId);
+                  const sr = stageSr;
                   if (!sr) return null;
                   const warm = intentWarm(sr, now);
-                  const col = collisionFor(sr, now);
+                  const col = stageCollision;
                   return (
                     <EvidenceChips
                       accountId={stageItem.accountId}
@@ -792,6 +857,10 @@ export default async function GroundworkPage({
                               total: sr.support.total,
                               spikeDay: sr.support.spike?.day ?? "",
                               spikeN: sr.support.spike?.n ?? 0,
+                              spikeCites: spikeCites(
+                                stageRows,
+                                sr.support.spike?.day ?? "",
+                              ),
                             }
                           : null
                       }
@@ -812,17 +881,22 @@ export default async function GroundworkPage({
                               }
                             : null
                       }
-                      collision={col}
-                      gems={sr.gems
-                        .filter((g) => !g.actedDay)
-                        .slice(0, 2)
-                        .map((g) => ({
-                          term: g.term,
-                          act: g.act,
-                          reason: g.reason,
-                          whenDay: g.whenDay,
-                          cites: g.cites,
-                        }))}
+                      collision={
+                        col
+                          ? {
+                              mktgSends7: col.mktgSends7,
+                              colleague: col.colleague
+                                ? {
+                                    ...col.colleague,
+                                    cite: collisionCite(stageRows, col.colleague),
+                                  }
+                                : null,
+                            }
+                          : null
+                      }
+                      // A colleague's gem produces nothing for the operator
+                      // anywhere (C6 as amended; pass 8 G1).
+                      gems={chipGems(sr.gems)}
                     />
                   );
                 })()}
@@ -854,7 +928,7 @@ export default async function GroundworkPage({
                               : styles.btnAccent
                           }
                           type="submit"
-                          title="The record already holds today's send — the stamp reads it."
+                          title="The record already holds today's send. This stamps the move worked."
                         >
                           Worked it
                         </button>
@@ -923,19 +997,10 @@ export default async function GroundworkPage({
                       {file.composed.payload}
                       {file.csmPrep.length > 0 && (
                         <details className={styles.prepFold}>
-                          <summary>
-                            THE CSM&rsquo;S OWN LAST{" "}
-                            {file.csmPrep.length === 1 ? "ROW" : "FIVE"} · SHARPEN THE ASK
-                            ▾
-                          </summary>
-                          {file.csmPrep.map((x) => (
-                            <div
-                              key={`${x.day}|${x.subject}`}
-                              className={styles.prepLine}
-                            >
-                              {x.day.slice(5).replace("-", "/")} · {x.subject}
-                            </div>
-                          ))}
+                          <summary>{prepKicker(file.csmPrep.length)} ▾</summary>
+                          <div className={styles.prepLine}>
+                            <CiteRows accountId={file.accountId} rows={file.csmPrep} />
+                          </div>
                         </details>
                       )}
                     </div>
@@ -1230,7 +1295,7 @@ export default async function GroundworkPage({
         <Link
           href="/sendbook"
           className={styles.tallyfoot}
-          title="The Sendbook — every touch, kept."
+          title="Open the Sendbook. Every touch you made is kept there."
         >
           {(() => {
             const age = dropAgeDays(secondById, now);
