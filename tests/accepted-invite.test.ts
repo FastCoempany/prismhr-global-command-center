@@ -11,6 +11,9 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
 import { isMachineSender, isMachinery, isMeetingResponse } from "../src/lib/intel/closer";
 import { effectiveAt } from "../src/lib/intel/clock";
 import { meetingRead, speakersIn } from "../src/lib/intel/meeting";
@@ -236,6 +239,94 @@ describe("a promise closes by delivery, and the record holds the landing", () =>
       NOTES,
     );
     assert.equal(sheet.open[0].settled, undefined);
+  });
+});
+
+// ── only their acceptance settles (pass 9 seam, S-8) ───────────────────────
+// The bar this file's header names is the COUNTERPARTY'S acceptance, and the
+// BOOKED decree says our own side accepting books nothing. The settle read
+// any acceptance at all: the operator answering their invite, or a colleague
+// on it, marked "send the invite" LANDED. It reads the account read's rule
+// now (isTheirAcceptance): an attributed sender who is not ours.
+
+describe("only their side's acceptance settles a scheduling promise", () => {
+  const commitment = {
+    text: "Send calendar invite for the Mon Sep 14 Global module overview · from 9/4 paste",
+    at: NOON,
+  };
+  const acceptedBy = (actors: string, head = actors) => ({
+    id: "acc",
+    body: `✉ OL 09/04 3:49 PM — Accepted: Initial Chat | Intro to PrismHR Global · ${head}`,
+    createdAt: NOON,
+    actors,
+    kind: "account",
+  });
+  const ROSTER = ["Lesha Cyphers"];
+
+  test("their acceptance settles, as before", () => {
+    assert.ok(settledByRecord(commitment, [acceptedBy("Joseph Lyon → Antaeus Coe")], ROSTER));
+  });
+
+  test("the operator's own acceptance settles nothing", () => {
+    assert.equal(
+      settledByRecord(commitment, [acceptedBy("Antaeus Coe → Joseph Lyon")], ROSTER),
+      null,
+    );
+  });
+
+  test("a colleague on the invite accepting settles nothing", () => {
+    assert.equal(
+      settledByRecord(commitment, [acceptedBy("Lesha Cyphers → Antaeus Coe")], ROSTER),
+      null,
+    );
+  });
+
+  test("an acceptance that names nobody settles nothing", () => {
+    const bare = {
+      id: "acc",
+      body: "✉ OL 09/04 3:49 PM — Accepted: Initial Chat | Intro to PrismHR Global",
+      createdAt: NOON,
+      actors: "",
+      kind: "account",
+    };
+    assert.equal(settledByRecord(commitment, [bare], ROSTER), null);
+  });
+
+  test("the register reads the same rule: our side's acceptance leaves the line open", () => {
+    const todos = [
+      {
+        id: "t1",
+        body: `${commitment.text}\n⚑[k:a]`,
+        done: false,
+        accountId: "acct",
+        remindAt: NOON,
+        createdAt: NOON,
+        updatedAt: NOON,
+      },
+    ];
+    const sheetOf = (notes: ReturnType<typeof acceptedBy>[]) =>
+      buildAccountSheet(
+        todos,
+        "acct",
+        new Set<string>(),
+        new Map(),
+        new Date("2026-09-04T21:00:00Z"),
+        notes,
+        null,
+        ROSTER,
+      );
+    assert.equal(sheetOf([acceptedBy("Antaeus Coe → Joseph Lyon")]).open[0].settled, undefined);
+    assert.equal(sheetOf([acceptedBy("Lesha Cyphers → Antaeus Coe")]).open[0].settled, undefined);
+    assert.equal(
+      sheetOf([acceptedBy("Joseph Lyon → Antaeus Coe")]).open[0].settled,
+      "they accepted the invitation",
+    );
+  });
+
+  test("the room hands its declared roster to both settles", () => {
+    const page = readFileSync(join(cwd(), "src/app/room/page.tsx"), "utf8");
+    assert.match(page, /settledByRecord\(\s*\{ text: o\.text, at: src\?\.createdAt \?\? "" \},\s*allNotes,\s*ourSide,?\s*\)/);
+    assert.match(page, /buildAccountSheet\(\s*todos,[\s\S]*?ourSide,\s*\);/);
   });
 });
 

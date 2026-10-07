@@ -23,6 +23,7 @@ import { splitFallback } from "@/lib/room/deliverables";
 import { clip } from "@/lib/room/move-line";
 import { dayBlown } from "@/lib/room/owed";
 import { settledByRecord } from "@/lib/room/settled";
+import { seatWorked } from "@/lib/groundwork/worked";
 import { recordSends } from "@/lib/sendbook/read";
 import { chicagoDay } from "@/lib/tz";
 
@@ -87,8 +88,10 @@ export type SeatForSheet = {
    *  ledger's hand, a snooze, or the record's live motion. Only then does the
    *  seat leave the wing and read here. */
   excluded: boolean;
-  /** Groundwork's worked stamp for the seat already stands today. */
-  workedToday?: boolean;
+  /** Groundwork's worked stamps, key to the moment it was done
+   *  (`groundwork:<day>:<account>:<rule>`), every day's: the seat's own on
+   *  any day since it was filed works it (seatWorked; pass 8 B8 and G2). */
+  stamps?: ReadonlyMap<string, string>;
 };
 
 const ROW_DELAY = "row-delay:";
@@ -316,6 +319,9 @@ export function buildAccountSheet(
   }[] = [],
   /** The Act Lane's seat, when the account holds one (C8). */
   seat: SeatForSheet | null = null,
+  /** The room's declared roster (csms and the record's home side), so a
+   *  colleague accepting an invite settles nothing (S-8). */
+  homeSide: readonly string[] = [],
 ): AccountSheet {
   const out: AccountSheet = { open: [], delayed: [], doneToday: [], released: [] };
   const people = recordPeople(notes);
@@ -367,7 +373,7 @@ export function buildAccountSheet(
           !!hearer ||
           !!hearerNamed(splitFallback(edit).text, people);
         const promised = !!wall && !deferred && heard;
-        const landed = settledByRecord({ text: edit, at: t.createdAt }, notes);
+        const landed = settledByRecord({ text: edit, at: t.createdAt }, notes, homeSide);
         out.open.push({
           id: t.id,
           body,
@@ -397,24 +403,31 @@ export function buildAccountSheet(
   }
   // A seat follows its account (ruled 2026-09-25, C8): when the account is
   // excluded from Groundwork's queue, the Act Lane's seat leaves the wing and
-  // reads here as the account's own action — until it is worked (the day's
-  // stamp, or the record showing the outbound after it), taken back (✕ parks
-  // it like any record entry), or the exclusion lifts and it returns to the
-  // wing. The line is the operator's own act, ranked with the plain open
+  // reads here as the account's own action — until it is worked, taken back
+  // (✕ parks it like any record entry), or the exclusion lifts and it returns
+  // to the wing. Worked is Groundwork's own rule, read here and never spelled
+  // twice (seatWorked): the seat's stamp on any day since it was filed, or
+  // the record's outbound after it. The day-scoped stamp this read used
+  // brought a seat worked yesterday back today (pass 8 B8, "rides until
+  // worked"). The line is the operator's own act, ranked with the plain open
   // lines: the seat's day is when it was seated, never when it is due.
-  const seatRow = seat?.excluded && !seat.workedToday ? seat.rows[0] : undefined;
+  const seatRow = seat?.excluded ? seat.rows[0] : undefined;
   const seated = seatRow ? parseSeatBody(seatRow.body) : null;
   if (seatRow && seated && !dispositions.has(`${HIDE}note:${seatRow.id}`)) {
-    const seatAt = Date.parse(seatRow.createdAt);
-    const workedByRecord = recordSends(
-      notes.map((n) => ({
-        body: n.body,
-        source: n.source ?? "",
-        createdAt: n.createdAt,
-        ...(n.actors ? { actors: n.actors } : {}),
-      })),
-    ).some((s) => Date.parse(s.at) > seatAt);
-    if (!workedByRecord) {
+    const worked = seatWorked(
+      accountId,
+      seatRow.createdAt,
+      seat?.stamps ?? new Map(),
+      recordSends(
+        notes.map((n) => ({
+          body: n.body,
+          source: n.source ?? "",
+          createdAt: n.createdAt,
+          ...(n.actors ? { actors: n.actors } : {}),
+        })),
+      ),
+    );
+    if (!worked) {
       const held = dispositions.get(`${ROW_DELAY}todo:${seatRow.id}`);
       const line = { id: seatRow.id, body: seated.act, edit: seated.act };
       if (held && sameLocalDayIso(held.updatedAt, now))

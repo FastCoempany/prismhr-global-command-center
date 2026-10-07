@@ -1058,6 +1058,12 @@ button.sdRadio:hover {
 .itDelayed .tx {
   color: var(--soft);
 }
+/* A commitment their side released (pass 8 H6; the pass 9 seam, S-2): one
+   quiet line in the ink ladder, its why beneath, its rail on hover. No color
+   of its own. */
+.itReleased .tx {
+  color: var(--soft);
+}
 .itEmpty .tx,
 .itEmpty .ic {
   color: var(--quiet);

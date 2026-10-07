@@ -330,7 +330,7 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
     assert.equal(out[0].day, "2026-10-09");
   });
 
-  test("the engine says the day: Promised Friday ahead, PROMISED with the date once blown, a wall with no hearer", () => {
+  test("the engine says the day: Promised Friday ahead, Due today on the day, PROMISED with the date once blown, a wall with no hearer", () => {
     const base = {
       accountName: "Acme PEO",
       step: null,
@@ -350,7 +350,10 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
       now: NOW,
       theirBall: { who: "Adam", text: "the pricing model", day: "2026-10-05" },
     });
-    assert.match(today.move, /Promised today\.$/);
+    // Rewritten for the pass 9 seam (S-9): on the day the recap says what
+    // the move line says, "Due today." (CLAUDE.md, "Their promise rides the
+    // move line"); it said "Promised today.".
+    assert.match(today.move, /Due today\.$/);
     const far = readDeal({
       ...base,
       now: NOW,

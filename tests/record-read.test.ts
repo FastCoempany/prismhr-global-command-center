@@ -1686,7 +1686,11 @@ describe("a seat on an excluded account reads on the HomeRoom's sheet as open (C
   });
 
   test("worked — by today's stamp or by the record's outbound after the seat — it reads nowhere", () => {
-    assert.deepEqual(sheet({ rows: [SEAT], excluded: true, workedToday: true }).open, []);
+    // Rewritten for the pass 9 seam (S-7): the sheet took a day-scoped
+    // `workedToday` flag; it takes the stamps now and reads Groundwork's own
+    // rule (seatWorked), so today's stamp is one case of it.
+    const today = new Map([["groundwork:2026-09-05:A1:seated", "2026-09-05T15:00:00Z"]]);
+    assert.deepEqual(sheet({ rows: [SEAT], excluded: true, stamps: today }).open, []);
     const sent = {
       body: "✉ OL Sep 3 — Re: the model · Antaeus Coe → Dana Reyes\nAttached.",
       createdAt: "2026-09-03T15:00:00Z",
@@ -1700,6 +1704,28 @@ describe("a seat on an excluded account reads on the HomeRoom's sheet as open (C
       sheet({ rows: [SEAT], excluded: true }, { notes: [earlier] }).open.length,
       1,
     );
+  });
+
+  test("a seat worked yesterday rides no more: the stamp of any day since the seat holds (pass 8 B8)", () => {
+    // "Rides until worked" (the Act Lane decree): the HomeRoom's copy read
+    // only today's stamp, so a seat worked yesterday came back here. It reads
+    // the rule Groundwork's wing reads (seatWorked, pass 8 G2).
+    const yesterday = new Map([["groundwork:2026-09-04:A1:seated", "2026-09-04T16:00:00Z"]]);
+    assert.deepEqual(sheet({ rows: [SEAT], excluded: true, stamps: yesterday }).open, []);
+    // A stamp from before the seat was filed worked an older seat: this one
+    // still rides.
+    const older = new Map([["groundwork:2026-08-30:A1:seated", "2026-08-30T16:00:00Z"]]);
+    assert.equal(sheet({ rows: [SEAT], excluded: true, stamps: older }).open.length, 1);
+    // Another account's stamp, or another rule's, works nothing here.
+    const others = new Map([
+      ["groundwork:2026-09-04:B2:seated", "2026-09-04T16:00:00Z"],
+      ["groundwork:2026-09-04:A1:first-touch", "2026-09-04T16:00:00Z"],
+    ]);
+    assert.equal(sheet({ rows: [SEAT], excluded: true, stamps: others }).open.length, 1);
+    // The room hands the sheet every stamp with its time, never a day's key.
+    const page = readFileSync("src/app/room/page.tsx", "utf8");
+    assert.ok(!page.includes("workedToday: doneKeys.has("), "the day-scoped stamp is back");
+    assert.match(page, /stamps: doneTimes,/);
   });
 
   test("taken back with ✕ (hide:note:) it is gone; held with ⏲ it reads HELD for the day", () => {
