@@ -537,7 +537,7 @@ title; the search bar carries depth. The board lift holds app-wide: an
 account on the dashboard is cleared with the CSM and touched — stored
 state only ever advances the derived one (boardLift, loadCommand).
 
-**A seat follows its account (ruled 2026-09-25, C8):** when the account is excluded from the queue, the seat leaves Groundwork and reads on the HomeRoom as the account's own action until worked or taken back; it returns to the wing if the exclusion lifts first.
+**A seat follows its account (ruled 2026-09-25, C8):** when the account is excluded from the queue, the seat leaves Groundwork and reads on the HomeRoom as the account's own action until worked or taken back; it returns to the wing if the exclusion lifts first. An exclusion that rests only on a colleague's inbox gives the HomeRoom no row (C6, pass 8 call 1), so that seat stays on the wing (ruled 2026-10-07, pass 9, the founder's delegation).
 
 ## The Playbook face — The Sheet (triptych winner, ship order 2026-09-15)
 
