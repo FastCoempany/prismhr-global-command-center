@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google";
 import { AppWayfinder } from "@/components/app-wayfinder";
-import { loadDashboard } from "@/lib/dashboard/data";
+import { loadDashboard, type DashCardRow } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
 import { DROP_STALE_DAYS, fetchSecondRecords, theirsLine } from "@/lib/activity/read";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
@@ -52,11 +52,17 @@ import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { settledByRecord } from "@/lib/room/settled";
-import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
 import { Chute } from "./chute";
+import {
+  acceptedForMove,
+  filedWarmth,
+  firstName,
+  offBoardCandidates,
+  ownRecordMotion,
+} from "./room-reads";
 import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/build";
 import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
 import {
@@ -85,9 +91,6 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--f-mono" });
 
 const HEALTH_ORDER = { red: 0, amber: 1, green: 2, quiet: 3 } as const;
 
-function firstName(s: string): string {
-  return (s ?? "").trim().split(/\s+/)[0] ?? "";
-}
 export default async function RoomPage() {
   const data = await loadDashboard();
   if (data.status === "unauthenticated") {
@@ -141,24 +144,46 @@ export default async function RoomPage() {
   // The reads, kept by account for the pipeline report below: built once per
   // row here, read once more there, never built twice (§2.2; pass 4 G2).
   const reads = new Map<string, ReturnType<typeof readAccount>>();
-  for (const card of data.cards) {
-    if (card.archived) continue;
-    const accountId =
-      idByName.get(card.name.toLowerCase()) ??
-      digestForCardName(card.name)?.accountId ??
-      "";
+  // The rows: every live card on the board, then the accounts Groundwork
+  // hands over (ruled 2026-10-07, pass 8 call 1). An off-board account
+  // excluded for live motion on the operator's own record is reactive work,
+  // the HomeRoom's by canon, so it takes a row until the exclusion lifts,
+  // read by the same read and engine as every row, with no board stage; a
+  // seat on it reads there as its action (C8). Its candidacy is settled here
+  // and its motion inside the loop, once its read is built.
+  const accountOfCard = (cardName: string): string =>
+    idByName.get(cardName.toLowerCase()) ?? digestForCardName(cardName)?.accountId ?? "";
+  type Subject = { card: DashCardRow | null; accountId: string; name: string };
+  const boardRows: Subject[] = data.cards
+    .filter((c) => !c.archived)
+    .map((card) => ({ card, accountId: accountOfCard(card.name), name: card.name }));
+  const offBoard: Subject[] = offBoardCandidates({
+    accounts: peos,
+    onBoard: new Set(boardRows.map((b) => b.accountId).filter(Boolean)),
+    closed: new Set(
+      data.cards
+        .filter((c) => c.archived && readOutcome(c.notes))
+        .map((c) => accountOfCard(c.name))
+        .filter(Boolean),
+    ),
+    dispositions,
+    snoozes,
+    notesById,
+  }).map((p) => ({ card: null, accountId: p.id, name: p.name }));
+  for (const { card, accountId, name } of [...boardRows, ...offBoard]) {
     const peo = peoById.get(accountId);
     const rawNotes = accountId ? (notesById.get(accountId) ?? []) : [];
     // The single account read (src/lib/record/read.ts; the Chute brains
     // refactor plan, §2.2): one read of every store for this account, built
-    // once per row. The registers, the move's inputs and the THEIRS line read
-    // their facts from it; the drawer, the engine's court and the other
-    // surfaces migrate onto it one slice at a time. The book's roster and the
-    // seeded contact ride in as the seeds the record outranks.
+    // once per row. The registers, the move's inputs, the THEIRS line and the
+    // Pipeline drawer (through `reads`, below) read their facts from it; the
+    // court line it once fed is retired (D25), and Groundwork and the
+    // Sendbook build the same read. The book's roster and the seeded contact
+    // ride in as the seeds the record outranks.
     const acct = readAccount({
       account: {
         id: accountId,
-        name: card.name,
+        name,
         contacts: accountId ? contactsFor(accountId) : [],
         contact: { name: peo?.contactName, email: peo?.contactEmail },
       },
@@ -170,15 +195,19 @@ export default async function RoomPage() {
       // id reads under the one account (E17).
       secondRecord: accountId ? secondRecordFor(secondById, accountId) : null,
       homeSide: ourSide,
-      digest: digestFor(accountId) ?? digestForCardName(card.name),
+      digest: digestFor(accountId) ?? digestForCardName(name),
       now,
-      board: { card, labels: data.labels },
+      board: card ? { card, labels: data.labels } : null,
     });
-    if (accountId) reads.set(accountId, acct);
     // ✕-parked entries (hide:note: dispositions) leave every register view —
     // the read holds the one filter; the note survives in the table, the row
     // does not.
     const allNotes = rawNotes.filter((n) => !acct.hidden.has(n.id));
+    // Off the board, the row stands only while the operator's own record
+    // holds live motion; the second record alone adds none (pass 8 call 1;
+    // C6).
+    if (!card && !ownRecordMotion(accountId, allNotes, acct.intel, now)) continue;
+    if (accountId) reads.set(accountId, acct);
     const mine = allNotes.filter((n) => n.lane === "mine");
     const backgroundTotal = allNotes.length - mine.length;
 
@@ -223,12 +252,13 @@ export default async function RoomPage() {
     const rel = acct.relationship;
 
     let briefed = false;
-    for (const node of DASH_NODES) {
-      node.checklist.forEach((item, i) => {
-        if (/partner (de)?brief/i.test(item) && card.checks[node.key]?.[i])
-          briefed = true;
-      });
-    }
+    if (card)
+      for (const node of DASH_NODES) {
+        node.checklist.forEach((item, i) => {
+          if (/partner (de)?brief/i.test(item) && card.checks[node.key]?.[i])
+            briefed = true;
+        });
+      }
     // The notifier's own hand outranks the derived read (decreed 2026-08-19):
     // the operator can set "opp created" or done directly from the row.
     const briefedManual: "opp" | "done" | null = doneKeys.has(`briefed:${accountId}:opp`)
@@ -237,19 +267,21 @@ export default async function RoomPage() {
         ? "done"
         : null;
 
-    const step = cardNextStep(card, data.labels, now.getTime());
+    // A row off the board has no stage: no gate, no meter to climb, nothing
+    // to stamp (pass 8 call 1).
+    const step = card ? cardNextStep(card, data.labels, now.getTime()) : null;
     const stageNode = step ? DASH_NODES.find((n) => n.key === step.nodeKey) : null;
-    const doneInStage = stageNode
-      ? (card.checks[stageNode.key] ?? []).filter(Boolean).length
-      : 0;
+    const doneInStage =
+      card && stageNode ? (card.checks[stageNode.key] ?? []).filter(Boolean).length : 0;
     const totalInStage = stageNode?.checklist.length ?? 0;
 
     // Closed Won / Closed Lost — the terminal stamp, if the operator confirmed
     // one. A closed row keeps its place until it's retired; the meter says so.
-    const outcome = readOutcome(card.notes);
+    const outcome = card ? readOutcome(card.notes) : null;
     // Every gate on every stage checked but nothing stamped: finished work
     // waiting on the operator's call — the row stays loud, it never hollows.
     const allGatesDone =
+      !!card &&
       !outcome &&
       !step &&
       DASH_NODES.every((n) => {
@@ -363,7 +395,7 @@ export default async function RoomPage() {
     const read: RoomRead = readDeal({
       // The account as a person says it: the move names it when the record
       // cannot say who owes a promise.
-      accountName: shortName(card.name),
+      accountName: shortName(name),
       // Whose move it is, from the read (field 4): the engine writes the
       // sentence the rung calls for (§2.2, the fifth migration).
       whoseMove: acct.whoseMove,
@@ -396,13 +428,10 @@ export default async function RoomPage() {
         : null,
       lastMeeting: meetingForRead,
       // The newest invitation acceptance — machinery, so it opens no
-      // reply-owed, but it is proof the meeting exists (HR Hawaii, 9/4).
-      lastAccepted: acct.lastAccepted
-        ? {
-            at: acct.lastAccepted.at,
-            who: firstName(acct.lastAccepted.who) || firstName(rel.name) || "they",
-          }
-        : null,
+      // reply-owed, but it is proof the meeting exists (HR Hawaii, 9/4). An
+      // empty name is our own side accepting, and nobody stands in for it
+      // (H2).
+      lastAccepted: acceptedForMove(acct.lastAccepted),
       theirBall,
       // Every promise still open on their side, the read's list (field 14):
       // the move line is the one place their promises show, and its door
@@ -424,10 +453,12 @@ export default async function RoomPage() {
 
     // The stage rail + suggestions for the drawer.
     const dismissed = new Set<string>();
-    const prefix = `sugg-dismiss:${card.id}:`;
-    for (const key of dispositions.keys())
-      if (key.startsWith(prefix)) dismissed.add(key.slice(prefix.length));
-    const suggestions = suggestChecks(docs, card, dismissed).map((sg) => ({
+    if (card) {
+      const prefix = `sugg-dismiss:${card.id}:`;
+      for (const key of dispositions.keys())
+        if (key.startsWith(prefix)) dismissed.add(key.slice(prefix.length));
+    }
+    const suggestions = (card ? suggestChecks(docs, card, dismissed) : []).map((sg) => ({
       node: sg.node as string,
       index: sg.itemIdx,
       item: DASH_NODES.find((n) => n.key === sg.node)?.checklist[sg.itemIdx] ?? "",
@@ -460,12 +491,16 @@ export default async function RoomPage() {
     // The loss read — dismissals are keyed to the triggering note, so fresh
     // loss evidence resurfaces while a "keep salvaging" call stays honored.
     const lossDismissed = new Set<string>();
-    const lossPrefix = `loss-dismiss:${card.id}:`;
-    for (const key of dispositions.keys())
-      if (key.startsWith(lossPrefix)) lossDismissed.add(key.slice(lossPrefix.length));
+    if (card) {
+      const lossPrefix = `loss-dismiss:${card.id}:`;
+      for (const key of dispositions.keys())
+        if (key.startsWith(lossPrefix)) lossDismissed.add(key.slice(lossPrefix.length));
+    }
     // BOTH lanes: a loss stated in case traffic is still a loss (Ted
-    // doctrine — the fate reads must see everything the corpus sees).
-    const loss = readLoss(allNotes, lossDismissed, now);
+    // doctrine — the fate reads must see everything the corpus sees). Its
+    // two exits stamp or keep a board card, so a row with no card carries
+    // none.
+    const loss = card ? readLoss(allNotes, lossDismissed, now) : null;
 
     // Owed-to-you: the record's action items with the operator's name on them,
     // minus anything dismissed or already open on the register.
@@ -498,6 +533,14 @@ export default async function RoomPage() {
     const gaps = accountId
       ? readGaps(notesById, accountId, gapDismissed)
       : { shown: [], queued: 0 };
+    // The asks waiting behind the shown few, in the carousel's own order:
+    // "· N queued" opens to them, and N is their length (the click-depth law;
+    // H5). The cap stays the carousel's; this read only lifts it.
+    const gapsQueued = accountId
+      ? readGaps(notesById, accountId, gapDismissed, Number.MAX_SAFE_INTEGER).shown.slice(
+          gaps.shown.length,
+        )
+      : [];
 
     // Comparability is the situation, not the name: same countries, same
     // product line, same industry. A question a peer buyer asked belongs here
@@ -513,22 +556,33 @@ export default async function RoomPage() {
     });
 
     // The meter's read: position from the further of board truth and record
-    // evidence, plus the why lines the hover bubble states.
-    const meter = meterRead({
-      outcome,
-      step: step
-        ? {
-            nodeKey: step.nodeKey,
-            nodeLabel: data.labels[step.nodeKey] ?? step.nodeLabel,
-            item: step.item,
-          }
-        : null,
-      doneInStage,
-      totalInStage,
-      allGatesDone,
-      evidence: suggestions.map((s) => ({ nodeKey: s.node, why: s.why })),
-      labels: data.labels,
-    });
+    // evidence, plus the why lines the hover bubble states. A row off the
+    // board has no stage to climb, and its meter says so and why the row is
+    // here (pass 8 call 1).
+    const meter = card
+      ? meterRead({
+          outcome,
+          step: step
+            ? {
+                nodeKey: step.nodeKey,
+                nodeLabel: data.labels[step.nodeKey] ?? step.nodeLabel,
+                item: step.item,
+              }
+            : null,
+          doneInStage,
+          totalInStage,
+          allGatesDone,
+          evidence: suggestions.map((s) => ({ nodeKey: s.node, why: s.why })),
+          labels: data.labels,
+        })
+      : {
+          frac: 0,
+          label: "NOT ON THE BOARD",
+          why: [
+            "No card on the board.",
+            "A fresh message from them or a meeting is on file.",
+          ],
+        };
 
     // THEIRS is the account's people (ruled 2026-09-25, C16, amended
     // 2026-10-05): the line carries only gems about an account person, read
@@ -539,8 +593,8 @@ export default async function RoomPage() {
     rows.push({
       accountId,
       theirs,
-      cardId: card.id,
-      name: card.name,
+      cardId: card?.id ?? "",
+      name,
       meta,
       shape,
       multiTone,
@@ -577,7 +631,7 @@ export default async function RoomPage() {
       },
       outcome,
       gaps: gaps.shown,
-      gapsQueued: gaps.queued,
+      gapsQueued,
       peers: peers.map((p) => ({
         question: p.question,
         shared: p.shared.join(" · "),
@@ -587,25 +641,26 @@ export default async function RoomPage() {
           `What did we answer when a buyer asked: "${p.question.slice(0, 200)}"`,
         ),
       })),
-      askHref: askHref(scopedAsk(card.name, [...prods])),
+      askHref: askHref(scopedAsk(name, [...prods])),
       researchAt,
-      stages: buildStageRail(card, data.labels),
+      stages: card ? buildStageRail(card, data.labels) : [],
       suggestions,
       move: read.move,
       moveFull: read.moveFull ?? "",
       thin: read.thin,
-      outstanding: step
-        ? {
-            item: step.item,
-            node: step.nodeKey,
-            index: step.index,
-            doneKey: morningDoneKey(
-              `card:${card.id}:${step.nodeKey}:${step.index}`,
-              now.getTime(),
-            ),
-            closedCount: doneInStage,
-          }
-        : null,
+      outstanding:
+        card && step
+          ? {
+              item: step.item,
+              node: step.nodeKey,
+              index: step.index,
+              doneKey: morningDoneKey(
+                `card:${card.id}:${step.nodeKey}:${step.index}`,
+                now.getTime(),
+              ),
+              closedCount: doneInStage,
+            }
+          : null,
       sheetOpen,
       sheetRest,
       sheetDelayed,
@@ -725,20 +780,16 @@ export default async function RoomPage() {
     }));
   // The eye also watches FILED intel, not just the frozen research: an
   // off-board account whose recent record carries the global scent warms
-  // here even if research-time demand never saw it.
+  // here even if research-time demand never saw it. An account with a row,
+  // on the board or off it, is already worked and never warms here; a
+  // ✕-parked row warms nothing (X1: hidden is hidden).
   const warmIds = new Set(warming.map((w) => w.id));
   const boardIds = new Set(rows.map((r) => r.accountId));
-  const FRESH_DAYS = 14 * 86_400_000;
   for (const p of peos) {
     if (warming.length >= 10) break;
     if (boardIds.has(p.id) || warmIds.has(p.id) || onBoard.has(p.name)) continue;
     if (snoozes.has(p.id) || doneKeys.has(triageDoneKey(p.id))) continue;
-    const notes = notesById.get(p.id) ?? [];
-    const hit = notes.find(
-      (n) =>
-        now.getTime() - Date.parse(n.createdAt) < FRESH_DAYS &&
-        GLOBAL_SCENT_RE.test(n.body),
-    );
+    const hit = filedWarmth(notesById.get(p.id) ?? [], dispositions, now);
     if (!hit) continue;
     const line = hit.body
       .split("\n")[0]
@@ -807,7 +858,7 @@ export default async function RoomPage() {
       <main
         className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
       >
-        {/* The Chute routes on the server over the joined roster (C2, D12);
+        {/* The Chute routes on the server over the joined roster (C2, D13);
             no roster rides the page. */}
         <Chute canWrite={data.canWrite} />
         <RoomClient
@@ -819,7 +870,9 @@ export default async function RoomPage() {
           later={later}
           canWrite={data.canWrite}
           dbUnavailable={data.status === "database-unavailable"}
-          boardNames={rows.map((r) => ({ id: r.accountId, name: r.name }))}
+          boardNames={rows
+            .filter((r) => r.cardId)
+            .map((r) => ({ id: r.accountId, name: r.name }))}
           pipeline={pipeReport}
           pipelineDay={pipeDayLabel}
           pipelineStale={pipeStale}

@@ -115,7 +115,7 @@ export function roomRow(over: Partial<RoomRow> = {}): RoomRow {
     owed: [],
     outcome: null,
     gaps: [],
-    gapsQueued: 0,
+    gapsQueued: [],
     peers: [],
     askHref: "/intranet?q=Simploy",
     researchAt: "",
