@@ -190,7 +190,8 @@ type TodoClient = {
 export type NewTodo = {
   /** The visible text. With `tags` or `due` the ⚑ line is folded on here;
    *  without either the body is written exactly as handed over (the sheet
-   *  mirror's pre-routed row, the Act Lane's fork). */
+   *  mirror's pre-routed row). The Act Lane's fork carries the action tag
+   *  (forkTodo, src/app/accounts/rules.ts; A8.15). */
   body: string;
   /** The sheet's tags (`kind: "action"`, an urgency chip, a country); the rest
    *  of the codec is filled with NO_TAGS, as every caller did by hand. */

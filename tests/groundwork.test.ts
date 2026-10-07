@@ -1441,3 +1441,14 @@ describe("D15 reaches every action (pass 8 call 2): Groundwork's actions refresh
     assert.equal(/revalidateTag\(/.test(actions), false);
   });
 });
+
+// The wiring of D27's channel-line clause: the wing's stamps go through the
+// one pure choice (wingStamp, src/lib/groundwork/stamp.ts, behavior-pinned in
+// tests/canon/groundwork.test.ts), never an inline second spelling.
+describe("the wing stamps through the one choice (D27, ship order 2026-10-06)", () => {
+  test("the page's stamp subtext is wingStamp's", () => {
+    const page = readFileSync("src/app/groundwork/page.tsx", "utf8");
+    assert.match(page, /sub: wingStamp\(/);
+    assert.ok(!/subFor\(m\[1\]\) \|\|/.test(page), "the inline choice is gone");
+  });
+});

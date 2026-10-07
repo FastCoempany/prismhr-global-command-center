@@ -31,6 +31,28 @@ const md = (iso: string) =>
  *  which is how "asap" once rendered as "0/0". */
 export const closeText = (c: PipelineRecord["closeDate"]) => (!c ? "" : md(c.v) || c.v);
 
+/** The passed day one record flags, read off the sheet's own verdict and no
+ *  rule of the drawer's (D28: a typed date reads PROMISED only when the line
+ *  names the person it was promised to, and otherwise it is a wall). A heard
+ *  promise outranks a plain wall: the closer rule calls it the stronger of
+ *  the two. Null while no day passed. */
+export function passedDay(
+  r: Pick<PipelineRecord, "ourNext">,
+): { wall: string; promised: boolean } | null {
+  const n = r.ourNext.find((x) => x.wall && x.promised) ?? r.ourNext.find((x) => x.wall);
+  return n?.wall ? { wall: n.wall, promised: !!n.promised } : null;
+}
+
+/** The drawer's mark for a passed day: PROMISED with its date only when
+ *  someone heard it, and the move line's wall words otherwise ("The 10/9
+ *  wall passed."), as a pill with no closing period. "" for none. */
+export function passedPill(
+  p: { wall?: string; promised?: boolean } | null | undefined,
+): string {
+  if (!p?.wall) return "";
+  return p.promised ? `Promised ${p.wall}` : `The ${p.wall} wall passed`;
+}
+
 const UNKNOWN = "Unknown";
 
 type Line = { key: string; text: string };

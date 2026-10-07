@@ -32,10 +32,13 @@ import {
   playNextAction,
   playsFor,
 } from "../../src/lib/campaigns";
+import { createTodoRow, type NewTodo, type TodoData } from "../../src/lib/notes/write";
+import { buildAccountSheet } from "../../src/lib/room/sheet-view";
 import {
   boardWords,
   csmThreadFlagOf,
   draftOnClose,
+  forkTodo,
   liveOnBoard,
   registersOf,
   sendConsequences,
@@ -364,6 +367,64 @@ describe("the board lift reads a live deal (A4; A8.15)", () => {
     assert.ok(!off.includes("the deal is live"), off);
     const on = textOf(await renderLane(laneAct({ onBoard: true })));
     assert.ok(on.includes("⌂ HOMEROOM"), on);
+  });
+});
+
+// ── the fork lands where its receipt says (A8.15) ───────────────────────────
+// A live deal's move lands as a HomeRoom action todo. The register lists
+// only action todos, so the fork files the action tag a composed action
+// carries. It used to file the bare text: the lane answered "✓ FILED · THE
+// HOMEROOM'S TODAY REGISTER" and the line never appeared there.
+
+describe("the HomeRoom fork lands in the TODAY register (A8.15)", () => {
+  const now = new Date("2026-10-07T15:00:00Z");
+  const filed = async (t: NewTodo) => {
+    const writes: TodoData[] = [];
+    const client = {
+      todo: {
+        create: async ({ data }: { data: TodoData }) => {
+          writes.push(data);
+          return { id: "fork1" };
+        },
+        findFirst: async () => null,
+      },
+    };
+    await createTodoRow(t, client);
+    const d = writes[0];
+    return {
+      id: "fork1",
+      body: d.body,
+      done: false,
+      accountId: d.accountId ?? "",
+      remindAt: d.remindAt ? d.remindAt.toISOString() : "",
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+  };
+
+  test("the fork's row, fed to the register, is an open line today", async () => {
+    const row = await filed(
+      forkTodo({ accountId: "ACCT01", act: "Ask Adam for the census", now }),
+    );
+    const sheet = buildAccountSheet([row], "ACCT01", new Set(), new Map(), now);
+    assert.equal(sheet.open.length, 1, "the line reaches TODAY");
+    assert.equal(sheet.open[0].body, "Ask Adam for the census");
+    assert.equal(sheet.delayed.length, 0, "due now, not scheduled");
+  });
+
+  test("the bare row it used to file is the one the register skips", async () => {
+    const row = await filed({
+      body: "Ask Adam for the census",
+      accountId: "ACCT01",
+      remindAt: now,
+    });
+    const sheet = buildAccountSheet([row], "ACCT01", new Set(), new Map(), now);
+    assert.equal(sheet.open.length, 0, "an untagged todo is a note to the register");
+  });
+
+  test("forkAct's HomeRoom half files through the rule", () => {
+    const src = readFileSync("src/app/accounts/act-actions.ts", "utf8");
+    assert.match(src, /createTodoRow\(\s*forkTodo\(/);
   });
 });
 

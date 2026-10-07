@@ -9,6 +9,7 @@
 // a bare noun, SEATED, THEIRS and ENGAGED · NEVER MET, and now speak like the
 // rest. Pure, so the canon suite can check every rule.
 
+import { shortName } from "@/lib/sendbook/read";
 import type { QueueRuleId } from "./day";
 
 type StampContext = {
@@ -126,4 +127,31 @@ export function stampSubtext(ruleId: QueueRuleId | string, ctx: StampContext): s
           .toUpperCase() || "WORKED"
       );
   }
+}
+
+/** A touch the Sendbook filed for the account today, newest first: its
+ *  channel, its count in the run, and who it went to ("" when unknown). */
+export type ChannelTouch = { channel: string; step: number; contact: string };
+
+/** The touch's channel line, `EMAIL · STEP 1 · CRISTINA B.`; "" for none. */
+function channelLine(t: ChannelTouch | null | undefined): string {
+  if (!t) return "";
+  return [`${t.channel} · STEP ${t.step}`, t.contact ? shortName(t.contact) : ""]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/** The wing's stamp subtext, chosen once (D27, ship order 2026-10-06): a
+ *  filed touch's channel line still leads the stamp when there is one, and
+ *  the rule's own stamp words speak otherwise, so the wing never stamps
+ *  mutely. The rule's facts are a thunk, read only when the channel line is
+ *  silent: the page builds them from several stores. */
+export function wingStamp(
+  touch: ChannelTouch | null | undefined,
+  ruleId: QueueRuleId | string,
+  ctx: StampContext | (() => StampContext),
+): string {
+  return (
+    channelLine(touch) || stampSubtext(ruleId, typeof ctx === "function" ? ctx() : ctx)
+  );
 }

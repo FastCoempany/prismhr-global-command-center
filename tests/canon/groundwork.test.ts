@@ -15,7 +15,7 @@ import {
   SEAT_SLOT_CAP,
   secondOnlyMotionIds,
 } from "../../src/lib/groundwork/day";
-import { stampSubtext } from "../../src/lib/groundwork/stamp";
+import { stampSubtext, wingStamp } from "../../src/lib/groundwork/stamp";
 import { readAccount } from "../../src/lib/record/read";
 import type { Peo } from "../../src/lib/book";
 import type { DealIntel } from "../../src/lib/intel/types";
@@ -529,5 +529,48 @@ describe("no rule stamps with an empty label (D27)", () => {
   test("a rule the table does not know still speaks its own label", () => {
     assert.equal(stampSubtext("some-new-rule", {}), "SOME NEW RULE");
     assert.ok(stampSubtext("", {}).length > 0);
+  });
+});
+
+// The stamp words' own clause (ship order 2026-10-06): "A filed touch's
+// channel line (EMAIL · STEP 1 · CRISTINA B., the Sendbook) still leads the
+// stamp when there is one." The choice lived in page code with no pin.
+describe("a filed touch's channel line leads the stamp; else the rule's words (D27)", () => {
+  test("a channel line leads, whatever the rule would say", () => {
+    assert.equal(
+      wingStamp({ channel: "EMAIL", step: 1, contact: "Cristina Bell" }, "silence-bump", {
+        threadSubject: "Mexico census",
+      }),
+      "EMAIL · STEP 1 · CRISTINA B.",
+    );
+    assert.equal(
+      wingStamp({ channel: "CALL", step: 2, contact: "" }, "seated", {
+        seatDay: "2026-10-06",
+      }),
+      "CALL · STEP 2",
+    );
+  });
+
+  test("no filed touch: the rule's own stamp speaks", () => {
+    assert.equal(
+      wingStamp(undefined, "seated", { seatDay: "2026-10-06" }),
+      "WORKED THE MOVE FROM THE SHEET · SEATED 10/6",
+    );
+    assert.equal(wingStamp(null, "some-new-rule", {}), "SOME NEW RULE");
+  });
+
+  test("the rule's facts are read only when the channel line is silent", () => {
+    let read = 0;
+    const ctx = () => {
+      read += 1;
+      return { seatDay: "2026-10-06" };
+    };
+    wingStamp({ channel: "EMAIL", step: 1, contact: "Cristina Bell" }, "seated", ctx);
+    assert.equal(read, 0);
+    assert.equal(
+      wingStamp(undefined, "seated", ctx),
+      "WORKED THE MOVE FROM THE SHEET · SEATED 10/6",
+    );
+    assert.equal(read, 1);
   });
 });

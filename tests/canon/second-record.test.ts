@@ -271,6 +271,7 @@ const matches = (r: Record<string, unknown>, where: Where | undefined): boolean 
 function memoryDb(
   seed: (Partial<NoteRow> & { accountId: string; body: string })[] = [],
   markers: { accountId: string; status: string }[] = [],
+  touches: Record<string, unknown>[] = [],
 ) {
   let clock = Date.parse("2026-09-01T12:00:00Z");
   let ids = 0;
@@ -343,6 +344,7 @@ function memoryDb(
     },
     todo: { findMany: async () => [] },
     dashCard: { findFirst: async () => null },
+    touch: { findMany: async () => touches },
   };
   const under = (accountId: string) => find({ where: { accountId } });
   return { db: db as unknown as ActivityDb, notes, under };
@@ -873,6 +875,148 @@ describe("hidden is hidden: the context pack skips ✕-parked rows (X1)", () => 
     const text = pack.lines.join("\n");
     assert.ok(!/wrong account|Pat Example/.test(text), text);
     assert.match(text, /Re: intro/);
+  });
+});
+
+// ── A2.4 · the context pack reads the account read's last outbound ─────────
+// The Ted doctrine: a derived fact reads the widest live source, and a
+// fact's two stores merge by latest (C3). The pack is what the distiller and
+// the refuter are told about the operator's own motion, so it reads the
+// account read's lastOutbound: every row under every id the account folds
+// into, the touch log merged by latest. It used to take the newest 80 rows
+// under the raw id alone, with no fold and no touch log.
+
+describe("the context pack's last outbound is the account read's (A2.4; C3)", () => {
+  const outbound = (pack: { lines: string[] }) =>
+    pack.lines.find((l) => l.startsWith("the operator's last outbound")) ?? "";
+  // My HR Professionals: the shell id folds into the substantive row
+  // (src/lib/book/merge.ts).
+  const SPMI = "001F000000w389qIAA";
+  const SHELL = "0013k00002dGqODAA0";
+
+  test("a send filed under the account's shell id is the last outbound (the fold)", async () => {
+    const { db } = memoryDb([
+      {
+        id: "older",
+        accountId: SPMI,
+        body: "✉ Re: intro — sent to Joseph Lyon.",
+        createdAt: new Date("2026-09-10T15:00:00.000Z"),
+        source: "act-lane",
+        actors: "Antaeus Coe → Joseph Lyon",
+      },
+      {
+        id: "newer",
+        accountId: SHELL,
+        body: "✉ Re: the census template — sent to Joseph Lyon.",
+        createdAt: new Date("2026-09-20T15:00:00.000Z"),
+        source: "act-lane",
+        actors: "Antaeus Coe → Joseph Lyon",
+      },
+    ]);
+    for (const asked of [SPMI, SHELL]) {
+      const line = outbound(await contextPackFor(asked, "myhrpros (SPMI)", db));
+      assert.match(
+        line,
+        /^the operator's last outbound: 2026-09-20 to Joseph Lyon/,
+        line,
+      );
+      assert.match(line, /the census template/, line);
+    }
+  });
+
+  test("a logged touch with its message, later than the record's send, is the last outbound", async () => {
+    const { db } = memoryDb(
+      [
+        {
+          id: "send",
+          accountId: ACCT,
+          body: "✉ Re: intro — sent to Natalie Borland.",
+          createdAt: new Date("2026-09-10T15:00:00.000Z"),
+          source: "act-lane",
+          actors: "Antaeus Coe → Natalie Borland",
+        },
+      ],
+      [],
+      [
+        {
+          subjectKey: `outreach:${ACCT}`,
+          kind: "account",
+          label: "Trend Personnel",
+          detail: "",
+          message: "Called about the census template",
+          contactedAt: new Date("2026-09-25T15:00:00.000Z"),
+          followUpAt: new Date("2026-09-27T15:00:00.000Z"),
+          intervalDays: 2,
+          status: "awaiting",
+          log: [],
+        },
+      ],
+    );
+    const line = outbound(await contextPackFor(ACCT, "Trend Personnel", db));
+    assert.match(line, /^the operator's last outbound: 2026-09-25/, line);
+    assert.match(line, /Called about the census template/, line);
+  });
+
+  test("the record's send, when it is the later of the two, still leads", async () => {
+    const { db } = memoryDb(
+      [
+        {
+          id: "send",
+          accountId: ACCT,
+          body: "✉ Re: intro — sent to Natalie Borland.",
+          createdAt: new Date("2026-09-28T15:00:00.000Z"),
+          source: "act-lane",
+          actors: "Antaeus Coe → Natalie Borland",
+        },
+      ],
+      [],
+      [
+        {
+          subjectKey: `outreach:${ACCT}`,
+          kind: "account",
+          label: "Trend Personnel",
+          message: "Called about the census template",
+          contactedAt: new Date("2026-09-25T15:00:00.000Z"),
+          followUpAt: new Date("2026-09-27T15:00:00.000Z"),
+          intervalDays: 2,
+          status: "awaiting",
+          log: [],
+        },
+      ],
+    );
+    const line = outbound(await contextPackFor(ACCT, "Trend Personnel", db));
+    assert.match(
+      line,
+      /^the operator's last outbound: 2026-09-28 to Natalie Borland/,
+      line,
+    );
+  });
+
+  test("a send behind eighty newer rows is still the last outbound", async () => {
+    const quiet = Array.from({ length: 85 }, (_, i) => ({
+      id: `q${i}`,
+      accountId: ACCT,
+      body: `research note ${i}`,
+      createdAt: new Date(Date.parse("2026-09-12T15:00:00.000Z") + i * 60_000),
+      source: "hand",
+    }));
+    const { db } = memoryDb([
+      {
+        id: "send",
+        accountId: ACCT,
+        body: "✉ Re: intro — sent to Natalie Borland.",
+        createdAt: new Date("2026-09-10T15:00:00.000Z"),
+        source: "act-lane",
+        actors: "Antaeus Coe → Natalie Borland",
+      },
+      ...quiet,
+    ]);
+    const line = outbound(await contextPackFor(ACCT, "Trend Personnel", db));
+    assert.match(
+      line,
+      /^the operator's last outbound: 2026-09-10 to Natalie Borland/,
+      line,
+    );
   });
 });
 
