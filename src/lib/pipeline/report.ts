@@ -1,3 +1,5 @@
+import { chicagoDay } from "@/lib/tz";
+
 export type Provenance = {
   /** Where the value came from, in the operator's words. "" when Unknown. */
   src: string;
@@ -161,7 +163,10 @@ export function ownerClause(owners: readonly LaneOwner[]): string {
 //
 // Trend is the sharpest: the ball has been theirs since 9/1 and the report
 // said "None set." A promise is a promise whichever dialect the record kept it
-// in — so the second rung reads an inbound note's own first person.
+// in — so this reads an inbound note's own first person. Since pass 8 call 6
+// (ruled 2026-10-07) the drawer lists only the read's own open promises, and
+// nothing in the app calls this; a prose promise the drawer should carry
+// grows the read's list, never a count of the drawer's own.
 
 /** A forward commitment: something the writer says they are about to do. */
 const WILL_DO_RE =
@@ -272,8 +277,9 @@ export function theirTurnFrom(
       out.push({
         who: who.split(" ")[0] || who,
         text,
-        at: n.createdAt.slice(0, 10),
-        src: `record ${md(n.createdAt)}`,
+        // The note's Chicago day (the closer rule; pass 8 X5).
+        at: chicagoDay(n.createdAt),
+        src: `record ${md(chicagoDay(n.createdAt))}`,
       });
       break; // one promise per note — the newest note already ranks first
     }
@@ -282,37 +288,12 @@ export function theirTurnFrom(
   return out;
 }
 
-// ── their promise is answered when they speak again ────────────────────────
-// A commitment of HIS retires when the record shows it landed
-// (src/lib/room/settled.ts). Theirs had no such rule and was carried forever.
-//
-// Trend Personnel is the case. Melanie wrote on 9/1, "I will check with our
-// Sales Director"; on 9/2 Adam answered for the team — "still working through
-// the proposal process, another month or two before a decision at best" — and
-// the report was still gating the account on her promise the following week.
-// It is the closer rule's own shape: read through to the last substantive
-// message, and let that set the state.
-
-/** Has anyone on their side spoken since `at`? A courtesy sign-off and
- *  machinery are transparent, and the answer may come from a colleague of the
- *  promiser — Adam answered for Melanie. */
-export function answeredSince(
-  at: string,
-  notes: readonly TurnNote[],
-  isHome: (name: string) => boolean,
-): boolean {
-  const after = Date.parse(`${at}T23:59:59Z`);
-  return (notes ?? []).some((n) => {
-    if (Date.parse(n.createdAt) <= after) return false;
-    const who = senderOf(n.actors ?? "");
-    if (!who || isHome(who)) return false;
-    if (/transcript/.test(n.source ?? "")) return false;
-    const body = n.body ?? "";
-    if (NOT_A_PROMISE_RE.test(body)) return false;
-    // A sign-off is punctuation, never an answer (the closer rule).
-    return body.replace(/^[^\n]*\n/, "").trim().length > 40;
-  });
-}
+// ── their promise closes by delivery or release, nowhere else ─────────────
+// The drawer used to retire a promise of theirs on any later message from
+// their side over forty characters, which is a resemblance, not a delivery
+// (pass 8 H12). The closer rule says a promise closes only by delivery or
+// explicit release, and the drawer now lists exactly the read's own open
+// promises (ruled 2026-10-07, pass 8 call 6), so the heuristic is gone.
 
 // ── the gate ────────────────────────────────────────────────────────────────
 // The fault the operator named on 2026-09-08: "you've still missed what

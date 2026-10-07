@@ -19,8 +19,10 @@ import {
   gatedByThem,
   ownersFrom,
   ownerClause,
-  answeredSince,
 } from "../src/lib/pipeline/report";
+import { buildPipelineReport } from "../src/lib/pipeline/build";
+import { readAccount, type RecordNote } from "../src/lib/record/read";
+import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
 
 describe("another team's work is not his next step", () => {
   test("the real Simploy handoff is caught", () => {
@@ -337,59 +339,101 @@ describe("the FYI line speaks the way a person speaks", () => {
 // A promise of theirs retires when they speak again. His own commitments have
 // had a settle rule since 2026-09-04 (src/lib/room/settled.ts); theirs had
 // none and was carried forever.
-describe("their promise is answered when they speak again", () => {
-  const isHome = (n: string) => /antaeus|lesha|anika/i.test(n);
-  // Trend Personnel, verbatim: Melanie promised on 9/1, Adam answered for the
-  // team on 9/2, and the report was still gating the account a week later.
-  const MELANIE = {
+describe("their promise closes by delivery or release, never because they wrote again", () => {
+  // The drawer used to retire a promise of theirs on any later message over
+  // forty characters (pass 8 H12). Trend Personnel, verbatim: Melanie
+  // promised on 9/1 and the read filed it as a loop on their side; Adam
+  // wrote on 9/2 that the proposal is still in process, which delivers
+  // nothing and releases nothing. The drawer lists the read's own open
+  // promises (ruled 2026-10-07, pass 8 call 6), so the loop stands until the
+  // record shows it kept or let go.
+  const isHome = ["Antaeus Coe", "Lesha Cyphers", "Anika Steenstra"];
+  const row = (
+    o: Partial<RecordNote> & { id: string; body: string; createdAt: string },
+  ) =>
+    ({
+      accountId: "TREND",
+      partner: "",
+      kind: "account",
+      lane: "mine",
+      actors: "",
+      source: "outlook-ai",
+      recipients: "",
+      ...o,
+    }) as RecordNote;
+  const MELANIE = row({
+    id: "mel",
     createdAt: "2026-09-01T15:06:00Z",
     actors: "Melanie Dreyer → Antaeus Coe",
-    source: "outlook-ai",
-    body: "head\nWill check with their Sales Director — this piece of the proposal is not what is holding up the process.",
-  };
-  const ADAM = {
+    body: "✉ OL Sep 1 10:06 AM — Re: proposal · Melanie Dreyer → Antaeus Coe\nWill check with their Sales Director — this piece of the proposal is not what is holding up the process.",
+  });
+  const ADAM = row({
+    id: "adam",
     createdAt: "2026-09-02T15:39:00Z",
     actors: "Adam Dingwell → Antaeus Coe",
-    source: "outlook-ai",
-    body: "head\nStill working through the proposal process; foresees another month or two before a decision at best. If they win the prospect's business this is more than likely something they will need.",
+    body: "✉ OL Sep 2 10:39 AM — Re: proposal · Adam Dingwell → Antaeus Coe\nStill working through the proposal process; foresees another month or two before a decision at best.",
+  });
+  const LOOP = {
+    id: "t1",
+    body: withTags("Check with the Sales Director", {
+      ...NO_TAGS,
+      owner: "them",
+      by: "Melanie Dreyer",
+      hearer: "Antaeus Coe",
+    }),
+    done: false,
+    accountId: "TREND",
+    createdAt: "2026-09-01T15:10:00Z",
+  };
+  const drawer = (todos: (typeof LOOP)[]) => {
+    const now = new Date("2026-09-08T17:00:00Z");
+    const notes = [ADAM, MELANIE];
+    const read = readAccount({
+      account: { id: "TREND", name: "Trend Personnel Services" },
+      notes,
+      touches: [],
+      todos,
+      dispositions: new Map(),
+      homeSide: isHome,
+      now,
+    });
+    return buildPipelineReport({
+      accounts: [
+        {
+          id: "TREND",
+          name: "Trend Personnel Services",
+          csm: "Anika Steenstra",
+          stageLabel: "",
+          notes: notes.map((n) => ({
+            id: n.id,
+            createdAt: n.createdAt,
+            body: n.body,
+            lane: "mine" as const,
+            actors: n.actors,
+            source: n.source,
+          })),
+          todos: todos.map((t) => ({ ...t, remindAt: "", updatedAt: t.createdAt })),
+          gaps: [],
+          support: null,
+          actors: [],
+          read,
+        },
+      ],
+      csms: isHome,
+      me: "Antaeus Coe",
+      now,
+    })[0];
   };
 
-  test("a colleague's answer closes the promiser's turn", () => {
-    assert.equal(answeredSince("2026-09-01", [ADAM], isHome), true);
-  });
-  test("our own reply is not their answer", () => {
-    const mine = {
-      createdAt: "2026-09-02T15:50:00Z",
-      actors: "Antaeus Coe → Adam Dingwell",
-      source: "outlook-ai",
-      body: "head\nMind if I toss tentative time on the calendar about a month out?",
-    };
-    assert.equal(answeredSince("2026-09-01", [mine], isHome), false);
-  });
-  test("a sign-off is punctuation, never an answer", () => {
-    const closer = {
-      createdAt: "2026-09-02T15:39:00Z",
-      actors: "Adam Dingwell → Antaeus Coe",
-      source: "outlook-ai",
-      body: "head\nThanks!",
-    };
-    assert.equal(answeredSince("2026-09-01", [closer], isHome), false);
-  });
-  test("machinery is never a person answering", () => {
-    const auto = {
-      createdAt: "2026-09-02T15:39:00Z",
-      actors: "Adam Dingwell → Antaeus Coe",
-      source: "outlook-ai",
-      body: "head\nOut of office. I am away until Monday and will reply on my return, thanks so much.",
-    };
-    assert.equal(answeredSince("2026-09-01", [auto], isHome), false);
-  });
-  test("silence keeps the promise open", () => {
-    assert.equal(answeredSince("2026-09-01", [MELANIE], isHome), false);
-    assert.equal(
-      answeredSince("2026-09-03", [ADAM], isHome),
-      false,
-      "earlier does not answer later",
+  test("a later message of theirs that delivers nothing leaves the promise standing", () => {
+    const r = drawer([LOOP]);
+    assert.ok(
+      r.theirSide.some((t) => /Sales Director/.test(t.text)),
+      JSON.stringify(r.theirSide),
     );
+  });
+  test("the loop closed on the record is gone", () => {
+    const r = drawer([{ ...LOOP, done: true }]);
+    assert.ok(!r.theirSide.some((t) => /Sales Director/.test(t.text)));
   });
 });

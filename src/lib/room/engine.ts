@@ -13,7 +13,7 @@ import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
 import { chicagoDay } from "@/lib/tz";
 import { splitFallback } from "./deliverables";
 import { clip, moveFromCommitment, pickOwed } from "./move-line";
-import { dayBlown } from "./owed";
+import { chicagoDaysSince, dayBlown } from "./owed";
 
 export type Health = "red" | "amber" | "green" | "quiet";
 
@@ -184,11 +184,13 @@ const firstOf = (name: string): string => (name ?? "").trim().split(/\s+/)[0] ??
 
 const viaOf = (p: PromiseIn): string => (p.via ?? "").trim();
 
-// Who owes it, as the move and the door name them; "" when the record
-// cannot say, and the account stands in. A relayed promise whose named
-// owner shares the colleague's first name falls back too, because the move
-// prints only the first name and "Chase Lesha" would read as the colleague.
-function ownerOf(p: PromiseIn): string {
+// Who owes it, as the move, the door and the drawer name them; "" when the
+// record cannot say, and the account stands in. A relayed promise whose
+// named owner shares the colleague's first name falls back too, because the
+// move prints only the first name and "Chase Lesha" would read as the
+// colleague. Exported so the drawer names the owner as the move does (pass
+// 8 call 6).
+export function ownerOf(p: PromiseIn): string {
   const who = (p.who ?? "").trim();
   const via = viaOf(p);
   if (via && who && firstOf(who).toLowerCase() === firstOf(via).toLowerCase()) return "";
@@ -250,9 +252,27 @@ function pressOf(p: PromiseIn, now: Date, fallback: string): Pressed {
   const ago = days != null && days > 0 ? daysAgo(days) : "today";
   const at = Date.parse(p.at);
   const clock = Number.isNaN(at) ? Number.MAX_SAFE_INTEGER : at;
+  // A promise with no day says when it was MADE, in words that cannot be
+  // read as a due day: "Promised yesterday" sat beside "Promised Friday" and
+  // read as a day that had passed (pass 8 G9). The trigger is the promise
+  // made (the writing canon, rule 3).
   return days != null && days > PROMISE_AWAIT_DAYS
-    ? { p, tier: 2, clock, line: `Chase ${who}. Promised ${ago}.`, yours: true }
-    : { p, tier: 5, clock, line: `Wait on ${who}. Promised ${ago}.`, yours: false };
+    ? { p, tier: 2, clock, line: `Chase ${who}. Promise made ${ago}.`, yours: true }
+    : { p, tier: 5, clock, line: `Wait on ${who}. Promise made ${ago}.`, yours: false };
+}
+
+/** Where a dated promise stands, in the move line's own words: "Promised
+ *  Friday" while it stands, "Due today" on the day, "PROMISED 10/9" once a
+ *  heard day passes, "The 10/9 wall passed" when nobody heard it; "" when
+ *  it named no day. The drawer's readout says the same thing the move does
+ *  (pass 8 call 6). */
+export function promiseStands(p: PromiseIn, now: Date): string {
+  const day = ISO_DAY.test(p.day ?? "") ? (p.day as string) : "";
+  if (!day) return "";
+  if (dayBlown(day, now))
+    return p.promised || viaOf(p) ? `PROMISED ${md(day)}` : `The ${md(day)} wall passed`;
+  if (day === chicagoDay(now)) return "Due today";
+  return `Promised ${dayWord(day, now)}`;
 }
 
 /** One line of the door: who owes it, what, the colleague it came through
@@ -288,10 +308,12 @@ function doorLine(p: PromiseIn, now: Date, fallback: string): string {
   return redactMoney(parts.join(" · "));
 }
 
+/** Chicago days back from now: 0 today, 1 yesterday, never negative. A
+ *  calendar day in Chicago, never a 24-hour span, so a 9 PM reply reads
+ *  "They wrote yesterday." at 8 the next morning (the closer rule: all days
+ *  are Chicago days; pass 8 X5). The one count, shared with whose move. */
 export function daysBetween(iso: string, now: Date): number | null {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return null;
-  return Math.max(0, Math.floor((now.getTime() - t) / DAY));
+  return chicagoDaysSince(iso, now);
 }
 
 // Climb: fraction of the whole pipeline covered — full stages behind the
@@ -452,11 +474,9 @@ export function readDeal(i: RoomInputs): RoomRead {
   const acceptedNewest = verdict.rung === "acceptance";
   const acceptedWho = (i.lastAccepted?.who || "").trim();
 
-  // A dated wall is a real calendar fact — expire and escalate it.
-  const wallMs = i.timing?.dateIso ? Date.parse(i.timing.dateIso) : NaN;
-  const wallDaysPast = Number.isNaN(wallMs)
-    ? null
-    : Math.floor((i.now.getTime() - wallMs) / DAY);
+  // A dated wall is a real calendar fact — expire and escalate it. It passes
+  // when its Chicago day ends, never at a UTC midnight (pass 8 X5).
+  const wallDaysPast = i.timing?.dateIso ? daysBetween(i.timing.dateIso, i.now) : null;
   const wallOverdue = wallDaysPast != null && wallDaysPast > 0;
 
   // Not enough signal — an honest read, never a fabricated move.

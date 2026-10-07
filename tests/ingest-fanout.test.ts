@@ -385,7 +385,8 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
   test("the room and the pipeline hand their loops to the reader, through the read", () => {
     // Since slice 14 the room takes the loop from the single account read's
     // theirPromise (field 14), which hands the account's todos to owedByThem
-    // itself; the pipeline reads the same field ahead of its own call.
+    // itself. The pipeline reads the read's whole list and makes no call of
+    // its own (ruled 2026-10-07, pass 8 call 6).
     const acct = readAccount({
       account: { id: "A1", name: "Acme PEO" },
       notes: [],
@@ -411,8 +412,8 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
     assert.match(page, /acct\.theirPromise/);
     assert.match(page, /\.\.\.\(b\.day \? \{ day: b\.day \} : \{\}\)/);
     const build = read("src/lib/pipeline/build.ts");
-    assert.match(build, /a\.read\.theirPromise/);
-    assert.match(build, /owedByThem\(ns, input\.now, a\.todos\)/);
+    assert.match(build, /a\.read\.theirPromises/);
+    assert.ok(!/owedByThem\(/.test(build), "the drawer counts no promises of its own");
   });
 });
 

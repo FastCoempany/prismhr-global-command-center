@@ -183,12 +183,36 @@ describe("PROMISED needs a hearer; a promise with no day keeps the await window"
       theirPromises: [{ ...loop, at: at(3) }],
       now: TUE,
     });
-    assert.equal(fresh.move, "Wait on Adam. Promised 3 days ago.");
+    assert.equal(fresh.move, "Wait on Adam. Promise made 3 days ago.");
     const edge = readDeal({ ...base, theirPromises: [{ ...loop, at: at(7) }], now: TUE });
-    assert.equal(edge.move, "Wait on Adam. Promised 7 days ago.");
+    assert.equal(edge.move, "Wait on Adam. Promise made 7 days ago.");
     const late = readDeal({ ...base, theirPromises: [{ ...loop, at: at(8) }], now: TUE });
-    assert.equal(late.move, "Chase Adam. Promised 8 days ago.");
+    assert.equal(late.move, "Chase Adam. Promise made 8 days ago.");
     assert.match(late.moveFull ?? "", / · Promised to Antaeus Coe · No day given · /);
+  });
+
+  test("a dayless promise says when it was made, never a due day (pass 8 G9)", () => {
+    // "Promised yesterday" sat in the same shape as the dated "Promised
+    // Friday" and read as a day that had passed. The dayless line names the
+    // promise made, so it cannot be read as the day it is due.
+    const loop = { ...adam(), day: undefined };
+    const day = (n: number) => new Date(TUE.getTime() - n * 86_400_000).toISOString();
+    const dayless = [0, 1, 3, 9].map(
+      (n) =>
+        readDeal({ ...base, theirPromises: [{ ...loop, at: day(n) }], now: TUE }).move,
+    );
+    assert.deepEqual(dayless, [
+      "Wait on Adam. Promise made today.",
+      "Wait on Adam. Promise made yesterday.",
+      "Wait on Adam. Promise made 3 days ago.",
+      "Chase Adam. Promise made 9 days ago.",
+    ]);
+    const dated = readDeal({ ...base, theirPromises: [adam()], now: TUE }).move;
+    assert.equal(dated, "Wait on Adam. Promised Friday.");
+    for (const move of dayless) {
+      assert.ok(!/\bPromised\b/.test(move), `a due day's word: ${move}`);
+      assertCanon(move);
+    }
   });
 
   test("who owes it is the record's first name, else the account as a person says it", () => {
@@ -203,7 +227,7 @@ describe("PROMISED needs a hearer; a promise with no day keeps the await window"
       lastInbound: { at: "2026-10-05T15:00:00Z", who: "Lesha", promise: true },
       now: TUE,
     });
-    assert.equal(r.move, "Wait on Lesha. Promised yesterday.");
+    assert.equal(r.move, "Wait on Lesha. Promise made yesterday.");
     assert.equal(r.moveFull, "Lesha · No day given");
   });
 
@@ -826,16 +850,16 @@ describe("a relayed promise on the move line and its door", () => {
       entry: { at: at(3), rung: "thread" },
     };
     const fresh = readDeal({ ...base, theirPromises: [relay], now: TUE });
-    assert.equal(fresh.move, "Wait on Simploy. Promised 3 days ago.");
+    assert.equal(fresh.move, "Wait on Simploy. Promise made 3 days ago.");
     assert.equal(
       fresh.moveFull,
       "Simploy · Send the plan summary. · via Lesha · Promised to Lesha Cyphers" +
         " · No day given · Filed thread 10/3",
     );
     const edge = readDeal({ ...base, theirPromises: [{ ...relay, at: at(7) }], now: TUE });
-    assert.equal(edge.move, "Wait on Simploy. Promised 7 days ago.");
+    assert.equal(edge.move, "Wait on Simploy. Promise made 7 days ago.");
     const late = readDeal({ ...base, theirPromises: [{ ...relay, at: at(8) }], now: TUE });
-    assert.equal(late.move, "Chase Simploy. Promised 8 days ago.");
+    assert.equal(late.move, "Chase Simploy. Promise made 8 days ago.");
     for (const r of [fresh, edge, late]) {
       assert.ok(!/PROMISED/.test(r.move), r.move);
       assertNoColleague(r.move);
@@ -995,7 +1019,7 @@ describe("the read marks a relay from the record, with no model call", () => {
       kind: "owed",
       entry: { at: "2026-10-03T15:00:00Z", noteId: "n6", rung: "thread" },
     });
-    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promised 3 days ago.");
+    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promise made 3 days ago.");
   });
 
   test("an Owed line naming a colleague is the colleague's own work, never theirs", () => {
@@ -1013,7 +1037,7 @@ describe("the read marks a relay from the record, with no model call", () => {
       acct.theirPromises.map((p) => [p.who, p.text]),
       [["Adam Bell", "the census"]],
     );
-    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promised 3 days ago.");
+    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promise made 3 days ago.");
   });
 
   test("a colleague named as the promiser is the via, and the owner falls back", () => {
@@ -1055,10 +1079,10 @@ describe("the read marks a relay from the record, with no model call", () => {
     const acct = readWith([LESHA_RELAY], [dayless], TUE, ROSTER);
     assert.equal(acct.theirPromises[0]?.via, "Lesha Cyphers");
     assert.equal(acct.theirPromises[0]?.promised, undefined);
-    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promised today.");
+    assert.equal(moveOf(acct, TUE).move, "Wait on Adam. Promise made today.");
     const later = new Date("2026-10-15T17:00:00Z");
     const late = moveOf(readWith([LESHA_RELAY], [dayless], later, ROSTER), later);
-    assert.equal(late.move, "Chase Adam. Promised 9 days ago.");
+    assert.equal(late.move, "Chase Adam. Promise made 9 days ago.");
   });
 
   test("a promise the client sent directly carries no via", () => {

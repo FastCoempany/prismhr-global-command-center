@@ -10,15 +10,15 @@
 //
 // The HomeRoom read it first (slice 10); Groundwork, the drawer, the Sendbook
 // and whose move followed (slices 11a to 14), and Accounts is the one left
-// (§2.2, the migration order). The old path — corpusFor and extractDealIntel —
-// stays for its other callers until the last one leaves, and tests/record-read
-// pins that the two agree on every fixture the old path's suites hold.
+// (§2.2, the migration order). The old path, corpusFor, retired with its
+// last caller (pass 8 housekeeping, #369); tests/record-read pins the read's
+// intel to extractDealIntel over the room's own slice of the rows on every
+// fixture the old path's suites held.
 
 import { secondRecordFor, type SecondRecord } from "@/lib/activity/read";
 import type { DashCardRow } from "@/lib/dashboard/data";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { DASH_NODES } from "@/lib/dashboard/stages";
-import { isAcceptance } from "@/lib/intel/closer";
 import { effectiveAt } from "@/lib/intel/clock";
 import type { DigestEntry } from "@/lib/intel/digest";
 import { THEIR_PROMISE_RE, extractDealIntel } from "@/lib/intel/extract";
@@ -42,7 +42,7 @@ import {
   type RecordDoc,
   type TouchRow,
 } from "./docs";
-import { whoseMove, type WhoseMove } from "./whose-move";
+import { isTheirAcceptance, whoseMove, type WhoseMove } from "./whose-move";
 
 /** The deal facts a Filing's read states on one entry (src/lib/sf-timeline.ts,
  *  TimelineEntry; slice 4). A row that carries them was read by the model,
@@ -202,8 +202,9 @@ export type AccountRead = {
    *  14 grown, by the plan's own rule: a surface that needs a fact the read
    *  does not carry grows the read, never a private re-derivation (§2.2). */
   theirPromises: TheirPromise[];
-  /** 15 · the newest invitation acceptance: machinery, but proof the meeting
-   *  exists. `who` is "" when our own side accepted. */
+  /** 15 · the newest invitation acceptance from their side: machinery, but
+   *  proof the meeting exists. Our own side accepting books nothing, so it
+   *  is never this fact; `who` is the person of theirs who accepted. */
   lastAccepted: { at: string; who: string; noteId: string } | null;
   /** 16 · any doc with a direction, or any touch. */
   conversationExists: boolean;
@@ -404,15 +405,20 @@ export function readAccount(input: AccountReadInput): AccountRead {
   const intel = extractDealIntel(live, digest);
 
   // 13 · who this deal runs through — the record's most-seen person outranks
-  // the book's seeded primary the moment real communication files.
+  // the book's seeded primary the moment real communication files. The
+  // read's declared home side goes with it, so a colleague who turns up on
+  // more threads than anyone at the account is never the relationship (ruled
+  // 2026-10-07, pass 8 call 7).
   const contacts = [...(account.contacts ?? [])];
-  const relationship = relationshipFor(visible, contacts, {
-    name: account.contact?.name,
-    email: account.contact?.email,
-  });
+  const relationship = relationshipFor(
+    visible,
+    contacts,
+    { name: account.contact?.name, email: account.contact?.email },
+    isHome,
+  );
 
-  // 19 · everyone the record names.
-  const people = peopleFor(visible, contacts, 12);
+  // 19 · everyone the record names on the account's side, by the same roster.
+  const people = peopleFor(visible, contacts, 12, isHome);
 
   // 7 · the touch clock: the record's own outbound and the touch log, by
   // latest. Our own side never becomes the person we wait on when the send
@@ -484,21 +490,14 @@ export function readAccount(input: AccountReadInput): AccountRead {
     };
   })();
 
-  // 15 · the newest acceptance, at its own moment; our own side is never
-  // the person who accepted.
+  // 15 · the newest acceptance from their side, at its own moment. Our own
+  // side accepting books nothing (CLAUDE.md, the Sendbook, BOOKED): a
+  // colleague on the invite accepting read "Wait for the meeting. Joseph
+  // accepted." under the relationship's name (pass 8 H2), so the fact and
+  // the rung read one test.
   const lastAccepted = (() => {
-    const a = visible.find((n) => isAcceptance(n.body ?? ""));
-    if (!a) return null;
-    const side =
-      (a.actors ?? "")
-        .split("→")[0]
-        ?.replace(/\+\d+\s*$/, "")
-        .trim() ?? "";
-    return {
-      at: effectiveAt(a.createdAt, a.body ?? ""),
-      who: isHome(side) ? "" : side,
-      noteId: a.id,
-    };
+    const a = live.find((d) => isTheirAcceptance(d));
+    return a ? { at: a.at, who: a.sender, noteId: a.noteId } : null;
   })();
 
   // 4 · whose move, over the same docs with the same touch log.

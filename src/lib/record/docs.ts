@@ -21,9 +21,9 @@ import {
   SOURCES,
   TAPE_HEAD_IN_BODY_RE,
   isCall,
-  isTape,
 } from "@/lib/ingest/dialect";
 import { isCloser, isMachinery } from "@/lib/intel/closer";
+import { isCallArchive } from "@/lib/intel/meeting";
 import { effectiveAt } from "@/lib/intel/clock";
 import type { DigestEntry } from "@/lib/intel/digest";
 import {
@@ -193,9 +193,13 @@ export function docOf(
   // as the Sendbook does. The flag stays on the doc for the readers that want
   // the colleague's row anyway — the people index, the relationship.
   const home = attributed && isHomeSideName(sender, homeSide);
+  // Direction is who sent it, read off the actors, never a name in the
+  // head: the head's em-dash slot holds the subject, so a reply of theirs
+  // titled "— Antaeus, quick question" read as the operator's own send
+  // (pass 8 H3; the Ted doctrine).
   const direction: RecordDoc["direction"] = !isEntry
     ? undefined
-    : mine || /—\s*Antaeus/i.test(n.body.split("\n")[0] ?? "")
+    : mine
       ? "out"
       : attributed && !home && !machinery && !closer && toUs
         ? "in"
@@ -231,7 +235,11 @@ export function evidenceRung(
   d: Pick<RecordDoc, "tape" | "source" | "text">,
 ): EvidenceRung {
   const src = d.source ?? "";
-  if (d.tape || isTape(src) || isCall(src)) return "tape";
+  // An archive under the tape's source is the tape only when it reads as a
+  // call: the zero-entry fallback files any unstructured paste there, and a
+  // typed line is never "On tape" (evidence or nothing; pass 8 X3).
+  if (d.tape || isCall(src) || isCallArchive({ body: d.text, source: src }))
+    return "tape";
   const base = src.endsWith(READ_SUFFIX) ? src.slice(0, -READ_SUFFIX.length) : src;
   if (
     (d.text ?? "").startsWith(`${GLYPHS.email} `) ||

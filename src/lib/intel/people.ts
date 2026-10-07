@@ -51,14 +51,22 @@ const norm = (s: string) => s.trim().toLowerCase();
 
 // Roll the account's notes up into people rows, joined against the contact
 // roster (title/email) by full name or email. Sorted most-seen first.
+//
+// `isHome`, when the caller holds the declared roster, leaves our own side
+// out the way the operator is always left out: a colleague on every thread
+// is not one of the account's people, and the account read hands its home
+// side here so a colleague is never the relationship (ruled 2026-10-07,
+// pass 8 call 7). A caller with no roster passes nothing and reads as before.
 export function peopleFor(
   notes: NoteForPeople[],
   contacts: ContactForPeople[],
   cap = 12,
+  isHome?: (name: string) => boolean,
 ): PersonRow[] {
   const byKey = new Map<string, PersonRow>();
   for (const n of notes) {
     for (const raw of splitActors(n.actors)) {
+      if (isHome?.(raw)) continue;
       const key = norm(raw);
       const row = byKey.get(key) ?? {
         name: raw,
