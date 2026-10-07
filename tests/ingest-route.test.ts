@@ -932,6 +932,9 @@ describe("the Sales Nav grab files each row on its own account", () => {
     const swallow = chute.slice(chute.indexOf("const swallow = async"), chute.indexOf("const batchSeq"));
     assert.ok(swallow.indexOf("isGrab(read.text)") > 0, "the Chute tells a grab");
     assert.ok(swallow.indexOf("isGrab(read.text)") < swallow.indexOf("routed(read.text)"), "before the route");
-    assert.match(read("src/app/room/ingest/use-ingest.ts"), /await roomGrab\(/);
+    // Rewritten in pass 9's tail: the grab travels through the carriage,
+    // whole or in pieces the server assembles, and lands in roomGrab either
+    // way (D4).
+    assert.match(read("src/app/room/ingest/use-ingest.ts"), /whole: \(t\) => roomGrab\(t, sent\),/);
   });
 });

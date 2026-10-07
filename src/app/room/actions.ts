@@ -13,6 +13,8 @@
 // that named three pages retired with slice 9 of the Chute brains refactor
 // plan.
 
+import { after } from "next/server";
+import { actedSweep } from "@/lib/activity/run";
 import { rulesRead } from "@/lib/intel/rules-read";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { MODEL_TRANSCRIBE } from "@/lib/intranet/doctrine";
@@ -283,6 +285,36 @@ function refusal(verdict: GuardVerdict | null, how: string) {
   };
 }
 
+// The record spoke, so the acted sweep runs (pass 9's tail, A4.14 and
+// A8.4): "the acted sweep can re-stamp from the record any time it truly
+// speaks" (CLAUDE.md, The Act Lane), and a filing that wrote rows on an
+// account is the record speaking. The run's sweep reaches every account once
+// per weekly export; this one reads the filed account alone, so a send
+// dropped in the Chute clears its gem's nag now, not at the next drop. It
+// runs after the response, so it never slows the filing, and it fails open
+// twice over: the sweep swallows its own errors, and a call outside a
+// request, where nothing can be scheduled, leaves the filing as it is and
+// the run catches the gem next week.
+function sweptAfter<R extends { ok: boolean; filed: number }>(
+  accountId: string,
+  r: R,
+): R {
+  if (r.ok && r.filed > 0) {
+    try {
+      after(async () => {
+        try {
+          await actedSweep(getPrisma(), { accountId });
+        } catch {
+          // the run's own sweep catches it at the next drop
+        }
+      });
+    } catch {
+      // nothing scheduled; the filing stands
+    }
+  }
+  return r;
+}
+
 export async function roomPaste(
   accountId: string,
   raw: string,
@@ -445,7 +477,7 @@ export async function roomPaste(
       fingerprint,
       pasteKey,
       dupeCheck,
-    });
+    }).then((r) => sweptAfter(acct.id, r));
   } finally {
     // A filing that filed nothing lets the capture go; one that landed has
     // already turned the claim into the filed marker, which this leaves.

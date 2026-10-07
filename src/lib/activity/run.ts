@@ -1452,14 +1452,28 @@ export async function runActivityPass(opts?: {
 // clocked Outlook send never matched and a person who was only a recipient
 // never stamped. The rows are the account's under every id that folds into
 // it (E17), and a ✕-parked row is hidden (X1).
+//
+// The run sweeps every account at the head of each export pass. A filing
+// sweeps one: "the acted sweep can re-stamp from the record any time it
+// truly speaks" (CLAUDE.md, The Act Lane), so when the Chute or a Drop files
+// rows on an account, its gems are checked against them then, not at the
+// next weekly drop. `scope.accountId` reads that account's gems under every
+// id it folds into, and nothing else.
 
-export async function actedSweep(db: ActivityDb = getPrisma()): Promise<number> {
+export async function actedSweep(
+  db: ActivityDb = getPrisma(),
+  scope: { accountId?: string } = {},
+): Promise<number> {
   let stamped = 0;
   try {
+    const one = (scope.accountId ?? "").trim();
     const gemNotes = await db.accountNote.findMany({
-      where: { accountId: { startsWith: GEMS_NS } },
+      where: one
+        ? { accountId: { in: accountIdsOf(`${GEMS_NS}${one}`) } }
+        : { accountId: { startsWith: GEMS_NS } },
       take: 400,
     });
+    if (gemNotes.length === 0) return 0;
     const hidden = await hiddenNoteIdsIn(db);
     for (const note of gemNotes) {
       const rawId = note.accountId.slice(GEMS_NS.length);

@@ -44,7 +44,7 @@ import {
   TRANSCRIBE_BYTES,
   TRANSPORT_BYTES,
   cut,
-  transportCut,
+  fitsTransport,
   filingSentences,
   windowSentences,
   windowsOf,
@@ -57,7 +57,18 @@ import {
 } from "../src/lib/intel/ai-clean";
 import { sheetToPaste } from "../src/lib/paste-files";
 import { readFileToText } from "../src/app/room/read-file";
-import { filingRequest } from "../src/app/room/ingest/use-ingest";
+import { carryFiling, filingRequest } from "../src/app/room/ingest/use-ingest";
+import {
+  TEXT_SET,
+  TEXT_UNFINISHED,
+  carryText,
+  takeTextPiece,
+  textPieceBytes,
+  textPieces,
+} from "../src/lib/ingest/carry";
+import { UNFILED, VAULT_PIECE_BYTES, type VaultChunkClient } from "../src/lib/ingest/vault";
+import { redactMoney } from "../src/lib/intel/lexicon";
+import { cleanSfPaste } from "../src/lib/sf-timeline";
 import {
   createAccountNoteRow,
   createTodoRow,
@@ -67,6 +78,8 @@ import {
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
+/** A book account's id, for the carriage pins: Simploy's. */
+const SIMPLOY_ID = "001F000000w38BOIAY";
 const actions = read("src/app/room/actions.ts");
 const fanoutSrc = read("src/lib/ingest/fanout.ts");
 
@@ -544,12 +557,14 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
     // neither cuts now, and roomPaste's read window is the one cut.
     assert.ok(!actions.includes('cut("the transcription"'), "the transcriber cuts nothing");
     assert.ok(actions.includes("return { ok: true, text, window: null };"));
+    // Rewritten in pass 9's tail (D4): the transport's cut retired too; a
+    // heavy text travels in pieces the server assembles, so the reader hands
+    // on every text whole and cuts nothing at all.
     const reader = read("src/app/room/read-file.ts");
-    assert.ok(!/\bcut\(/.test(reader), "the file reader cuts nothing but the transport's");
+    assert.ok(!/\bcut\(|transportCut|Cut\(/.test(reader), "the file reader cuts nothing");
     assert.ok(reader.includes("`DOCUMENT — ${f.name}\\n\\n${raw}`"), "the document whole");
     assert.ok(reader.includes("if (r.window) windows.push(r.window);"));
-    assert.ok(reader.includes('const carried = transportCut("the file", text);'));
-    assert.ok(reader.includes("return { ok: true, text: carried.text, windows };"));
+    assert.ok(reader.includes("return { ok: true, text, windows };"));
     assert.ok(roomPaste.includes("const windows: Window[] = [...(opts.windows ?? [])];"));
   });
 
@@ -959,84 +974,237 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
   });
 });
 
-// ── the transport's window (pass 8 call 3, the coordinator's follow-up) ────
-// Under the server's request cap every reader hands on the text whole; above
-// it, a text used to fail its filing with nothing fanned out. The reader now
-// windows it to fit, the window rides to the receipt (D4), and it files.
-describe("a text too heavy for the transport is windowed to fit and still files", () => {
+// ── a heavy text travels in pieces and files whole (D4; pass 9's tail) ─────
+// Rewritten in pass 9's tail. #374 windowed a text past the server's request
+// cap to fit (the transport's cut), so a capture past 4 MB filed its first
+// 4 MB with an amber "Read N of M" line: a cut the law does not allow ("the
+// note keeps the text whole at any size; only the model's read is
+// windowed", D4). The text now travels the way a dropped file above the cap
+// does (D8 as amended 2026-10-05): in pieces through the vault's chunk
+// store, assembled on the server before anything reads it.
+describe("a text too heavy for one request travels in pieces and files whole", () => {
   const encoded = (t: string) => new TextEncoder().encode(JSON.stringify(t)).length;
 
-  test("the limit is named once, under the platform's request cap", () => {
+  /** An in-memory VaultChunk table, the client the server half is handed. */
+  function chunkStore() {
+    type Row = { accountId: string; filename: string; index: number; total: number; bytes: Uint8Array; createdAt: Date };
+    const rows: Row[] = [];
+    const matches = (r: Row, w: Record<string, unknown>) =>
+      (w.accountId === undefined || r.accountId === w.accountId) &&
+      (w.filename === undefined || r.filename === w.filename) &&
+      (w.total === undefined || r.total === w.total) &&
+      (w.index === undefined || r.index === w.index) &&
+      (w.createdAt === undefined || r.createdAt < (w.createdAt as { lt: Date }).lt);
+    const client: VaultChunkClient = {
+      vaultChunk: {
+        deleteMany: async ({ where }) => {
+          const before = rows.length;
+          for (let i = rows.length - 1; i >= 0; i--) if (matches(rows[i], where)) rows.splice(i, 1);
+          return { count: before - rows.length };
+        },
+        create: async ({ data }) => {
+          rows.push({ ...data, createdAt: new Date() });
+          return { id: `c${rows.length}` };
+        },
+        count: async ({ where }) => rows.filter((r) => matches(r, where)).length,
+        findMany: async ({ where }) =>
+          rows
+            .filter((r) => matches(r, where))
+            .sort((a, b) => a.index - b.index)
+            .map((r) => ({ index: r.index, bytes: r.bytes })),
+      },
+    };
+    return { client, rows };
+  }
+
+  type Paste = Parameters<typeof carryFiling>[0];
+  type Filed = Awaited<ReturnType<typeof carryFiling>>;
+  const refused = (reason: string): Filed => ({ ok: false, filed: 0, how: "", reason });
+
+  test("the limit is named once, under the platform's request cap, and says which way a text goes", () => {
     assert.equal(TRANSPORT_BYTES, 4 * 1024 * 1024);
     const config = read("next.config.ts");
     const kb = Number(/bodySizeLimit:\s*"(\d+)kb"/.exec(config)?.[1] ?? "0");
     assert.ok(kb > 0, "the server action body limit is set");
-    assert.ok(TRANSPORT_BYTES < kb * 1024, "the window stays under the server's cap");
+    assert.ok(TRANSPORT_BYTES < kb * 1024, "a whole text stays under the server's cap");
     assert.ok(kb * 1024 < 4.5 * 1024 * 1024, "and the cap under the platform's 4.5 MB");
-    // Both doors take the module's limit, never one of their own.
-    assert.ok(read("src/app/room/read-file.ts").includes('transportCut("the file", text)'));
-    assert.ok(read("src/app/room/ingest/use-ingest.ts").includes('transportCut("the text", text)'));
+    assert.equal(VAULT_PIECE_BYTES, TRANSPORT_BYTES, "a piece weighs what a whole text may");
+    // Nothing cuts on the way: no reader and no door keeps the transport's
+    // old window.
+    for (const f of ["src/app/room/read-file.ts", "src/app/room/ingest/use-ingest.ts", "src/lib/ingest/windows.ts"])
+      assert.ok(!read(f).includes("transportCut"), `${f} still cuts for the transport`);
   });
 
-  test("under the limit nothing is cut; over it the head that fits is kept and the window says how much", () => {
-    assert.deepEqual(transportCut("the file", "short", 100), { text: "short", window: null });
-    const exact = "x".repeat(98);
-    assert.equal(transportCut("the file", exact, 100).window, null, "98 characters and two quotes fit 100 bytes");
-    const over = transportCut("the file", "x".repeat(250), 100);
-    assert.equal(over.text, "x".repeat(98));
-    assert.deepEqual(over.window, { what: "the file", read: 98, of: 250 });
-    // Every kind of character is costed as it travels: escapes, UTF-8's
-    // widths, a pair never split, a control character's \u escape.
-    for (const unit of ["—", "\n", '"', "é", "😀", "\u0001", "a\\b"]) {
-      const text = unit.repeat(200);
-      const r = transportCut("the file", text, 101);
-      assert.ok(r.window, `${JSON.stringify(unit)} is cut`);
-      assert.ok(encoded(r.text) <= 101, `${JSON.stringify(unit)} fits: ${encoded(r.text)}`);
-      assert.ok(encoded(text.slice(0, r.text.length + unit.length)) > 101, `${JSON.stringify(unit)} keeps all that fits`);
-      assert.ok(!/[\uD800-\uDBFF]$/.test(r.text), "no half of a pair");
+  test("fitsTransport costs every character as it travels", () => {
+    assert.equal(fitsTransport("short", 100), true);
+    assert.equal(fitsTransport("x".repeat(98), 100), true, "98 characters and two quotes fit 100 bytes");
+    assert.equal(fitsTransport("x".repeat(99), 100), false);
+    // Escapes, UTF-8's widths, a pair, a control character's \u escape: the
+    // answer is the encoded argument's own weight, at every length.
+    for (const unit of ["—", "\n", '"', "é", "😀", "\u0001", "a\\b"])
+      for (let n = 1; n <= 60; n++) {
+        const text = unit.repeat(n);
+        assert.equal(fitsTransport(text, 101), encoded(text) <= 101, `${JSON.stringify(unit)} × ${n}`);
+      }
+  });
+
+  test("the pieces join on the server byte for byte, a character split across two included", async () => {
+    // Two leading bytes, then four-byte characters: the cut at the middle can
+    // only fall inside a character, and the server joins before it decodes.
+    const text = "ab" + "😀".repeat(1_100_000);
+    assert.equal(fitsTransport(text), false);
+    const pieces = textPieces(text);
+    assert.equal(pieces.length, 2);
+    assert.ok(pieces.every((p) => p.length <= VAULT_PIECE_BYTES));
+    assert.throws(() => new TextDecoder("utf-8", { fatal: true }).decode(pieces[0]), "the cut falls inside a character");
+    const store = chunkStore();
+    let got = "";
+    const r = await carryText(
+      text,
+      {
+        whole: async () => assert.fail("too heavy to travel whole"),
+        piece: async (key, i, n, form) =>
+          takeTextPiece(store.client, { key, index: i, total: n, bytes: await textPieceBytes(form) }, async (t) => {
+            got = t;
+            return "used";
+          }, "broken"),
+      },
+      () => "broken",
+    );
+    assert.equal(r, "used");
+    assert.equal(got, text, "the whole text, every character");
+    assert.equal(store.rows.length, 0, "the pieces are gone once the text is whole");
+    // A text that fits one request goes whole, through no store at all.
+    assert.equal(
+      await carryText("The board meets Thursday.", { whole: async (t) => t, piece: async () => assert.fail("no pieces") }, () => ""),
+      "The board meets Thursday.",
+    );
+  });
+
+  test("a text past the limit files whole through the real carriage, and the receipt carries only the model's window", async () => {
+    // A spreadsheet handed on every sheet, every row: distinct lines, past
+    // the request cap, no figure and no chrome to clean.
+    const lines: string[] = [];
+    // Each line's weight as it travels, its joining newline's escape included.
+    for (let i = 0, size = 0; size <= TRANSPORT_BYTES + 300_000; i++) {
+      const line = `Row ${i} · Dana Ellis · Mexico · résumé on file — the board meets Thursday`;
+      lines.push(line);
+      size += encoded(line);
     }
-  });
-
-  test("the reader windows a file past the limit, records the window and hands on what fits", async () => {
+    const heavy = `SPREADSHEET — census.xlsx\n\n${lines.join("\n")}`;
+    assert.equal(fitsTransport(heavy), false, "too heavy for one request");
     const noPdf = async () => ({ ok: false, reason: "no reader in the suite" });
-    const line = "Dana Ellis: the board meets Thursday — we sign after.\n";
-    const big = line.repeat(Math.ceil((TRANSPORT_BYTES + 400_000) / line.length));
-    const r = await readFileToText(new File([big], "export.txt", { type: "text/plain" }), noPdf);
+
+    // The reader hands it on whole, with no window of its own…
+    const r = await readFileToText(new File([heavy], "census.txt", { type: "text/plain" }), noPdf);
     assert.ok(r.ok);
     if (!r.ok) return;
-    // The text reader trims the file, so the whole is the trimmed text.
-    const whole = big.trim();
-    assert.equal(r.windows.length, 1);
-    assert.deepEqual(r.windows[0], { what: "the file", read: r.text.length, of: whole.length });
-    assert.ok(encoded(r.text) <= TRANSPORT_BYTES, "what travels fits the transport");
-    assert.ok(encoded(whole) > TRANSPORT_BYTES, "and the whole would not have");
-    assert.ok(whole.startsWith(r.text), "the head is kept");
-    // The receipt's amber line says it, beside roomPaste's own read window.
-    const read60 = { what: "the paste", read: READ_WINDOW, of: r.text.length };
-    assert.deepEqual(filingSentences({ windows: [...r.windows, read60] }), [
-      `Read ${r.text.length.toLocaleString("en-US")} of ${whole.length.toLocaleString("en-US")} characters of the file.`,
-      `Read 60,000 of ${r.text.length.toLocaleString("en-US")} characters of the paste.`,
+    assert.equal(r.text, heavy);
+    assert.deepEqual(r.windows, []);
+    // …the filing request carries it untouched…
+    const request: Paste = filingRequest("chute", SIMPLOY_ID, r.text, { windows: r.windows });
+    assert.equal(request[1], heavy);
+    assert.deepEqual(request[2], { force: false, door: "chute", windows: [] });
+
+    // …and the browser half posts it in pieces to the server half over an
+    // in-memory chunk store, which assembles it and hands the whole text to
+    // the filing. The door is roomPastePiece's (src/app/room/carry-actions.ts,
+    // pinned below), without the session gate the suite cannot open.
+    const store = chunkStore();
+    const notes: AccountNoteData[] = [];
+    const noteClient = {
+      accountNote: {
+        async create({ data }: { data: AccountNoteData }) {
+          notes.push(data);
+          return { id: `n${notes.length}` };
+        },
+      },
+    };
+    let pieces = 0;
+    // What roomPaste does with a capture whose read finds no entries: its
+    // own model read window, then the whole text as one note through the
+    // one writer (the lines the pins above read from roomPaste).
+    const roomPasteFiles = async (accountId: string, rawText: string, opts: Paste[2]): Promise<Filed> => {
+      const readCut = cut("the paste", rawText, READ_WINDOW);
+      const windows = [...(opts.windows ?? [])];
+      if (readCut.window) windows.push(readCut.window);
+      const body = redactMoney(cleanSfPaste(rawText));
+      const n = await createAccountNoteRow(
+        { accountId, kind: "account", body: `☰ transcript — filed from the room\n${body}`, door: opts.door, lane: "mine", source: "transcript" },
+        noteClient,
+      );
+      return { ok: true, filed: 1, how: "transcript", noteIds: [n.id], windows };
+    };
+    const filed = await carryFiling(request, {
+      paste: async () => assert.fail("too heavy to travel whole"),
+      piece: async (accountId, key, index, total, form, opts) => {
+        pieces++;
+        return takeTextPiece(
+          store.client,
+          { key, index, total, bytes: await textPieceBytes(form) },
+          (text) => roomPasteFiles(accountId, text, opts),
+          refused(TEXT_UNFINISHED),
+        );
+      },
+    });
+    assert.equal(pieces, 2);
+    assert.equal(filed.ok, true);
+    assert.equal(notes.length, 1);
+    assert.equal(notes[0].body, `☰ transcript — filed from the room\n${heavy}`, "the note body is the input, whole");
+    assert.equal(notes[0].accountId, SIMPLOY_ID);
+    assert.equal(notes[0].door, "chute");
+    // The receipt: one window, the model's read, measured against the whole
+    // text, and no transport line beside it.
+    assert.deepEqual(filed.windows, [{ what: "the paste", read: READ_WINDOW, of: heavy.length }]);
+    assert.deepEqual(filingSentences({ windows: filed.windows }), [
+      `Read 60,000 of ${heavy.length.toLocaleString("en-US")} characters.`,
     ]);
-    // A file under the limit passes whole, with no window.
-    const small = await readFileToText(new File([line.repeat(40)], "note.txt"), noPdf);
-    assert.ok(small.ok);
-    if (small.ok) {
-      assert.deepEqual(small.windows, []);
-      assert.equal(small.text, line.repeat(40).trim());
-    }
   });
 
-  test("a pasted text past the limit is windowed in the filing request, and one that fits is untouched", () => {
-    const fits = filingRequest("drop", "A1", "The board meets Thursday.", { windows: [] });
-    assert.deepEqual(fits, ["A1", "The board meets Thursday.", { force: false, door: "drop", windows: [] }]);
-    const heavy = "y".repeat(TRANSPORT_BYTES + 10);
-    const [, text, opts] = filingRequest("drop", "A1", heavy, {
-      windows: [{ what: "the file", read: 5, of: 9 }],
+  test("a piece that never lands, or a set that never comes whole, files nothing and says so", async () => {
+    const heavy = "z".repeat(TRANSPORT_BYTES + 10);
+    const lost = await carryFiling(filingRequest("drop", SIMPLOY_ID, heavy), {
+      paste: async () => assert.fail("too heavy to travel whole"),
+      piece: async () => {
+        throw new Error("the request broke off");
+      },
     });
-    assert.equal(text.length, TRANSPORT_BYTES - 2);
-    assert.deepEqual(opts.windows, [
-      { what: "the file", read: 5, of: 9 },
-      { what: "the text", read: TRANSPORT_BYTES - 2, of: heavy.length },
-    ]);
+    assert.deepEqual(lost, refused(TEXT_UNFINISHED));
+    // A door that keeps answering staged never made the set whole.
+    const stuck = await carryFiling(filingRequest("drop", SIMPLOY_ID, heavy), {
+      paste: async () => assert.fail("too heavy to travel whole"),
+      piece: async (_a, _k, index, total) => ({ ok: true, staged: true, index, total }),
+    });
+    assert.deepEqual(stuck, refused(TEXT_UNFINISHED));
+    // The server half refuses a key it never made and a missing piece.
+    const store = chunkStore();
+    const use = async () => "used";
+    assert.equal(await takeTextPiece(store.client, { key: "../x", index: 0, total: 2, bytes: new Uint8Array([1]) }, use, "broken"), "broken");
+    assert.equal(await takeTextPiece(store.client, { key: "abcdefgh-1", index: 0, total: 2, bytes: null }, use, "broken"), "broken");
+    // A text's pieces stage under their own namespace, apart from any file's.
+    await takeTextPiece(store.client, { key: "abcdefgh-1", index: 0, total: 2, bytes: new Uint8Array([104]) }, use, "broken");
+    assert.deepEqual(store.rows.map((x) => [x.accountId, x.filename]), [[TEXT_SET, "abcdefgh-1"]]);
+    assert.notEqual(TEXT_SET, UNFILED);
+  });
+
+  test("every door carries the text: the filing, the route and the grab's split, each assembled on the server", () => {
+    const door = read("src/app/room/ingest/use-ingest.ts");
+    assert.match(door, /const r = await carryFiling\(filingRequest\(door, accountId, text, opts\)\);/);
+    assert.match(door, /carryText\(text, \{ whole: routeText, piece: routeTextPiece \}/);
+    assert.match(door, /whole: \(t\) => roomGrab\(t, sent\),\s*piece: \(key, i, n, form\) => roomGrabPiece\(key, i, n, form, sent\),/);
+    const carry = read("src/app/room/carry-actions.ts");
+    assert.match(carry, /^"use server";/);
+    // Each door takes the session gate before anything stages, and the
+    // filing's door binds the account against the book first.
+    for (const fn of ["roomPastePiece", "roomGrabPiece", "routeTextPiece"]) {
+      const body = carry.slice(carry.indexOf(`export async function ${fn}(`));
+      const gate = body.indexOf("if (!(await canStage()))");
+      assert.ok(gate > 0 && gate < body.indexOf("takeTextPiece("), `${fn} gates before it stages`);
+    }
+    assert.match(carry, /const acct = bindAccountId\(accountId, peos\);\s*if \(!acct\)/);
+    assert.match(carry, /\(text\) => roomPaste\(acct\.id, text, opts\),/);
+    assert.match(carry, /\(text\) => roomGrab\(text, opts\),/);
+    assert.match(carry, /\(text\) => routeText\(text\),/);
+    assert.match(carry, /canStage\(\): Promise<boolean> \{\s*if \(!hasDatabaseEnv\(\)\) return false;\s*const access = await getAppAccess\(\);\s*return access\.status === "active" && access\.canWrite;/);
   });
 });

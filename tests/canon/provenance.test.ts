@@ -157,18 +157,22 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
 
   test("the Chute files as chute; the row's paste is the drop; the fan-out carries the filing's door", () => {
     // The doors file through the shared hook since slice 8: the Chute mounts
-    // it as "chute", the row's Drop as "drop", and the hook's one roomPaste
+    // it as "chute", the row's Drop as "drop", and the hook's one filing
     // call stamps the door it was mounted with.
     const chute = read("src/app/room/chute.tsx");
     assert.match(chute, /useIngest\(\{\s*door:\s*"chute"/);
     const client = read("src/app/room/room-client.tsx");
     assert.match(client, /useIngest\(\{\s*door:\s*"drop"/);
     const door = read("src/app/room/ingest/use-ingest.ts");
-    assert.match(door, /roomPaste\(\.\.\.filingRequest\(door,/);
-    // The windows are the reader's, plus the transport's when a pasted text
-    // was too heavy for the server's cap (pass 9, after pass 8 call 3).
-    assert.match(door, /\{ force: !!opts\.force, door, windows \}/);
-    assert.match(door, /const windows = carried\.window\s*\? \[\.\.\.\(opts\.windows \?\? \[\]\), carried\.window\]\s*: opts\.windows;/);
+    // Rewritten in pass 9's tail: the filing travels through the carriage
+    // (carryFiling, whole or in pieces, D4), and the request still names the
+    // door. The windows are the reader's alone: a text too heavy for the
+    // server's cap travels in pieces and is never cut, so no transport
+    // window joins them.
+    assert.match(door, /carryFiling\(filingRequest\(door,/);
+    assert.match(door, /\{ force: !!opts\.force, door, windows: opts\.windows \}/);
+    assert.match(door, /whole: \(t\) => doors\.paste\(accountId, t, opts\),/);
+    assert.match(door, /piece: \(key, i, n, form\) => doors\.piece\(accountId, key, i, n, form, opts\),/);
     const actions = read("src/app/room/actions.ts");
     // The door is a required argument since pass 9 (pass 8 housekeeping):
     // roomPaste no longer defaults a caller that names none to the Drop.

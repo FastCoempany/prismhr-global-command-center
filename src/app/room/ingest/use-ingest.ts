@@ -16,17 +16,22 @@
 // never ships here (C2, D13); filing is roomPaste with the mounting door's
 // name, so every row the filing writes carries it (P3); the vault is the
 // server's two doors through sendToVault, so no token reaches the browser
-// (D8, as amended 2026-10-05). The reads run at most CHUTE_PARALLEL at a
-// time, in drop order (D11), at either door.
+// (D8, as amended 2026-10-05). A text too heavy for one request travels to
+// the filing, the route and the grab's split in pieces the server assembles
+// (carryText; D4), so nothing is cut on the way. The reads run at most
+// CHUTE_PARALLEL at a time, in drop order (D11), at either door.
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { Door } from "@/lib/ingest/doors";
+import { carryText } from "@/lib/ingest/carry";
 import { sendToVault, sendUnfiled, type VaultReceipt } from "@/lib/ingest/vault";
-import { transportCut, type Window } from "@/lib/ingest/windows";
+import type { Window } from "@/lib/ingest/windows";
 import { DROP_ACCEPT } from "@/lib/paste-files";
 import { splitDrop, vaultAfterVerdict, type VaultStep } from "@/lib/room/drop-plan";
 import { roomGrab, roomPaste } from "../actions";
-import { CHUTE_PARALLEL, runLimited } from "../chute-ledger";
+import { roomGrabPiece, roomPastePiece, routeTextPiece } from "../carry-actions";
+import { CHUTE_PARALLEL, readQueue } from "../chute-ledger";
 import { readFileToText } from "../read-file";
 import { routeText, type RouteReply } from "../route-actions";
 import { vaultChunk, vaultFile } from "../vault-actions";
@@ -103,22 +108,46 @@ export type FilingOpts = {
 
 /** What one filing asks of the server: the account, the text, and the door
  *  the capture came through, which stamps every row the filing writes (P3),
- *  with the operator's force and the reader's windows. A pasted text too
- *  heavy for the server's request cap is windowed to fit here, as the file
- *  reader windows a file, and the window joins the others (TRANSPORT_BYTES;
- *  D4); a text that fits passes untouched (pass 8 call 3). Pure, so the
- *  suite can read the request a pick makes. */
+ *  with the operator's force and the reader's windows. The text goes whole,
+ *  at any size (D4): one too heavy for one request travels in pieces
+ *  (carryText), never cut, so no window joins the reader's here. Pure, so
+ *  the suite can read the request a pick makes. */
 export function filingRequest(
   door: FilingDoor,
   accountId: string,
   text: string,
   opts: Pick<FilingOpts, "force" | "windows"> = {},
 ): Parameters<typeof roomPaste> {
-  const carried = transportCut("the text", text);
-  const windows = carried.window
-    ? [...(opts.windows ?? []), carried.window]
-    : opts.windows;
-  return [accountId, carried.text, { force: !!opts.force, door, windows }];
+  return [accountId, text, { force: !!opts.force, door, windows: opts.windows }];
+}
+
+/** The refusal a text carriage answers with when the server never saw the
+ *  text whole: nothing filed, and the reason says to try again. */
+const notCarried = (reason: string): PasteResult => ({
+  ok: false,
+  filed: 0,
+  how: "",
+  reason,
+});
+
+/** File one request through the server: whole when the text fits one
+ *  request, in pieces the server assembles when it does not, and either way
+ *  roomPaste files every character (D4). */
+export function carryFiling(
+  [accountId, text, opts]: Parameters<typeof roomPaste>,
+  doors: {
+    paste: typeof roomPaste;
+    piece: typeof roomPastePiece;
+  } = { paste: roomPaste, piece: roomPastePiece },
+): Promise<PasteResult> {
+  return carryText(
+    text,
+    {
+      whole: (t) => doors.paste(accountId, t, opts),
+      piece: (key, i, n, form) => doors.piece(accountId, key, i, n, form, opts),
+    },
+    notCarried,
+  );
 }
 
 /** A filing's result, with what its verdict does with the files that waited
@@ -130,6 +159,9 @@ export type Filed = PasteResult & { vault: VaultStep };
 
 export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfReader }) {
   const router = useRouter();
+  // The door's one line of reads (D11): every drop at this door joins it, so
+  // a second drop thrown while the first is reading waits behind it.
+  const [queue] = useState(() => readQueue(CHUTE_PARALLEL));
 
   /** The drop's plan, by this door. */
   const plan = (files: FileList | readonly File[] | null | undefined): DropPlan =>
@@ -142,7 +174,13 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
 
   /** Route a text on the server over the joined roster (C2, D13). The
    *  Chute's call; the Drop is bound to its row and never routes. */
-  const route = (text: string): Promise<RouteReply> => routeText(text);
+  const route = (text: string): Promise<RouteReply> =>
+    carryText(text, { whole: routeText, piece: routeTextPiece }, (reason) => ({
+      best: null,
+      candidates: [],
+      book: [],
+      refused: reason,
+    }));
 
   /** File a text to an account through the pipeline, as this door, or as
    *  the door a handed-off capture came through. */
@@ -155,7 +193,7 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
     text: string,
     opts: FilingOpts,
   ): Promise<Filed> {
-    const r = await roomPaste(...filingRequest(door, accountId, text, opts));
+    const r = await carryFiling(filingRequest(door, accountId, text, opts));
     return landed(r, opts.waiting);
   }
 
@@ -174,14 +212,20 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
    *  The grab names a list of accounts, never one, so it skips the whole-text
    *  route: the server splits it row by row and files each row on the
    *  account it surely matches. The Chute's call; a paste on the row reaches
-   *  the same split through roomPaste. The transport's window applies as it
-   *  does to any text (D4). */
+   *  the same split through roomPaste. Whole at any size, as any text (D4). */
   const fileGrab = async (
     text: string,
     opts: Pick<FilingOpts, "windows" | "waiting"> = {},
   ): Promise<Filed> => {
-    const [, carried, sent] = filingRequest(door, "", text, { windows: opts.windows });
-    const r = await roomGrab(carried, { door: sent.door, windows: sent.windows });
+    const sent = { door, windows: opts.windows };
+    const r = await carryText(
+      text,
+      {
+        whole: (t) => roomGrab(t, sent),
+        piece: (key, i, n, form) => roomGrabPiece(key, i, n, form, sent),
+      },
+      notCarried,
+    );
     return landed(r, opts.waiting);
   };
 
@@ -203,10 +247,12 @@ export function useIngest({ door, readPdf }: { door: IngestDoor; readPdf: PdfRea
   ): Promise<VaultReceipt> =>
     sendUnfiled(f, { whole: vaultFile, piece: vaultChunk }, onPiece);
 
-  /** Run the drop's reads at most CHUTE_PARALLEL at a time, in drop order;
-   *  the rest wait their turn (D11). */
+  /** Run the drop's reads at most CHUTE_PARALLEL at a time, in drop order,
+   *  behind any drop still reading at this door; the rest wait their turn
+   *  (D11). Each task starts when its turn comes, so a door can say which
+   *  files are reading and which are waiting. */
   function limited<T>(tasks: readonly (() => Promise<T>)[]): Promise<T[]> {
-    return runLimited(tasks, CHUTE_PARALLEL);
+    return Promise.all(tasks.map((task) => queue(task)));
   }
 
   return { door, plan, read, route, file, fileGrab, vault, vaultUnfiled, limited };

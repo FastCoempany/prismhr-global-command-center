@@ -527,6 +527,15 @@ export function Row({
       const i = xs.indexOf(name);
       return i < 0 ? xs : [...xs.slice(0, i), ...xs.slice(i + 1)];
     });
+  // The files of a drop still waiting their turn, in drop order: the door
+  // reads CHUTE_PARALLEL at once and the rest wait and say so (D11), so the
+  // label never names a file as reading before its turn comes.
+  const [queued, setQueued] = useState<string[]>([]);
+  const queuedDrop = (name: string) =>
+    setQueued((xs) => {
+      const i = xs.indexOf(name);
+      return i < 0 ? xs : [...xs.slice(0, i), ...xs.slice(i + 1)];
+    });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Which outstanding item was closed — keyed by doneKey so the strike never
   // carries over onto the NEXT item after the panel refreshes.
@@ -884,6 +893,7 @@ export function Row({
   // through the same read-and-file path as a paste. Each file of a drop
   // files on its own, with its own receipt (bug 2 closed, slice 8).
   const readDroppedFile = async (f: File, waiting?: File[]) => {
+    queuedDrop(f.name);
     readingAdd(f.name);
     const read = await ingest.read(f);
     if (!read.ok) {
@@ -964,6 +974,7 @@ export function Row({
     // CHUTE_PARALLEL at a time in drop order (D11). Each waits on its own
     // verdict alone: handing the whole drop down vaulted every other file a
     // second time on accept (audit pass 1, bug 8).
+    setQueued((xs) => [...xs, ...plan.read.map((f) => f.name)]);
     void ingest.limited(plan.read.map((f) => () => readDroppedFile(f, [f])));
   };
 
@@ -2261,7 +2272,7 @@ export function Row({
               <button
                 type="button"
                 className={`${styles.door} ${styles.doorZap} ${pasteOpen ? styles.doorOn : ""}`}
-                title={`The bolt — paste anything. It reads and files to ${row.name}.`}
+                title={`The bolt. Paste anything. It reads and files to ${row.name}.`}
                 onClick={() => {
                   setPasteOpen((v) => !v);
                   setComposerOpen(false);
@@ -2273,7 +2284,7 @@ export function Row({
               <button
                 type="button"
                 className={`${styles.door} ${styles.doorNote} ${composerOpen && mode === "note" ? styles.doorOn : ""}`}
-                title={`Note — a line for the record on ${row.name}.`}
+                title={`Note. A line for the record on ${row.name}.`}
                 onClick={() => {
                   const on = composerOpen && mode === "note";
                   setMode("note");
@@ -2286,7 +2297,7 @@ export function Row({
               <button
                 type="button"
                 className={`${styles.door} ${styles.doorAct} ${composerOpen && mode === "action" ? styles.doorOn : ""}`}
-                title={`Action — open work on the sheet for ${row.name}.`}
+                title={`Action. Open work on the sheet for ${row.name}.`}
                 onClick={() => {
                   const on = composerOpen && mode === "action";
                   setMode("action");
@@ -2301,7 +2312,7 @@ export function Row({
                 className={`${styles.door} ${styles.doorFile}`}
                 disabled={pending || reading.length > 0}
                 onClick={() => fileInputRef.current?.click()}
-                title="File — email, PDF, transcript, spreadsheet, document, or image."
+                title="File. Email, PDF, transcript, spreadsheet, document, or image."
               >
                 ⇪
               </button>
@@ -2406,6 +2417,9 @@ export function Row({
             )}
             {reading.length > 0 && (
               <p className={styles.sniff}>Reading {reading.join(", ")}…</p>
+            )}
+            {queued.length > 0 && (
+              <p className={styles.sniff}>Waiting: {queued.join(", ")}.</p>
             )}
             {arch && <p className={styles.sniff}>⇪ {arch.text}</p>}
             {note && <p className={styles.err}>{note}</p>}

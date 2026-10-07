@@ -32,7 +32,7 @@ import { isGrab } from "@/lib/ingest/grab";
 import type { Window } from "@/lib/ingest/windows";
 import { shortName } from "@/lib/ingest/short-name";
 import { ALREADY_ON_FILE, monthDay } from "@/lib/ingest/wrote";
-import type { HeldVerdict } from "./chute-ledger";
+import { waitAhead, type HeldVerdict } from "./chute-ledger";
 import {
   HELD_X_TITLE,
   HELD_X_TITLE_BRAIN,
@@ -486,17 +486,18 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     const batch = ++batchSeq.current;
     const files = Array.from(list ?? []);
     // Every file gets its row the moment it lands; the reads run at most
-    // CHUTE_PARALLEL at a time, in drop order — the rest wait their turn
-    // (D11). The plan says which files the reader cannot open; on the Chute
-    // a .csv is read, because the weekly export is this door's to take.
+    // CHUTE_PARALLEL at a time, in drop order, behind any drop still reading
+    // — the rest wait their turn and say so with their place, and a row
+    // says "Reading…" only once its turn comes (D11). The plan says which
+    // files the reader cannot open; on the Chute a .csv is read, because the
+    // weekly export is this door's to take.
     const vaultOnly = new Set(ingest.plan(files).vault);
     const seated = receipts.seat(files, batch);
     void ingest.limited(
-      seated.map(
-        ({ f, key }) =>
-          () =>
-            swallow(f, key, vaultOnly.has(f)),
-      ),
+      seated.map(({ f, key }) => () => {
+        receipts.start(key);
+        return swallow(f, key, vaultOnly.has(f));
+      }),
     );
   };
 
@@ -519,6 +520,9 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   const isWaiting = (it: Receipt) => it.state === "pick" || it.state === "mismatch";
   const isRunning = (it: Receipt) =>
     it.state === "reading" || it.state === "filing" || it.state === "activity";
+  // Waiting its turn to be read (D11), which is not held: nothing is asked
+  // of the operator, the line just has not reached it.
+  const isQueued = (it: Receipt) => it.state === "queued";
 
   // The second record's drop keeps its own receipt: the counts that came in,
   // the run's last line, and its two-press take-back.
@@ -616,6 +620,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
               : undefined
           }
           onClear={receipts.settled(it) ? () => receipts.dismiss(it.key) : undefined}
+          ahead={isQueued(it) ? waitAhead(items, it.key) : undefined}
         />
       )}
     </li>
@@ -627,24 +632,29 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     items.length > 0 &&
     (() => {
       const running = items.filter(isRunning);
+      const queued = items.filter(isQueued);
       const waiting = items.filter(isWaiting);
       const settledCount = items.filter((x) => receipts.settled(x)).length;
       const filed = items.filter((x) => x.state === "filed").length;
       const meter =
-        running.length + waiting.length > 0
+        running.length + queued.length + waiting.length > 0
           ? [
               count(items.length, "file", "files"),
               filed > 0 ? `${filed} filed` : "",
               waiting.length > 0 ? `${waiting.length} held` : "",
               running.length > 0 ? `${running.length} reading` : "",
+              queued.length > 0 ? `${queued.length} waiting` : "",
             ]
               .filter(Boolean)
               .join(" · ")
           : `${count(items.length, "receipt", "receipts")} · today`;
-      // Folded: every held row and every row still reading, then the two
-      // newest settled receipts (D12). items is newest-first; keep that order.
+      // Folded: every held row, every row still reading and every row
+      // waiting its turn, then the two newest settled receipts (D12). items
+      // is newest-first; keep that order.
       const visible = new Set<number>(
-        items.filter((x) => isWaiting(x) || isRunning(x)).map((x) => x.key),
+        items
+          .filter((x) => isWaiting(x) || isRunning(x) || isQueued(x))
+          .map((x) => x.key),
       );
       if (!ledgerOpen) {
         let extra = 0;

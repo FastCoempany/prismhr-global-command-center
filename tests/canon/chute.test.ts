@@ -3,7 +3,8 @@
 // Every test here calls a function and checks what it returns, except the
 // D15 scan at the foot, which pins an absence (no revalidation call under
 // src/app/room) and the asks that replaced it, and so reads source and
-// nothing else.
+// nothing else, and D11's wiring, which reads how the Chute's hooks seat and
+// start a file, because the hooks run only in a browser.
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -15,9 +16,11 @@ import {
   LEDGER_TEXT_CAP,
   chicagoDay,
   loadLedger,
+  readQueue,
   runLimited,
   saveLedger,
   storedRow,
+  waitAhead,
   type LedgerRow,
   type LedgerStorage,
 } from "../../src/app/room/chute-ledger";
@@ -46,6 +49,7 @@ import { SENDBOOK_NS } from "../../src/lib/sendbook/read";
 import { PRESENCE_NS } from "../../src/lib/presence";
 
 const NOW = new Date("2026-09-25T15:00:00Z"); // 10:00a Chicago, Fri Sep 25
+const readSrc = (p: string) => readFileSync(join(cwd(), p), "utf8");
 
 const memory = (): LedgerStorage & { raw: () => string } => {
   const m = new Map<string, string>();
@@ -278,6 +282,74 @@ describe("the Chute reads at most three files at once; the rest wait in drop ord
     await runLimited(mk(3), 1);
     assert.equal(peak, 1);
     assert.deepEqual(await runLimited([], 3), []);
+  });
+
+  // Pass 9's tail (D11, "say so"): every drop at a door joins one line, so a
+  // second drop thrown while the first is reading waits behind it and the
+  // door never reads more than three; each waiting row then says it waits
+  // and its place, and "Reading…" belongs to the three in flight.
+  test("two drops at one door share one line: three in flight, the rest in the order they joined", async () => {
+    const run = readQueue(CHUTE_PARALLEL);
+    let inFlight = 0;
+    let peak = 0;
+    const started: string[] = [];
+    const task = (name: string) => async () => {
+      started.push(name);
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      await tick();
+      inFlight -= 1;
+      return name;
+    };
+    const first = ["a", "b", "c", "d"].map((n) => run(task(n)));
+    await tick(); // the second drop lands while the first is reading
+    const second = ["e", "f"].map((n) => run(task(n)));
+    assert.deepEqual(await Promise.all([...first, ...second]), ["a", "b", "c", "d", "e", "f"]);
+    assert.equal(peak, 3, "never more than three across both drops");
+    assert.deepEqual(started, ["a", "b", "c", "d", "e", "f"]);
+  });
+
+  test("a waiting row knows its place: the waiting rows dropped before it", () => {
+    const items = [
+      row({ key: 6, state: "queued" }),
+      row({ key: 5, state: "queued" }),
+      row({ key: 4, state: "queued" }),
+      row({ key: 3, state: "reading" }),
+      row({ key: 2, state: "filing", account: { id: "A", name: "Acme" } }),
+      row({ key: 1, state: "reading" }),
+    ];
+    assert.equal(waitAhead(items, 4), 0);
+    assert.equal(waitAhead(items, 5), 1);
+    assert.equal(waitAhead(items, 6), 2);
+  });
+
+  test("a waiting row died with the tab like a reading one: it comes back interrupted", () => {
+    const storage = memory();
+    saveLedger([row({ key: 7, state: "queued" })], storage, NOW);
+    const back = loadLedger(storage, NOW);
+    assert.equal(back.items[0].state, "interrupted");
+    assert.ok(back.items[0].reason);
+  });
+
+  test("the Chute seats a drop waiting and marks a file reading only when its turn comes", () => {
+    const hook = readSrc("src/app/room/ingest/use-receipts.ts");
+    const seat = hook.slice(hook.indexOf("const seat = ("), hook.indexOf("const start = ("));
+    assert.match(seat, /state: "queued" as const,/);
+    assert.ok(!seat.includes('"reading"'), "nothing is reading at the seat");
+    assert.match(hook, /x\.key === key && x\.state === "queued" \? \{ \.\.\.x, state: "reading" \} : x/);
+    const chute = readSrc("src/app/room/chute.tsx");
+    assert.match(chute, /seated\.map\(\(\{ f, key \}\) => \(\) => \{\s*receipts\.start\(key\);\s*return swallow\(f, key, vaultOnly\.has\(f\)\);/);
+    assert.match(chute, /ahead=\{isQueued\(it\) \? waitAhead\(items, it\.key\) : undefined\}/);
+    // One line per door: the hook keeps one queue for every drop it takes.
+    const door = readSrc("src/app/room/ingest/use-ingest.ts");
+    assert.match(door, /const \[queue\] = useState\(\(\) => readQueue\(CHUTE_PARALLEL\)\);/);
+    assert.match(door, /return Promise\.all\(tasks\.map\(\(task\) => queue\(task\)\)\);/);
+    // The row's Drop rides the same line and says so too: a file it has not
+    // reached waits under its own line, never under "Reading".
+    const client = readSrc("src/app/room/room-client.tsx");
+    assert.match(client, /setQueued\(\(xs\) => \[\.\.\.xs, \.\.\.plan\.read\.map\(\(f\) => f\.name\)\]\);\s*void ingest\.limited\(/);
+    assert.match(client, /const readDroppedFile = async \(f: File, waiting\?: File\[\]\) => \{\s*queuedDrop\(f\.name\);\s*readingAdd\(f\.name\);/);
+    assert.match(client, /<p className=\{styles\.sniff\}>Waiting: \{queued\.join\(", "\)\}\.<\/p>/);
   });
 });
 

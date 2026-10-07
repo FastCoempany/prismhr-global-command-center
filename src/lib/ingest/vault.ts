@@ -12,7 +12,9 @@
 // VaultChunk table and, when the set is whole, assembles the file in order,
 // lands it once and deletes the pieces. Both halves are pure over what they
 // are handed — the doors, the client, the landing — so the suite can script
-// the wire and read the calls back.
+// the wire and read the calls back. The staging and the assembly are one
+// function, stageSet, which a text too heavy for one request rides as well
+// (src/lib/ingest/carry.ts; D4); the vault's own path through it is unchanged.
 //
 // Client-safe: nothing here reads the environment or the database directly.
 
@@ -178,18 +180,28 @@ export type Piece = {
 
 const wholeNumber = (n: number) => Number.isInteger(n) && n >= 0;
 
-/** Stage one piece. When it makes the set whole, assemble the file in order,
- *  land it once through `land`, delete the pieces and answer with the
- *  landing's receipt; otherwise answer staged. A set that can never be whole
- *  — an index twice, one missing when the count says full, a piece over the
- *  size — vaults nothing, is cleared, and the receipt says the backup did
- *  not finish. The sweep of stale pieces rides every call. */
-export async function stagePiece(
+/** What one staged piece did to its set: staged and waiting on the rest,
+ *  broken so it can never be whole (and cleared), or whole, assembled and
+ *  handed to the landing, with the landing's answer. */
+export type SetStep<R> =
+  | { kind: "staged"; index: number; total: number }
+  | { kind: "broken" }
+  | { kind: "landed"; value: R };
+
+/** The chunk store's one staging and assembly, for every set it carries: a
+ *  dropped file's pieces (stagePiece, below) and a text too heavy for one
+ *  request (src/lib/ingest/carry.ts; D4). Stage one piece; when it makes the
+ *  set whole, assemble the bytes in order, hand them to `land` once as one
+ *  file, delete the pieces and answer with what the landing answered. A set
+ *  that can never be whole — an index twice, one missing when the count says
+ *  full, a piece over the size — lands nothing and is cleared. The sweep of
+ *  stale pieces rides every call. */
+export async function stageSet<R>(
   client: VaultChunkClient,
   piece: Piece,
-  land: (file: File) => Promise<VaultReceipt>,
+  land: (file: File) => Promise<R>,
   now: Date = new Date(),
-): Promise<PieceReply> {
+): Promise<SetStep<R>> {
   const { accountId, filename, index, total } = piece;
   const key = { accountId, filename, total };
   if (
@@ -200,7 +212,7 @@ export async function stagePiece(
     piece.bytes.length === 0 ||
     piece.bytes.length > VAULT_PIECE_BYTES
   )
-    return { ok: false, reason: UNFINISHED };
+    return { kind: "broken" };
 
   await client.vaultChunk.deleteMany({
     where: { createdAt: { lt: new Date(now.getTime() - STALE_PIECE_MS) } },
@@ -212,7 +224,7 @@ export async function stagePiece(
   });
 
   const staged = await client.vaultChunk.count({ where: key });
-  if (staged < total) return { ok: true, staged: true, index, total };
+  if (staged < total) return { kind: "staged", index, total };
 
   const rows = await client.vaultChunk.findMany({
     where: key,
@@ -223,7 +235,7 @@ export async function stagePiece(
     rows.length === total && rows.every((r, i) => r.index === i && r.bytes.length > 0);
   if (!inOrder) {
     await client.vaultChunk.deleteMany({ where: key });
-    return { ok: false, reason: UNFINISHED };
+    return { kind: "broken" };
   }
   const size = rows.reduce((n, r) => n + r.bytes.length, 0);
   const whole = new Uint8Array(size);
@@ -232,9 +244,27 @@ export async function stagePiece(
     whole.set(r.bytes, at);
     at += r.bytes.length;
   }
-  const receipt = await land(
+  const value = await land(
     new File([whole], filename, { type: piece.type || "application/octet-stream" }),
   );
   await client.vaultChunk.deleteMany({ where: key });
-  return receipt;
+  return { kind: "landed", value };
+}
+
+/** Stage one piece of a dropped file. When it makes the set whole, assemble
+ *  the file in order, land it once through `land`, delete the pieces and
+ *  answer with the landing's receipt; otherwise answer staged. A set that
+ *  can never be whole vaults nothing, is cleared, and the receipt says the
+ *  backup did not finish. The staging itself is stageSet's. */
+export async function stagePiece(
+  client: VaultChunkClient,
+  piece: Piece,
+  land: (file: File) => Promise<VaultReceipt>,
+  now: Date = new Date(),
+): Promise<PieceReply> {
+  const step = await stageSet(client, piece, land, now);
+  if (step.kind === "staged")
+    return { ok: true, staged: true, index: step.index, total: step.total };
+  if (step.kind === "broken") return { ok: false, reason: UNFINISHED };
+  return step.value;
 }
