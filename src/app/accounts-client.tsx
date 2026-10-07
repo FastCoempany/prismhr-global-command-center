@@ -42,7 +42,13 @@ import {
   type Intent,
   type Stage,
 } from "@/lib/command-center/types";
-import { kitsFor, mergeText, type CampaignKit } from "@/lib/campaigns";
+import {
+  askText,
+  defaultPlay,
+  kitText,
+  playsFor,
+  type CampaignKit,
+} from "@/lib/campaigns";
 import { EditableMessage } from "./today-client";
 import { getContacts, type ContactRow } from "./accounts/actions";
 import {
@@ -54,8 +60,17 @@ import {
 } from "./accounts/draft-actions";
 import { sfContactUrl } from "@/lib/salesforce";
 import styles from "./command-center.module.css";
-import SecondRecordPanel, { type RowSecond } from "./accounts/second-record-panel";
+import SecondRecordPanel, {
+  TouchEvidence,
+  type RowSecond,
+} from "./accounts/second-record-panel";
 import type { LastHumanTouch } from "@/lib/record/accounts";
+import {
+  csmThreadFlagOf,
+  sendFlagOf,
+  type Collision,
+  type TouchCite,
+} from "./accounts/rules";
 import ActLane, { type LaneAct } from "./accounts/act-lane";
 import { markActActed, unmarkActActed } from "./accounts/act-actions";
 
@@ -191,13 +206,21 @@ export type AccountRow = {
   /** LAST HUMAN TOUCH: the later of the record's own touch and the export's
    *  last human row, whispering which record it came from (C1). */
   touch: LastHumanTouch | null;
+  /** The touch's evidence, one click down (pass 8 A5): the entry or the
+   *  export row the cell read. */
+  touchCite: TouchCite | null;
+  /** The collision guard's fact: live marketing sends or a colleague's
+   *  thread inside seven days. It raises the quiet flag on the lane's send
+   *  and on the CSM play (the direct doctrine); null when clear. */
+  collision: Collision | null;
   /** The Act Lane's saved, unsent draft — the pad never eats your words. */
   actDraft: { to: string; subject: string; body: string } | null;
   /** The newest gem's acted day ("" when un-acted) — the ✓ stamp's date. */
   actedDay: string;
   /** That gem's term, for the stamp's take-back. */
   actedTerm: string;
-  /** A live board card (by id, digest-matched) — the fork's HomeRoom half. */
+  /** A live deal on the board (by id, digest-matched): neither archived nor
+   *  stamped Closed Won/Lost (pass 8 A4) — the fork's HomeRoom half. */
   onBoard: boolean;
   name: string;
   industry: string;
@@ -318,9 +341,17 @@ function ApproachChip({ approach }: { approach: Approach }) {
 // the account's expanded row. Posts the same savePeo/applyPlay actions.
 function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
   const [copiedId, setCopiedId] = useState("");
-  const plays = kitsFor(a.stage, a.approach);
+  // Every play for the stage, the direct play first; the Approach withholds
+  // nothing (C19). The CSM play carries the quiet flag when the CSM's own
+  // thread is live (the direct doctrine).
+  const plays = playsFor(a.stage, csmThreadFlagOf(a.collision));
+  // The next-action hint seeds from the stage's direct play, the same seed
+  // the draft desk uses; past the plays it falls back to the stage's word.
+  const seed = defaultPlay(a.stage);
+  const suggested = seed ? askText(seed.ask, a) : suggestedAction(a);
   const copyKit = async (kit: CampaignKit) => {
-    const text = `Subject: ${mergeText(kit.subject, a)}\n\n${mergeText(kit.body, a)}`;
+    const merged = kitText(kit, a);
+    const text = `Subject: ${merged.subject}\n\n${merged.body}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(kit.id);
@@ -383,11 +414,9 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
               <input
                 name="nextAction"
                 defaultValue={a.nextAction ?? ""}
-                placeholder={suggestedAction(a) ?? "Brief the CSM"}
+                placeholder={suggested ?? "Write the next move"}
               />
-              {!a.nextAction && suggestedAction(a) && (
-                <p className={styles.hint}>{suggestedAction(a)}</p>
-              )}
+              {!a.nextAction && suggested && <p className={styles.hint}>{suggested}</p>}
             </div>
             <div className={styles.field}>
               <label>Next action date</label>
@@ -428,23 +457,30 @@ function WorkingDeal({ a, canWrite }: { a: AccountRow; canWrite: boolean }) {
         <div className={styles.plays}>
           {plays.length === 0 ? (
             <p className={styles.muted}>
-              No play for this stage and approach. Advance the stage or clear the approach
-              gate.
+              No play for this stage. Write this one by hand.
             </p>
           ) : (
-            plays.map((k) => (
+            plays.map(({ kit: k, flag }) => (
               <div key={k.id} className={styles.play}>
                 <div className={styles.playTop}>
                   <strong>{k.name}</strong>
                   <span className={styles.chip}>{k.channel}</span>
                 </div>
-                <p className={styles.playAsk}>{mergeText(k.ask, a)}</p>
+                {flag && (
+                  <span
+                    className={styles.quietFlag}
+                    title="The CSM's own thread is live. This play stays open."
+                  >
+                    ⚠ {flag}
+                  </span>
+                )}
+                <p className={styles.playAsk}>{askText(k.ask, a)}</p>
                 <details className={styles.playDetails}>
                   <summary>Preview message</summary>
                   <div className={styles.playSubject}>
-                    Subject: {mergeText(k.subject, a)}
+                    Subject: {kitText(k, a).subject}
                   </div>
-                  <pre className={styles.playPre}>{mergeText(k.body, a)}</pre>
+                  <pre className={styles.playPre}>{kitText(k, a).body}</pre>
                 </details>
                 <div className={styles.playActions}>
                   <button
@@ -669,6 +705,8 @@ export function AccountsClient({
   const [openId, setOpenId] = useState(focusId);
   // The second-record fold — one open at a time, from THE SIGNAL cell.
   const [srOpenId, setSrOpenId] = useState("");
+  // The touch fold — LAST HUMAN TOUCH's evidence, one open at a time.
+  const [touchOpenId, setTouchOpenId] = useState("");
   // The Act Lane (Version C, decreed 2026-08-21): one standing workbench,
   // reloaded chip to chip. The lane component saves a touched draft on hop.
   const [laneId, setLaneId] = useState("");
@@ -760,6 +798,7 @@ export function AccountsClient({
           subject: laneRow.actDraft?.subject ?? laneRow.second.act,
           body: laneRow.actDraft?.body ?? "",
           onBoard: laneRow.onBoard,
+          flag: sendFlagOf(laneRow.collision),
         }
       : null;
 
@@ -1069,12 +1108,17 @@ export function AccountsClient({
                       </td>
                       <td>
                         {a.touch ? (
-                          <span
+                          <button
+                            type="button"
                             className={styles.srTouch}
+                            onClick={() =>
+                              setTouchOpenId(touchOpenId === a.id ? "" : a.id)
+                            }
+                            aria-expanded={touchOpenId === a.id}
                             title={
                               a.touch.record === "record"
-                                ? "The record's own last touch — the operator wrote to them"
-                                : `The second record's last human row — ${a.touch.kind === "account" ? "their side wrote" : "a colleague's motion"}`
+                                ? "The record's own last touch. Opens the entry."
+                                : `The second record's last human row.${a.touch.kind === "account" ? " Their side wrote." : a.touch.kind === "colleague" ? " A colleague moved." : ""} Opens the row.`
                             }
                           >
                             <span
@@ -1089,7 +1133,7 @@ export function AccountsClient({
                             · {mmddOf(a.touch.day)}
                             {/* The whisper (C1): which record the value came from. */}
                             <span className={styles.srTouchRecord}>{a.touch.record}</span>
-                          </span>
+                          </button>
                         ) : (
                           <span className={styles.muted}>—</span>
                         )}
@@ -1122,9 +1166,15 @@ export function AccountsClient({
                             ▮ {a.second.supportTotal} CASES
                           </button>
                         ) : a.second?.verdict ? (
-                          <span className={styles.srVerdict} title={a.second.verdict}>
+                          <button
+                            type="button"
+                            className={styles.srVerdict}
+                            onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                            aria-expanded={srOpenId === a.id}
+                            title="The second record's read. Opens the line and the rows under it."
+                          >
                             {a.second.verdict}
-                          </span>
+                          </button>
                         ) : (
                           <span className={styles.muted}>—</span>
                         )}
@@ -1176,6 +1226,13 @@ export function AccountsClient({
                         ) : null}
                       </td>
                     </tr>
+                    {touchOpenId === a.id && a.touchCite && (
+                      <tr>
+                        <td colSpan={6} className={styles.srFoldTd}>
+                          <TouchEvidence accountId={a.id} cite={a.touchCite} />
+                        </td>
+                      </tr>
+                    )}
                     {srOpenId === a.id && a.second && (
                       <tr>
                         <td colSpan={6} className={styles.srFoldTd}>
@@ -1845,7 +1902,7 @@ function ContactsPanel({
                       className={styles.ctcName}
                       title="Open this contact's record in Salesforce"
                     >
-                      {c.first} {c.last} ↗
+                      {c.first} {c.last}
                     </a>
                   ) : (
                     <b>

@@ -30,8 +30,8 @@ export const stageLabel = (s: Stage) => STAGES.find((x) => x.key === s)?.label ?
 // doctrine :247): whether the CSM was briefed and whether client outreach is
 // cleared. Nothing is withheld by it — direct outreach is the default move and
 // the CSM is a door chosen when it is the fastest one, never a toll. The
-// campaign kits still filter on it (src/lib/campaigns/index.ts, ALLOWED); the
-// ruling retires that filter.
+// campaign kits do not read it (src/lib/campaigns/index.ts, kitsFor): every
+// stage's plays show, the direct play first (pass 8 A7).
 export type Approach = "NEEDS_CSM" | "CHANNEL_OK" | "DIRECT_OK";
 
 export const APPROACHES: { key: Approach; label: string; blurb: string }[] = [

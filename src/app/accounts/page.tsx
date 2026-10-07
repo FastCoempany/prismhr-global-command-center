@@ -5,8 +5,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { csms, peos } from "@/lib/book";
 import { EXTRA_PARTNERS } from "@/lib/book/partners";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
-import { peopleFor } from "@/lib/intel/people";
-import { fetchSecondRecords } from "@/lib/activity/read";
+import { collisionFor, fetchSecondRecords } from "@/lib/activity/read";
 import { readAccount, secondRecordFor } from "@/lib/record/read";
 import { lastHumanTouch, sheetSecond } from "@/lib/record/accounts";
 import { homeSideFrom } from "@/lib/pipeline/build";
@@ -14,7 +13,6 @@ import { ACT_DRAFT_NS, parseActDraftBody } from "@/lib/act/lane";
 import { parseResearchBody, researchNs } from "@/lib/intel/deep-research";
 import { loadCommand } from "@/lib/command-center/data";
 import { loadDashboard } from "@/lib/dashboard/data";
-import { readOutcome } from "@/lib/dashboard/outcome";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { SENDBOOK_NS } from "@/lib/sendbook/read";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
@@ -39,6 +37,7 @@ import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
 import type { LinkedNote } from "@/components/account-notes";
 import { theirLoopOf } from "@/lib/room/owed";
 import { AccountsClient, type AccountRow } from "../accounts-client";
+import { boardWords, liveOnBoard, registersOf, touchCiteOf } from "./rules";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -136,25 +135,18 @@ export default async function AccountsPage() {
   // The board's word on every account (founder-decreed 2026-08-20): a
   // stamped outcome outranks any "in motion" read, a live row IS motion,
   // and cold outreach without a row reads ENGAGED — never "in motion".
-  const boardById = new Map<string, { outcome: "won" | "lost" | null; live: boolean }>();
-  {
+  // The fold lives in ./rules (boardWords) so the suite calls it.
+  const boardById = await (async () => {
     const dash = await loadDashboard();
-    if (dash.status !== "unauthenticated" && dash.status !== "database-unavailable") {
-      const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
-      for (const card of dash.cards) {
-        const id =
-          idByName.get(card.name.toLowerCase()) ??
-          digestForCardName(card.name)?.accountId ??
-          "";
-        if (!id) continue;
-        const b = boardById.get(id) ?? { outcome: null, live: false };
-        const o = readOutcome(card.notes);
-        if (o) b.outcome = o.status;
-        else if (!card.archived) b.live = true;
-        boardById.set(id, b);
-      }
-    }
-  }
+    if (dash.status === "unauthenticated" || dash.status === "database-unavailable")
+      return boardWords([], () => "");
+    const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
+    return boardWords(
+      dash.cards,
+      (name) =>
+        idByName.get(name.toLowerCase()) ?? digestForCardName(name)?.accountId ?? "",
+    );
+  })();
   // Who counts as our side, read over the WHOLE book — the CSM column plus
   // everyone the record shows working across several accounts — built once,
   // the way the room builds it, and handed to every read below (E9: the
@@ -259,6 +251,10 @@ export default async function AccountsPage() {
         now,
       });
       const sr = acct.secondRecord;
+      const touch = lastHumanTouch(acct, sr);
+      // Hidden is hidden (pass 8 X1): the registers read the record minus
+      // the read's own ✕-parked set.
+      const registers = registersOf(chipNotes.get(p.id) ?? [], acct.hidden);
       const d = deskScore(p, {
         // The newest entry's moment (field 20): the visible record's own
         // clock, never a ✕-parked row; "" on an empty record is no clock.
@@ -366,10 +362,18 @@ export default async function AccountsPage() {
         // the term). "" when nothing is stamped.
         actedDay: (sr?.gems ?? []).find((x) => x.actedDay)?.actedDay ?? "",
         actedTerm: (sr?.gems ?? []).find((x) => x.actedDay)?.term ?? "",
-        onBoard: boardById.has(p.id),
+        // The fork's HomeRoom half reads a live deal: an archived card or a
+        // Closed Won/Lost stamp is not one (pass 8 A4; the board lift).
+        onBoard: liveOnBoard(boardById.get(p.id)),
+        // The quiet flag's fact (the direct doctrine; pass 8 A7, A8): live
+        // marketing sends or a colleague's thread inside seven days, read by
+        // the same collision guard Groundwork's file card reads.
+        collision: collisionFor(sr ?? undefined, now),
         // LAST HUMAN TOUCH reads both records (C1): the later of the read's
-        // own touch and the export's last human row, with the whisper.
-        touch: lastHumanTouch(acct, sr),
+        // own touch and the export's last human row, with the whisper. Its
+        // cite is the door one click down (pass 8 A5).
+        touch,
+        touchCite: touchCiteOf(acct, touch, sr?.rollup?.lastHuman ?? null),
         // The row's gems and the ACT chip read only an account person's gems
         // (C6, C16, amended 2026-10-05) through the THEIRS line's own
         // builder — a colleague's gem never raises an act for the operator.
@@ -402,27 +406,11 @@ export default async function AccountsPage() {
         contactCount: contactCount(p.id),
         // Two registers: the working record ("mine") renders by default; the
         // background register (case/support traffic) sits behind a click.
-        chipNotes: (chipNotes.get(p.id) ?? [])
-          .filter((n) => n.lane === "mine")
-          .map((n) => ({
-            id: n.id,
-            partner: n.partner,
-            kind: n.kind,
-            body: n.body,
-            actors: n.actors,
-            createdAt: n.createdAt,
-          })),
-        bgNotes: (chipNotes.get(p.id) ?? [])
-          .filter((n) => n.lane === "background")
-          .map((n) => ({
-            id: n.id,
-            partner: n.partner,
-            kind: n.kind,
-            body: n.body,
-            actors: n.actors,
-            createdAt: n.createdAt,
-          })),
-        people: peopleFor(chipNotes.get(p.id) ?? [], contactsFor(p.id)),
+        chipNotes: registers.mine,
+        bgNotes: registers.background,
+        // The people index is the read's own (field 19), over the visible
+        // record only, joined to the roster.
+        people: acct.people,
         stage: peoStateById.get(p.id)?.stage ?? "NOT_TOUCHED",
         approach: peoStateById.get(p.id)?.approach ?? "NEEDS_CSM",
         intent: peoStateById.get(p.id)?.intent ?? "UNKNOWN",

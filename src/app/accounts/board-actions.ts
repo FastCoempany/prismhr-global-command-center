@@ -39,9 +39,11 @@ function safeReturn(fd: FormData): string {
   return raw === "/accounts" || raw === "/room" ? raw : "/";
 }
 
+// D15 reaches every action (ruled 2026-10-07, pass 8 call 2): an action may
+// refresh the page it was called from, and no action revalidates another
+// surface. The return page is the page that posted the form.
 function done(to = "/") {
-  revalidatePath("/accounts");
-  revalidatePath("/room");
+  if (to !== "/") revalidatePath(to);
   redirect(to);
 }
 

@@ -3635,6 +3635,39 @@
   font-size: 13px;
   font-weight: 600;
 }
+/* LAST HUMAN TOUCH and the verdict are doors (the click-depth law, pass 8
+   A5): each opens its evidence one click down, and keeps its quiet look. */
+button.srTouch,
+button.srVerdict {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+button.srVerdict {
+  font-family: inherit;
+}
+button.srTouch:hover,
+button.srVerdict:hover {
+  color: var(--ink);
+}
+/* The quiet flag (the direct doctrine): a send that lands beside live
+   motion says so; it informs and never blocks. Groundwork's file card wears
+   the same flag (groundwork.module.css, .collideFlag). */
+.quietFlag {
+  display: block;
+  margin: 0 0 8px;
+  padding: 5px 9px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 5px;
+  background: rgba(245, 158, 11, 0.06);
+  font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #b6791a;
+}
 .srFoldTd {
   background: #f8fafd;
   padding: 12px 16px;
