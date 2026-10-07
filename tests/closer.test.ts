@@ -7,7 +7,7 @@
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import { isCloser } from "../src/lib/intel/closer";
-import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
+import { readRows } from "./helpers/account-read";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
 
@@ -58,9 +58,9 @@ describe("closers are transparent in the ledger", () => {
   test("a trailing 'No problem!' never becomes the last inbound", () => {
     // The Lesha thread, in filing order: her substantive message, the
     // operator's reply, her courtesy close.
-    const docs = corpusFor("SIMPLOY01", "Simploy", {
-      homeSide: undefined,
-      acctNotes: [
+    const { intel } = readRows(
+      { id: "SIMPLOY01", name: "Simploy" },
+      [
         note(
           "✉ TM Today 1:49 PM — Chassie owes you information · Lesha Cyphers → Antaeus Coe\nHey. I just talked to Chassie at Simploy. She owes you some information and will be in touch.",
           "Lesha Cyphers → Antaeus Coe",
@@ -77,8 +77,8 @@ describe("closers are transparent in the ledger", () => {
           "2026-08-22T18:51:00Z",
         ),
       ],
-    });
-    const intel = extractDealIntel(docs);
+      { homeSide: [] },
+    );
     // The closer read through: the newest inbound is the SUBSTANTIVE 1:49
     // message, which the operator's 1:50 reply already answered — so no
     // surface derives "Answer Lesha" from this thread.
@@ -87,17 +87,17 @@ describe("closers are transparent in the ledger", () => {
   });
 
   test("a substantive inbound still counts — transparency is not deafness", () => {
-    const docs = corpusFor("SIMPLOY01", "Simploy", {
-      homeSide: undefined,
-      acctNotes: [
+    const { intel } = readRows(
+      { id: "SIMPLOY01", name: "Simploy" },
+      [
         note(
           "✉ TM Today 2:10 PM — Can you send the Canada model? · Chassie Smith → Antaeus Coe\nCan you send the Canada model this week?",
           "Chassie Smith → Antaeus Coe",
           "2026-08-22T19:10:00Z",
         ),
       ],
-    });
-    const intel = extractDealIntel(docs);
+      { homeSide: [] },
+    );
     assert.equal(intel.lastInbound, "2026-08-22T19:10:00Z");
     assert.equal(intel.lastInboundWho, "Chassie Smith");
   });
@@ -147,10 +147,9 @@ describe("their promise is an await, never a reply owed", () => {
   });
 
   test("the live Simploy entry reads as their promise", async () => {
-    const { corpusFor, extractDealIntel } = await import("../src/lib/intel/extract");
-    const docs = corpusFor("SIMPLOY01", "Simploy", {
-      homeSide: undefined,
-      acctNotes: [
+    const { intel } = readRows(
+      { id: "SIMPLOY01", name: "Simploy" },
+      [
         {
           id: "n9",
           kind: "account",
@@ -159,8 +158,8 @@ describe("their promise is an await, never a reply owed", () => {
           createdAt: "2026-08-21T12:00:00Z",
         },
       ],
-    });
-    const intel = extractDealIntel(docs);
+      { homeSide: [] },
+    );
     assert.equal(intel.lastInboundPromise, true);
   });
 });

@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { corpusFor, dealIntelFor, extractDealIntel } from "@/lib/intel/extract";
-import { digestFor } from "@/lib/intel/digest";
+import { extractDealIntel } from "@/lib/intel/extract";
+import { readRows } from "./helpers/account-read";
 
-describe("corpusFor", () => {
+// corpusFor and dealIntelFor retired with their last caller (pass 8
+// housekeeping); the account read (src/lib/record/read.ts) assembles the docs
+// and extracts the intel now, so these pins read it.
+describe("the read's docs", () => {
   test("assembles every store, tags SF activities, sorts newest first", () => {
-    const docs = corpusFor("X1", "Acme", {
-      homeSide: undefined,
-      acctNotes: [
+    const { docs } = readRows(
+      { id: "X1", name: "Acme" },
+      [
         {
           id: "1",
           body: "✉ SF Jul 21 3:47 PM — Re: demo · Russ Jones → Rachael Brown\nbody",
@@ -21,20 +24,28 @@ describe("corpusFor", () => {
           kind: "mine",
         },
       ],
-      partnerNotes: [
-        { id: "3", body: "partner said things", createdAt: "2026-07-20T00:00:00Z" },
-      ],
-      todos: [{ id: "4", body: "send cal invite", createdAt: "2026-07-25T00:00:00Z" }],
-      touches: [
-        {
-          subjectKey: "acct:X1",
-          label: "Acme",
-          contactedAt: "2026-07-19T00:00:00Z",
-          message: "outreach text",
-          log: [{ at: "2026-07-18T00:00:00Z", body: "Reply received ✓" }],
-        },
-      ],
-    });
+      {
+        homeSide: [],
+        todos: [
+          {
+            id: "4",
+            body: "send cal invite",
+            done: false,
+            accountId: "X1",
+            createdAt: "2026-07-25T00:00:00Z",
+          },
+        ],
+        touches: [
+          {
+            subjectKey: "acct:X1",
+            label: "Acme",
+            contactedAt: "2026-07-19T00:00:00Z",
+            message: "outreach text",
+            log: [{ at: "2026-07-18T00:00:00Z", body: "Reply received ✓" }],
+          },
+        ],
+      },
+    );
     assert.equal(docs[0].text, "send cal invite"); // newest first
     const sf = docs.find((d) => d.src.startsWith("sf-activity"));
     assert.ok(sf);
@@ -46,10 +57,10 @@ describe("corpusFor", () => {
 
 describe("extractDealIntel", () => {
   test("golden: Advocate digest + fresh notes", () => {
-    const dig = digestFor("ADVOCATEPAY000001")!;
-    const docs = corpusFor("ADVOCATEPAY000001", "Advocate Pay — SubcontractorHub", {
-      homeSide: undefined,
-      acctNotes: [
+    // The read joins the digest by id, as readFromStores does.
+    const { intel } = readRows(
+      { id: "ADVOCATEPAY000001", name: "Advocate Pay — SubcontractorHub" },
+      [
         {
           id: "n1",
           body: "✉ SF 7/26 — Re: Side bar · Bryce Rowley → Antaeus Coe\nreferral agreement redlines back, targeting signature this week",
@@ -57,8 +68,8 @@ describe("extractDealIntel", () => {
           kind: "account",
         },
       ],
-    });
-    const intel = extractDealIntel(docs, dig);
+      { homeSide: [] },
+    );
     const codes = intel.countries.map((c) => c.value);
     for (const c of ["bg", "in", "ph", "mx", "za", "gb"]) assert.ok(codes.includes(c), c);
     const prods = intel.products.map((p) => p.value);
@@ -72,9 +83,9 @@ describe("extractDealIntel", () => {
   });
 
   test("cold account: extraction from raw notes only", () => {
-    const intel = dealIntelFor("NOPE000000000001", "Nobody Co", {
-      homeSide: undefined,
-      acctNotes: [
+    const { intel } = readRows(
+      { id: "NOPE000000000001", name: "Nobody Co" },
+      [
         {
           id: "1",
           body: "They have 12 contractors in Mexico paid by wire, considering an employer of record; time-sensitive — decision by August 6",
@@ -82,7 +93,8 @@ describe("extractDealIntel", () => {
           kind: "mine",
         },
       ],
-    });
+      { homeSide: [] },
+    );
     assert.deepEqual(
       intel.countries.map((c) => c.value),
       ["mx"],

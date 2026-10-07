@@ -10,7 +10,8 @@ import {
 import { peopleFor } from "@/lib/intel/people";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { parseSfTimeline, scrubSecrets } from "@/lib/sf-timeline";
-import { corpusFor, extractDealIntel } from "@/lib/intel/extract";
+import { extractDealIntel } from "@/lib/intel/extract";
+import { readRows } from "./helpers/account-read";
 import { readDeal } from "@/lib/room/engine";
 
 // ADVERSARIAL — the 25-finding repair batch. Each block attacks one seam the
@@ -107,9 +108,9 @@ describe("the deal read — filed intel finally moves the room", () => {
     actors,
   });
   test("your own sends classify outbound; client replies inbound", () => {
-    const docs = corpusFor("a", "Acme", {
-      homeSide: undefined,
-      acctNotes: [
+    const { intel } = readRows(
+      { id: "a", name: "Acme" },
+      [
         note(
           "✉ SF Jul 28 — Re: contract · Antaeus Coe → Bryce Rowley",
           "Antaeus Coe → Bryce Rowley",
@@ -121,8 +122,8 @@ describe("the deal read — filed intel finally moves the room", () => {
           "2026-07-29T12:00:00Z",
         ),
       ],
-    });
-    const intel = extractDealIntel(docs);
+      { homeSide: [] },
+    );
     assert.equal(intel.lastOutbound, "2026-07-28T12:00:00Z");
     assert.equal(intel.lastInbound, "2026-07-29T12:00:00Z");
   });

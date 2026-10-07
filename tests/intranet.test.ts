@@ -1490,31 +1490,34 @@ describe("nothing sensitive reaches storage by any road (F8, Phase 13.5)", () =>
 
 // ── Part IV · the operator's correction ─────────────────────────────────────
 describe("the grab takes the whole thread, structured (IV.4)", () => {
+  // The bookmarklet builders moved out of the shelf into grabs.ts (#336); the
+  // shelf keeps the copy that tells the operator to re-drag.
+  const grab = readFileSync(join(root, "src/app/intake/grabs.ts"), "utf8");
   const shelf = readFileSync(join(root, "src/app/intake/capture-shelf.tsx"), "utf8");
 
   test("every message is emitted with the delimiters the parser was built for", () => {
     for (const mark of ["⟦MSG⟧", "⟦AT⟧", "⟦BODY⟧", "⟦LINKS⟧", "⟦CAPTURED"]) {
-      assert.ok(shelf.includes(mark), `the grab no longer emits ${mark}`);
+      assert.ok(grab.includes(mark), `the grab no longer emits ${mark}`);
     }
   });
   test("attribution is read from the DOM, never inferred from layout", () => {
-    assert.ok(shelf.includes("message-author-name"), "the author node is not read");
-    assert.ok(shelf.includes("dateTime"), "the instant is not read from <time>");
+    assert.ok(grab.includes("message-author-name"), "the author node is not read");
+    assert.ok(grab.includes("dateTime"), "the instant is not read from <time>");
   });
   test("it scrolls until the top stops yielding, not eight passes", () => {
-    assert.ok(shelf.includes("nogrow"), "the no-growth stop is gone");
-    assert.ok(/passes>300/.test(shelf), "the safety cap is gone");
-    assert.ok(!/for\(let i=0;i<8;i\+\+\)/.test(shelf), "the old eight-pass cap is back");
+    assert.ok(grab.includes("nogrow"), "the no-growth stop is gone");
+    assert.ok(/passes>300/.test(grab), "the safety cap is gone");
+    assert.ok(!/for\(let i=0;i<8;i\+\+\)/.test(grab), "the old eight-pass cap is back");
   });
   test("it harvests incrementally, because Teams unloads what scrolls away", () => {
-    assert.ok(/const seen=new Map\(\)/.test(shelf), "no incremental harvest map");
-    assert.ok(shelf.includes("harvest()"), "nothing harvests per pass");
+    assert.ok(/const seen=new Map\(\)/.test(grab), "no incremental harvest map");
+    assert.ok(grab.includes("harvest()"), "nothing harvests per pass");
   });
   test("an unrecognised DOM degrades to plain text and says so", () => {
-    assert.ok(shelf.includes("Structure not recognised"));
+    assert.ok(grab.includes("Structure not recognised"));
   });
   test("a Teams grab opens the Intranet, and the shelf says to re-drag", () => {
-    assert.ok(shelf.includes("/intranet"), "the grab still opens the old room");
+    assert.ok(grab.includes("/intranet"), "the grab still opens the old room");
     assert.ok(/re-drag/i.test(shelf), "nobody is told the bookmark went stale");
   });
   test("the grab's own output parses back into messages with speakers", () => {

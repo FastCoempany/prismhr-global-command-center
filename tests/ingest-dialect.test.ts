@@ -21,7 +21,7 @@ import {
   sniffHead,
   type Dialect,
 } from "../src/lib/ingest/dialect";
-import { dialectOf, sourceFor, transcriberPrompt } from "../src/lib/room/paste";
+import { transcriberPrompt } from "../src/lib/room/paste";
 import {
   TYPED_NOTE_HEAD,
   asTypedNote,
@@ -163,15 +163,36 @@ describe("the head alphabet — every producer head sniffs to its dialect", () =
     assert.equal(HEAD_LIST.length, 8);
   });
 
-  test("dialectOf and sourceFor keep their answers through the re-export", () => {
-    assert.equal(dialectOf("TEAMS THREAD - Simploy · captured 9/25/2026\n\nhi"), "TM");
-    assert.equal(dialectOf("OUTLOOK THREAD - captured"), "OL");
-    assert.equal(dialectOf("CALL TRANSCRIPT — dropped file x.vtt"), "CT");
-    assert.equal(dialectOf("SALESNAV ACCOUNTS - captured"), "SN");
-    assert.equal(dialectOf("Lesha Cyphers to Kim Bartolotti\nRE: PrismOne"), "SF");
+  // roomPaste sniffs the capture and files the source column off the table
+  // (src/app/room/actions.ts). dialectOf and sourceFor, which wrapped the
+  // two, retired with their last caller (pass 8 housekeeping); the answers
+  // they kept are pinned on the functions roomPaste calls.
+  test("the sniff and the source table keep roomPaste's answers", () => {
+    assert.equal(
+      sniffHead("TEAMS THREAD - Simploy · captured 9/25/2026\n\nhi").dialect,
+      "TM",
+    );
+    assert.equal(sniffHead("OUTLOOK THREAD - captured").dialect, "OL");
+    assert.equal(sniffHead("CALL TRANSCRIPT — dropped file x.vtt").dialect, "CT");
+    assert.equal(sniffHead("SALESNAV ACCOUNTS - captured").dialect, "SN");
+    assert.equal(
+      sniffHead("Lesha Cyphers to Kim Bartolotti\nRE: PrismOne").dialect,
+      "SF",
+    );
+    const base: Record<Dialect, string> = {
+      OL: SOURCES.outlook,
+      TM: SOURCES.teams,
+      CT: SOURCES.call,
+      SN: SOURCES.salesnav,
+      SF: SOURCES.sf,
+    };
     for (const d of DIALECTS)
       for (const how of ["rules", "ai", "transcript"])
-        assert.equal(sourceFor(d, how), SOURCE_OF(d, null, how), `${d} ${how}`);
+        assert.equal(
+          SOURCE_OF(d, null, how),
+          how === "ai" ? `${base[d]}-ai` : base[d],
+          `${d} ${how}`,
+        );
   });
 });
 

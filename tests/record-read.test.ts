@@ -1,7 +1,9 @@
 // The single account read (the Chute brains refactor plan, §2.2; slice 10).
-// Parity first: the read's intel is the old path's intel on every fixture the
-// extract, closer, ted-doctrine, pipeline-fixes, intraday-court and
-// accepted-invite suites hold; the hide filter inside the read is the room
+// Parity first: the read's intel is the extractor's over the room's own slice
+// of the rows on every fixture the extract, closer, ted-doctrine,
+// pipeline-fixes, intraday-court and accepted-invite suites hold (the old
+// path, corpusFor, retired with its last caller in pass 8's housekeeping, and
+// those suites now read the read); the hide filter inside the read is the room
 // page's; machinery and sign-offs are flags on the doc, never exclusions; the
 // second record folds a shell-keyed drop under the canonical id; THEIRS leads
 // only with an account person's gem (C16); and whoseMove agrees with the
@@ -29,7 +31,8 @@ import { orgInboundKey } from "../src/lib/activity/read";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { renderSeatBody } from "../src/lib/act/lane";
 import { inboundDates, recordSends, warmDates, whoChipNames } from "../src/lib/sendbook/read";
-import { corpusFor, extractDealIntel } from "../src/lib/intel/extract";
+import { extractDealIntel } from "../src/lib/intel/extract";
+import { buildDocs } from "../src/lib/record/docs";
 import { digestFor, digestForCardName } from "../src/lib/intel/digest";
 import { lastTouchRead } from "../src/lib/room/touch";
 import { readDeal } from "../src/lib/room/engine";
@@ -94,8 +97,11 @@ type Stores = {
   now?: Date;
 };
 
-/** The read and the old path over the same stores. The old path gets the
- *  rows the room's own filter kept, the same roster and the same seed. */
+/** The read and the extractor over the same stores. The extractor gets the
+ *  rows the room's own filter kept, the account's slice of the todos and
+ *  touches as the room cut it, the same roster and the same seed, so the pin
+ *  holds the read's hide filter, slice and seed to the room's. It ran over
+ *  corpusFor's docs until corpusFor retired (pass 8 housekeeping). */
 function both(id: string, name: string, s: Stores) {
   const dispositions = s.dispositions ?? new Map<string, unknown>();
   const todos = (s.todos ?? []).map((t) => ({
@@ -115,9 +121,10 @@ function both(id: string, name: string, s: Stores) {
     now: s.now ?? NOW,
   });
   const visible = s.notes.filter((n) => !dispositions.has(`hide:note:${n.id}`));
+  const digest = digestFor(id) ?? digestForCardName(name);
   const old = extractDealIntel(
-    corpusFor(id, name, {
-      acctNotes: visible,
+    buildDocs({
+      notes: visible,
       homeSide: s.homeSide,
       todos: todos.filter((t) => id && t.accountId === id),
       touches: touches.filter(
@@ -125,8 +132,10 @@ function both(id: string, name: string, s: Stores) {
           (id && t.subjectKey === `outreach:${id}`) ||
           t.label.toLowerCase() === name.toLowerCase(),
       ),
+      digest,
+      hidden: new Set(),
     }),
-    digestFor(id) ?? digestForCardName(name),
+    digest,
   );
   return { read, old };
 }
@@ -206,9 +215,9 @@ const TREND = [
   }),
 ];
 
-// ── parity: the read's intel is the old path's intel ────────────────────────
+// ── parity: the read's intel is the extractor's over the room's slice ───────
 
-describe("the read's intel equals extractDealIntel(corpusFor(…)) on the suites' fixtures", () => {
+describe("the read's intel equals extractDealIntel over the room's slice on the suites' fixtures", () => {
   test("extract: every store, tagged and sorted", () => {
     const { read, old } = both("X1", "Acme", {
       homeSide: [],
