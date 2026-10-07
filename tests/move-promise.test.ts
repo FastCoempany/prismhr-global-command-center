@@ -20,7 +20,7 @@ import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { join } from "node:path";
 import { cwd } from "node:process";
-import { readDeal, type PromiseIn } from "../src/lib/room/engine";
+import { promiseStands, readDeal, type PromiseIn } from "../src/lib/room/engine";
 import { readAccount, type RecordNote } from "../src/lib/record/read";
 import { evidenceRung } from "../src/lib/record/docs";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
@@ -435,6 +435,35 @@ describe("the meeting branch keeps its own line", () => {
       blown.move,
       "Send Tom the recap. Adam owes the pricing model. PROMISED 10/9.",
     );
+  });
+
+  test("the recap says the day as the move line does: Due today on the day", () => {
+    // One fact, one wording (CLAUDE.md, "Their promise rides the move
+    // line"): the recap's tail said "Promised today." where the move line
+    // says "Due today." for the same promise on the same day.
+    const meeting = (now: Date, day: string, promised?: boolean) =>
+      readDeal({
+        ...base,
+        lastMeeting: { at: new Date(now.getTime() - 3_600_000).toISOString(), who: "Tom" },
+        lastRecordAt: now.toISOString(),
+        theirBall: { who: "Adam", text: "the pricing model", day, ...(promised ? { promised } : {}) },
+        now,
+      }).move;
+    assert.equal(
+      meeting(FRI, "2026-10-09"),
+      "Send Tom the recap. Adam owes the pricing model. Due today.",
+    );
+    // Every state reads what promiseStands reads for the move line.
+    for (const [now, day, promised] of [
+      [TUE, "2026-10-09", false],
+      [FRI, "2026-10-09", false],
+      [MON, "2026-10-09", true],
+      [MON, "2026-10-09", false],
+      [TUE, "2026-10-20", false],
+    ] as const) {
+      const stands = promiseStands(adam({ day, promised }), now);
+      assert.ok(meeting(now, day, promised).endsWith(` ${stands}.`), `${day} at ${now.toISOString()}`);
+    }
   });
 });
 

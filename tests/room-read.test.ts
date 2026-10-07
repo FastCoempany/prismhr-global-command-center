@@ -231,7 +231,9 @@ describe("an off-board account in live motion takes a HomeRoom row (pass 8 call 
     const sheet = buildAccountSheet([], "G1", new Set(["in1"]), new Map(), NOW_OCT, [inbound], {
       rows: [seat],
       excluded,
-      workedToday: false,
+      // The worked stamps with their times (the pass 9 seam, S-7: the sheet
+      // reads seatWorked, so it takes stamps, not a day's flag).
+      stamps: new Map(),
     });
     assert.deepEqual(
       sheet.open.map((o) => o.body),

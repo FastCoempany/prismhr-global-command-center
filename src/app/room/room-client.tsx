@@ -58,12 +58,13 @@ import {
 } from "./actions";
 import type { Window } from "@/lib/ingest/windows";
 import { shortName } from "@/lib/ingest/short-name";
-import { monthDay } from "@/lib/ingest/wrote";
+import { ALREADY_ON_FILE, monthDay } from "@/lib/ingest/wrote";
+import type { VaultReceipt } from "@/lib/ingest/vault";
 import { asTypedNote, sniffPaste } from "@/lib/paste-files";
 import type { LedgerRow } from "./chute-ledger";
 import { HeldBox, type HeldAccount, type HeldChoice } from "./ingest/held";
 import { ReceiptLine } from "./ingest/receipt";
-import { DROP_CSV_RECEIPT, useIngest } from "./ingest/use-ingest";
+import { DROP_CSV_RECEIPT, useIngest, type Filed } from "./ingest/use-ingest";
 import { dismissHeld, holdVerdict, useVerdict, type Held } from "./ingest/use-verdict";
 import { useUndo } from "./ingest/use-undo";
 import type { StageView } from "@/lib/room/stages-view";
@@ -150,6 +151,11 @@ export type RoomRow = {
   }[];
   sheetDelayed: { id: string; body: string; edit?: string; when: string }[];
   sheetDoneToday: { id: string; body: string; edit?: string; at: string }[];
+  /** Commitments their side released (the closer rule: a promise closes by
+   *  delivery or explicit release; pass 8 H6). Closed, so never counted and
+   *  never instructed; each shows as one quiet line with its `why` ("Chassie
+   *  released it 10/3.") so nothing leaves TODAY without a trace. */
+  sheetReleased?: { id: string; body: string; edit?: string; why: string }[];
   record: { id: string; t: string; text: string; struck: boolean }[];
   recordTotal: number;
   backgroundTotal: number;
@@ -331,23 +337,81 @@ type FreshEntry = { text: string; receipt?: undefined } | { receipt: LedgerRow }
 /** Today, M/D in Chicago: the day a receipt shows. */
 const receiptDay = (): string => monthDay(new Date());
 
+/** The receipt a refused filing leaves on the Drop, the one the Chute's
+ *  ledger paints for the same result (the pass 9 seam, S-1): a duplicate is
+ *  the decree's line beside the earlier filing's day, which opens to what
+ *  that filing wrote (pass 8, C2); a filing that failed for any other reason
+ *  with a file waiting is the failure's line, and the file backs up beneath
+ *  it (pass 8 call 8). A paste refused with no file waiting is null: the
+ *  row's note says why, as before. A pasted duplicate is named as the held
+ *  box names a paste. */
+export function dropRefusal(
+  r: Pick<Filed, "ok" | "duplicate" | "reason" | "prior" | "vault">,
+  account: HeldAccount,
+  filename: string,
+  day: string,
+): Omit<LedgerRow, "key"> | null {
+  if (r.duplicate)
+    return {
+      filename: filename || "Paste",
+      state: "dupe",
+      account,
+      reason: r.reason ?? ALREADY_ON_FILE,
+      ...(r.prior ? { prior: r.prior } : {}),
+      day,
+    };
+  if (r.vault.failed?.length)
+    return {
+      filename,
+      state: "error",
+      account,
+      reason: r.reason ?? "The file didn't take.",
+      day,
+    };
+  return null;
+}
+
+/** Back up a file whose filing failed (ruled 2026-10-07, pass 8 call 8), as
+ *  the Chute does: to the account it was filing to, or under
+ *  accounts/_unfiled/ when it named none or that backup was refused, so git
+ *  stays the home for every dropped file (D8). Through the shared door's two
+ *  vault doors, so no token reaches the browser. */
+export async function backUpFailed(
+  doors: Pick<ReturnType<typeof useIngest>, "vault" | "vaultUnfiled">,
+  f: File,
+  account: { id: string } | undefined,
+  onPiece?: (sent: number, total: number) => void,
+): Promise<VaultReceipt> {
+  const r = account ? await doors.vault(account.id, f, onPiece) : null;
+  return r?.ok ? r : doors.vaultUnfiled(f, onPiece);
+}
+
 /** A row's key for the fold and the list: its card, or its account for a row
  *  off the board, which has no card (pass 8 call 1). */
 export const rowKey = (r: Pick<RoomRow, "cardId" | "accountId">): string =>
   r.cardId || `account:${r.accountId}`;
 
 /** Every line the TODAY register holds, by id: the open, the rest behind
- *  the cap, the held, the done today, and the owed lines. */
+ *  the cap, the held, the done today, the released, and the owed lines. */
 export function todayLines(
   r: Pick<
     RoomRow,
-    "sheetOpen" | "sheetRest" | "sheetDelayed" | "sheetDoneToday" | "owed"
+    | "sheetOpen"
+    | "sheetRest"
+    | "sheetDelayed"
+    | "sheetDoneToday"
+    | "sheetReleased"
+    | "owed"
   >,
 ): string[] {
   return [
-    ...[...r.sheetOpen, ...r.sheetRest, ...r.sheetDelayed, ...r.sheetDoneToday].map(
-      (t) => t.id,
-    ),
+    ...[
+      ...r.sheetOpen,
+      ...r.sheetRest,
+      ...r.sheetDelayed,
+      ...r.sheetDoneToday,
+      ...(r.sheetReleased ?? []),
+    ].map((t) => t.id),
     ...r.owed.map((o) => `owed:${o.key}`),
   ];
 }
@@ -586,12 +650,60 @@ export function Row({
       } else setNote(r.reason ?? "The edit didn't save.");
     });
   };
+  // ✎ opens the line with the FULL stored text, never the display cap:
+  // saving an untouched row must not truncate it.
+  const startTodoEdit = (t: { id: string; body: string; edit?: string }) => {
+    setTodoEditId(t.id);
+    setTodoEditText(editedTodos.get(t.id) ?? t.edit ?? t.body);
+  };
+  // The box ✎ opens, one for every TODAY line the operator can rewrite:
+  // Enter keeps, Escape puts it back.
+  const todoEditBox = (id: string) => (
+    <div key={id} className={`${styles.it} ${styles.itOpen}`}>
+      <span className={`${styles.ic} ${styles.gAct}`}>✸</span>
+      <span className={styles.recEdit}>
+        <input
+          value={todoEditText}
+          onChange={(ev) => setTodoEditText(ev.target.value)}
+          onKeyDown={(ev) => {
+            if (ev.key === "Enter") saveTodoEdit(id);
+            if (ev.key === "Escape") setTodoEditId(null);
+          }}
+          aria-label="edit this line"
+        />
+        <button type="button" className={styles.sdTag} onClick={() => saveTodoEdit(id)}>
+          save
+        </button>
+        <button
+          type="button"
+          className={styles.sdTag}
+          onClick={() => setTodoEditId(null)}
+        >
+          cancel
+        </button>
+      </span>
+    </div>
+  );
   const deleteNote = (noteId: string) => {
     if (pending) return;
     start(async () => {
       const r = took(await roomRecordDelete(row.accountId, noteId));
       if (r.ok) setDeletedNotes((s) => new Set(s).add(noteId));
       else setNote(r.reason ?? "The delete didn't take.");
+    });
+  };
+  // A failed filing's file backs up beneath its receipt (pass 8 call 8): in
+  // flight, landed with its door, or the backup's own failure on the amber
+  // line, as the Chute's receipt says it.
+  const backUp = async (key: number, f: File, account: HeldAccount) => {
+    const progress = (sent: number, total: number) =>
+      patchReceipt(key, {
+        vault: { text: `Backing up ${f.name}… ${sent} of ${total}`, going: true },
+      });
+    patchReceipt(key, { vault: { text: `Backing up ${f.name}…`, going: true } });
+    const r = await backUpFailed(ingest, f, account, progress);
+    patchReceipt(key, {
+      vault: r.ok ? { text: r.detail, url: r.url } : { text: r.reason, bad: true },
     });
   };
   // File a text through the shared door, inside the row's transition so the
@@ -613,7 +725,21 @@ export function Row({
         try {
           done(await fileText(text, force, waiting, windows, to));
         } catch {
-          setNote("The paste didn't file.");
+          // Nothing dies silently: a broken filing says so, and its files
+          // still back up, to the account it was filing to or under
+          // accounts/_unfiled/ (pass 8 call 8), as the Chute's do.
+          if (waiting?.length) {
+            const account = to ?? { id: row.accountId, name: row.name };
+            const key = addReceipt({
+              filename: waiting[0].name,
+              state: "error",
+              account,
+              reason: "The filing broke. Drop it again.",
+              day: receiptDay(),
+            });
+            for (const f of waiting) void backUp(key, f, account);
+            setSpring("today");
+          } else setNote("The paste didn't file.");
           done(false);
         }
       }),
@@ -669,7 +795,24 @@ export function Row({
       setSpring("today");
       return true;
     }
-    setNote(r.reason ?? "The paste didn't file.");
+    // A refusal the Chute paints as a receipt lands as one here too (the
+    // pass 9 seam, S-1): the duplicate with its door to the earlier filing,
+    // the failed filing with its file's backup beneath it. A paste refused
+    // with nothing waiting stays the row's note.
+    const refused = dropRefusal(r, account, waiting?.[0]?.name ?? "", receiptDay());
+    if (!refused) {
+      setNote(r.reason ?? "The paste didn't file.");
+      return false;
+    }
+    const key = addReceipt(refused);
+    for (const f of vault.failed ?? []) void backUp(key, f, account);
+    // The capture is on file already: nothing in the pane is left to file.
+    if (r.duplicate) {
+      setPasteText("");
+      setPasteOpen(false);
+    }
+    setNote(null);
+    setSpring("today");
     return false;
   };
   // An answer to the held question is final: the filing re-runs with force
@@ -930,16 +1073,20 @@ export function Row({
 
   // ↺ on a filing's receipt takes the whole filing back by its id
   // (use-undo.ts), the to-dos it opened included, and the receipt says what
-  // went.
+  // went and opens to it.
   const takeBack = (rc: LedgerRow) => {
     const acct = rc.account;
     if (!acct || pending) return;
     start(async () => {
       const r = await undo(acct.id, rc);
+      // The line opens to what was taken back (pass 8, C5): the server reads
+      // the filing's lines before they go, and the row holds them while the
+      // tab lives, as the Chute's does.
       if (r.ok)
         patchReceipt(rc.key, {
           state: "undone",
           reason: `Taken back from ${shortName(acct.name)}. ${r.removed + r.retired} removed.`,
+          took: r.took,
         });
       else setNote(r.reason ?? "The take-back didn't go through.");
     });
@@ -1025,7 +1172,9 @@ export function Row({
   const liveOwed = row.owed.filter((o) => !owedGone.has(o.key));
   const doneCount =
     row.sheetDoneToday.filter((t) => !gone.has(t.id)).length +
-    row.sheetOpen.filter((t) => !gone.has(t.id) && doneIds.has(t.id)).length;
+    [...row.sheetOpen, ...(row.sheetReleased ?? [])].filter(
+      (t) => !gone.has(t.id) && doneIds.has(t.id),
+    ).length;
   // The numeral and the trailing text, from one derivation. They used to come
   // from two, and a row with an owed line and no todo read "TODAY 0 · TrendHR
   // follow-up" — a count of nothing beside a thing (2026-09-23).
@@ -1868,37 +2017,7 @@ export function Row({
                   settled?: string;
                 }) => {
                   const did = doneIds.has(t.id);
-                  if (todoEditId === t.id)
-                    return (
-                      <div key={t.id} className={`${styles.it} ${styles.itOpen}`}>
-                        <span className={`${styles.ic} ${styles.gAct}`}>✸</span>
-                        <span className={styles.recEdit}>
-                          <input
-                            value={todoEditText}
-                            onChange={(ev) => setTodoEditText(ev.target.value)}
-                            onKeyDown={(ev) => {
-                              if (ev.key === "Enter") saveTodoEdit(t.id);
-                              if (ev.key === "Escape") setTodoEditId(null);
-                            }}
-                            aria-label="edit this line"
-                          />
-                          <button
-                            type="button"
-                            className={styles.sdTag}
-                            onClick={() => saveTodoEdit(t.id)}
-                          >
-                            save
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.sdTag}
-                            onClick={() => setTodoEditId(null)}
-                          >
-                            cancel
-                          </button>
-                        </span>
-                      </div>
-                    );
+                  if (todoEditId === t.id) return todoEditBox(t.id);
                   return (
                     <div
                       key={t.id}
@@ -1981,14 +2100,7 @@ export function Row({
                               </form>
                               <button
                                 disabled={pending}
-                                onClick={() => {
-                                  setTodoEditId(t.id);
-                                  // The FULL stored line, never the display cap —
-                                  // saving an untouched row must not truncate it.
-                                  setTodoEditText(
-                                    editedTodos.get(t.id) ?? t.edit ?? t.body,
-                                  );
-                                }}
+                                onClick={() => startTodoEdit(t)}
                                 title="edit this line"
                               >
                                 ✎
@@ -2058,6 +2170,60 @@ export function Row({
                   )}
                 </div>
               ))}
+            {/* What their side released: closed, outside the count, one quiet
+                line with its why, so a commitment never leaves TODAY without
+                a trace (pass 8 H6; the pass 9 seam, S-2). The stored line is
+                still the operator's: ✓ closes it, ✎ rewrites it. */}
+            {(row.sheetReleased ?? [])
+              .filter((t) => !gone.has(t.id))
+              .map((t) => {
+                if (todoEditId === t.id) return todoEditBox(t.id);
+                const did = doneIds.has(t.id);
+                return (
+                  <div
+                    key={t.id}
+                    className={`${styles.it} ${did ? styles.itDid : styles.itReleased}`}
+                  >
+                    <span className={did ? `${styles.ic} ${styles.gDone}` : styles.ic}>
+                      {did ? "✓" : "✸"}
+                    </span>
+                    <span className={styles.tx}>
+                      {editedTodos.get(t.id) ?? t.body}
+                      {!did && <span className={styles.settledWhy}>{t.why}</span>}
+                    </span>
+                    {row.canWrite && (
+                      <span className={styles.rail}>
+                        {did ? (
+                          <button
+                            disabled={pending}
+                            onClick={() => todoOp(t.id, "undo")}
+                            title="undo"
+                          >
+                            ↩
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              disabled={pending}
+                              onClick={() => todoOp(t.id, "done")}
+                              title="done"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              disabled={pending}
+                              onClick={() => startTodoEdit(t)}
+                              title="edit this line"
+                            >
+                              ✎
+                            </button>
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         )}
 

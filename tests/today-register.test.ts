@@ -176,3 +176,69 @@ describe("whatever lands in TODAY springs it open (H4)", () => {
     );
   });
 });
+
+// S-2 (pass 9 seam): the read moves a commitment their side released out of
+// the open list into `released` (the closer rule: a promise closes by
+// delivery or explicit release; pass 8 H6), and nothing rendered it, so the
+// line vanished from TODAY without a trace. It shows now as one quiet line
+// with its why, outside the count, and the operator's ✓ and ✎ ride it.
+describe("a released commitment shows in TODAY as a quiet line with its why", () => {
+  const released = {
+    id: "todo-r",
+    body: "Send Chassie the census template · from 10/1 paste",
+    edit: "Send Chassie the census template · from 10/1 paste",
+    why: "Chassie released it 10/3.",
+  };
+  const paint = async (over: Parameters<typeof roomRow>[0] = {}) => {
+    const { render } = await import("./helpers/room-render");
+    const { createElement } = await import("react");
+    return render(
+      createElement(room.Row, {
+        row: roomRow({ sheetReleased: [released], ...over }),
+        collapsed: false,
+        onToggle: () => {},
+        defaultSpring: "today",
+      }),
+    );
+  };
+  const lineOf = (html: string): string => {
+    const at = html.indexOf(released.why);
+    assert.ok(at > 0, "the why is not on the register");
+    const start = html.lastIndexOf('<div class="it ', at);
+    const end = html.indexOf("</div>", at);
+    return html.slice(start, end);
+  };
+
+  test("the line and its why are on the sprung register, quiet, with ✓ and ✎", async () => {
+    const html = await paint();
+    const line = lineOf(html);
+    assert.ok(line.includes(released.body), "the line itself");
+    assert.ok(line.includes('class="it itReleased"'), "the quiet line's own class");
+    assert.ok(line.includes('title="done"'), "✓ closes it");
+    assert.ok(line.includes('title="edit this line"'), "✎ rewrites it");
+    assert.ok(!line.includes("PROMISED") && !line.includes("OPEN"), "no open-line chip");
+    assert.ok(!line.includes('title="park"') && !line.includes("delay to tomorrow"));
+  });
+
+  test("it leaves the count: TODAY counts what is still open", async () => {
+    const html = await paint();
+    // The one open line, not two; the done is the row's own done today.
+    assert.match(html, /<span class="sumn">1 · 1 done<\/span>/, "the released line is counted");
+    const read = await paint({ canWrite: false });
+    assert.ok(!lineOf(read).includes('title="done"'), "a read-only session gets no ✓");
+  });
+
+  test("the class holds no color of its own", () => {
+    const css = readFileSync(join(cwd(), "src/app/room/room.module.css"), "utf8");
+    const rules = [...css.matchAll(/\.itReleased[^{]*\{([^}]*)\}/g)].map((m) => m[1]);
+    assert.ok(rules.length > 0, "the quiet line has its rule");
+    for (const r of rules)
+      for (const m of r.matchAll(/color:\s*([^;]+);/g))
+        assert.match(m[1].trim(), /^var\(--(soft|faint|quiet|ink)\)$/, `a new color: ${m[1]}`);
+  });
+
+  test("the room hands the read's released lines to the row", () => {
+    const page = readFileSync(join(cwd(), "src/app/room/page.tsx"), "utf8");
+    assert.match(page, /sheetReleased: sheet\.released/);
+  });
+});

@@ -36,7 +36,7 @@ import { ALREADY_FILING, ALREADY_ON_FILE, wroteFrom } from "../src/lib/ingest/wr
 import { vaultAfterVerdict } from "../src/lib/room/drop-plan";
 import { HELD_LINE, heldLine, keptLine } from "../src/lib/intranet/capture-door";
 import type { RouteAccount } from "../src/lib/route-capture";
-import { chute, classesOf, held, receipt, render, textOf } from "./helpers/room-render";
+import { chute, classesOf, held, receipt, render, roomClient, textOf } from "./helpers/room-render";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -801,6 +801,90 @@ describe("a readable file whose filing fails still backs up (pass 8 call 8)", ()
     assert.match(src, /const \[failed\] = r\.vault\.failed \?\? \[\];\s*if \(failed\) void backUp\(key, failed, account\);/);
     assert.match(src, /let r = account \? await ingest\.vault\(account\.id, f, progress\) : null;\s*if \(!r\?\.ok\) r = await ingest\.vaultUnfiled\(f, progress\);/);
     assert.match(src, /reason: "The filing broke\. Drop it again\." \}\);\s*void backUp\(key, f, filingTo\);/);
+  });
+});
+
+// ── the Drop's half (pass 9 seam, S-1) ─────────────────────────────────────
+// The Chute slice gave the result its fields (r.vault.failed, r.prior,
+// r.took) and painted them on the Chute; the Drop read none of them. A file
+// whose filing failed on a row never reached git (pass 8 call 8), its
+// duplicate was a bare note with no door to the earlier filing (C2), and its
+// take-back opened to nothing (C5).
+
+describe("the Drop backs up, opens the duplicate and the take-back like the Chute (S-1)", () => {
+  const SIMPLOY_ROW = { id: SIMPLOY.id, name: SIMPLOY.name };
+  const eml = new File(["From: a"], "simploy-renewal.eml");
+
+  test("a failed filing with a file is an error receipt that backs up; a paste's refusal stays the note", async () => {
+    const { dropRefusal } = await roomClient();
+    const row = dropRefusal(
+      { ok: false, reason: "Filing failed partway. Check the account page.", vault: { archive: [], hold: [], failed: [eml] } },
+      SIMPLOY_ROW,
+      eml.name,
+      "10/7",
+    );
+    assert.deepEqual(row, {
+      filename: "simploy-renewal.eml",
+      state: "error",
+      account: SIMPLOY_ROW,
+      reason: "Filing failed partway. Check the account page.",
+      day: "10/7",
+    });
+    const landed = await receiptLine({ key: 1, ...row!, vault: { text: "accounts/Simploy/simploy-renewal.eml", url: "https://github.com/o/vault/s" } });
+    assert.equal(textOf(landed), "simploy-renewal.eml · Filing failed partway. Check the account page. ✕ ⇪ Not filed. Backed up. · open");
+    // A paste that files nothing has no file to back up: the row's note says it.
+    assert.equal(dropRefusal({ ok: false, reason: "Paste something first.", vault: { archive: [], hold: [] } }, SIMPLOY_ROW, "", "10/7"), null);
+  });
+
+  test("a duplicate is the Chute's receipt: the decree's line and the earlier filing's day, which opens", async () => {
+    const { dropRefusal } = await roomClient();
+    const r = { ok: false, duplicate: true, reason: ALREADY_ON_FILE, prior: { day: "10/3", filingId: "f0" }, vault: { archive: [], hold: [] } };
+    const file = dropRefusal(r, SIMPLOY_ROW, eml.name, "10/7");
+    assert.deepEqual(file, { filename: "simploy-renewal.eml", state: "dupe", account: SIMPLOY_ROW, reason: ALREADY_ON_FILE, prior: { day: "10/3", filingId: "f0" }, day: "10/7" });
+    const html = await receiptLine({ key: 2, ...file! });
+    assert.equal(textOf(html), "simploy-renewal.eml · Already on file. Nothing filed twice. · Simploy · Filed 10/3 ✕");
+    assert.match(html, /title="Show what the earlier filing wrote">Filed 10\/3<\/button>/);
+    // A pasted duplicate is named as the held box names a paste.
+    const paste = dropRefusal({ ...r, prior: { day: "10/3" } }, SIMPLOY_ROW, "", "10/7");
+    assert.equal(textOf(await receiptLine({ key: 3, ...paste! })), "Paste · Already on file. Nothing filed twice. · Simploy · Filed 10/3 ✕");
+  });
+
+  test("the backup goes to the account it was filing to, or under accounts/_unfiled/ when that is refused", async () => {
+    const { backUpFailed } = await roomClient();
+    const asked: string[] = [];
+    const doors = (accountOk: boolean) => ({
+      vault: async (accountId: string) => {
+        asked.push(`vault ${accountId}`);
+        return accountOk
+          ? { ok: true as const, kind: "file" as const, url: "https://github.com/o/vault/a", detail: "accounts/Simploy/simploy-renewal.eml" }
+          : { ok: false as const, reason: "The vault refused it." };
+      },
+      vaultUnfiled: async () => {
+        asked.push("unfiled");
+        return { ok: true as const, kind: "file" as const, url: "https://github.com/o/vault/u", detail: "accounts/_unfiled/simploy-renewal.eml" };
+      },
+    });
+    const there = await backUpFailed(doors(true), eml, SIMPLOY_ROW);
+    assert.deepEqual(asked, [`vault ${SIMPLOY.id}`]);
+    assert.ok(there.ok && there.detail.startsWith("accounts/Simploy/"));
+    asked.length = 0;
+    const unfiled = await backUpFailed(doors(false), eml, SIMPLOY_ROW);
+    assert.deepEqual(asked, [`vault ${SIMPLOY.id}`, "unfiled"]);
+    assert.ok(unfiled.ok && unfiled.detail.startsWith("accounts/_unfiled/"));
+    asked.length = 0;
+    await backUpFailed(doors(true), eml, undefined);
+    assert.deepEqual(asked, ["unfiled"], "no account named, straight to _unfiled");
+  });
+
+  test("the Drop wires them: the refusal's receipt, the failed files' backup, the take-back's lines", () => {
+    const src = read("src/app/room/room-client.tsx");
+    const fileText = src.slice(src.indexOf("  const fileText = async ("), src.indexOf("  const answerHeld = "));
+    assert.match(fileText, /const refused = dropRefusal\(r, account, waiting\?\.\[0\]\?\.name \?\? "", receiptDay\(\)\);/);
+    assert.match(fileText, /for \(const f of vault\.failed \?\? \[\]\) void backUp\(key, f, account\);/);
+    // A filing that broke backs its files up too, as the Chute's does.
+    assert.match(src, /reason: "The filing broke\. Drop it again\.",[\s\S]{0,200}?void backUp\(/);
+    const takeBack = src.slice(src.indexOf("  const takeBack = (rc: LedgerRow)"), src.indexOf("  const clearReceipt = "));
+    assert.match(takeBack, /took: r\.took,/);
   });
 });
 

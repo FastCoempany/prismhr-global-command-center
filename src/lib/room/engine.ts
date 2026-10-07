@@ -147,13 +147,15 @@ const dayWord = (dayIso: string, now: Date): string => {
 };
 
 // The loop's reason, after the meeting move names what they owe: the day
-// they named while it stands; PROMISED with its date once it ended with a
-// hearer on record; a plain wall when it ended with none (D28).
+// they named while it stands, "Due today" on the day, PROMISED with its date
+// once it ended with a hearer on record, a plain wall when it ended with
+// none (D28). The move line's own words (promiseStands, below), so one
+// promise reads one way on the row whichever branch speaks; this line said
+// "Promised today." where the move line says "Due today." (the pass 9 seam,
+// S-9; CLAUDE.md, "Their promise rides the move line").
 const loopReason = (ball: { day?: string; promised?: boolean }, now: Date): string => {
-  const day = ball.day ?? "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return "";
-  if (day >= chicagoDay(now)) return ` Promised ${dayWord(day, now)}.`;
-  return ball.promised ? ` PROMISED ${md(day)}.` : ` The ${md(day)} wall passed.`;
+  const stands = promiseStands({ who: "", text: "", at: "", ...ball }, now);
+  return stands ? ` ${stands}.` : "";
 };
 
 // Their promise holds an await this long before the chase resumes — a

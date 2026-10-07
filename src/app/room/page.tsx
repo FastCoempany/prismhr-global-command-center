@@ -9,7 +9,7 @@ import { contactsFor, knownPeople } from "@/lib/book/contacts";
 import {
   loadAccountNotes,
   loadDispositions,
-  loadDoneKeys,
+  loadDoneTimes,
   loadSnoozes,
   loadTodos,
   loadTouches,
@@ -43,7 +43,6 @@ import { moveDoneKey } from "@/lib/room/bind";
 import { buildStageRail } from "@/lib/room/stages-view";
 import { buildAccountSheet } from "@/lib/room/sheet-view";
 import { liveMotionIds } from "@/lib/groundwork/day";
-import { groundworkDoneKey } from "@/lib/groundwork/file";
 import { SEAT_NS } from "@/lib/act/lane";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
@@ -106,7 +105,7 @@ export default async function RoomPage() {
     );
   }
 
-  const [notesById, touches, todos, dispositions, snoozes, validations, doneKeys] =
+  const [notesById, touches, todos, dispositions, snoozes, validations, doneTimes] =
     await Promise.all([
       loadAccountNotes(),
       loadTouches(),
@@ -114,8 +113,12 @@ export default async function RoomPage() {
       loadDispositions(),
       loadSnoozes(),
       loadValidations(),
-      loadDoneKeys(),
+      loadDoneTimes(),
     ]);
+  // Every completion mark, with when it was made: a seat's worked stamp
+  // counts on any day since the seat (seatWorked; pass 8 B8), so the sheet
+  // reads the times, and the rest of the page reads the keys.
+  const doneKeys = new Set(doneTimes.keys());
   const idByName = new Map(peos.map((p) => [p.name.toLowerCase(), p.id]));
   const peoById = new Map(peos.map((p) => [p.id, p]));
   const touchMap = new Map(touches.map((t) => [t.subjectKey, t]));
@@ -328,9 +331,10 @@ export default async function RoomPage() {
         ? {
             rows: notesById.get(`${SEAT_NS}${accountId}`) ?? [],
             excluded,
-            workedToday: doneKeys.has(groundworkDoneKey(now, `${accountId}:seated`)),
+            stamps: doneTimes,
           }
         : null,
+      ourSide,
     );
     // Owed-to-you lines the record holds, minus anything dismissed or already
     // open on the register — the same read the suggestions use.
@@ -351,7 +355,11 @@ export default async function RoomPage() {
       // counterparty's own acceptance — so the room stops asking for a thing
       // it can see was done (the Joseph Lyon invite, 2026-09-04).
       const src = allNotes.find((n) => n.id === o.noteId);
-      return !settledByRecord({ text: o.text, at: src?.createdAt ?? "" }, allNotes);
+      return !settledByRecord(
+        { text: o.text, at: src?.createdAt ?? "" },
+        allNotes,
+        ourSide,
+      );
     });
 
     // The newest meeting record is the read's (field 6): who the recap is
@@ -665,6 +673,9 @@ export default async function RoomPage() {
       sheetRest,
       sheetDelayed,
       sheetDoneToday,
+      // What their side released: closed, never counted, shown so nothing
+      // vanishes without a trace (pass 8 H6; the pass 9 seam, S-2).
+      sheetReleased: sheet.released,
       record: mine.slice(0, 6).map((n) => ({
         id: n.id,
         t: new Date(Date.parse(n.createdAt)).toLocaleDateString("en-US", {
