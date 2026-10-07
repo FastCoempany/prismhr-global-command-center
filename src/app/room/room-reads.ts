@@ -5,6 +5,7 @@
 // goes in.
 
 import { liveMotionIds } from "@/lib/groundwork/day";
+import { hideNoteKey } from "@/lib/record/hide";
 import type { DealIntel } from "@/lib/intel/types";
 import { GLOBAL_SCENT_RE } from "@/lib/intel/provenance";
 
@@ -15,7 +16,6 @@ export function firstName(s: string): string {
 
 // ✕ parks a record row under this disposition key; the account read holds the
 // same filter (src/lib/record/read.ts).
-const HIDE_NOTE = "hide:note:";
 
 type NoteLike = { id: string; body: string; source: string; createdAt: string };
 
@@ -88,7 +88,7 @@ export function filedWarmth<N extends { id: string; body: string; createdAt: str
   return (
     notes.find(
       (n) =>
-        !dispositions.has(`${HIDE_NOTE}${n.id}`) &&
+        !dispositions.has(hideNoteKey(n.id)) &&
         now.getTime() - Date.parse(n.createdAt) < FRESH_SCENT_MS &&
         GLOBAL_SCENT_RE.test(n.body),
     ) ?? null

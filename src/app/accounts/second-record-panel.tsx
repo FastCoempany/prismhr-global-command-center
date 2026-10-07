@@ -114,6 +114,13 @@ export function TouchEvidence({
       return;
     }
     setBusy(true);
+    // The rollup carries the row's own key (S-17); an older rollup without
+    // one is matched by day and subject among the newest staged rows.
+    if (cite.k) {
+      setText(await fetchExcerpt(accountId, cite.k));
+      setBusy(false);
+      return;
+    }
     const heads = await fetchRowHeads(accountId);
     const want = squash(cite.subject);
     const row = heads.find(

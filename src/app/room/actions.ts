@@ -85,6 +85,7 @@ import {
 import { mintAsks } from "@/lib/intel/ask-mint";
 import { SCENARIOS } from "@/lib/intel/scenarios";
 import { homeSideFrom } from "@/lib/pipeline/build";
+import { hideNoteKey } from "@/lib/record/hide";
 import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
 import {
   loadAccountNotes,
@@ -1257,7 +1258,7 @@ export async function roomResearch(
       loadTouches(),
       loadDispositions(),
     ]);
-    const people = readFromStores(
+    const read = readFromStores(
       {
         notesById,
         touches,
@@ -1267,8 +1268,9 @@ export async function roomResearch(
       },
       acct,
       { now },
-    )
-      .people.map((p) => p.name)
+    );
+    const people = read.people
+      .map((p) => p.name)
       .filter((x) => x.length > 2 && !MINE_RE.test(x))
       .slice(0, 6);
 
@@ -1279,7 +1281,9 @@ export async function roomResearch(
       accountName: acct.name,
       site: site || undefined,
       people,
-      countries: previous?.countries ?? [],
+      // The prompt calls these the countries the record mentions, so they
+      // are the record's (the read's field 18), never the last pass's own.
+      countries: read.countries.map((c) => c.value),
       now,
     });
     if (!finding.summary && finding.signals.length === 0)
@@ -1606,7 +1610,7 @@ export async function roomRecordDelete(
       select: { id: true, body: true },
     });
     if (!n) return { ok: false, reason: "That entry belongs to a different account." };
-    const key = `hide:note:${id}`.slice(0, 191);
+    const key = hideNoteKey(id).slice(0, 191);
     await prisma.accountDisposition.upsert({
       where: { accountId: key },
       create: { accountId: key, status: "parked", reason: n.body.slice(0, 300) },
@@ -1752,7 +1756,7 @@ async function seatOp(
   else if (op === "now")
     await prisma.accountDisposition.deleteMany({ where: { accountId: held } });
   else {
-    const key = `hide:note:${seat.id}`.slice(0, 191);
+    const key = hideNoteKey(seat.id).slice(0, 191);
     await prisma.accountDisposition.upsert({
       where: { accountId: key },
       create: { accountId: key, status: "parked", reason },

@@ -5,7 +5,7 @@
 // for the draft's own prompt, and both read through this filter, so a parked
 // row never names a recipient and never rides into a draft.
 
-const HIDE_NOTE = "hide:note:";
+import { hideNoteKey } from "@/lib/record/hide";
 
 export function visibleNotes<N extends { id: string }>(
   notesById: ReadonlyMap<string, readonly N[]>,
@@ -15,7 +15,7 @@ export function visibleNotes<N extends { id: string }>(
   for (const [id, notes] of notesById)
     out.set(
       id,
-      notes.filter((n) => !dispositions.has(`${HIDE_NOTE}${n.id}`)),
+      notes.filter((n) => !dispositions.has(hideNoteKey(n.id))),
     );
   return out;
 }

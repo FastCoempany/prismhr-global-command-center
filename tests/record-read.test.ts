@@ -443,14 +443,9 @@ describe("the hide filter (hide:note:) runs inside the read", () => {
 
   test("the note grammar has one spelling, and the read and the sheet rules park by it (S-11)", () => {
     // The prefix had two spellings, the second record's export and a
-    // private copy in the read; it lives in src/lib/record/hide.ts. The three
-    // copies left below sit in files another seam owns, and the coordinator
-    // folds them; nothing else in src spells the prefix in code.
-    const OTHER_SEAMS = new Set([
-      "src/app/room/actions.ts",
-      "src/app/room/room-reads.ts",
-      "src/app/partners/visible.ts",
-    ]);
+    // private copy in the read; it lives in src/lib/record/hide.ts, and
+    // nothing else in src spells the prefix in code.
+    const OTHER_SEAMS = new Set<string>();
     const spellers = new Set<string>();
     const walk = (dir: string): void => {
       for (const e of readdirSync(dir, { withFileTypes: true })) {

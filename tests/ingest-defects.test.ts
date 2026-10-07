@@ -191,9 +191,10 @@ describe("bug 4 — 'cross it out and drop it again' cannot work", () => {
   test("why undo works and cross-out does not", () => {
     // The undo clears the duplicate guard's marker, so the re-drop files.
     assert.ok(pasteUndo.includes("startsWith: `pastehash:${acct.id}:`"));
-    // Cross-out parks the note under hide:note: and leaves the marker, so
-    // the re-drop is refused as a duplicate.
-    assert.ok(recordDelete.includes("hide:note:"));
+    // Cross-out parks the note under hide:note: (spelled once, by
+    // hideNoteKey, S-11) and leaves the marker, so the re-drop is refused as
+    // a duplicate.
+    assert.ok(recordDelete.includes("hideNoteKey("));
     assert.ok(!recordDelete.includes("pastehash"));
   });
 });

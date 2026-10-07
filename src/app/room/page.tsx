@@ -46,7 +46,7 @@ import { liveMotionIds } from "@/lib/groundwork/day";
 import { SEAT_NS } from "@/lib/act/lane";
 import { readLoss } from "@/lib/room/loss";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
-import { latestResearchAt, researchNs } from "@/lib/intel/deep-research";
+import { latestResearchAt, ownPassesFrom, researchNs } from "@/lib/intel/deep-research";
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
@@ -466,7 +466,10 @@ export default async function RoomPage() {
       for (const key of dispositions.keys())
         if (key.startsWith(prefix)) dismissed.add(key.slice(prefix.length));
     }
-    const suggestions = (card ? suggestChecks(docs, card, dismissed) : []).map((sg) => ({
+    // The meter cites the read's own countries, one answer everywhere (S-20).
+    const suggestions = (
+      card ? suggestChecks(docs, card, dismissed, now, acct.countries) : []
+    ).map((sg) => ({
       node: sg.node as string,
       index: sg.itemIdx,
       item: DASH_NODES.find((n) => n.key === sg.node)?.checklist[sg.itemIdx] ?? "",
@@ -709,7 +712,8 @@ export default async function RoomPage() {
   // ── The pull-tab drawers' data ────────────────────────────────────────────
   // Roundups: the whole engine, distilled — per partner: cadence state, the
   // per-account composer sections, and the default message.
-  const intelList = applyValidations(accountIntel(), validations);
+  // The newer of the two research stores, as the queue reads demand (S-12).
+  const intelList = applyValidations(accountIntel(ownPassesFrom(notesById)), validations);
   const parkedIds = new Set<string>();
   for (const [id, d] of dispositions)
     if (d.status === "parked" || d.status === "not-mine") parkedIds.add(id);
