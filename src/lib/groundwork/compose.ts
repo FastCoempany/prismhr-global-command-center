@@ -115,8 +115,8 @@ export function composeFor(args: {
         ),
       };
     case "intent-warm":
-      // Direct doctrine: the reading-us note goes to the account's own
-      // person, not through the partner manager.
+      // Direct doctrine: the note to the people reading us goes to the
+      // account's own person, not through the partner manager.
       return {
         kind: "send-draft",
         label: `Copy the note${labelTo}`,

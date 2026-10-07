@@ -13,6 +13,7 @@ import {
   QUEUE_RULE_IDS,
   RULE_SLOT_CAP,
   SEAT_SLOT_CAP,
+  secondOnlyMotionIds,
 } from "../../src/lib/groundwork/day";
 import { stampSubtext } from "../../src/lib/groundwork/stamp";
 import { readAccount } from "../../src/lib/record/read";
@@ -268,6 +269,63 @@ describe("a seat follows its account (E6 + C8): an excluded account's seat leave
         .map((q) => q.accountId)
         .join(),
       stays.id,
+    );
+  });
+});
+
+describe("a seat on an account excluded only by the second record stays on the wing (C8 with pass 8 call 1)", () => {
+  // The HomeRoom takes a row only for an exclusion resting on the operator's
+  // own record; an exclusion resting only on the export's org-side inbound
+  // adds no row (C6). A seat sent there would show nowhere, so it stays here.
+  const NOW_SEP = new Date("2026-09-25T15:00:00Z");
+  const id = "S0000000000000001";
+  const org = acct({ id, name: "Answered In The Export" });
+  const second = new Map([
+    [
+      id,
+      {
+        rollup: {
+          lastTheirs: { day: "2026-09-20", who: "Tom Harrison", subject: "Re: Canada" },
+        },
+      },
+    ],
+  ]);
+
+  test("the export alone excludes it, and only the export", () => {
+    const only = secondOnlyMotionIds(new Map(), new Map(), NOW_SEP, second);
+    assert.deepEqual([...only], [id]);
+    // The same reply on the first record is the operator's own record: not second-only.
+    const intel = new Map([[id, { lastInbound: "2026-09-20T15:00:00Z" }]]);
+    assert.deepEqual([...secondOnlyMotionIds(new Map(), intel, NOW_SEP, second)], []);
+  });
+
+  test("the seat stays and leads; the account's rules stay out", () => {
+    const { all } = buildQueue({
+      ...base,
+      now: NOW_SEP,
+      accounts: [org],
+      seats: new Map([[id, seatOf("Send the model.")]]),
+      wireAtById: new Map([[id, "2026-09-24T12:00:00Z"]]),
+      excludedIds: new Set([id]),
+      seatStaysIds: new Set([id]),
+    });
+    assert.deepEqual(
+      all.filter((q) => q.accountId === id).map((q) => q.ruleId),
+      ["seated"],
+    );
+  });
+
+  test("an exclusion the HomeRoom takes still sends the seat there", () => {
+    const { all } = buildQueue({
+      ...base,
+      now: NOW_SEP,
+      accounts: [org],
+      seats: new Map([[id, seatOf("Send the model.")]]),
+      excludedIds: new Set([id]),
+    });
+    assert.deepEqual(
+      all.filter((q) => q.accountId === id),
+      [],
     );
   });
 });

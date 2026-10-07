@@ -3,8 +3,9 @@
 // The Klaxon — the time instrument that runs the room (triptych winner,
 // decided 2026-08-11). The band's command and its countdown are the masthead:
 // serif verb left, burning count right, a full-width burn bar draining as the
-// window empties. Inside the last five minutes the count turns red and
-// throbs. The capsule facts (Chicago clock, date, weather) ride the sub-row.
+// window empties. Inside the last five minutes the count and the bar turn red
+// and pulse together; reduced motion keeps the red (pass 8 call 11). The
+// capsule facts (Chicago clock, date, weather) ride the sub-row.
 // Hydration-safe: em-dashes on the server, real readings after mount. Weather
 // is a keyless open-meteo read; if the fetch fails the slot stays quiet — the
 // room never invents a sky.

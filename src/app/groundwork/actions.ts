@@ -4,7 +4,9 @@
 // request time; the only things it persists are worked stamps (side effects
 // of real actions, §3.5) and the wire sweep's filed items. Every action
 // re-checks its own preconditions server-side: the client's due chip is a
-// convenience, never the gate.
+// convenience, never the gate. An action refreshes Groundwork, the page it
+// is called from, and no other surface: every other page derives on request
+// (D15; ruled 2026-10-07, pass 8 call 2).
 
 import { revalidatePath } from "next/cache";
 import { getAppAccess } from "@/lib/auth";
@@ -12,6 +14,7 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
+import { TAP_PAIR_MS, tapOfStamp } from "@/lib/groundwork/worked";
 import { roomResearch } from "@/app/room/actions";
 import {
   CHANNELS,
@@ -53,14 +56,14 @@ export async function runResearchNow(
   const r = await roomResearch(accountId);
   if (r.ok && mk) await markWorked(mk);
   revalidatePath("/groundwork");
-  revalidatePath("/room");
 }
 
 // The Channel Ask's landing (the Sendbook, decreed 2026-08-19): a worked
 // stamp that names its channel files a sendbook:<account> touch beside the
 // TaskDone stamp, so the register and the wing subtext read a real store.
 // Channels that leave a file behind never come through here — the record's
-// own outbound IS the touch, and the ask pre-answers.
+// own outbound IS the touch, and the ask pre-answers. The tap and the stamp
+// carry one moment, so the take-back finds the move's own tap (pass 8 G8).
 export async function workedChannel(
   mk: string,
   accountId: string,
@@ -74,6 +77,7 @@ export async function workedChannel(
     await markWorked(mk);
     return;
   }
+  const at = new Date();
   try {
     await createAccountNoteRow({
       accountId: `${SENDBOOK_NS}${accountId}`,
@@ -87,73 +91,74 @@ export async function workedChannel(
       lane: "background",
       actors: "",
       source: "sendbook",
+      at,
     });
   } catch {
     // the stamp still lands below — a lost touch line costs the register a
     // row, never the day its checkmark
   }
-  await markWorked(mk);
-  revalidatePath("/sendbook");
+  await stamp(mk, at);
 }
 
 // The take-back (founder-decreed 2026-08-19): an accidental stamp must be
 // reversible in place. Un-stamping deletes today's done mark — the move
-// returns to the queue — and withdraws the tap note the stamp filed, if one
-// rode along today. The record's own entries are never touched: a filed
-// email is a fact, not a stamp.
+// returns to the queue — and withdraws the tap note that stamp filed, if one
+// rode along: the move's own tap, never another move's from earlier in the
+// day (pass 8 G8). The record's own entries are never touched: a filed email
+// is a fact, not a stamp.
 export async function unWork(mk: string, accountId: string): Promise<void> {
   if (!(await requireWrite()) || !mk || mk.length > 200) return;
   const key = groundworkDoneKey(new Date(), mk);
   const prisma = getPrisma();
+  let doneAt: Date | null = null;
   try {
+    doneAt =
+      (await prisma.taskDone.findUnique({ where: { key }, select: { doneAt: true } }))
+        ?.doneAt ?? null;
     await prisma.taskDone.deleteMany({ where: { key } });
   } catch {
     return;
   }
-  if (accountId && getPeo(accountId)) {
+  if (doneAt && accountId && getPeo(accountId)) {
     try {
-      // Only the newest tap filed today comes back out — Chicago's day, the
-      // same day the stamp itself was scoped to.
-      const chi = new Date().toLocaleDateString("en-CA", {
-        timeZone: "America/Chicago",
-      });
-      // Coarse fetch window (UTC midnight minus a buffer covers every
-      // Chicago offset); the exact day check is the per-row comparison below.
-      const windowStart = new Date(Date.parse(`${chi}T00:00:00Z`) - 12 * 3_600_000);
-      const candidates = await prisma.accountNote.findMany({
+      const taps = await prisma.accountNote.findMany({
         where: {
           accountId: `${SENDBOOK_NS}${accountId}`,
-          createdAt: { gte: windowStart },
+          createdAt: { gte: new Date(doneAt.getTime() - TAP_PAIR_MS), lte: doneAt },
         },
-        orderBy: { createdAt: "desc" },
-        take: 3,
         select: { id: true, createdAt: true },
       });
-      const todays = candidates.find(
-        (c) =>
-          c.createdAt.toLocaleDateString("en-CA", { timeZone: "America/Chicago" }) ===
-          chi,
-      );
-      if (todays) await prisma.accountNote.delete({ where: { id: todays.id } });
+      const own = tapOfStamp(taps, doneAt);
+      if (own) await prisma.accountNote.delete({ where: { id: own.id } });
     } catch {
       // a leftover tap line is visible in the register and strikable later;
       // the stamp itself is already back out
     }
   }
   revalidatePath("/groundwork");
-  revalidatePath("/sendbook");
 }
 
-export async function markWorked(mk: string): Promise<void> {
+// The worked stamp itself, at the moment given: the Channel Ask hands its
+// tap's moment in, so the two pair (tapOfStamp). Not exported, so no client
+// can call it with a moment of its own.
+async function stamp(mk: string, at: Date): Promise<void> {
   if (!(await requireWrite()) || !mk || mk.length > 200) return;
-  const key = groundworkDoneKey(new Date(), mk);
+  const key = groundworkDoneKey(at, mk);
   try {
     const prisma = getPrisma();
-    await prisma.taskDone.upsert({ where: { key }, create: { key }, update: {} });
+    await prisma.taskDone.upsert({
+      where: { key },
+      create: { key, doneAt: at },
+      update: {},
+    });
   } catch {
     return; // a lost stamp costs a checkmark, never the work
   }
   revalidatePath("/groundwork");
+}
+
+export async function markWorked(mk: string): Promise<void> {
+  await stamp(mk, new Date());
 }
 
 // The readout-read stamp — Russ's pull tab records when the readout was last
@@ -267,5 +272,4 @@ export async function attachWireToAccount(
     return;
   }
   revalidatePath("/groundwork");
-  revalidatePath("/room");
 }

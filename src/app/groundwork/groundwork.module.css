@@ -377,11 +377,18 @@
   border-radius: 4px;
   transition: width 0.4s;
 }
+/* Inside the last five minutes the count and the burn bar turn red and pulse
+   together; reduced motion keeps the red and drops the pulse (ruled
+   2026-10-07, pass 8 call 11). */
 .kxLate .kxCount {
   color: var(--ds-red);
 }
+.kxLate .kxBurn i {
+  background: var(--ds-red);
+}
 @media (prefers-reduced-motion: no-preference) {
-  .kxLate .kxCount {
+  .kxLate .kxCount,
+  .kxLate .kxBurn i {
     animation: kxThrob 1s steps(2, end) infinite;
   }
   @keyframes kxThrob {

@@ -12,8 +12,9 @@
 import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
-import { GLYPH_RE } from "@/lib/ingest/dialect";
 import { isMeetingNote } from "@/lib/intel/meeting";
+import { latestResearchAt } from "@/lib/intel/deep-research";
+import type { AccountRead } from "@/lib/record/read";
 import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
 import { getDemand, researchGeneratedAt, DEMAND_GATE } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
@@ -21,7 +22,6 @@ import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
 import {
   engagedNeverIntroduced,
   intentWarm,
-  orgInboundKey,
   outreachGem,
   verifiedCold,
   type SecondRecord,
@@ -130,6 +130,25 @@ export function liveMotionIds(
   return out;
 }
 
+/** The accounts whose live motion rests only on the second record: the
+ *  export's attributed inbound excludes them, and the operator's own record
+ *  would not. The HomeRoom takes a row only for an exclusion resting on the
+ *  operator's own record (ruled 2026-10-07, pass 8 call 1), so an off-board
+ *  account excluded here has no row there, and its seat stays on the wing
+ *  (QueueInput.seatStaysIds). */
+export function secondOnlyMotionIds(
+  notesById: Parameters<typeof liveMotionIds>[0],
+  intelById: Parameters<typeof liveMotionIds>[1],
+  now: Date,
+  secondById: Parameters<typeof liveMotionIds>[3],
+): Set<string> {
+  const first = liveMotionIds(notesById, intelById, now);
+  const out = new Set<string>();
+  for (const id of liveMotionIds(notesById, intelById, now, secondById))
+    if (!first.has(id)) out.add(id);
+  return out;
+}
+
 // A wire hit older than this no longer justifies a news note — the trigger
 // is perishable by design.
 const WIRE_FRESH_DAYS = 5;
@@ -150,11 +169,20 @@ type QueueInput = {
   contactCountById: (id: string) => number;
   wireAtById?: Map<string, string>; // newest matched wire item per account, ISO
   researchAtById?: Map<string, string>; // newest deep-research note per account, ISO
+  /** How many signals that newest deep-research note found (its finding's
+   *  `signals`). The queue's demand reads it beside the sweep (G7). */
+  researchSignalsById?: Map<string, number>;
   doneKeys?: Set<string>; // raw done-stamp keys, for the carryover read
   // Accounts the queue must not stage: a deal at demo or later is the
   // HomeRoom's to work, and a stamped Closed Won/Lost is over. Groundwork
   // prospects the book it is NOT actively closing.
   excludedIds?: Set<string>;
+  /** Excluded accounts whose seat stays on the wing: off the board, and
+   *  excluded for nothing but the second record's live motion
+   *  (secondOnlyMotionIds). The HomeRoom builds them no row (pass 8 call 1;
+   *  C6), so the seat a C8 exclusion would send there would show nowhere.
+   *  Their rules stay out of the queue. */
+  seatStaysIds?: Set<string>;
   /** The second record, parsed once for the whole book (read.ts). */
   secondById?: Map<string, SecondRecord>;
   /** Whose move it is, per account, from the single account read (field 4;
@@ -162,6 +190,15 @@ type QueueInput = {
    *  thread from an open one. Absent for an account, the same rungs run over
    *  the facts the queue holds (whoseMoveFrom). */
   moveById?: Map<string, WhoseMove>;
+  /** The single account read's own fields, per account (src/lib/record/
+   *  read.ts): field 2, the operator's newest send, and field 16, whether a
+   *  conversation exists. One fact, one reader (pass 8 G3, G4): the
+   *  drumbeat, the carry clearance and engaged-never-introduced read these,
+   *  never the deal facts' `lastOutbound`, which counts a self-assigned task
+   *  or a logged meeting as a send, and never a glyph test of their own.
+   *  Absent for an account, the record holds nothing of it: no send, and a
+   *  conversation only when the touch log holds one. */
+  readById?: Map<string, Pick<AccountRead, "lastOutbound" | "conversationExists">>;
   /** Accounts holding ANY live board card — engaged-never-introduced only
    *  fires where no deal exists at all, whatever its stage. */
   boardIds?: Set<string>;
@@ -240,20 +277,62 @@ export function moveKey(item: Pick<QueueItem, "accountId" | "ruleId">): string {
   return `${item.accountId}:${item.ruleId}`;
 }
 
-// Research staleness in days, per-account notes ONLY — null when the account
-// has never had its own pass. The book-wide stamp is handled once, outside
-// the per-account loop: one stale book is one move, never a wall of clones.
+// The book-wide sweep's moment for one account, "" when the sweep never
+// researched it — the same reading the Spring's research chip takes. The
+// wing's stamp reads it too, so the stamp names the age the move spoke.
+export function sweepAtFor(accountId: string): string {
+  return getDemand(accountId)?.researched && researchGeneratedAt
+    ? `${researchGeneratedAt}T12:00:00Z`
+    : "";
+}
+
+// Research staleness in days for an account with its own pass — null when
+// the account has never had one. The book-wide stamp is handled once,
+// outside the per-account loop: one stale book is one move, never a wall of
+// clones. The age reads the LATEST of both stores, as the Spring's research
+// chip does (latestResearchAt): an account the sweep read after its own pass
+// is as fresh as the sweep (the Ted doctrine's merge by latest; pass 8 G7).
 function perAccountResearchAge(
   inp: QueueInput,
   accountId: string,
   now: Date,
 ): number | null {
   const perAccount = inp.researchAtById?.get(accountId);
-  if (!perAccount) return null;
-  const t = Date.parse(perAccount);
-  if (Number.isNaN(t)) return null;
-  return (now.getTime() - t) / DAY;
+  if (!perAccount || Number.isNaN(Date.parse(perAccount))) return null;
+  const latest = latestResearchAt(perAccount, sweepAtFor(accountId)) ?? perAccount;
+  return (now.getTime() - Date.parse(latest)) / DAY;
 }
+
+// The demand the queue reads, the latest of both research stores (pass 8
+// G7; the record outranks every seed, and a fact's two stores merge by
+// latest). The book-wide sweep scores demand; the account's own pass names
+// the signals it found and carries no score. The later of the two speaks, as
+// the Spring's research chip reads the date. A later pass that found a
+// signal reads as real demand and clears the gate on its own; a later pass
+// that found none is silent, and the sweep stands in, as Accounts merges the
+// research fields. The sweep's number still ranks where it agrees; below the
+// gate it is an older read the pass overturned, and the composite rests on
+// the desk score alone.
+function demandFor(
+  inp: QueueInput,
+  accountId: string,
+): { real: boolean; score: number | null; confidence?: "high" | "medium" | "low" } {
+  const sweep = getDemand(accountId);
+  const score = sweep?.demandScore ?? null;
+  const swept = (score ?? 0) >= DEMAND_GATE;
+  const own = inp.researchAtById?.get(accountId) ?? "";
+  const ownSpeaks =
+    !!own &&
+    (inp.researchSignalsById?.get(accountId) ?? 0) > 0 &&
+    latestResearchAt(own, sweepAtFor(accountId)) === own;
+  if (!ownSpeaks) return { real: swept, score, confidence: sweep?.confidence };
+  return { real: true, score: swept ? score : null, confidence: sweep?.confidence };
+}
+
+const compositeOf = (inp: QueueInput, p: Peo): number => {
+  const d = demandFor(inp, p.id);
+  return compositeScore(deskScore(p).score, d.score, d.confidence).score;
+};
 
 // The full ranked list for one day — the pure heart buildQueue calls twice:
 // once for today, once for yesterday, so the carryover read stays derived and
@@ -315,7 +394,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
         ruleId: "intent-warm",
         weight: 84,
         band: BAND_OF["intent-warm"],
-        action: "Send the reading-us note.",
+        action: "Send them a note.",
         reason: warm
           ? warm.opens30 > 0
             ? `They opened ${warm.opens30} of ours.`
@@ -330,11 +409,15 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // engaged-never-introduced (78): heavy support traffic, still warm, on an
     // account nobody ever pitched — no first-record motion, no board card.
     // The file card carries the support pulse as ammunition.
-    // "Never pitched" means no CONVERSATION — no outreach touch and no filed
-    // send or meeting. A background case note filed for intel is not a
-    // conversation and must not silence the rule.
-    const hasConversation =
-      acctTouches.length > 0 || (notes ?? []).some((n) => GLYPH_RE.test(n.body));
+    // "Never pitched" means no CONVERSATION, and the read says whether one
+    // exists (field 16): a doc with a direction, or a touch. Accounts' ENGAGED
+    // reads the same field, so a glyph row with no direction, a thread between
+    // two of their own people or a background case note, silences neither
+    // (one fact, one reader; pass 8 G4).
+    const readHere = inp.readById?.get(p.id);
+    const hasConversation = readHere
+      ? readHere.conversationExists
+      : acctTouches.length > 0;
     const eni = engagedNeverIntroduced(sr, now);
     if (eni && !hasConversation && !inp.boardIds?.has(p.id)) {
       candidates.push({
@@ -397,25 +480,35 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // touch log and the record's own traffic (Ted doctrine): a filed
     // outbound resets the drumbeat, and a filed REPLY silences it entirely —
     // an answered thread is the HomeRoom's motion, not Groundwork's.
+    // The record's side of the clock is the read's own last send (field 2):
+    // never self-addressed, never a meeting, never ahead of today. The deal
+    // facts' `lastOutbound` counted a self-assigned task or a logged demo as a
+    // send and reset "No reply since" on it (pass 8 G3).
     const newestTouch = acctTouches
       .slice()
       .sort((a, b) => b.contactedAt.localeCompare(a.contactedAt))[0];
     const intelHere = inp.intelById.get(p.id);
-    const lastOutIso = [newestTouch?.contactedAt ?? "", intelHere?.lastOutbound ?? ""]
+    const lastOutIso = [newestTouch?.contactedAt ?? "", readHere?.lastOutbound?.at ?? ""]
       .filter(Boolean)
-      .sort()
+      .sort((a, b) => Date.parse(a) - Date.parse(b))
       .pop();
     // The answered check reads whose move it is (the one spelling,
     // src/lib/record/whose-move.ts): their reply, a fresh meeting or their
     // acceptance after our send means the thread is not waiting on them, so
     // the drumbeat falls silent — on a booked meeting too, which the old
     // clock comparison never saw. The read's verdict carries the Channel
-    // Ask's taps, handed into its touch log beside the record's sends. The
-    // second record's datetime still silences it and nothing else (D19): a
-    // reply that landed in a colleague's inbox answers the thread, and it
-    // stages nothing in its place — the coordination move ("Ask … what they
-    // said.") is retired (ruled 2026-09-25, C6, amended 2026-10-05).
-    const orgIn = orgInboundKey(sr);
+    // Ask's taps, handed into its touch log beside the record's sends. On the
+    // second record only an attributed inbound row answers the thread (the
+    // rollup's lastTheirs, built under the machinery and closer reads), as
+    // with warmth and the exclusion: the account-level Last Email Received is
+    // a datetime and never quiets the drumbeat (D19; ruled 2026-10-07, pass 8
+    // call 4). A reply that landed in a colleague's inbox answers the thread,
+    // and it stages nothing in its place: the coordination move ("Ask … what
+    // they said.") is retired (ruled 2026-09-25, C6, amended 2026-10-05).
+    // A day key is a calendar fact; it reads at noon UTC, as every day key in
+    // the second record does.
+    const theirDay = sr?.rollup?.lastTheirs?.day ?? "";
+    const orgIn = theirDay ? `${theirDay.slice(0, 10)}T12:00:00Z` : "";
     const move =
       inp.moveById?.get(p.id) ??
       whoseMoveFrom(
@@ -437,7 +530,11 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
         now,
       );
     const answeredMine = move.whose === "you" || move.whose === "booked";
-    const answeredOrg = !answeredMine && !!orgIn && !!lastOutIso && orgIn > lastOutIso;
+    const answeredOrg =
+      !answeredMine &&
+      !!orgIn &&
+      !!lastOutIso &&
+      Date.parse(orgIn) > Date.parse(lastOutIso);
     const answered = answeredMine || answeredOrg;
     if (newestTouch && lastOutIso && !answered) {
       const quiet = (now.getTime() - Date.parse(lastOutIso)) / DAY;
@@ -478,9 +575,8 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
     // has gone stale. Fires only on a per-account pass — the book-wide stamp
     // collapses to a single move after this loop.
     const researchAge = perAccountResearchAge(inp, p.id, now);
-    const demand = getDemand(p.id);
     if (
-      (demand?.demandScore ?? 0) >= DEMAND_GATE &&
+      demandFor(inp, p.id).real &&
       researchAge != null &&
       researchAge > RESEARCH_STALE_DAYS
     ) {
@@ -548,12 +644,13 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   // before they arrive here). The seat is the account's own move: it lands
   // before the vehicle rules compute their bearers, so no briefing slot ever
   // swallows it (ruled 2026-09-25, D22). A seat follows its account (C8): an
-  // excluded account's seat leaves Groundwork with it.
+  // excluded account's seat leaves Groundwork with it, unless the HomeRoom
+  // has no row to take it (seatStaysIds).
   const nameOf = new Map(inp.accounts.map((p) => [p.id, p.name]));
   for (const [id, seat] of inp.seats ?? []) {
     const name = nameOf.get(id);
     if (!name) continue;
-    if (inp.excludedIds?.has(id)) continue;
+    if (inp.excludedIds?.has(id) && !inp.seatStaysIds?.has(id)) continue;
     candidates.push({
       accountId: id,
       name,
@@ -588,18 +685,9 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
         (p) =>
           !inp.excludedIds?.has(p.id) &&
           !inp.researchAtById?.get(p.id) &&
-          (getDemand(p.id)?.demandScore ?? 0) >= DEMAND_GATE,
+          demandFor(inp, p.id).real,
       )
-      .sort((a, b) => {
-        const da = getDemand(a.id);
-        const db = getDemand(b.id);
-        return (
-          compositeScore(deskScore(b).score, db?.demandScore ?? null, db?.confidence)
-            .score -
-          compositeScore(deskScore(a).score, da?.demandScore ?? null, da?.confidence)
-            .score
-        );
-      });
+      .sort((a, b) => compositeOf(inp, b) - compositeOf(inp, a));
     const bearer = bearers.find((p) => !occupied.has(p.id));
     if (bearer) {
       candidates.push({
@@ -626,14 +714,8 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   for (const p of inp.accounts) {
     if (inp.excludedIds?.has(p.id)) continue;
     if (!p.csm || p.csm === "Unassigned") continue;
-    const d = getDemand(p.id);
-    const comp = compositeScore(
-      deskScore(p).score,
-      d?.demandScore ?? null,
-      d?.confidence,
-    ).score;
     const list = rosterRanked.get(p.csm) ?? [];
-    list.push({ id: p.id, score: comp });
+    list.push({ id: p.id, score: compositeOf(inp, p) });
     rosterRanked.set(p.csm, list);
   }
   const rosterBest = new Map<string, { id: string; score: number }>();
@@ -678,10 +760,7 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
   }
   const compOf = (id: string) => {
     const p = byId.get(id);
-    if (!p) return 0;
-    const d = getDemand(id);
-    return compositeScore(deskScore(p).score, d?.demandScore ?? null, d?.confidence)
-      .score;
+    return p ? compositeOf(inp, p) : 0;
   };
   const sorted = [...bestByAccount.values()].sort((a, b) => {
     if (b.weight !== a.weight) return b.weight - a.weight;
@@ -729,10 +808,11 @@ export function buildQueue(inp: QueueInput): {
   const done = inp.doneKeys ?? new Set<string>();
   // The record clears a carry too (Ted doctrine): an outbound filed since
   // yesterday IS the work — the stamp table only knows about the copy button.
-  const yesterdayIso = yesterday.toISOString();
+  // The outbound is the read's own last send (field 2), so a self-assigned
+  // task or a logged meeting never clears a carry (pass 8 G3).
   const workedByRecord = (accountId: string): boolean => {
-    const out = inp.intelById.get(accountId)?.lastOutbound ?? "";
-    return !!out && out >= yesterdayIso;
+    const out = inp.readById?.get(accountId)?.lastOutbound?.at ?? "";
+    return !!out && Date.parse(out) >= yesterday.getTime();
   };
   const all = ranked.map((q) => {
     const mk = moveKey(q);

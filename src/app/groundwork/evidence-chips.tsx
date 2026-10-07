@@ -5,9 +5,12 @@
 // law: the drill goes as many layers as the evidence holds — chip → themes →
 // case list → per-case excerpt timeline — served by the evidence route (a
 // GET, never a server action). The stage's arrival never grows: everything
-// below the chip row renders only on click.
+// below the chip row renders only on click. Every chip lands on rows (pass 8
+// G5): SPIKE's day opens that day's rows, the collision flag opens the
+// colleague's row or the campaign table, and every row opens its excerpt.
 
 import { useState } from "react";
+import type { Cite } from "@/lib/groundwork/chips";
 import styles from "./groundwork.module.css";
 
 type CaseLine = {
@@ -29,22 +32,105 @@ type Camp = { campaign: string; o: number; c: number; last: string };
 
 type ChipsProps = {
   accountId: string;
-  support: { total: number; spikeDay: string; spikeN: number } | null;
+  support: {
+    total: number;
+    spikeDay: string;
+    spikeN: number;
+    /** The spike day's support rows, by key (spikeCites). */
+    spikeCites: Cite[];
+  } | null;
   intent: { opens30: number; clicks30: number; lastOpen: string; sends7: number } | null;
   collision: {
     mktgSends7: number;
-    colleague: { who: string; day: string } | null;
+    /** The colleague's thread, with the row it stands on when the staged
+     *  slice still holds it (collisionCite). A quiet flag, never a move. */
+    colleague: { who: string; day: string; cite: Cite | null } | null;
   } | null;
   gems: {
     term: string;
     act: string;
     reason: string;
     whenDay: string;
-    cites: { k: string; day: string; who: string; subject: string }[];
+    cites: Cite[];
   }[];
 };
 
 const mmdd = (day: string) => (day ? day.slice(5).replace("-", "/") : "");
+
+const evidenceUrl = (accountId: string, q: string) =>
+  `/activity/evidence?acct=${encodeURIComponent(accountId)}&${q}`;
+
+/** Rows of the staged slice as doors: each head line opens in place to the
+ *  row's cleaned excerpt, from the evidence route one row at a time (the meat
+ *  law). The gems' citations, the collision's colleague row, SPIKE's day and
+ *  the roundup brief's prep all open through it. */
+export function CiteRows({ accountId, rows }: { accountId: string; rows: Cite[] }) {
+  const [excerpts, setExcerpts] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState("");
+
+  const load = async (k: string) => {
+    if (excerpts[k] !== undefined) {
+      const next = { ...excerpts };
+      delete next[k];
+      setExcerpts(next);
+      return;
+    }
+    setBusy(k);
+    try {
+      const r = await fetch(evidenceUrl(accountId, `k=${encodeURIComponent(k)}`), {
+        cache: "no-store",
+      });
+      const j = (await r.json()) as {
+        ok: boolean;
+        row?: { excerpt: string };
+        reason?: string;
+      };
+      setExcerpts({
+        ...excerpts,
+        [k]: j.ok
+          ? j.row?.excerpt ||
+            "The row carries no comment body. The subject is the whole entry."
+          : (j.reason ?? "The row isn't in the staged slice."),
+      });
+    } catch {
+      setExcerpts({ ...excerpts, [k]: "The evidence store didn't answer. Try again." });
+    } finally {
+      setBusy("");
+    }
+  };
+
+  return (
+    <>
+      {rows.map((c) => (
+        <div key={c.k}>
+          <button type="button" className={styles.evCite} onClick={() => load(c.k)}>
+            {[mmdd(c.day), c.who, c.subject].filter(Boolean).join(" · ")}{" "}
+            <b>{busy === c.k ? "…" : excerpts[c.k] !== undefined ? "▾" : "▸ read it"}</b>
+          </button>
+          {excerpts[c.k] !== undefined && (
+            <div className={styles.evExcerpt}>{excerpts[c.k]}</div>
+          )}
+        </div>
+      ))}
+    </>
+  );
+}
+
+function CampRows({ camps, busy }: { camps: Camp[] | null; busy: boolean }) {
+  return (
+    <>
+      {busy && <span className={styles.evQuiet}>reading the tallies…</span>}
+      {camps?.length === 0 && !busy && (
+        <span className={styles.evQuiet}>No campaign drew an open in the window.</span>
+      )}
+      {(camps ?? []).map((c) => (
+        <div key={c.campaign} className={styles.evStamp}>
+          o {c.o} · c {c.c} · last {mmdd(c.last) || "—"} · {c.campaign}
+        </div>
+      ))}
+    </>
+  );
+}
 
 export default function EvidenceChips({
   accountId,
@@ -53,14 +139,15 @@ export default function EvidenceChips({
   collision,
   gems,
 }: ChipsProps) {
-  const [open, setOpen] = useState<"" | "support" | "intent" | "collision" | "gems">("");
+  const [open, setOpen] = useState<
+    "" | "support" | "spike" | "intent" | "collision" | "gems"
+  >("");
   const [cases, setCases] = useState<CaseLine[] | null>(null);
   const [timeline, setTimeline] = useState<{
     caseNo: string;
     rows: TimelineRow[];
   } | null>(null);
   const [camps, setCamps] = useState<Camp[] | null>(null);
-  const [excerpts, setExcerpts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState("");
 
   if (!support && !intent && !collision && gems.length === 0) return null;
@@ -75,10 +162,7 @@ export default function EvidenceChips({
     if (cases || open === "support") return;
     setBusy("support");
     try {
-      const r = await fetch(
-        `/activity/evidence?acct=${encodeURIComponent(accountId)}&theme=`,
-        { cache: "no-store" },
-      );
+      const r = await fetch(evidenceUrl(accountId, "theme="), { cache: "no-store" });
       const j = (await r.json()) as { ok: boolean; cases?: CaseLine[] };
       setCases(j.cases ?? []);
     } catch {
@@ -96,8 +180,10 @@ export default function EvidenceChips({
     setBusy(caseNo);
     try {
       const r = await fetch(
-        `/activity/evidence?acct=${encodeURIComponent(accountId)}&case=${encodeURIComponent(caseNo)}`,
-        { cache: "no-store" },
+        evidenceUrl(accountId, `case=${encodeURIComponent(caseNo)}`),
+        {
+          cache: "no-store",
+        },
       );
       const j = (await r.json()) as { ok: boolean; timeline?: TimelineRow[] };
       setTimeline({ caseNo, rows: j.timeline ?? [] });
@@ -108,15 +194,15 @@ export default function EvidenceChips({
     }
   };
 
-  const loadCamps = async () => {
-    toggle("intent");
-    if (camps || open === "intent") return;
-    setBusy("intent");
+  // The campaign table: the intent chip's door, and the marketing half of
+  // the collision flag's. Blast bodies never upload, so the campaigns and
+  // their tallies are the rows the export carried (the second record).
+  const loadCamps = async (k: "intent" | "collision") => {
+    toggle(k);
+    if (camps || open === k) return;
+    setBusy("camps");
     try {
-      const r = await fetch(
-        `/activity/evidence?acct=${encodeURIComponent(accountId)}&camps=1`,
-        { cache: "no-store" },
-      );
+      const r = await fetch(evidenceUrl(accountId, "camps=1"), { cache: "no-store" });
       const j = (await r.json()) as {
         ok: boolean;
         windows?: { top: Camp[] } | null;
@@ -124,38 +210,6 @@ export default function EvidenceChips({
       setCamps(j.windows?.top ?? []);
     } catch {
       setCamps([]);
-    } finally {
-      setBusy("");
-    }
-  };
-
-  const loadExcerpt = async (k: string) => {
-    if (excerpts[k] !== undefined) {
-      const next = { ...excerpts };
-      delete next[k];
-      setExcerpts(next);
-      return;
-    }
-    setBusy(k);
-    try {
-      const r = await fetch(
-        `/activity/evidence?acct=${encodeURIComponent(accountId)}&k=${encodeURIComponent(k)}`,
-        { cache: "no-store" },
-      );
-      const j = (await r.json()) as {
-        ok: boolean;
-        row?: { excerpt: string };
-        reason?: string;
-      };
-      setExcerpts({
-        ...excerpts,
-        [k]: j.ok
-          ? j.row?.excerpt ||
-            "The row carries no comment body — the subject is the whole entry."
-          : (j.reason ?? "The row isn't in the staged slice."),
-      });
-    } catch {
-      setExcerpts({ ...excerpts, [k]: "The evidence store didn't answer. Try again." });
     } finally {
       setBusy("");
     }
@@ -169,7 +223,7 @@ export default function EvidenceChips({
             type="button"
             className={`${styles.evChip} ${styles.evChipGem}`}
             onClick={() => toggle("gems")}
-            title="Verified gems from the second record — every citation opens to the email meat"
+            title="Verified gems from the second record. Each citation opens to the email it stands on."
           >
             ◆ {gems.length === 1 ? gems[0].term : `${gems.length} GEMS`}
           </button>
@@ -179,18 +233,27 @@ export default function EvidenceChips({
             type="button"
             className={`${styles.evChip} ${styles.evChipAmber}`}
             onClick={loadCases}
-            title="Support cases in the 90-day window — opens the case list, each case opens its timeline"
+            title="Support cases in the 90-day window. Opens the case list; each case opens its timeline."
           >
             ▮ SUPPORT {support.total}
-            {support.spikeDay ? ` · SPIKE ${mmdd(support.spikeDay)}` : ""}
+          </button>
+        )}
+        {support && support.total > 0 && support.spikeDay && (
+          <button
+            type="button"
+            className={`${styles.evChip} ${styles.evChipAmber}`}
+            onClick={() => toggle("spike")}
+            title={`The busiest support day in the window, ${support.spikeN} rows. Opens that day's rows; each row opens its excerpt.`}
+          >
+            SPIKE {mmdd(support.spikeDay)}
           </button>
         )}
         {intent && (intent.opens30 > 0 || intent.clicks30 > 0) && (
           <button
             type="button"
             className={`${styles.evChip} ${styles.evChipBlue}`}
-            onClick={loadCamps}
-            title="Marketing opens and clicks, 30 days — opens the campaign table"
+            onClick={() => loadCamps("intent")}
+            title="Marketing opens and clicks over 30 days. Opens the campaign table."
           >
             INTENT · O {intent.opens30}
             {intent.clicks30 > 0 ? ` · C ${intent.clicks30}` : ""} · 30D
@@ -200,7 +263,9 @@ export default function EvidenceChips({
           <button
             type="button"
             className={`${styles.evChip} ${styles.evChipAmber}`}
-            onClick={() => toggle("collision")}
+            onClick={() =>
+              collision.mktgSends7 > 0 ? loadCamps("collision") : toggle("collision")
+            }
             title="Your note would land beside live motion. It informs; it never blocks."
           >
             ⚠{" "}
@@ -218,27 +283,7 @@ export default function EvidenceChips({
               <span className={styles.evGemTerm}>◆ {g.term} · CONFIRMED</span>
               <div className={styles.evGemAct}>{g.act}</div>
               <div className={styles.evGemWhy}>{g.reason}</div>
-              {g.cites.map((c) => (
-                <div key={c.k}>
-                  <button
-                    type="button"
-                    className={styles.evCite}
-                    onClick={() => loadExcerpt(c.k)}
-                  >
-                    {mmdd(c.day)} · {c.who} · {c.subject}{" "}
-                    <b>
-                      {busy === c.k
-                        ? "…"
-                        : excerpts[c.k] !== undefined
-                          ? "▾"
-                          : "▸ read it"}
-                    </b>
-                  </button>
-                  {excerpts[c.k] !== undefined && (
-                    <div className={styles.evExcerpt}>{excerpts[c.k]}</div>
-                  )}
-                </div>
-              ))}
+              <CiteRows accountId={accountId} rows={g.cites} />
             </div>
           ))}
         </div>
@@ -251,7 +296,7 @@ export default function EvidenceChips({
           )}
           {cases?.length === 0 && busy !== "support" && (
             <span className={styles.evQuiet}>
-              The staged slice holds no case rows — the drop&rsquo;s cap kept newer
+              The staged slice holds no case rows. The drop&rsquo;s cap kept newer
               traffic.
             </span>
           )}
@@ -282,32 +327,35 @@ export default function EvidenceChips({
         </div>
       )}
 
+      {open === "spike" && support && (
+        <div className={styles.evFold}>
+          {support.spikeCites.length === 0 ? (
+            <span className={styles.evQuiet}>
+              The staged slice no longer holds that day&rsquo;s rows.
+            </span>
+          ) : (
+            <CiteRows accountId={accountId} rows={support.spikeCites} />
+          )}
+        </div>
+      )}
+
       {open === "intent" && (
         <div className={styles.evFold}>
-          {busy === "intent" && (
-            <span className={styles.evQuiet}>reading the tallies…</span>
-          )}
-          {camps?.length === 0 && busy !== "intent" && (
-            <span className={styles.evQuiet}>
-              No campaign drew an open in the window.
-            </span>
-          )}
-          {(camps ?? []).map((c) => (
-            <div key={c.campaign} className={styles.evStamp}>
-              o {c.o} · c {c.c} · last {mmdd(c.last) || "—"} · {c.campaign}
-            </div>
-          ))}
+          <CampRows camps={camps} busy={busy === "camps"} />
         </div>
       )}
 
       {open === "collision" && collision && (
         <div className={styles.evFold}>
-          <span className={styles.evQuiet}>
-            {collision.mktgSends7 > 0
-              ? `Marketing sent ${collision.mktgSends7} blast${collision.mktgSends7 === 1 ? "" : "s"} to this account inside seven days — your note lands beside them.`
-              : `${collision.colleague?.who ?? "A colleague"} was in this account's traffic on ${mmdd(collision.colleague?.day ?? "")} — your note lands beside that thread.`}{" "}
-            It informs; it never blocks. The composed file carries the same flag.
-          </span>
+          {collision.mktgSends7 > 0 && <CampRows camps={camps} busy={busy === "camps"} />}
+          {collision.colleague &&
+            (collision.colleague.cite ? (
+              <CiteRows accountId={accountId} rows={[collision.colleague.cite]} />
+            ) : (
+              <span className={styles.evQuiet}>
+                The staged slice no longer holds {collision.colleague.who}&rsquo;s row.
+              </span>
+            ))}
         </div>
       )}
     </div>
