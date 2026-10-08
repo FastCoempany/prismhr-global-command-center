@@ -10,6 +10,7 @@ import { CUES, PRODUCTS } from "@/lib/playbook/products";
 import { fetchSecondRecords } from "@/lib/activity/read";
 import { approveSecondDraft, dismissSecondDraft } from "./actions";
 import { secondRecordDrafts } from "./drafts";
+import { DraftEvidence } from "./draft-evidence";
 import { loadAccountNotes, loadDispositions } from "@/lib/today/overlay";
 import { prospectAsks } from "@/lib/intranet/store";
 import { harvestBattlecards } from "@/lib/intranet/bridges";
@@ -101,12 +102,14 @@ export default async function PlaybookPage() {
         {srDrafts.length > 0 && (
           <details className="srDraftQueue">
             <summary>
-              FROM THE SECOND RECORD — {srDrafts.length} DRAFT
+              FROM THE SECOND RECORD · {srDrafts.length} DRAFT
               {srDrafts.length === 1 ? "" : "S"} ▾
             </summary>
             {srDrafts.map((d) => (
               <div key={d.key} className="srDraftCard">
                 <p>{d.text}</p>
+                {/* The draft's counts open its cases (the meat law). */}
+                <DraftEvidence theme={d.theme} accounts={d.accounts} />
                 <div>
                   <form action={approveSecondDraft} style={{ display: "inline" }}>
                     <input type="hidden" name="text" value={d.text} />
@@ -120,7 +123,7 @@ export default async function PlaybookPage() {
                     <input type="hidden" name="key" value={d.key} />
                     <button
                       type="submit"
-                      title="Close without filing — it never re-proposes"
+                      title="Close without filing. It never comes back."
                     >
                       ✕
                     </button>

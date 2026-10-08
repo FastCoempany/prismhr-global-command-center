@@ -15,13 +15,37 @@ import { mount, openBrowser, type MountOptions } from "../helpers/browser";
 
 const FACES: [string, string, MountOptions][] = [
   ["the HomeRoom", "tests/browser/fixtures/room.tsx", { returns: { chuteBook: [] } }],
-  ["Groundwork", "tests/browser/fixtures/groundwork.tsx", { now: "2026-07-30T15:00:00Z" }],
-  ["Groundwork's chips", "tests/browser/fixtures/evidence.tsx", { now: "2026-07-30T15:00:00Z" }],
+  [
+    "Groundwork",
+    "tests/browser/fixtures/groundwork.tsx",
+    { now: "2026-07-30T15:00:00Z" },
+  ],
+  [
+    "Groundwork's chips",
+    "tests/browser/fixtures/evidence.tsx",
+    { now: "2026-07-30T15:00:00Z" },
+  ],
   ["the Accounts sheet", "tests/browser/fixtures/accounts.tsx", {}],
   ["the Sendbook", "tests/browser/fixtures/sendbook.tsx", {}],
   ["the Intranet", "tests/browser/fixtures/intranet.tsx", {}],
   ["the Chute", "tests/browser/fixtures/chute.tsx", { returns: { chuteBook: [] } }],
   ["the roundup prep", "tests/browser/fixtures/prep.tsx", {}],
+  [
+    "the draft desk",
+    "tests/browser/fixtures/desk.tsx",
+    {
+      returns: { listMailTemplates: [] },
+      routes: {
+        "/activity/evidence": () => ({
+          ok: true,
+          line: "Dana wrote 09/18: Re: pricing.",
+          cite: { k: "r1", day: "2026-09-18", who: "Dana Ruiz", subject: "Re: pricing" },
+        }),
+      },
+    },
+  ],
+  ["State of play", "tests/browser/fixtures/readout.tsx", {}],
+  ["a Playbook draft", "tests/browser/fixtures/drafts.tsx", {}],
 ];
 
 /** A number that names a moment in full (a clock, a day), not a count. */
@@ -54,7 +78,13 @@ describe("A5.1 to A5.4 · every count on every mounted face is a door, and no fo
       const seen = await page.evaluate((moment) => {
         const DOOR = "a,button,summary,label,input,select,textarea,[role=button]";
         const re = new RegExp(moment, "g");
-        const out: { cls: string; text: string; door: boolean; lineDoor: boolean; openFold: boolean }[] = [];
+        const out: {
+          cls: string;
+          text: string;
+          door: boolean;
+          lineDoor: boolean;
+          openFold: boolean;
+        }[] = [];
         const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         let n: Node | null;
         while ((n = walk.nextNode())) {
@@ -65,24 +95,48 @@ describe("A5.1 to A5.4 · every count on every mounted face is a door, and no fo
           if (el.closest("script,style")) continue;
           // What a person can see: a closed fold's contents keep a box but
           // are not rendered.
-          if (!el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+          if (!el.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
+            continue;
           out.push({
             cls: el.className + " " + (el.parentElement?.className ?? ""),
             text: raw.trim().slice(0, 80),
             door: !!el.closest(DOOR),
             // The count's own line carries the door that opens it.
-            lineDoor: !![el, el.parentElement].some((x) => x?.querySelector(":scope > button, :scope > a")),
+            lineDoor:
+              !![el, el.parentElement].some((x) =>
+                x?.querySelector(":scope > button, :scope > a"),
+              ) ||
+              // A door within the count's card (three levels up) that names
+              // the same numbers: the card's own door to what it counts.
+              (() => {
+                const nums = text.match(/\d+/g) ?? [];
+                let box: HTMLElement | null = el;
+                for (let up = 0; up < 3 && box; up++, box = box.parentElement)
+                  for (const d of box.querySelectorAll<HTMLElement>(DOOR))
+                    if (
+                      nums.every((x) =>
+                        new RegExp(`\\b${x}\\b`).test(d.textContent ?? ""),
+                      )
+                    )
+                      return true;
+                return false;
+              })(),
             openFold: !!el.closest("details[open]"),
           });
         }
         return out;
       }, MOMENT.source);
       const dead = seen.filter(
-        (s) => !s.door && !s.lineDoor && !s.openFold && !EXEMPT.some(([re]) => re.test(s.cls)),
+        (s) =>
+          !s.door && !s.lineDoor && !s.openFold && !EXEMPT.some(([re]) => re.test(s.cls)),
       );
       assert.deepEqual(dead, [], `${name} has a count that opens nothing`);
       // Nothing deep surfaces uninvited: no fold is open on arrival.
-      assert.equal(await page.locator("details[open]").count(), 0, `${name} opened a fold on arrival`);
+      assert.equal(
+        await page.locator("details[open]").count(),
+        0,
+        `${name} opened a fold on arrival`,
+      );
       await page.close();
     });
 });
@@ -96,7 +150,9 @@ describe("the doors pass 11 opened each reach their evidence in one click", () =
   });
 
   test("a stamp's channel line opens to the name whole and the touch's words", async () => {
-    const page = await mount(browser, "tests/browser/fixtures/groundwork.tsx", { now: "2026-07-30T15:00:00Z" });
+    const page = await mount(browser, "tests/browser/fixtures/groundwork.tsx", {
+      now: "2026-07-30T15:00:00Z",
+    });
     assert.equal(await page.getByText("To Pat Eriksen.").isVisible(), false);
     await page.getByText("EMAIL · STEP 1 · PAT E.").click();
     assert.equal(await page.getByText("To Pat Eriksen.").isVisible(), true);
@@ -115,9 +171,11 @@ describe("the doors pass 11 opened each reach their evidence in one click", () =
     await page.getByRole("button", { name: "4 messages" }).click();
     await page.waitForSelector("text=Census timing");
     assert.ok(
-      (await page.evaluate(() => (window as unknown as { __calls: [string, unknown[]][] }).__calls)).some(
-        ([n, a]) => n === "intranetReceiptDocs" && a[0] === "cap1",
-      ),
+      (
+        await page.evaluate(
+          () => (window as unknown as { __calls: [string, unknown[]][] }).__calls,
+        )
+      ).some(([n, a]) => n === "intranetReceiptDocs" && a[0] === "cap1"),
     );
     await page.close();
   });

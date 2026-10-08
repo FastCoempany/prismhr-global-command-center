@@ -25,6 +25,8 @@ import { multiTone } from "@/lib/room/multi";
 import { ChannelAsk } from "./channel-ask";
 import { CiteRows } from "./evidence-chips";
 import { CopyStamp } from "./copy-stamp";
+import { ReadoutText } from "./readout-text";
+import type { ReadoutDoor } from "@/lib/groundwork/readout";
 import { Instrument } from "./instrument";
 import { SweepButton } from "./sweep-button";
 import styles from "./groundwork.module.css";
@@ -303,7 +305,9 @@ type LowerDeckProps = {
   wireAvailable: boolean;
   wireIsDue: boolean;
   inst: { inst: Institution; eventSoon: boolean } | null;
-  readout: { sections: { title: string; paragraphs: { text: string }[] }[] };
+  readout: {
+    sections: { title: string; paragraphs: { text: string; doors?: ReadoutDoor[] }[] }[];
+  };
   readoutPayload: string;
   /** The lint's flags on the readout, each said one click down. */
   lintIssues: readonly { kind: string; detail: string }[];
@@ -465,9 +469,7 @@ export function LowerDeck({
                 {s.title}
               </span>
               {s.paragraphs.map((para, i) => (
-                <p key={i} style={{ margin: "4px 0 8px" }}>
-                  {para.text}
-                </p>
+                <ReadoutText key={i} text={para.text} doors={para.doors} />
               ))}
             </div>
           ))}

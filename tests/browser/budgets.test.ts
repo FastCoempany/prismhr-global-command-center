@@ -12,7 +12,10 @@ import { readFileSync } from "node:fs";
 import type { Browser, Locator } from "playwright-core";
 import { cls, mount, openBrowser, type MountOptions } from "../helpers/browser";
 
-const BUDGET = JSON.parse(readFileSync("tests/browser/budgets.json", "utf8")) as Record<string, number>;
+const BUDGET = JSON.parse(readFileSync("tests/browser/budgets.json", "utf8")) as Record<
+  string,
+  number
+>;
 
 let browser: Browser;
 before(async () => {
@@ -32,23 +35,93 @@ const piecesOf = (unit: Locator) =>
     let n: Node | null;
     while ((n = walk.nextNode())) {
       if (!(n.textContent ?? "").trim()) continue;
-      if (!n.parentElement!.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+      if (
+        !n.parentElement!.checkVisibility({
+          visibilityProperty: true,
+          opacityProperty: true,
+        })
+      )
+        continue;
       pieces += 1;
     }
     return pieces;
   });
 
-const UNITS: [string, string, MountOptions, (p: import("playwright-core").Page) => Locator][] = [
+const UNITS: [
+  string,
+  string,
+  MountOptions,
+  (p: import("playwright-core").Page) => Locator,
+][] = [
   [
     "homeroom-row",
     "tests/browser/fixtures/room.tsx",
     { returns: { chuteBook: [] } },
-    (p) => p.locator("a", { hasText: /^Simploy$/ }).first().locator("xpath=ancestor::*[contains(@class,'room__row')][1]"),
+    (p) =>
+      p
+        .locator("a", { hasText: /^Simploy$/ })
+        .first()
+        .locator("xpath=ancestor::*[contains(@class,'room__row')][1]"),
   ],
-  ["groundwork-stage", "tests/browser/fixtures/evidence.tsx", { now: "2026-07-30T15:00:00Z" }, (p) => p.locator(cls("groundwork.module.css", "stage"))],
-  ["accounts-row", "tests/browser/fixtures/accounts.tsx", {}, (p) => p.locator("tbody tr[id^=acct-]").first()],
-  ["sendbook-line", "tests/browser/fixtures/sendbook.tsx", {}, (p) => p.locator(cls("sendbook.module.css", "line")).first()],
-  ["intranet-entry", "tests/browser/fixtures/intranet.tsx", {}, (p) => p.locator(cls("command-center.module.css", "itRunLines")).first()],
+  [
+    "groundwork-stage",
+    "tests/browser/fixtures/evidence.tsx",
+    { now: "2026-07-30T15:00:00Z" },
+    (p) => p.locator(cls("groundwork.module.css", "stage")),
+  ],
+  [
+    "accounts-row",
+    "tests/browser/fixtures/accounts.tsx",
+    {},
+    (p) => p.locator("tbody tr[id^=acct-]").first(),
+  ],
+  [
+    "sendbook-line",
+    "tests/browser/fixtures/sendbook.tsx",
+    {},
+    (p) => p.locator(cls("sendbook.module.css", "line")).first(),
+  ],
+  [
+    "intranet-entry",
+    "tests/browser/fixtures/intranet.tsx",
+    {},
+    (p) => p.locator(cls("command-center.module.css", "itRunLines")).first(),
+  ],
+  // The second ring (pass 12): the draft desk's head and its one cited line,
+  // the roundup brief's folded prep, State of play folded, a Playbook draft.
+  [
+    "draft-desk",
+    "tests/browser/fixtures/desk.tsx",
+    {
+      returns: { listMailTemplates: [] },
+      routes: {
+        "/activity/evidence": () => ({
+          ok: true,
+          line: "Dana wrote 09/18: Re: pricing.",
+          cite: { k: "r1", day: "2026-09-18", who: "Dana Ruiz", subject: "Re: pricing" },
+        }),
+      },
+    },
+    (p) => p.locator(cls("command-center.module.css", "deskLine")).first(),
+  ],
+  [
+    "roundup-prep",
+    "tests/browser/fixtures/prep.tsx",
+    {},
+    (p) => p.locator(cls("groundwork.module.css", "draft")).first(),
+  ],
+  [
+    "state-of-play",
+    "tests/browser/fixtures/readout.tsx",
+    {},
+    (p) => p.locator(cls("groundwork.module.css", "russ")).first(),
+  ],
+  [
+    "playbook-draft",
+    "tests/browser/fixtures/drafts.tsx",
+    {},
+    (p) => p.locator(".srDraftCard").first(),
+  ],
 ];
 
 describe("A4.31 · arrival budgets never grow", () => {
@@ -60,7 +133,10 @@ describe("A4.31 · arrival budgets never grow", () => {
       assert.equal(await u.count(), 1, `${key}'s unit is gone`);
       const n = await piecesOf(u);
       assert.ok(n > 0, `${key} measured nothing`);
-      assert.ok(n <= BUDGET[key], `${key} arrives with ${n} pieces against a budget of ${BUDGET[key]}`);
+      assert.ok(
+        n <= BUDGET[key],
+        `${key} arrives with ${n} pieces against a budget of ${BUDGET[key]}`,
+      );
       await page.close();
     });
 

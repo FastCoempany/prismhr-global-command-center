@@ -15,6 +15,10 @@ export type SecondDraft = {
   text: string;
   accountId: string;
   accountName: string;
+  /** The support theme the draft counts, and every account it counted, most
+   *  cases first: the draft's door to its case list (the meat law, pass 12). */
+  theme: string;
+  accounts: { id: string; name: string; n: number }[];
 };
 
 /** The support themes the queue reads, per account: a label and its count. */
@@ -36,7 +40,14 @@ export function secondRecordDrafts(input: {
 }): SecondDraft[] {
   const agg = new Map<
     string,
-    { label: string; n: number; accounts: Set<string>; bestId: string; bestN: number }
+    {
+      label: string;
+      n: number;
+      accounts: Set<string>;
+      byAccount: Map<string, number>;
+      bestId: string;
+      bestN: number;
+    }
   >();
   for (const [id, sr] of input.secondById) {
     if (!input.nameById.has(id)) continue;
@@ -46,11 +57,13 @@ export function secondRecordDrafts(input: {
         label: t.label,
         n: 0,
         accounts: new Set<string>(),
+        byAccount: new Map<string, number>(),
         bestId: id,
         bestN: 0,
       };
       cur.n += t.n;
       cur.accounts.add(id);
+      cur.byAccount.set(id, (cur.byAccount.get(id) ?? 0) + t.n);
       if (t.n > cur.bestN) {
         cur.bestN = t.n;
         cur.bestId = id;
@@ -69,6 +82,10 @@ export function secondRecordDrafts(input: {
         text,
         accountId: a.bestId,
         accountName: input.nameById.get(a.bestId) ?? "",
+        theme: a.label,
+        accounts: [...a.byAccount]
+          .sort((x, y) => y[1] - x[1])
+          .map(([id, n]) => ({ id, name: input.nameById.get(id) ?? id, n })),
       };
     })
     .filter((d) => !input.marketKeys.has(d.key) && !input.dismissed.has(d.key));

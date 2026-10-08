@@ -731,6 +731,10 @@ export default async function GroundworkPage({
     partnerUpdatesReplied: partnerTouches.filter(
       (t) => t.status === "replied" || t.status === "responded",
     ).length,
+    partnerUpdatesWho: partnerTouches.map((t) => ({
+      name: t.label || t.subjectKey.replace(/^partner-outreach:/, ""),
+      replied: t.status === "replied" || t.status === "responded",
+    })),
     nextSevenDays: nextSevenDays.slice(0, 6),
     now,
   });

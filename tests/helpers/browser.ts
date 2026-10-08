@@ -45,7 +45,9 @@ export function scopeModule(
   file: string,
   css: string,
 ): { map: Record<string, string>; css: string } {
-  const prefix = basename(file).replace(/\.module\.css$/, "").replace(/\W/g, "_");
+  const prefix = basename(file)
+    .replace(/\.module\.css$/, "")
+    .replace(/\W/g, "_");
   const names = new Set<string>();
   for (const m of css.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) names.add(m[1]);
   const scoped = (n: string) => `${prefix}__${n}`;
@@ -62,9 +64,11 @@ export function scopeModule(
       return whole.replace(comp[0], "");
     },
   );
-  const out = body.replace(/\.(-?[_a-zA-Z][\w-]*)/g, (m, n: string, at: number, s: string) =>
-    // A dot inside a number or a url is not a class.
-    /[\d\w/]/.test(s[at - 1] ?? "") ? m : `.${scoped(n)}`,
+  const out = body.replace(
+    /\.(-?[_a-zA-Z][\w-]*)/g,
+    (m, n: string, at: number, s: string) =>
+      // A dot inside a number or a url is not a class.
+      /[\d\w/]/.test(s[at - 1] ?? "") ? m : `.${scoped(n)}`,
   );
   return { map, css: out };
 }
@@ -88,7 +92,8 @@ export function notFound(){}`;
 /** Every export of a "use server" module, as a recorded stub. */
 function serverStub(src: string): string {
   const names = new Set<string>();
-  for (const m of src.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)) names.add(m[1]);
+  for (const m of src.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g))
+    names.add(m[1]);
   for (const m of src.matchAll(/export\s+const\s+(\w+)/g)) names.add(m[1]);
   return [...names]
     .map(
@@ -117,10 +122,22 @@ function plugins(sheets: Map<string, string>): Plugin[] {
     {
       name: "faces",
       setup(b) {
-        b.onResolve({ filter: SERVER_ONLY }, (a) => ({ path: a.path, namespace: "inert" }));
-        b.onLoad({ filter: /.*/, namespace: "inert" }, () => ({ contents: INERT, loader: "js" }));
-        b.onResolve({ filter: /^next\/link$/ }, () => ({ path: "link", namespace: "stub" }));
-        b.onResolve({ filter: /^next\/navigation$/ }, () => ({ path: "nav", namespace: "stub" }));
+        b.onResolve({ filter: SERVER_ONLY }, (a) => ({
+          path: a.path,
+          namespace: "inert",
+        }));
+        b.onLoad({ filter: /.*/, namespace: "inert" }, () => ({
+          contents: INERT,
+          loader: "js",
+        }));
+        b.onResolve({ filter: /^next\/link$/ }, () => ({
+          path: "link",
+          namespace: "stub",
+        }));
+        b.onResolve({ filter: /^next\/navigation$/ }, () => ({
+          path: "nav",
+          namespace: "stub",
+        }));
         b.onLoad({ filter: /.*/, namespace: "stub" }, (a) => ({
           contents: a.path === "link" ? STUB_LINK : STUB_NAV,
           loader: "jsx",
@@ -225,15 +242,38 @@ export async function mount(
   await page.route(`${ORIGIN}/**`, (r) => {
     const url = new URL(r.request().url());
     if (url.pathname === "/")
-      return r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: html });
+      return r.fulfill({
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: html,
+      });
     asked.push(`${r.request().method()} ${url.pathname}${url.search}`);
     const answer = opts.routes?.[url.pathname];
     return answer
-      ? r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(answer(url)) })
+      ? r.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(answer(url)),
+        })
       : r.fulfill({ status: 404, body: "" });
   });
+  // A fixture that throws never renders: say why, instead of waiting.
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(`${ORIGIN}/`, { waitUntil: "load" });
-  await page.waitForFunction(() => (document.getElementById("root")?.childElementCount ?? 0) > 0);
+  await page
+    .waitForFunction(
+      () => (document.getElementById("root")?.childElementCount ?? 0) > 0,
+      null,
+      {
+        timeout: 10_000,
+      },
+    )
+    .catch(() => {
+      throw new Error(
+        `${fixture} never rendered: ${errors.join(" | ") || "no error raised"}`,
+      );
+    });
   await page.waitForTimeout(30);
   return page;
 }
@@ -245,11 +285,15 @@ export const requestsOf = (page: Page): string[] => requests.get(page) ?? [];
 
 /** The server actions the page called, in order. */
 export async function callsOf(page: Page): Promise<[string, unknown[]][]> {
-  return page.evaluate(() => (window as unknown as { __calls: [string, unknown[]][] }).__calls);
+  return page.evaluate(
+    () => (window as unknown as { __calls: [string, unknown[]][] }).__calls,
+  );
 }
 
 /** A module's scoped class, as the page carries it. */
 export const cls = (sheet: string, name: string): string =>
-  `.${basename(sheet).replace(/\.module\.css$/, "").replace(/\W/g, "_")}__${name}`;
+  `.${basename(sheet)
+    .replace(/\.module\.css$/, "")
+    .replace(/\W/g, "_")}__${name}`;
 
 export { relative };
