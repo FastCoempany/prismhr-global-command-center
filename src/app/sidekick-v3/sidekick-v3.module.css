@@ -1,12 +1,12 @@
 .app {
   --navy: #0a1c40;
-  --navy2: #0e2450;
+  --navy2: #142949;
   --blue: #2563eb;
   --bg: #f5f7fb;
   --card: #ffffff;
-  --line: #e6ebf3;
+  --line: rgba(10, 28, 64, 0.09);
   --ink: #0a1c40;
-  --muted: #5b6b86;
+  --muted: rgba(10, 28, 64, 0.66);
   display: grid;
   grid-template-columns: 320px 1fr;
   height: calc(100vh - 64px);
@@ -24,7 +24,7 @@
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
 .side {
   background: var(--navy);
-  color: #dfe6f2;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -80,7 +80,7 @@
 .ghostBtnSm {
   padding: 6px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(120, 140, 180, 0.4);
+  border: 1px solid rgba(10, 28, 64, 0.4);
   background: transparent;
   color: inherit;
   font-size: 12px;
@@ -101,7 +101,7 @@
   font-size: 14px;
 }
 .search input::placeholder {
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .lensRow {
@@ -116,7 +116,7 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: transparent;
-  color: #b9c6de;
+  color: rgba(255, 255, 255, 0.66);
   font-size: 12.5px;
   cursor: pointer;
 }
@@ -137,7 +137,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
   padding: 12px 8px 4px;
 }
 
@@ -151,7 +151,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #dfe6f2;
+  color: #ffffff;
   font-size: 13.5px;
   cursor: pointer;
 }
@@ -166,10 +166,10 @@
   min-width: 18px;
   font-variant-numeric: tabular-nums;
   font-size: 11.5px;
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
 }
 .itemActive .itemNum {
-  color: #cfe0ff;
+  color: #ffffff;
 }
 .itemTitle {
   flex: 1;
@@ -177,10 +177,10 @@
 .itemClock {
   font-variant-numeric: tabular-nums;
   font-size: 11px;
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
 }
 .itemActive .itemClock {
-  color: #cfe0ff;
+  color: #ffffff;
 }
 
 .pbItem {
@@ -195,7 +195,7 @@
 .pbControls button {
   border: none;
   background: transparent;
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
   cursor: pointer;
   font-size: 12px;
   padding: 2px 4px;
@@ -267,14 +267,14 @@
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 13px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #9a3412;
+  background: #f5f7fb;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #0a1c40;
 }
 .bannerOk {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #166534;
+  background: #fafbfd;
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #0a1c40;
 }
 
 .scroll {
@@ -316,9 +316,9 @@
   white-space: nowrap;
 }
 .chipEdited {
-  color: #9a3412;
-  background: #fff7ed;
-  border-color: #fed7aa;
+  color: #0a1c40;
+  background: #f5f7fb;
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .shot {
@@ -346,8 +346,8 @@
   margin-top: 14px;
 }
 .blockSay {
-  background: #f0f6ff;
-  border: 1px solid #dbe7ff;
+  background: #f5f7fb;
+  border: 1px solid rgba(37, 99, 235, 0.4);
   border-radius: 10px;
   padding: 10px 14px;
 }
@@ -468,7 +468,7 @@
   inset: 0;
   z-index: 60;
   background: var(--navy);
-  color: #f4f7fd;
+  color: #ffffff;
   padding: 48px min(8vw, 96px);
   display: flex;
   flex-direction: column;
@@ -485,14 +485,14 @@
   right: 22px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: transparent;
-  color: #cdd9ee;
+  color: rgba(255, 255, 255, 0.66);
   border-radius: 8px;
   padding: 6px 12px;
   cursor: pointer;
 }
 .presenterMeta {
   font-size: 14px;
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
   font-variant-numeric: tabular-nums;
 }
 .presenterSay {
@@ -511,17 +511,17 @@
 }
 .presenterBranch {
   margin: 0;
-  color: #ffd9b0;
+  color: #f59e0b;
   font-size: 1rem;
   max-width: 68ch;
 }
 .presenterNext {
   margin: 0;
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
   font-size: 0.95rem;
 }
 .presenter .ghostBtn {
   background: transparent;
-  color: #dfe6f2;
+  color: #ffffff;
   border-color: rgba(255, 255, 255, 0.3);
 }

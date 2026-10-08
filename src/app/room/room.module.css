@@ -274,7 +274,7 @@
   flex-direction: column;
   gap: 4px;
   background: #fff;
-  border: 1px solid var(--line);
+  border: 1px solid var(--hair);
   border-radius: 6px;
   padding: 8px 10px;
   box-shadow: 0 4px 14px rgba(10, 28, 64, 0.12);
@@ -319,7 +319,7 @@
   letter-spacing: 0.08em;
   color: var(--faint);
   text-decoration: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--hair);
   border-radius: 3px;
   padding: 1px 2px;
 }
@@ -340,7 +340,7 @@
     monospace;
   letter-spacing: 0.1em;
   color: var(--faint);
-  border: 1px dashed var(--line);
+  border: 1px dashed var(--hair);
   border-radius: 999px;
   padding: 1px 7px;
   vertical-align: 1px;
@@ -497,6 +497,7 @@
   background: rgba(255, 255, 255, 0.85);
   padding: 0;
   cursor: pointer;
+  color: var(--ink);
   z-index: 3;
 }
 .node:hover {
@@ -2723,8 +2724,8 @@ button.sdRadio:hover {
   /* The fade says there is more to the right. It only paints when the value
      actually overflows — a short line keeps its full weight to the last
      letter, so nothing reads as cut when it is not. */
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent);
+  -webkit-mask-image: linear-gradient(to right, #0a1c40 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to right, #0a1c40 calc(100% - 14px), transparent);
 }
 .pipeVal::-webkit-scrollbar {
   display: none;

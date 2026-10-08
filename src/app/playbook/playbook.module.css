@@ -8,9 +8,9 @@
 }
 
 .copyBtn {
-  border: 1px solid #e6ebf3;
+  border: 1px solid rgba(10, 28, 64, 0.09);
   background: #fff;
-  color: #5b6b86;
+  color: rgba(10, 28, 64, 0.66);
   border-radius: 6px;
   padding: 0 6px;
   font: inherit;

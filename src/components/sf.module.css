@@ -13,9 +13,9 @@
 .miniBadge {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #b6e3f7;
-  background: #f0f9ff;
-  color: #0369a1;
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  background: #f5f7fb;
+  color: #1d4ed8;
   border-radius: 4px;
   padding: 0 5px;
   font-size: 9.5px;
@@ -29,18 +29,18 @@
   align-self: flex-start;
   font-size: 12px;
   font-weight: 700;
-  color: #0369a1;
+  color: #1d4ed8;
   text-decoration: none;
-  border-bottom: 1.5px solid #7dd3fc;
+  border-bottom: 1.5px solid rgba(37, 99, 235, 0.4);
 }
 .link:hover {
-  border-bottom-color: #0369a1;
+  border-bottom-color: #1d4ed8;
 }
 .copy {
   align-self: flex-start;
-  border: 1px solid #b6e3f7;
+  border: 1px solid rgba(37, 99, 235, 0.4);
   background: #fff;
-  color: #0369a1;
+  color: #1d4ed8;
   border-radius: 6px;
   padding: 3px 9px;
   font: inherit;
@@ -49,7 +49,7 @@
   cursor: pointer;
 }
 .copy:hover {
-  border-color: #00a1e0;
+  border-color: #1d4ed8;
 }
 .inline {
   display: inline-flex;
@@ -57,5 +57,5 @@
   gap: 5px;
   font-size: 11.5px;
   font-weight: 700;
-  color: #0369a1;
+  color: #1d4ed8;
 }

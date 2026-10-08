@@ -1,6 +1,6 @@
 // "Arrival budgets never grow" (the meat law, founder-decreed 2026-08-20),
 // as a ratchet in a real browser (pass 11). Each face's arrival is measured
-// as the rendered text lines one unit takes on first paint (a HomeRoom row,
+// as the visible pieces of text one unit shows on first paint (a HomeRoom row,
 // Groundwork's stage, an Accounts row, a Sendbook line, the Intranet's
 // digest entry), and held to the budget recorded in budgets.json. A face
 // that grows fails the build until its budget is raised in the same diff,
@@ -22,22 +22,20 @@ after(async () => {
   await browser?.close();
 });
 
-/** The rendered text lines a unit takes: every visible text box, grouped by
- *  the row it sits on. */
-const linesOf = (unit: Locator) =>
+/** What a unit shows on arrival: its visible pieces of text (each text run
+ *  a person can see, however long). A face grows when it shows more pieces;
+ *  the fixtures are fixed, so the count is too. */
+const piecesOf = (unit: Locator) =>
   unit.evaluate((root) => {
-    const tops = new Set<number>();
+    let pieces = 0;
     const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let n: Node | null;
     while ((n = walk.nextNode())) {
       if (!(n.textContent ?? "").trim()) continue;
-      const el = n.parentElement!;
-      if (!el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
-      const range = document.createRange();
-      range.selectNodeContents(n);
-      for (const r of range.getClientRects()) if (r.width > 0 && r.height > 0) tops.add(Math.round(r.top / 6));
+      if (!n.parentElement!.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+      pieces += 1;
     }
-    return tops.size;
+    return pieces;
   });
 
 const UNITS: [string, string, MountOptions, (p: import("playwright-core").Page) => Locator][] = [
@@ -55,14 +53,14 @@ const UNITS: [string, string, MountOptions, (p: import("playwright-core").Page) 
 
 describe("A4.31 · arrival budgets never grow", () => {
   for (const [key, fixture, opts, unit] of UNITS)
-    test(`${key} arrives within its budget of ${BUDGET[key]} lines`, async () => {
+    test(`${key} arrives within its budget of ${BUDGET[key]} pieces`, async () => {
       assert.ok(Number.isInteger(BUDGET[key]), `${key} has no budget`);
       const page = await mount(browser, fixture, opts);
       const u = unit(page);
       assert.equal(await u.count(), 1, `${key}'s unit is gone`);
-      const n = await linesOf(u);
+      const n = await piecesOf(u);
       assert.ok(n > 0, `${key} measured nothing`);
-      assert.ok(n <= BUDGET[key], `${key} arrives on ${n} lines against a budget of ${BUDGET[key]}`);
+      assert.ok(n <= BUDGET[key], `${key} arrives with ${n} pieces against a budget of ${BUDGET[key]}`);
       await page.close();
     });
 

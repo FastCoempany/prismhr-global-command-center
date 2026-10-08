@@ -5,9 +5,9 @@
   --orange: #e6701e;
   --bg: #f5f7fb;
   --card: #ffffff;
-  --line: #e6ebf3;
+  --line: rgba(10, 28, 64, 0.09);
   --ink: #0a1c40;
-  --muted: #5b6b86;
+  --muted: rgba(10, 28, 64, 0.66);
   /* The brand's green (#22C55E), by role: real health. On this pale field it
      is too light for words, so a green state takes it as tint and border
      and keeps its words in ink. */
@@ -61,16 +61,16 @@
   white-space: nowrap;
 }
 .banner {
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #9a3412;
+  background: #f5f7fb;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #0a1c40;
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 13px;
   margin-bottom: 18px;
 }
 .banner code {
-  background: #ffedd5;
+  background: rgba(245, 158, 11, 0.12);
   padding: 1px 5px;
   border-radius: 5px;
 }
@@ -123,7 +123,7 @@
   padding: 11px 14px 11px 38px;
   border: 1px solid rgba(10, 28, 64, 0.14);
   border-radius: 11px;
-  background: linear-gradient(#ffffff, #fdfdfe);
+  background: linear-gradient(#ffffff, #ffffff);
   box-shadow:
     0 1px 2px rgba(10, 28, 64, 0.06),
     0 3px 10px rgba(10, 28, 64, 0.07),
@@ -149,6 +149,7 @@
   background: none;
   padding: 0;
   font: inherit;
+  color: inherit;
   cursor: pointer;
 }
 
@@ -217,7 +218,7 @@
 }
 .addMini:hover:not(:disabled) {
   border-color: var(--blue);
-  background: #eef3fb;
+  background: #eff2f7;
 }
 .addMini:disabled {
   opacity: 0.6;
@@ -225,7 +226,7 @@
 }
 
 .acctDetail {
-  background: #fbfcfe;
+  background: #fafbfd;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px 14px;
@@ -251,7 +252,7 @@
   font-weight: 700;
   text-transform: capitalize;
   color: var(--muted);
-  background: #f1f4f9;
+  background: #eff2f7;
   border-radius: 20px;
   padding: 1px 8px;
 }
@@ -300,7 +301,7 @@
   padding: 7px 10px;
 }
 .servedBy strong {
-  color: #b6531a;
+  color: #0a1c40;
 }
 .countries {
   display: flex;
@@ -311,7 +312,7 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--navy);
-  background: #eef3fb;
+  background: #eff2f7;
   border-radius: 20px;
   padding: 1px 9px;
 }
@@ -341,7 +342,7 @@
 }
 .barTrack {
   height: 8px;
-  background: #eef1f6;
+  background: #eff2f7;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -358,9 +359,9 @@
 }
 .demandPending {
   align-self: start;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #9a3412;
+  background: #f5f7fb;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #0a1c40;
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 12px;
@@ -392,7 +393,7 @@
   color: var(--muted);
   padding: 10px 12px;
   border-bottom: 1px solid var(--line);
-  background: #fbfcfe;
+  background: #fafbfd;
   /* Persist column headers under the sticky wayfinder (min-height 58px + pad). */
   position: sticky;
   top: 74px;
@@ -424,7 +425,7 @@
   font-size: 12px;
 }
 .rowActive {
-  background: #eef3fb;
+  background: #eff2f7;
 }
 
 /* Group header */
@@ -440,28 +441,28 @@
   border-radius: 6px;
 }
 .fitHigh {
-  background: #fde8d7;
-  color: #b6531a;
+  background: rgba(37, 99, 235, 0.16);
+  color: #1d4ed8;
 }
 .fitMedium {
-  background: #dbe6fd;
+  background: rgba(37, 99, 235, 0.08);
   color: var(--blue-d);
 }
 .fitLow {
-  background: #eef1f6;
-  color: #5b6b86;
+  background: #eff2f7;
+  color: rgba(10, 28, 64, 0.66);
 }
 .stage {
   font-size: 11.5px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 20px;
-  background: #eef1f6;
-  color: #46536b;
+  background: #eff2f7;
+  color: rgba(10, 28, 64, 0.66);
   white-space: nowrap;
 }
 .stageActive {
-  background: #dbe6fd;
+  background: rgba(37, 99, 235, 0.08);
   color: var(--blue-d);
 }
 .stageWon {
@@ -472,7 +473,7 @@
 .chip {
   font-size: 11px;
   color: var(--muted);
-  background: #f1f4f9;
+  background: #eff2f7;
   border-radius: 6px;
   padding: 1px 7px;
 }
@@ -488,12 +489,12 @@
   white-space: nowrap;
 }
 .approachHold {
-  background: #fdeaea;
-  color: #b42318;
+  background: rgba(239, 68, 68, 0.07);
+  color: #ef4444;
 }
 .approachOk {
-  background: #fef3e2;
-  color: #b6531a;
+  background: rgba(245, 158, 11, 0.12);
+  color: #0a1c40;
 }
 .approachGo {
   background: rgba(34, 197, 94, 0.12);
@@ -587,7 +588,7 @@
   border-radius: 10px;
   padding: 10px 12px;
   margin-bottom: 10px;
-  background: #fbfcfe;
+  background: #fafbfd;
 }
 .playTop {
   display: flex;
@@ -759,11 +760,11 @@
   box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.55);
 }
 .valFlagged {
-  background: #fde7e7;
-  color: #b42323;
+  background: rgba(239, 68, 68, 0.07);
+  color: #ef4444;
 }
 .valAdjusted {
-  background: #eef3fb;
+  background: #eff2f7;
   color: var(--blue-d);
 }
 
@@ -837,14 +838,14 @@
   width: 100%;
   min-height: 90px;
   resize: vertical;
-  border: 1px solid var(--hair-strong, #d4dbe8);
+  border: 1px solid var(--hair-strong, rgba(10, 28, 64, 0.16));
   border-radius: 10px;
   padding: 11px 13px;
   font: inherit;
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--ink);
-  background: #fbfdff;
+  background: #fafbfd;
 }
 .editMsgArea:focus {
   outline: none;
@@ -893,7 +894,7 @@
 }
 .copyLine:hover {
   border-color: var(--blue);
-  background: #eef3fb;
+  background: #eff2f7;
 }
 
 /* Today section tabs — keep any one view short instead of one long scroll. */
@@ -918,13 +919,13 @@
   color: var(--ink);
 }
 .feeCell {
-  background: #fffbeb;
+  background: #fafbfd;
 }
 
 /* CSM engagement panel (Account Room detail) */
 .engage {
-  border: 1px solid #cdddf5;
-  background: #f6f9ff;
+  border: 1px solid rgba(10, 28, 64, 0.14);
+  background: #fafbfd;
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 12px;
@@ -956,12 +957,12 @@
   font-weight: 800;
 }
 .gateOn {
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(34, 197, 94, 0.1);
+  color: #0a1c40;
 }
 .gateOff {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.07);
+  color: #ef4444;
 }
 .engageSfForm {
   display: flex;
@@ -978,9 +979,9 @@
   align-self: flex-start;
 }
 .gateBtnOn {
-  border-color: #86efac;
-  background: #dcfce7;
-  color: #166534;
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.1);
+  color: #0a1c40;
 }
 .gateBtnOff {
   border-color: var(--line);
@@ -1053,16 +1054,16 @@
   padding: 1px 8px;
 }
 .health_green {
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(34, 197, 94, 0.1);
+  color: #0a1c40;
 }
 .health_yellow {
-  background: #fef9c3;
-  color: #854d0e;
+  background: rgba(245, 158, 11, 0.12);
+  color: #0a1c40;
 }
 .health_red {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.07);
+  color: #ef4444;
 }
 .healthNone {
   font-size: 11.5px;
@@ -1081,7 +1082,7 @@
   cursor: pointer;
 }
 .engageSave:hover {
-  background: #0c2350;
+  background: #142949;
 }
 .engageAsk {
   font-size: 12.5px;
@@ -1167,7 +1168,7 @@
   white-space: nowrap;
 }
 .prNoteBtn:hover {
-  background: #0d2a5c;
+  background: rgba(10, 28, 64, 0.93);
 }
 .prEmpty {
   margin: 0;
@@ -1210,9 +1211,9 @@
   border: 1px solid var(--line);
 }
 .prTag_outreach {
-  background: #fdeadd;
-  color: #b45309;
-  border-color: #f5cfae;
+  background: rgba(10, 28, 64, 0.06);
+  color: rgba(10, 28, 64, 0.66);
+  border-color: rgba(10, 28, 64, 0.14);
 }
 .prTag_reply {
   background: rgba(34, 197, 94, 0.12);
@@ -1235,15 +1236,15 @@
   padding: 0 4px;
 }
 .prDel:hover {
-  color: #b3261e;
+  color: #ef4444;
 }
 
 /* ── Drafting desk (Partner Room) + draft link ───────────────────────── */
 
 .desk {
   margin-bottom: 12px;
-  border: 1px dashed #d7c8f2;
-  background: #faf8fe;
+  border: 1px dashed rgba(37, 99, 235, 0.4);
+  background: #f5f7fb;
   border-radius: 10px;
   padding: 8px 12px;
 }
@@ -1251,7 +1252,7 @@
   cursor: pointer;
   font-size: 12.5px;
   font-weight: 800;
-  color: #5b3aa8;
+  color: #1d4ed8;
   list-style: none;
 }
 .deskSummary::-webkit-details-marker {
@@ -1293,7 +1294,7 @@
 }
 .deskDraftBtn {
   border: none;
-  background: #5b3aa8;
+  background: #2563eb;
   color: #fff;
   border-radius: 8px;
   padding: 7px 14px;
@@ -1303,7 +1304,7 @@
   cursor: pointer;
 }
 .deskDraftBtn:hover {
-  background: #4a2f8a;
+  background: #1d4ed8;
 }
 .deskDraftBtn:disabled,
 .deskCopyBtn:disabled {
@@ -1311,9 +1312,9 @@
   cursor: default;
 }
 .deskCopyBtn {
-  border: 1px solid #d7c8f2;
+  border: 1px solid rgba(37, 99, 235, 0.4);
   background: #fff;
-  color: #5b3aa8;
+  color: #1d4ed8;
   border-radius: 8px;
   padding: 7px 14px;
   font: inherit;
@@ -1322,7 +1323,7 @@
   cursor: pointer;
 }
 .deskCopyBtn:hover {
-  background: #f3eefc;
+  background: #eff2f7;
 }
 .deskNotice {
   margin: 0;
@@ -1336,7 +1337,7 @@
   gap: 6px;
 }
 .deskOut textarea {
-  border: 1px solid #d7c8f2;
+  border: 1px solid rgba(37, 99, 235, 0.4);
   border-radius: 8px;
   padding: 9px 11px;
   font: inherit;
@@ -1363,16 +1364,16 @@
 }
 .atcBtn:hover {
   border-color: var(--blue);
-  background: #eef3fb;
+  background: #eff2f7;
 }
 
 /* Account Room — disposition badge + exclusions ledger */
 .dispoBadge {
   font-size: 10px;
   font-weight: 700;
-  color: #8a5a10;
-  background: #fff2e6;
-  border: 1px solid #f3c9a3;
+  color: #0a1c40;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
   border-radius: 999px;
   padding: 0 7px;
   white-space: nowrap;
@@ -1446,12 +1447,12 @@
 @keyframes chasePulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45);
-    text-shadow: 0 0 1px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+    text-shadow: 0 0 1px rgba(239, 68, 68, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(220, 38, 38, 0);
-    text-shadow: 0 0 6px rgba(220, 38, 38, 0.85);
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+    text-shadow: 0 0 6px rgba(239, 68, 68, 0.85);
   }
 }
 
@@ -1522,14 +1523,14 @@
 @keyframes uGlowHigh {
   50% {
     box-shadow:
-      0 0 18px 5px rgba(220, 38, 38, 0.7),
+      0 0 18px 5px rgba(239, 68, 68, 0.7),
       inset 0 0 8px rgba(255, 255, 255, 0.35);
   }
 }
 @keyframes uGlowMed {
   50% {
     box-shadow:
-      0 0 15px 4px rgba(180, 83, 9, 0.6),
+      0 0 15px 4px rgba(245, 158, 11, 0.6),
       inset 0 0 7px rgba(255, 255, 255, 0.3);
   }
 }
@@ -1599,8 +1600,8 @@
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #7c3aed;
-  background: #f4effd;
+  color: #1d4ed8;
+  background: #eff2f7;
   border-radius: 999px;
   padding: 1px 8px;
 }
@@ -1611,15 +1612,15 @@
 }
 .arcDelete {
   font-size: 11px;
-  color: var(--red);
+  color: var(--ds-red);
   background: none;
-  border: 1px solid #f2c6c6;
+  border: 1px solid rgba(239, 68, 68, 0.4);
   border-radius: 8px;
   padding: 2px 8px;
   cursor: pointer;
 }
 .arcDelete:hover {
-  background: #fdf3f3;
+  background: #f5f7fb;
 }
 
 /* ═══ Intake — SF activity paste/bookmarklet ═══ */
@@ -1648,7 +1649,7 @@
 .inkSelect {
   font: inherit;
   font-size: 12.5px;
-  border: 1px solid #cdd6e4;
+  border: 1px solid rgba(10, 28, 64, 0.18);
   border-radius: 8px;
   padding: 5px 8px;
   background: #fff;
@@ -1656,10 +1657,10 @@
 }
 
 .inkAside {
-  border: 1px solid #e3e8f1;
+  border: 1px solid rgba(10, 28, 64, 0.1);
   border-radius: 12px;
   padding: 14px 16px;
-  background: #fbfcfe;
+  background: #fafbfd;
 }
 .inkBookmarklet {
   display: inline-block;
@@ -1683,7 +1684,7 @@
 /* ═══ Account Room contacts panel — the full SF contact roster ═══ */
 .ctcWrap {
   margin-top: 10px;
-  border-top: 1px dashed #e0d5b0;
+  border-top: 1px dashed rgba(245, 158, 11, 0.4);
   padding-top: 6px;
 }
 .ctcToggle {
@@ -1701,7 +1702,7 @@
   width: min(360px, 100%);
   font: inherit;
   font-size: 12px;
-  border: 1px solid #cdd6e4;
+  border: 1px solid rgba(10, 28, 64, 0.18);
   border-radius: 8px;
   padding: 4px 9px;
   margin: 6px 0;
@@ -1716,11 +1717,11 @@
   padding-right: 4px;
 }
 .ctcRow {
-  border: 1px solid #eceff5;
+  border: 1px solid rgba(10, 28, 64, 0.07);
   border-radius: 9px;
   padding: 6px 9px;
   font-size: 12px;
-  background: #fcfdff;
+  background: #fafbfd;
   min-width: 0;
 }
 .ctcHead {
@@ -1813,7 +1814,7 @@
   border-radius: 999px;
   border: 1px solid rgba(230, 112, 30, 0.45);
   background: linear-gradient(180deg, rgba(230, 112, 30, 0.16), rgba(230, 112, 30, 0.09));
-  color: #a2450b;
+  color: #0a1c40;
   font-weight: 600;
   font-size: 13px;
   text-decoration: none;
@@ -1829,7 +1830,7 @@
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(162, 69, 11, 0.62);
+  color: rgba(245, 158, 11, 0.62);
 }
 .toolBody {
   display: flex;
@@ -1856,7 +1857,7 @@
   color: rgba(10, 28, 64, 0.66);
 }
 .toolTakes b {
-  color: #15803d;
+  color: #0a1c40;
 }
 .toolRefuses {
   color: rgba(10, 28, 64, 0.42);
@@ -2002,7 +2003,7 @@
   color: rgba(10, 28, 64, 0.55);
 }
 .itWarn {
-  color: #7a4b00;
+  color: #0a1c40;
 }
 .itClear {
   border: 0;
@@ -2021,10 +2022,10 @@
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #7a4b00;
+  color: #0a1c40;
 }
 .itMixed {
-  color: #1e3a8a;
+  color: #1d4ed8;
 }
 .itProse {
   margin: 0;
@@ -2210,7 +2211,7 @@
   font-variant-numeric: tabular-nums;
 }
 .itFresh {
-  color: #b45309;
+  color: #0a1c40;
 }
 
 .itQuiet {
@@ -2254,7 +2255,7 @@
 .itGone {
   margin: 10px 0 0;
   font-size: 12.5px;
-  color: #7a4b00;
+  color: #0a1c40;
 }
 .itPassage {
   margin-top: 12px;
@@ -2423,7 +2424,7 @@
   margin: 0 0 12px;
   font-size: 13.5px;
   line-height: 1.55;
-  color: #7a4b00;
+  color: #0a1c40;
 }
 .itEvalRow {
   display: flex;
@@ -2490,11 +2491,11 @@
     transform 0.12s ease;
 }
 .itKeep:hover:not(:disabled) {
-  background: #13275a;
+  background: rgba(10, 28, 64, 0.94);
   transform: translateY(-1px);
 }
 .itKeep:hover:not(:disabled) {
-  background: #13275a;
+  background: rgba(10, 28, 64, 0.94);
 }
 .itKeep:disabled {
   opacity: 0.45;
@@ -2608,10 +2609,10 @@
   text-transform: uppercase;
 }
 .itKAsk {
-  color: #9a4a12;
+  color: #0a1c40;
 }
 .itKFed {
-  color: #15803d;
+  color: #0a1c40;
 }
 .itKWorld {
   color: var(--blue);
@@ -2782,7 +2783,7 @@
   margin: 0 auto;
   padding: 0 24px 10px;
   font-size: 12px;
-  color: #7a4b00;
+  color: #0a1c40;
 }
 
 /* ── Part V · the refounded face ─────────────────────────────────────────── */
@@ -3029,7 +3030,7 @@
   position: relative;
   margin-top: 10px;
   background: #fff;
-  border: 1px solid rgba(27, 77, 54, 0.35);
+  border: 1px solid rgba(34, 197, 94, 0.35);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -3040,7 +3041,7 @@
   position: absolute;
   width: 13px;
   height: 13px;
-  border: 2px solid rgba(27, 77, 54, 0.4);
+  border: 2px solid rgba(34, 197, 94, 0.4);
   pointer-events: none;
   z-index: 1;
 }
@@ -3141,7 +3142,7 @@
   font-weight: 700;
   font-size: 28px;
   line-height: 1;
-  color: #14532d;
+  color: #0a1c40;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -3162,7 +3163,7 @@
 .itBgFill {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #1b4d36, #15803d);
+  background: linear-gradient(90deg, #22c55e, #22c55e);
   transition: width 0.5s ease;
 }
 .itBgBar::after {
@@ -3226,7 +3227,7 @@
   font-variant-numeric: tabular-nums;
 }
 .itBgStReading {
-  color: #14532d;
+  color: #0a1c40;
 }
 .itBgStIdle {
   color: rgba(10, 28, 64, 0.42);
@@ -3257,7 +3258,7 @@
   font-variant-numeric: tabular-nums;
 }
 .itBgBad {
-  color: #b91c1c;
+  color: #ef4444;
 }
 .itBgFoldWrap {
   padding: 4px 18px 12px;
@@ -3306,7 +3307,7 @@
 /* The board's word on the accounts page (decreed 2026-08-20): a stamp
    outranks "in motion"; won green, lost red — the semantic ladder. */
 .dispoWon {
-  color: #1e8e4a;
+  color: #0a1c40;
   border-color: rgba(34, 197, 94, 0.5);
 }
 .dispoLost {
@@ -3330,7 +3331,7 @@
   text-align: left;
 }
 .engageFold:hover {
-  color: #1e5b46;
+  color: #0a1c40;
 }
 
 /* The drilldown folds + the contacts lead (decreed 2026-08-20). */
@@ -3352,7 +3353,7 @@
   text-align: left;
 }
 .foldHead:hover {
-  color: #1e5b46;
+  color: #0a1c40;
 }
 .foldHint {
   font-weight: 400;
@@ -3627,6 +3628,13 @@
 
 /* ── The second record's columns and fold (Concept I, decreed 2026-08-20) ── */
 .srTouch {
+  /* A button since pass 8 A5 (the touch's door): it keeps its old face, so
+     none of the browser's own button paint shows (palette pass). */
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
   font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
   font-size: 10.5px;
   letter-spacing: 0.03em;
@@ -3662,11 +3670,11 @@
   text-align: left;
 }
 .srTermSupport {
-  color: #b6791a;
+  color: #0a1c40;
   border-bottom-color: rgba(245, 158, 11, 0.5);
 }
 .srMore {
-  color: #9aa7bd;
+  color: rgba(255, 255, 255, 0.66);
   font-weight: 500;
 }
 .srVerdict {
@@ -3715,10 +3723,10 @@ button.srVerdict:hover {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #b6791a;
+  color: #0a1c40;
 }
 .srFoldTd {
-  background: #f8fafd;
+  background: #fafbfd;
   padding: 12px 16px;
 }
 .srPanel {
@@ -3790,7 +3798,7 @@ button.srVerdict:hover {
   margin: 4px 0 8px 14px;
   padding: 8px 12px;
   border-left: 2px solid var(--line);
-  background: #fbfcfe;
+  background: #fafbfd;
   border-radius: 0 6px 6px 0;
   font-size: 12.5px;
   color: var(--ink);
@@ -3800,7 +3808,7 @@ button.srVerdict:hover {
   font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: #9aa7bd;
+  color: rgba(255, 255, 255, 0.66);
   margin-bottom: 2px;
 }
 .srVerdictLine {
@@ -3973,7 +3981,7 @@ button.srVerdict:hover {
   flex: 0 0 380px;
   position: sticky;
   top: 74px;
-  background: #fafbfe;
+  background: #fafbfd;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 14px 16px;
@@ -4068,8 +4076,8 @@ button.srVerdict:hover {
   border-color: var(--blue);
 }
 .actLaneGo:hover:not(:disabled) {
-  background: #1d4fc4;
-  border-color: #1d4fc4;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 .actLaneSaved {
   margin-top: 8px;
@@ -4124,7 +4132,7 @@ button.srVerdict:hover {
   font-family: var(--font-donor-mono), ui-monospace, Menlo, monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #15803d;
+  color: #0a1c40;
 }
 .actLaneTb {
   border: 0;
@@ -4174,7 +4182,7 @@ button.srVerdict:hover {
   margin: 6px 0 8px;
   padding: 6px 10px;
   border-left: 2px solid rgba(37, 99, 235, 0.35);
-  background: #f8fafd;
+  background: #fafbfd;
   border-radius: 0 6px 6px 0;
   font-size: 12.5px;
   color: var(--ink);

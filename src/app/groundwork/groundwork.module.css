@@ -731,19 +731,19 @@ a.wingItem:hover .wingNm {
   letter-spacing: 0.1em;
 }
 .evChip:hover {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--ds-ink);
+  color: var(--ds-ink);
 }
 .evChipGem {
-  color: var(--orange);
-  border-color: rgba(230, 112, 30, 0.5);
+  color: var(--ds-blue);
+  border-color: rgba(37, 99, 235, 0.4);
 }
 .evChipAmber {
-  color: #b6791a;
+  color: #0a1c40;
   border-color: rgba(245, 158, 11, 0.5);
 }
 .evChipBlue {
-  color: var(--blue);
+  color: var(--ds-blue);
   border-color: rgba(37, 99, 235, 0.4);
 }
 .evFold {
@@ -762,7 +762,7 @@ a.wingItem:hover .wingNm {
 }
 .evGemTerm {
   composes: kick;
-  color: var(--orange);
+  color: var(--ds-blue);
 }
 .evGemAct {
   font-size: 14.5px;
@@ -771,7 +771,7 @@ a.wingItem:hover .wingNm {
 }
 .evGemWhy {
   font-size: 12.5px;
-  color: var(--soft);
+  color: var(--ds-ink-soft);
   margin-bottom: 4px;
 }
 .evCite {
@@ -784,14 +784,14 @@ a.wingItem:hover .wingNm {
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10.5px;
   line-height: 1.9;
-  color: var(--soft);
+  color: var(--ds-ink-soft);
   padding: 0;
 }
 .evCite:hover {
-  color: var(--ink);
+  color: var(--ds-ink);
 }
 .evCite b {
-  color: var(--blue);
+  color: var(--ds-blue);
   font-weight: 500;
 }
 .evExcerpt {
@@ -801,19 +801,19 @@ a.wingItem:hover .wingNm {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 0 6px 6px 0;
   font-size: 12.5px;
-  color: var(--ink);
+  color: var(--ds-ink);
 }
 .evStamp {
   display: block;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: var(--faint);
+  color: var(--ds-ink-faint);
   margin-bottom: 2px;
 }
 .evQuiet {
   font-size: 12.5px;
-  color: var(--faint);
+  color: var(--ds-ink-faint);
   font-style: italic;
 }
 
@@ -830,12 +830,12 @@ a.wingItem:hover .wingNm {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #b6791a;
+  color: #0a1c40;
 }
 
 /* The Tallyfoot's staleness pressure — a quiet line, never a wall. */
 .staleFoot {
-  color: #b6791a;
+  color: #0a1c40;
 }
 
 /* The roundup brief's prep (5.3) — the CSM's own motion, folded by default. */
@@ -849,16 +849,16 @@ a.wingItem:hover .wingNm {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  color: var(--faint);
+  color: var(--ds-ink-faint);
   cursor: pointer;
   list-style: none;
 }
 .prepFold summary:hover {
-  color: var(--ink);
+  color: var(--ds-ink);
 }
 .prepLine {
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 10.5px;
   line-height: 1.9;
-  color: var(--soft);
+  color: var(--ds-ink-soft);
 }
