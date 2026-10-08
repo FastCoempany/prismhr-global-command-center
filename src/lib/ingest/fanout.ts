@@ -422,7 +422,8 @@ export async function fileCompletion(
       {
         accountId,
         kind: "account",
-        body: `✓ ${text} — done ${day}`,
+        // Two flat sentences, no dash aside (the writing canon, rule 5).
+        body: `✓ ${text}${/[.!?]$/.test(text) ? "" : "."} Done ${day}.`,
         door: "hand",
         lane: "mine",
         source: "done",

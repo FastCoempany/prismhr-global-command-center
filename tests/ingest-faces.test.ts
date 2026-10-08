@@ -14,9 +14,10 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
+import ts from "typescript";
 import {
   handOffRow,
   loadLedger,
@@ -35,6 +36,7 @@ import { claimAccountId } from "../src/lib/ingest/guard";
 import { UNFILED, sendUnfiled, type VaultDoors } from "../src/lib/ingest/vault";
 import { ALREADY_FILING, ALREADY_ON_FILE, wroteFrom } from "../src/lib/ingest/wrote";
 import { vaultAfterVerdict } from "../src/lib/room/drop-plan";
+import { lintAct, lintReason } from "../src/lib/activity/lint";
 import { HELD_LINE, heldLine, keptLine } from "../src/lib/intranet/capture-door";
 import type { RouteAccount } from "../src/lib/route-capture";
 import { chute, classesOf, held, receipt, render, roomClient, textOf } from "./helpers/room-render";
@@ -1049,5 +1051,243 @@ describe("a Sales Nav grab's receipt counts every row and opens to the accounts 
     const undo = actions.slice(actions.indexOf("export async function roomGrabUndo("), actions.indexOf("export async function roomPasteUndo("));
     assert.match(undo, /roomPasteUndo\(\s*x\.id,\s*\[x\.noteId\],\s*\[\],/);
     assert.match(read("src/app/room/ingest/use-undo.ts"), /await roomGrabUndo\(\.\.\.grabUndoRequest\(row\.grab\)\)/);
+  });
+});
+
+// ── pass 10: every operator string on the ingest surfaces is linted ─────────
+// The writing canon and the plain-speech law (CLAUDE.md, rows A12.1 to A12.12
+// of the scoreboard) on every ingest surface: the Chute, the Drop, the held
+// box, the receipts, Send-it, the Intranet dock and its run log, and the
+// activity run's receipts. Most of these strings are built inside server
+// actions that gate on the session, so no render reaches them; the sweep
+// reads every string literal, template and JSX text the scope's modules
+// spell (the TypeScript parser, never a regex over source) and runs each
+// through the repo's canon lint (src/lib/activity/lint.ts) plus the checks the
+// lint leaves to its callers. A future device, hedge, dash aside or
+// parenthetical in any of them fails the build.
+
+const INGEST_FILES: string[] = [
+  "src/app/room/chute.tsx",
+  "src/app/room/chute-ledger.ts",
+  "src/app/room/read-file.ts",
+  "src/app/room/route-actions.ts",
+  "src/app/room/vault-actions.ts",
+  "src/app/room/filing-actions.ts",
+  "src/lib/activity/run.ts",
+  "src/lib/activity/upload.ts",
+  "src/lib/intranet/capture-door.ts",
+  ...["src/app/room/ingest", "src/lib/ingest", "src/app/intranet", "src/app/activity"].flatMap((d) =>
+    (readdirSync(join(root, d), { recursive: true }) as string[])
+      .filter((f) => /\.tsx?$/.test(f))
+      .map((f) => join(d, f)),
+  ),
+];
+
+// The Drop lives inside the HomeRoom's Row: its handlers by name, and the
+// element that takes the drop. A rename fails the sweep rather than
+// quietly shrinking it.
+const DROP_HANDLERS = [
+  "dropRefusal",
+  "readingDrop",
+  "queuedDrop",
+  "submitCompose",
+  "backUp",
+  "filePaste",
+  "fileText",
+  "answerHeld",
+  "dropHeldPaste",
+  "unfileHeld",
+  "readDroppedFile",
+  "archiveFiles",
+  "handleFiles",
+  "submitPaste",
+];
+
+// Strings in scope that no operator reads, each with its reason. Every entry
+// must still match a string, so the list cannot rot into a blanket pass.
+const NOT_COPY: { file: string; has: string; why: string }[] = [
+  { file: "src/app/room/chute-ledger.ts", has: "interrupted — drop it again", why: "the decree's own words, verbatim (CLAUDE.md, The Chute; B48)" },
+  { file: "src/app/room/read-file.ts", has: "DOCUMENT — ", why: "a capture's head line: the dialect the reader writes and the sniffers read" },
+  { file: "src/lib/activity/run.ts", has: "the room's own run lock", why: "the lock row's raw text; every capture read excludes it by checksum" },
+  { file: "src/app/intranet/runners.ts", has: "the room's own run lock", why: "the lock row's raw text; every capture read excludes it by checksum" },
+  { file: "src/lib/activity/run.ts", has: "the operator is ", why: "the distiller's context pack, read only by the model" },
+  { file: "src/lib/activity/run.ts", has: "the operator's last outbound", why: "the distiller's context pack, read only by the model" },
+  { file: "src/lib/activity/run.ts", has: "a live board row exists", why: "the distiller's context pack, read only by the model" },
+  { file: "src/lib/activity/run.ts", has: "your first pass produced nothing", why: "the distiller's retry instruction, read only by the model" },
+  { file: "src/lib/ingest/verdict-reason.ts", has: "(no page data on file)", why: "the reason model's prompt" },
+  { file: "src/lib/ingest/verdict-reason.ts", has: "(not an account in our book)", why: "the reason model's prompt" },
+  { file: "src/lib/ingest/verdict-reason.ts", has: " in the book)", why: "the reason model's prompt" },
+  { file: "src/app/intranet/intranet-client.tsx", has: "(start with: ", why: "the question as the brain receives it, never rendered" },
+];
+
+/** Every string a module spells: literals, templates with each hole read as
+ *  "X", and each JSX element's own text with its holes read the same way. */
+function spelled(file: string, only?: (n: ts.Node) => boolean): string[] {
+  const src = read(file);
+  const sf = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true, file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const out: string[] = [];
+  const entity = (s: string) =>
+    s.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  const walk = (n: ts.Node, inScope: boolean) => {
+    const live = inScope || !only || only(n);
+    if (live) {
+      if (ts.isImportDeclaration(n) || ts.isExportDeclaration(n)) return;
+      // A pattern handed to RegExp is a reader's grammar, never copy.
+      if (ts.isNewExpression(n) && n.expression.getText(sf) === "RegExp") return;
+      if (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) out.push(n.text);
+      else if (ts.isTemplateExpression(n)) out.push(n.head.text + n.templateSpans.map((s) => "X" + s.literal.text).join(""));
+      else if ((ts.isJsxElement(n) || ts.isJsxFragment(n)) && n.children.some((c) => ts.isJsxText(c) && /[A-Za-z]/.test(c.text)))
+        out.push(
+          entity(
+            n.children
+              .map((c) =>
+                ts.isJsxText(c)
+                  ? c.text
+                  : ts.isJsxExpression(c) && c.expression && ts.isStringLiteral(c.expression)
+                    ? c.expression.text
+                    : ts.isJsxExpression(c) && !c.expression
+                      ? ""
+                      : "X",
+              )
+              .join("")
+              .replace(/\s+/g, " ")
+              .trim(),
+          ),
+        );
+    }
+    ts.forEachChild(n, (c) => walk(c, live));
+  };
+  walk(sf, false);
+  // A dash between two holes ("X — X") is a line too; a lone "—" is a blank.
+  return out.filter((s) => /[A-Za-z]{2}/.test(s) || (/[—–]/.test(s) && /[A-Za-z]/.test(s)));
+}
+
+/** The Drop's strings: its handlers inside the HomeRoom's Row, and the
+ *  element that takes the drop. */
+function dropSpelled(): { strings: string[]; found: Set<string> } {
+  const found = new Set<string>();
+  const strings = spelled("src/app/room/room-client.tsx", (n) => {
+    if ((ts.isFunctionDeclaration(n) || ts.isVariableDeclaration(n)) && n.name && ts.isIdentifier(n.name) && DROP_HANDLERS.includes(n.name.text)) {
+      found.add(n.name.text);
+      return true;
+    }
+    if (ts.isJsxElement(n) && n.openingElement.attributes.properties.some((p) => ts.isJsxAttribute(p) && p.name.getText() === "onDrop")) {
+      found.add("onDrop");
+      return true;
+    }
+    return false;
+  });
+  return { strings, found };
+}
+
+// A reassurance flourish or invented slang the plain-speech law names, and
+// the noun-form the writing canon's first rule names ("delivery is pending").
+const FLOURISH_RE =
+  /\b(and that's (fine|okay|ok)|no judg(e)?ment|shouldn't have to|don't worry|no worries|rest assured|read-back|when it's home|on the first pass|unlocks the full shape)\b/i;
+const NOUN_FORM_RE = /\b\w+ (delivery|follow-up|outreach|review) is (pending|due|outstanding)\b/i;
+
+/** What the canon finds in one operator string, or nothing. */
+function canonFaults(s: string): string[] {
+  const t = s.replace(/\s+/g, " ").trim();
+  // lintReason carries the hedges, the retired words (steps, X-shaped, their
+  // own book, domestic-only) and the seven devices; its word cap is for
+  // reason lines and its digit rule is for gem prose, and a receipt's counts
+  // are arithmetic, so both stay out here.
+  const faults = lintReason(t).faults.filter((f) => !/the cap is|a digit that is not a date/.test(f));
+  // The deadline check runs on every line: no ingest string tells the
+  // operator to act by a day.
+  if (lintAct(t).faults.includes("a deadline rides the action line")) faults.push("a deadline");
+  if (/[—–]/.test(t) && /[A-Za-z]/.test(t)) faults.push("a dash aside");
+  if (/\([^()]*[A-Za-z][^()]*\)/.test(t) && /\s/.test(t)) faults.push("a parenthetical");
+  if (FLOURISH_RE.test(t)) faults.push("a flourish or invented slang");
+  if (NOUN_FORM_RE.test(t)) faults.push("a noun-form instruction");
+  return faults;
+}
+
+describe("every operator string on the ingest surfaces obeys the writing canon and the plain-speech law (pass 10, A12)", () => {
+  test("the sweep reaches every door: the Chute, the Drop, the held box, the receipts, Send-it, the Intranet and the activity run", () => {
+    for (const f of [
+      "src/app/room/ingest/held.tsx",
+      "src/app/room/ingest/receipt.tsx",
+      "src/app/room/ingest/hand-off.ts",
+      "src/lib/ingest/guard.ts",
+      "src/lib/ingest/grab.ts",
+      "src/app/intranet/intranet-client.tsx",
+      "src/app/intranet/runners.ts",
+      "src/app/intranet/capture-actions.ts",
+      "src/app/activity/dock.tsx",
+      "src/app/activity/actions.ts",
+    ])
+      assert.ok(INGEST_FILES.includes(f), `the sweep misses ${f}`);
+    const { strings, found } = dropSpelled();
+    assert.deepEqual([...found].sort(), [...DROP_HANDLERS, "onDrop"].sort(), "a Drop handler was renamed out of the sweep");
+    assert.ok(strings.some((s) => /Read & file/.test(s)), "the Drop's own face is in the sweep");
+    // The canon's own examples fail the sweep's checks, so the sweep is live.
+    for (const bad of [
+      "A country is a lens, not a copy.",
+      "Kept — but the brain is unreachable.",
+      "Read clean, nothing worth keeping, and that's fine.",
+      "Keep in the Playbook (the bank)",
+      "It may be worth a second look.",
+      "Send the model by Friday.",
+      "Model delivery is pending.",
+      "This drop looks EOR-shaped.",
+      "Questions now are free, later they're change orders.",
+    ])
+      assert.ok(canonFaults(bad).length > 0, `the sweep let through: ${bad}`);
+  });
+
+  test("no string in scope carries a device, a hedge, a deadline, a dash aside, a parenthetical, retired words or a flourish", () => {
+    const used = new Set<number>();
+    const faults: string[] = [];
+    const sweep = (file: string, strings: string[]) => {
+      for (const s of strings) {
+        const skip = NOT_COPY.findIndex((x) => x.file === file && s.includes(x.has));
+        if (skip >= 0) {
+          used.add(skip);
+          continue;
+        }
+        const f = canonFaults(s);
+        if (f.length) faults.push(`${file}: ${f.join(", ")} in "${s.slice(0, 160)}"`);
+      }
+    };
+    for (const file of INGEST_FILES) sweep(file, spelled(file));
+    sweep("src/app/room/room-client.tsx", dropSpelled().strings);
+    assert.deepEqual(faults, []);
+    const stale = NOT_COPY.filter((_, i) => !used.has(i)).map((x) => `${x.file}: ${x.has}`);
+    assert.deepEqual(stale, [], "a NOT_COPY entry matches nothing; remove it");
+  });
+});
+
+// ── pass 10: the click-depth law on the ingest surfaces (A5) ────────────────
+// "Every compression opens … exactly one click deep. Nothing compressed is
+// ever a dead end, and nothing deep ever surfaces uninvited." The Chute's
+// second-record receipt counted rows, accounts and email text and opened to
+// nothing: its only link landed on the Intranet with the dock's receipt
+// folded, a second click away. The counts are a door now, and the dock opens
+// its receipt when the page is arrived at by that door.
+
+describe("the Chute's second-record counts open the run's receipt in one click (pass 10, A5)", () => {
+  test("the counts are a link to the dock's anchor, and the dock answers to it", async () => {
+    const { ActivityCame } = await chute();
+    const { ActivityDock, DOCK_ANCHOR, opensOnArrival } = await import("../src/app/activity/dock");
+    const html = await render(createElement(ActivityCame, { came: { rows: 412, accounts: 37, textRows: 1 } }));
+    assert.match(html, new RegExp(`<a href="/intranet#${DOCK_ANCHOR}"`));
+    assert.equal(textOf(html), "412 rows · 37 accounts · 1 carrying email text.");
+    assert.equal(textOf(await render(createElement(ActivityCame, { came: { rows: 1, accounts: 1, textRows: 0 } }))), "1 row · 1 account · 0 carrying email text.");
+    // The dock carries the anchor, and arriving by it opens the receipt.
+    assert.match(await render(createElement(ActivityDock, { book: [], canWrite: true })), new RegExp(`id="${DOCK_ANCHOR}"`));
+    assert.equal(opensOnArrival(`#${DOCK_ANCHOR}`), true);
+    assert.equal(opensOnArrival(""), false);
+    assert.equal(opensOnArrival("#elsewhere"), false);
+  });
+
+  test("nothing deep surfaces uninvited: the held box's grounds and the receipt's lists stay shut at first paint", async () => {
+    const shut = textOf(await heldBox({ verdict: TEXT_VERDICT, claim: SIMPLOY.name, bound: REGIS }));
+    assert.ok(!shut.includes("In the text"), shut);
+    assert.ok(!shut.includes("Nothing in the text names Regis HR Group"), shut);
+    const wrote = { filed: ["Re: renewal · Lesha Cyphers · 10/3"], todos: ["Send the census template."], promises: [], asks: ["Which countries are first?"], learned: [] };
+    const line = textOf(await receiptLine(filed({ asks: 1 }), { wrote }));
+    for (const s of ["Re: renewal", "Send the census template.", "Which countries are first?"]) assert.ok(!line.includes(s), s);
   });
 });

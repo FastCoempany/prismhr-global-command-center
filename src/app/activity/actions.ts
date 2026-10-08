@@ -29,7 +29,7 @@ export async function activityStage(batch: StageBatch): Promise<StageReply> {
     return await stageActivityBatch(batch);
   } catch (e) {
     const msg = (e as Error)?.message ?? "unknown";
-    return { ok: false, reason: `Staging failed — ${msg.slice(0, 120)}.` };
+    return { ok: false, reason: `Staging failed: ${msg.slice(0, 120)}.` };
   }
 }
 
@@ -45,7 +45,7 @@ export async function activityRun(): Promise<RunPassResult> {
       done: false,
       remaining: 0,
       receipt: [],
-      reason: `The pass failed — ${msg.slice(0, 120)}.`,
+      reason: `The pass failed: ${msg.slice(0, 120)}.`,
     };
   }
 }
@@ -73,7 +73,7 @@ export async function activityTakeBack(): Promise<TakeBackResult> {
       ok: false,
       removed: 0,
       lines: [],
-      reason: `The take-back failed — ${msg.slice(0, 120)}.`,
+      reason: `The take-back failed: ${msg.slice(0, 120)}.`,
     };
   }
 }

@@ -59,6 +59,16 @@ export function countsLine(c: {
   return `Read ${plural(c.rows, "row")} across ${plural(c.accounts, "account")}, ${c.textRows} with email text. ${plural(c.distill, "account")} to distill and ${c.intentOnly} with only a tally to refresh.`;
 }
 
+/** The dock's anchor. The Chute's second-record receipt links here, and
+ *  arriving by that link opens the receipt, so the counts the Chute shows
+ *  open to the run's lines in one click (the click-depth law; pass 10). */
+export const DOCK_ANCHOR = "second-record";
+
+/** Whether the page was arrived at by the dock's own link. */
+export function opensOnArrival(hash: string): boolean {
+  return hash === `#${DOCK_ANCHOR}`;
+}
+
 /** The take-back's warning, said once before the second press. */
 export const TAKE_BACK_ARMED =
   "Press ↩ again to clear the second record. Earlier drops were not kept. Your acted stamps stay.";
@@ -108,6 +118,17 @@ export function ActivityDock({
   // reach is every account's second-record read, so a stray click must not.
   const [armed, setArmed] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Arriving by the Chute's link opens the receipt; a later hash change on
+  // this page (the Chute mounted above) opens it too.
+  useEffect(() => {
+    const sync = () => {
+      if (opensOnArrival(window.location.hash)) setOpen(true);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
 
   useEffect(() => {
     void activityReceipt().then((r) => {
@@ -187,6 +208,7 @@ export function ActivityDock({
 
   return (
     <section
+      id={DOCK_ANCHOR}
       className={`${styles.dock} ${hot ? styles.hot : ""}`}
       onDragOver={(e) => {
         e.preventDefault();

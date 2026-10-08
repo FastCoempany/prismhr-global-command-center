@@ -115,16 +115,15 @@ function reasonOf(e: unknown): string {
   if (inner) msg = inner[1];
   msg = msg.slice(0, 160);
   if (/credit balance is too low/i.test(msg))
-    return "the API account is out of credits — add credits under Plans & Billing, then press ⟳; everything that failed retries automatically";
+    return "the API account is out of credits. Add credits under Plans & Billing, then press ⟳. Everything that failed retries on its own";
   if (err?.status === 401) return "the API key was refused";
   if (err?.status === 429)
-    return "the model is rate-limited right now — try again shortly";
+    return "the model is rate-limited right now. Try again shortly";
   if (err?.status === 529 || err?.status === 503)
-    return "the model is overloaded right now — try again shortly";
-  if (err?.status === 400)
-    return `the model refused the request${msg ? ` — ${msg}` : ""}`;
+    return "the model is overloaded right now. Try again shortly";
+  if (err?.status === 400) return `the model refused the request${msg ? `: ${msg}` : ""}`;
   if (err?.name === "APIConnectionTimeoutError" || /timed? ?out|aborted/i.test(msg))
-    return "the model call timed out — a very long entry can do that; it will be retried next pass";
+    return "the model call timed out. A very long entry can do that. It retries next pass";
   return msg || "an unknown failure";
 }
 
@@ -324,20 +323,22 @@ export async function syncApp(budget = 400): Promise<RunReport> {
 
     const { created, updated, skipped } = await upsertDocs(drafts);
     lines.push(
-      `Looked around the app — ${created} new, ${updated} changed, ${skipped} already in hand.`,
+      `Looked around the app: ${created} new, ${updated} changed, ${skipped} already in hand.`,
     );
 
     // C6 · a mirror whose home row has gone keeps its place and gains a stamp.
     const gone = await markVanished(hidden);
     if (gone > 0)
-      lines.push(`${gone} row${gone === 1 ? "" : "s"} left the app — kept here, marked.`);
+      lines.push(
+        `${gone} row${gone === 1 ? "" : "s"} left the app. The brain keeps ${gone === 1 ? "it" : "them"}, marked.`,
+      );
 
     return { ok: true, lines };
   } catch {
     return {
       ok: false,
       lines,
-      reason: "The brain's tables aren't there yet — run docs/intranet-tables.sql.",
+      reason: "The brain's tables aren't there yet. Run docs/intranet-tables.sql.",
     };
   }
 }
@@ -571,21 +572,21 @@ export async function ingestPlaybook(): Promise<RunReport> {
 
     const { created, updated, skipped } = await upsertDocs(drafts);
     lines.push(
-      `The Playbook came along — ${created} new, ${updated} changed, ${skipped} unchanged.`,
+      `Read the Playbook: ${created} new, ${updated} changed, ${skipped} unchanged.`,
     );
 
     // V.3 · the foundational bank — the floor every filing lands on.
     const seeded = await seedBank();
     if (seeded)
       lines.push(
-        `Laid the index floor — ${seeded} subject${seeded === 1 ? "" : "s"} seeded from the bank.`,
+        `Seeded ${seeded} subject${seeded === 1 ? "" : "s"} into the index from the bank.`,
       );
 
     // V.4 · questions are content, not categories.
     const retired = await retireQuestionRail();
     if (retired)
       lines.push(
-        `The question categories left the rail — what they held now lives under ${BUYER_QUESTIONS_PARENT}.`,
+        `The question categories left the rail. What they held now lives under ${BUYER_QUESTIONS_PARENT}.`,
       );
 
     return { ok: true, lines };
@@ -682,7 +683,7 @@ export async function extractPending(
     return {
       ok: false,
       lines: [],
-      reason: "The brain is unreachable — nothing can be read right now.",
+      reason: "The brain is unreachable. Nothing can be read right now.",
     };
 
   const prisma = getPrisma();
@@ -736,7 +737,7 @@ export async function extractPending(
       st.kind === "sendit" && opts?.captureId ? "your paste" : "the whole backlog";
     const partWord = st.kind === "sendit" && opts?.captureId ? "parts read" : "read";
     let total = doneBase + backlog;
-    await pulse({ total, unit: `${unitWord} — ${doneBase} of ${total} ${partWord}` });
+    await pulse({ total, unit: `${unitWord} · ${doneBase} of ${total} ${partWord}` });
 
     // Reads run eight at a time — the model is the slow part and the calls
     // are independent, so a pass gets eight entries per model-latency instead
@@ -787,7 +788,7 @@ export async function extractPending(
           // per pass says it — never a wall of identical red.
           failed += 1;
           if (!firstWhy) firstWhy = reasonOf(s.reason);
-          const raw = `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} — ${rawOf(s.reason)}`;
+          const raw = `${doc.space || doc.origin} · ${iso(doc.occurredAt).slice(0, 10)} · ${rawOf(s.reason)}`;
           detail.push(raw);
           // The failure is stamped so the doc sorts behind never-tried work
           // next pass. It stays pending — promptVersion "fail:N" is still
@@ -804,7 +805,7 @@ export async function extractPending(
             {
               failed,
               total,
-              unit: `${unitWord} — ${doneBase + read} of ${total} ${partWord} · ${failed} queued for retry`,
+              unit: `${unitWord} · ${doneBase + read} of ${total} ${partWord} · ${failed} queued for retry`,
             },
             { detail: [raw] },
           );
@@ -869,7 +870,7 @@ export async function extractPending(
         await pulse(
           {
             done: doneBase + read,
-            unit: `${unitWord} — ${doneBase + read} of ${total} ${partWord}`,
+            unit: `${unitWord} · ${doneBase + read} of ${total} ${partWord}`,
           },
           {
             log: [
@@ -877,8 +878,8 @@ export async function extractPending(
                 // A row read from its filing says so: the log is where the
                 // operator sees that no second model read was paid.
                 text: nSt
-                  ? `${w.what} read${stored[b] ? " from its filing" : ""} — ${nSt} statement${nSt === 1 ? "" : "s"} filed under ${subs.join(", ")}.`
-                  : `${w.what} read${stored[b] ? " from its filing" : ""} clean — nothing worth keeping, and that's fine.`,
+                  ? `${w.what} read${stored[b] ? " from its filing" : ""}. Filed ${nSt} statement${nSt === 1 ? "" : "s"} under ${subs.join(", ")}.`
+                  : `${w.what} read${stored[b] ? " from its filing" : ""}. Nothing in it to keep.`,
               },
             ],
           },
@@ -898,7 +899,7 @@ export async function extractPending(
         {
           log: [
             {
-              text: `${failed} failed this pass — queued for retry.`,
+              text: `${failed} failed this pass and wait${failed === 1 ? "s" : ""} for a retry.`,
               bad: true,
             },
           ],
@@ -906,7 +907,7 @@ export async function extractPending(
       );
     }
     if (outOfTime)
-      lines.push("Ran out of time this pass — the rest waits for the next one.");
+      lines.push("Ran out of time this pass. The rest waits for the next one.");
     const left = await prisma.intranetDoc.count({
       where: { OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }] },
     });
@@ -918,8 +919,8 @@ export async function extractPending(
     const halted = read === 0 && failed > 0 && !outOfTime;
     if (halted)
       await pulse(
-        { active: false, now: `Reading is paused — ${firstWhy}.`, lanes: [] },
-        { log: [{ text: `Reading is paused — ${firstWhy}.`, bad: true }] },
+        { active: false, now: `Reading is paused: ${firstWhy}.`, lanes: [] },
+        { log: [{ text: `Reading is paused: ${firstWhy}.`, bad: true }] },
       );
 
     return {
@@ -931,7 +932,7 @@ export async function extractPending(
       briefs: briefs.length ? briefs : undefined,
     };
   } catch (e) {
-    return { ok: false, lines, reason: `The reading pass failed — ${reasonOf(e)}.` };
+    return { ok: false, lines, reason: `The reading pass failed: ${reasonOf(e)}.` };
   }
 }
 
@@ -1192,7 +1193,7 @@ export async function decomposeTopics(budget = 2): Promise<RunReport> {
       const proposal = await runSplit(topic, claims.map(toClaim)).catch(() => null);
       done += 1;
       if (!proposal || proposal.verdict !== "split") {
-        lines.push(`${t.label} holds together — left whole.`);
+        lines.push(`${t.label} holds together. It stays whole.`);
         continue;
       }
 
@@ -1236,11 +1237,11 @@ function listOut(items: string[]): string {
   return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
 
-/** "The index grew — X picked up 6, and Y is brand new." */
+/** "The index grew: X picked up 6, and Y is brand new." */
 function grewSentence(grew: { label: string; n: number; fresh: boolean }[]): string {
   const grown = grew.filter((g) => !g.fresh).map((g) => `${g.label} picked up ${g.n}`);
   const fresh = grew.filter((g) => g.fresh).map((g) => `"${g.label}" is brand new`);
-  return `The index grew — ${listOut([...grown, ...fresh])}.`;
+  return `The index grew: ${listOut([...grown, ...fresh])}.`;
 }
 
 /** Read what was JUST pasted, settle the index, and report the visible
@@ -1254,8 +1255,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
     return {
       ok: false,
       lines: [],
-      reason:
-        "Kept — but the brain is unreachable, so it can't be read into the index yet.",
+      reason: "Kept. The brain is unreachable, so it can't be read into the index yet.",
     };
 
   const prisma = getPrisma();
@@ -1288,8 +1288,8 @@ export async function readCapture(captureId: string): Promise<RunReport> {
         total: parts,
         done: 0,
         failed: 0,
-        now: "Your paste arrived — reading it before anything else.",
-        unit: `your paste — 0 of ${parts} part${parts === 1 ? "" : "s"} read`,
+        now: "Your paste arrived. Reading it before anything else.",
+        unit: `your paste · 0 of ${parts} part${parts === 1 ? "" : "s"} read`,
         lanes: [],
         log: [],
         detail: [],
@@ -1297,7 +1297,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       {
         log: [
           {
-            text: `Your paste arrived${capSpace ? ` — ${capSpace}` : ""}, kept verbatim in the archive. Split into ${parts} part${parts === 1 ? "" : "s"}.`,
+            text: `Your paste arrived${capSpace ? ` in ${capSpace}` : ""}, kept verbatim in the archive. Split into ${parts} part${parts === 1 ? "" : "s"}.`,
           },
         ],
       },
@@ -1378,7 +1378,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       const buyers = tally.get("prospect-question") ?? 0;
       if (buyers > 0)
         lines.push(
-          `${buyers === 1 ? "One of those is a question a real buyer asked — it's" : `${buyers} of those are questions real buyers asked — they're`} filed under ${BUYER_QUESTIONS_PARENT}, in ${BUYER_QUESTIONS_SUB}, and any battlecard proposals from them will show up on the Playbook.`,
+          `${buyers === 1 ? "One of those is a question a real buyer asked. It's" : `${buyers} of those are questions real buyers asked. They're`} filed under ${BUYER_QUESTIONS_PARENT}, in ${BUYER_QUESTIONS_SUB}, and any battlecard proposals from them will show up on the Playbook.`,
         );
 
       const named = accountsMentioned(
@@ -1387,7 +1387,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       );
       if (named.length)
         lines.push(
-          `${listOut(named.map((a) => a.name))} came up by name — their account rows carry this from here.`,
+          `${listOut(named.map((a) => a.name))} came up by name. Their account rows carry this from here.`,
         );
     } else if (grew.length) {
       lines.push(grewSentence(grew));
@@ -1429,11 +1429,11 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       await pulse(
         {
           active: false,
-          now: "Caught up — nothing waiting.",
-          unit: "nothing — at rest",
+          now: "Caught up. Nothing waiting.",
+          unit: "nothing · at rest",
           lanes: [],
         },
-        { log: [{ text: "Done — the backlog is clear." }] },
+        { log: [{ text: "Done. The backlog is clear." }] },
       );
 
     return {
@@ -1444,7 +1444,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       detail: read.detail,
     };
   } catch (e) {
-    return { ok: false, lines: [], reason: `The reading failed — ${reasonOf(e)}.` };
+    return { ok: false, lines: [], reason: `The reading failed: ${reasonOf(e)}.` };
   }
 }
 
@@ -1765,7 +1765,7 @@ export async function runBrain(opts?: {
         done: 0,
         failed: 0,
         now: sweep ? "Looking around the whole app first…" : "Continuing the backlog.",
-        unit: "the whole backlog — sweep first, then reads",
+        unit: "the whole backlog · sweep first, then reads",
         lanes: [],
         log: [],
         detail: [],
@@ -1774,7 +1774,7 @@ export async function runBrain(opts?: {
         log: [
           {
             text: sweep
-              ? "Sweep started — the accounts page, the Playbook, partners, demo notes."
+              ? "Sweep started on the accounts page, the Playbook, partners and demo notes."
               : "Continuing the backlog.",
           },
         ],
@@ -1831,11 +1831,11 @@ export async function runBrain(opts?: {
     await pulse(
       {
         active: false,
-        now: "Caught up — nothing waiting.",
-        unit: "nothing — at rest",
+        now: "Caught up. Nothing waiting.",
+        unit: "nothing · at rest",
         lanes: [],
       },
-      { log: [{ text: "Done — the backlog is clear." }] },
+      { log: [{ text: "Done. The backlog is clear." }] },
     );
 
   return {

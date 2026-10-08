@@ -25,7 +25,7 @@ export function SelfCheck() {
           })
         }
       >
-        {busy ? "Checking — this takes a minute…" : "Run the self-check"}
+        {busy ? "Checking. This takes a minute…" : "Run the self-check"}
       </button>
       {lines.length > 0 && (
         <ul className={styles.itRunLines}>

@@ -1571,7 +1571,9 @@ describe("the world speaks only when the record is empty (IV.6)", () => {
     );
   });
   test("the surface labels it as from outside the record", () => {
-    assert.ok(client.includes("From the world, not the record"));
+    // Flat since pass 10 (A12.11): the old label balanced on an antithesis
+    // and a dash aside.
+    assert.ok(client.includes("General knowledge from outside the record."));
     assert.ok(client.includes("itWorld"), "the world block has no distinct dress");
   });
   test("buyers' own questions are read as intelligence in the answer path (C7)", () => {
@@ -1761,7 +1763,8 @@ describe("the ledger surface holds the decrees (IV.8)", () => {
     );
   });
   test("the country lens note states the no-duplication doctrine", () => {
-    assert.ok(client.includes("A country is a lens, not a copy"));
+    // Flat since pass 10 (A12.11): the same doctrine without the antithesis.
+    assert.ok(client.includes("Each country reads the same record through one place. Nothing is copied."));
   });
 });
 
@@ -1905,9 +1908,10 @@ describe("the bench gadget is wired to the truth", () => {
   test("the gadget is docked, stamps its run, and takes you to it on Send it", () => {
     assert.ok(client.includes("itBgPlate"), "the gadget lost its plate");
     assert.ok(client.includes("scrollIntoView"), "Send it no longer brings you to it");
-    assert.ok(client.includes("Send-it run — your paste"));
-    assert.ok(client.includes("Refresh run — the whole backlog"));
-    assert.ok(client.includes("At rest — caught up"), "rest is not stated honestly");
+    // The run's name and its unit sit on the mono dot since pass 10 (A12.5).
+    assert.ok(client.includes("Send-it run · your paste"));
+    assert.ok(client.includes("Refresh run · the whole backlog"));
+    assert.ok(client.includes("At rest · caught up"), "rest is not stated honestly");
   });
   test("a failure holds the gadget open until it is seen (V.6)", () => {
     assert.ok(client.includes("failHold"), "a failed run folds away unseen");
@@ -1925,7 +1929,8 @@ describe("the bench gadget is wired to the truth", () => {
     assert.ok(/r\.halt/.test(client), "the client hammers on regardless");
   });
   test("repeated failures collapse to one line per pass", () => {
-    assert.ok(runners.includes("failed this pass — queued for retry"));
+    // Flat since pass 10 (A12.5): no dash aside.
+    assert.ok(runners.includes("failed this pass and wait"));
     assert.ok(
       !runners.includes("One entry failed — it retries next pass"),
       "the wall of identical red lines is back",
