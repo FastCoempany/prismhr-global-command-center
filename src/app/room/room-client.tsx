@@ -7,6 +7,7 @@
 
 import {
   Fragment,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -61,7 +62,8 @@ import { shortName } from "@/lib/ingest/short-name";
 import { ALREADY_ON_FILE, monthDay } from "@/lib/ingest/wrote";
 import type { VaultReceipt } from "@/lib/ingest/vault";
 import { asTypedNote, sniffPaste } from "@/lib/paste-files";
-import type { LedgerRow } from "./chute-ledger";
+import { PICK_LOST, type LedgerRow } from "./chute-ledger";
+import { loadDropHolds, saveDropHolds } from "./ingest/drop-held";
 import { HeldBox, type HeldAccount, type HeldChoice } from "./ingest/held";
 import { ReceiptLine } from "./ingest/receipt";
 import { DROP_CSV_RECEIPT, useIngest, type Filed } from "./ingest/use-ingest";
@@ -326,7 +328,15 @@ type FreshCap = {
 // text, the dropped files held with the question so a disputed drop never
 // lands in the wrong folder, and what the reader cut before the text
 // arrived (D4), for the re-run.
-type DropHold = Held<{ text: string; files?: File[]; windows?: Window[] }>;
+// A held question survives a reload and the day line with its text, and
+// says since when once carried (pass 10, A12.7; ./ingest/drop-held.ts).
+type DropHold = Held<{
+  text: string;
+  files?: File[];
+  windows?: Window[];
+  filename?: string;
+  heldSince?: string;
+}>;
 
 // One line of the TODAY register's fresh receipts: a sentence the row said
 // (a close, a retire, an ask minted), or a filing's receipt, which the Drop
@@ -484,7 +494,46 @@ export function Row({
     );
   // The held verdict the banner shows; a second dispute waits its turn
   // behind it (use-verdict.ts).
-  const { mismatch, setMismatch } = useVerdict<DropHold>();
+  const { mismatch, setMismatch, queue: heldLine, restore } = useVerdict<DropHold>();
+  // The line of held questions is kept per account, so a reload or the day
+  // line never quietly forgets a pick the room asked for (Yesterday carries;
+  // pass 10, A12.7). The keeper runs before the loader, so its first run,
+  // before anything came back, writes nothing.
+  const heldLoaded = useRef(false);
+  useEffect(() => {
+    if (!heldLoaded.current) return;
+    try {
+      saveDropHolds(localStorage, row.accountId, heldLine);
+    } catch {
+      // Storage refused: the line still holds for this page.
+    }
+  }, [heldLine, row.accountId]);
+  useEffect(() => {
+    let back: ReturnType<typeof loadDropHolds> = { holds: [], lost: [] };
+    try {
+      back = loadDropHolds(localStorage, row.accountId);
+    } catch {
+      // Storage refused or held nothing readable: nothing comes back.
+    }
+    heldLoaded.current = true;
+    if (!back.holds.length && !back.lost.length) return;
+    // Deferred so hydration completes against the server's empty line first,
+    // as the Chute's ledger does (use-receipts.ts).
+    const t = setTimeout(() => {
+      if (back.holds.length) restore(back.holds);
+      // A hold whose text could not be kept asks for the re-drop.
+      for (const filename of back.lost)
+        addReceipt({
+          filename,
+          state: "interrupted",
+          reason: PICK_LOST,
+          day: receiptDay(),
+        });
+    }, 0);
+    return () => clearTimeout(t);
+    // The account is the row's for its life; the loader runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.accountId]);
   const [gone, setGone] = useState<Set<string>>(new Set());
   // Rows the operator just un-held: they belong in the open list until the
   // server round trip re-partitions them there.
@@ -862,7 +911,7 @@ export function Row({
   // nothing filed. Held files never go this way; they wait for the box,
   // whose ✕ still backs them up (slice 18a).
   const dropHeldPaste = () => {
-    if (mismatch && !mismatch.files?.length) setMismatch(null);
+    if (mismatch && !mismatch.files?.length && !mismatch.filename) setMismatch(null);
   };
   // "Keep on {row}": the operator asserts the drop was right.
   const pickBound = () => answerHeld();
@@ -875,7 +924,7 @@ export function Row({
   const unfileHeld = () => {
     if (!mismatch) return;
     const plan = dismissHeld({
-      filename: mismatch.files?.[0]?.name,
+      filename: mismatch.files?.[0]?.name ?? mismatch.filename,
       text: mismatch.text,
       files: mismatch.files,
     });
@@ -2437,7 +2486,8 @@ export function Row({
                 and the ✕ files nothing and still backs the files up. */}
             {mismatch && (
               <HeldBox
-                file={mismatch.files?.[0]?.name ?? "Paste"}
+                file={mismatch.files?.[0]?.name ?? mismatch.filename ?? "Paste"}
+                since={mismatch.heldSince}
                 verdict={mismatch}
                 claim={mismatch.claim}
                 bound={{ id: row.accountId, name: row.name }}

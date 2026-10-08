@@ -80,10 +80,15 @@ export function queueVerdict<T>(queue: readonly T[], next: T | null): T[] {
 export function useVerdict<T>(): {
   mismatch: T | null;
   setMismatch: (next: T | null) => void;
+  /** The whole line, for the Drop to keep across a reload (drop-held.ts). */
+  queue: readonly T[];
+  /** The line a reload brought back, ahead of anything held since. */
+  restore: (items: readonly T[]) => void;
 } {
   const [queue, setQueue] = useState<T[]>([]);
   const setMismatch = (next: T | null) => setQueue((q) => queueVerdict(q, next));
-  return { mismatch: queue[0] ?? null, setMismatch };
+  const restore = (items: readonly T[]) => setQueue((q) => [...items, ...q]);
+  return { mismatch: queue[0] ?? null, setMismatch, queue, restore };
 }
 
 /** What the held box's ✕ does with a held capture (slice 18a): it files
