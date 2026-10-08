@@ -1,14 +1,14 @@
 .app {
   --navy: #0a1c40;
-  --navy2: #0e2450;
+  --navy2: #142949;
   --blue: #2563eb;
   --blue-d: #1d4ed8;
   --orange: #e6701e;
   --bg: #f5f7fb;
   --card: #ffffff;
-  --line: #e6ebf3;
+  --line: rgba(10, 28, 64, 0.09);
   --ink: #0a1c40;
-  --muted: #5b6b86;
+  --muted: rgba(10, 28, 64, 0.66);
   display: grid;
   grid-template-columns: 320px 1fr;
   height: calc(100vh - 64px);
@@ -26,7 +26,7 @@
 /* Sidebar */
 .side {
   background: var(--navy);
-  color: #dfe6f2;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -76,7 +76,7 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
-  color: #dfe6f2;
+  color: #ffffff;
   font-size: 13px;
   text-decoration: none;
 }
@@ -85,7 +85,7 @@
 }
 
 .search input::placeholder {
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
 }
 .nav {
   overflow: auto;
@@ -93,7 +93,7 @@
   flex: 1;
 }
 .grpTitle {
-  color: #8ea3c7;
+  color: rgba(255, 255, 255, 0.66);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
@@ -106,7 +106,7 @@
   padding: 7px 10px;
   border-radius: 8px;
   cursor: pointer;
-  color: #cdd8ec;
+  color: rgba(255, 255, 255, 0.66);
   font-size: 13.5px;
   border: 0;
   background: transparent;
@@ -133,11 +133,11 @@
   background: var(--blue);
 }
 .low {
-  background: #5b6b86;
+  background: rgba(10, 28, 64, 0.65);
 }
 .pinFlag {
   margin-left: auto;
-  color: #f7b267;
+  color: #f59e0b;
   font-size: 12px;
 }
 
@@ -167,7 +167,7 @@
 }
 .toggle {
   display: flex;
-  background: #e7edf6;
+  background: #eff2f7;
   border-radius: 9px;
   padding: 3px;
 }
@@ -219,20 +219,20 @@
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  background: #e7edf6;
+  background: #eff2f7;
   color: var(--navy);
 }
 .tierHigh {
-  background: #fde8d7;
-  color: #b6531a;
+  background: rgba(37, 99, 235, 0.16);
+  color: #1d4ed8;
 }
 .tierMedium {
-  background: #dbe6fd;
+  background: rgba(37, 99, 235, 0.08);
   color: var(--blue-d);
 }
 .tierLow {
-  background: #eef1f6;
-  color: #5b6b86;
+  background: #eff2f7;
+  color: rgba(10, 28, 64, 0.66);
 }
 .say {
   background: linear-gradient(135deg, var(--navy), var(--navy2));
@@ -247,7 +247,7 @@
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #9db4dc;
+  color: rgba(255, 255, 255, 0.66);
   margin-bottom: 8px;
 }
 .say p {
@@ -335,13 +335,13 @@
   font-size: 12.5px;
   padding: 5px 10px;
   border-radius: 8px;
-  background: #eaf0f9;
+  background: #eff2f7;
   color: var(--navy);
   border: 1px solid var(--line);
   cursor: pointer;
 }
 .jump button:disabled {
-  color: #93a2ba;
+  color: rgba(10, 28, 64, 0.42);
   cursor: default;
 }
 .noteBox textarea {
@@ -369,7 +369,7 @@
   cursor: pointer;
 }
 .savedFlag {
-  color: #1a7f3c;
+  color: #0a1c40;
   font-size: 12.5px;
 }
 .muted {
@@ -381,7 +381,7 @@
 .presenter {
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, var(--navy), #06122b);
+  background: linear-gradient(135deg, var(--navy), #142949);
   color: #fff;
   z-index: 50;
   display: flex;
@@ -390,7 +390,7 @@
 }
 .presenter .pTitle {
   font-size: 20px;
-  color: #9db4dc;
+  color: rgba(255, 255, 255, 0.66);
   margin-bottom: 18px;
 }
 .presenter .pSay {
@@ -402,7 +402,7 @@
 .presenter ul {
   margin-top: 30px;
   font-size: clamp(18px, 1.8vw, 24px);
-  color: #cfe;
+  color: #ffffff;
   line-height: 1.7;
 }
 .presenter .exit {
@@ -431,7 +431,7 @@
   width: min(620px, 92vw);
   background: #fff;
   border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 20px 60px rgba(10, 28, 64, 0.35);
   overflow: hidden;
   height: fit-content;
   max-height: 62vh;
@@ -461,7 +461,7 @@
   font-size: 14px;
 }
 .paletteItemActive {
-  background: #eef3fb;
+  background: #eff2f7;
 }
 .pMod {
   margin-left: auto;
@@ -504,8 +504,8 @@
   margin-top: 12px;
 }
 .editedChip {
-  background: #fff4e6;
-  color: #b6531a;
+  background: rgba(245, 158, 11, 0.12);
+  color: #0a1c40;
 }
 
 /* Playbooks */
@@ -543,7 +543,7 @@
 .pbControls button {
   background: transparent;
   border: 0;
-  color: #9db4dc;
+  color: rgba(255, 255, 255, 0.66);
   cursor: pointer;
   font-size: 12px;
   padding: 2px 4px;

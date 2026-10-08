@@ -98,6 +98,13 @@
   --font-serif: var(--ds-font-serif);
   --font-sans: var(--ds-font-sans);
   --font-mono: var(--ds-font-mono);
+  /* The room's font names, aliased to the brand's (palette pass): the
+     HomeRoom's next/font variables set them on its frame; every other page,
+     and every module the room's sheets reach from there (the Chute on the
+     Intranet, the held box), reads the brand's own. */
+  --f-serif: var(--ds-font-serif);
+  --f-sans: var(--ds-font-sans);
+  --f-mono: var(--ds-font-mono);
   --text-page-title: 32px;
   --text-section-title: 22px;
   --text-panel-title: var(--ds-type-title);

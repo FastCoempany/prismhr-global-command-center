@@ -10,7 +10,7 @@
   display: grid;
   gap: 8px;
   align-content: start;
-  border: 1px solid #e6ebf3;
+  border: 1px solid rgba(10, 28, 64, 0.09);
   border-left: 4px solid #2563eb;
   border-radius: 14px;
   background: #fff;
@@ -32,5 +32,5 @@
 .blurb {
   font-size: 12.5px;
   line-height: 1.55;
-  color: #5b6b86;
+  color: rgba(10, 28, 64, 0.66);
 }

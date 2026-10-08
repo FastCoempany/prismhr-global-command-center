@@ -1,14 +1,14 @@
 .app {
   --navy: #0a1c40;
-  --navy2: #0e2450;
+  --navy2: #142949;
   --blue: #2563eb;
   --bg: #f5f7fb;
   --card: #ffffff;
-  --line: #e6ebf3;
+  --line: rgba(10, 28, 64, 0.09);
   --ink: #0a1c40;
-  --muted: #5b6b86;
-  --good: #157347;
-  --warn: #b45309;
+  --muted: rgba(10, 28, 64, 0.66);
+  --good: #0a1c40;
+  --warn: #0a1c40;
   display: grid;
   grid-template-columns: 340px 1fr;
   height: calc(100vh - 64px);
@@ -26,7 +26,7 @@
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
 .side {
   background: var(--navy);
-  color: #dfe6f2;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -45,7 +45,7 @@
 .sideNote {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #9fb0cc;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .lensRow {
@@ -73,7 +73,7 @@
 
 .lensOff {
   background: rgba(255, 255, 255, 0.07);
-  color: #cdd9ec;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .lensOff:hover {
@@ -95,7 +95,7 @@
 }
 
 .searchBox input::placeholder {
-  color: #8fa2c2;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .stepList {
@@ -118,7 +118,7 @@
   border-radius: 8px;
   border: 0;
   background: transparent;
-  color: #dfe6f2;
+  color: #ffffff;
   cursor: pointer;
   font-size: 13px;
 }
@@ -164,7 +164,7 @@
 
 .stepTime {
   font-size: 11px;
-  color: #9fb0cc;
+  color: rgba(255, 255, 255, 0.66);
   font-variant-numeric: tabular-nums;
 }
 
@@ -173,7 +173,7 @@
   font-size: 11px;
   font-weight: 700;
   color: #0a1c40;
-  background: #f8c73d;
+  background: #f59e0b;
   border-radius: 999px;
   padding: 1px 7px;
 }
@@ -181,14 +181,14 @@
 .emptyNote {
   padding: 12px;
   font-size: 13px;
-  color: #9fb0cc;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .sideFoot {
   padding: 12px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 12px;
-  color: #9fb0cc;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 /* ── Main pane ───────────────────────────────────────────────────────── */
@@ -329,7 +329,7 @@
   border: 1px solid var(--line);
   border-left: 3px solid var(--blue);
   border-radius: 10px;
-  background: #fbfcfe;
+  background: #fafbfd;
   padding: 12px 14px;
   margin-top: 10px;
 }
@@ -362,12 +362,12 @@
 
 .statusAnswered {
   color: var(--good);
-  background: #e5f3ec;
+  background: rgba(34, 197, 94, 0.1);
 }
 
 .statusOpen {
   color: var(--warn);
-  background: #fdf1e3;
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .questionText {

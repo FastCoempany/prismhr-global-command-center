@@ -94,7 +94,7 @@ export default function Fixture() {
   // The page's own frame (src/app/room/page.tsx renders RoomFace).
   return (
     <RoomFace
-      fontVars=""
+      fontVars="harness-room-fonts"
       room={{
         rows: ROWS,
         cadence: [],

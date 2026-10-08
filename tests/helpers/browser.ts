@@ -31,10 +31,11 @@ function inlined(file: string, seen = new Set<string>()): string {
 }
 
 /** The app's global sheet with the tokens, and the font variables the root
- *  layout's next/font calls declare (src/app/layout.tsx) and the room's own
- *  (src/app/room/page.tsx). */
+ *  layout's next/font calls declare (src/app/layout.tsx). The room's own
+ *  (src/app/room/page.tsx) ride a class its fixture sets on the frame, as the
+ *  page sets them on its main, so a sheet that leans on them elsewhere shows. */
 const GLOBAL_CSS = (): string =>
-  `:root{--font-donor-serif:"DM Serif Display";--font-donor-sans:"Public Sans";--font-donor-mono:"JetBrains Mono";--f-serif:"DM Serif Display";--f-sans:"Public Sans";--f-mono:"JetBrains Mono";}\n` +
+  `:root{--font-donor-serif:"DM Serif Display";--font-donor-sans:"Public Sans";--font-donor-mono:"JetBrains Mono";}.harness-room-fonts{--f-serif:"DM Serif Display";--f-sans:"Public Sans";--f-mono:"JetBrains Mono";}\n` +
   inlined(join(ROOT, "src/app/globals.css"));
 
 /** One CSS module, scoped: every class the file defines becomes

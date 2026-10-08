@@ -31,7 +31,7 @@ export type DashNodeKey =
 type DashNode = {
   key: DashNodeKey;
   label: string;
-  heat: string; // the node's "lit" color on the grey→green ramp
+  heat: string; // the node's "lit" color on the brand's ramp: quiet ink → amber → green (palette pass)
   checklist: string[]; // mandatory gates — all checked lights the node
 };
 
@@ -39,7 +39,7 @@ export const DASH_NODES: DashNode[] = [
   {
     key: "investigate",
     label: "Investigate",
-    heat: "#8593ab",
+    heat: "rgba(10, 28, 64, 0.42)",
     checklist: [
       "Trigger identified — a real reason this account is in play (partner flag, inbound, or a global-hiring signal in their book)",
       "Owner partner confirmed — who holds the relationship (CSM / HCM enterprise sales / etc.)",
@@ -49,7 +49,7 @@ export const DASH_NODES: DashNode[] = [
   {
     key: "first_meeting",
     label: "First Time Meeting",
-    heat: "#e0a93a",
+    heat: "#f59e0b",
     checklist: [
       "Partner briefed on the Global angle for this specific account",
       "Cleared by the partner to engage the client (permission to approach)",
@@ -61,7 +61,7 @@ export const DASH_NODES: DashNode[] = [
   {
     key: "needs_analysis",
     label: "Needs Analysis",
-    heat: "#ef9a3d",
+    heat: "#f59e0b",
     checklist: [
       "Legal entities where they're hiring? (which countries — or none)",
       "How they pay those workers today (method + any current provider)",
@@ -87,7 +87,7 @@ export const DASH_NODES: DashNode[] = [
   {
     key: "exec_summary",
     label: "Executive Summary",
-    heat: "#93862f",
+    heat: "rgba(34, 197, 94, 0.55)",
     checklist: [
       "Executive summary drafted — countries, headcount, risk, and the value it unlocks",
       "Reviewed with the partner before it goes to the client",
@@ -97,7 +97,7 @@ export const DASH_NODES: DashNode[] = [
   {
     key: "proposal",
     label: "Proposal",
-    heat: "#6fae3e",
+    heat: "rgba(34, 197, 94, 0.75)",
     checklist: [
       "Decision criteria and timeline confirmed",
       "Proposal / pricing delivered",
@@ -107,7 +107,7 @@ export const DASH_NODES: DashNode[] = [
   {
     key: "contract",
     label: "Contract",
-    heat: "#1a7f3c",
+    heat: "#22c55e",
     checklist: [
       "Yes/no reached — if yes, close plan agreed; if no, reason logged",
       "Partner debriefed on the outcome (protect the relationship for the next one)",

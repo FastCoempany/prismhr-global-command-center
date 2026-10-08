@@ -750,3 +750,63 @@ describe("concepts never ship: no concept is served (A6.11)", () => {
     assert.ok(!/rewrites|redirects|docs\//.test(config), "the Next config reaches past the app");
   });
 });
+
+// ── the palette pass · "Ad-hoc per-mockup palettes of any kind. The palette
+// is the brand's, always." (the design canon) ────────────────────────────────
+// The brand's palette is antaeus-brand-kit/css/tokens.css: the field and its
+// surfaces, ink and ink-700, the five accents and their strong states, white,
+// and any of them at an alpha. Every color the app's stylesheets and its
+// components write is one of those; every color variable a sheet reads
+// resolves to something.
+describe("the palette is the brand's, always (the design canon)", () => {
+  const BRAND_HEX = new Set(["0a1c40", "142949", "e6701e", "d4661b", "2563eb", "1d4ed8", "22c55e", "f59e0b", "ef4444", "ffffff", "f5f7fb", "fafbfd", "eff2f7", "fbfaf5"]);
+  const BRAND_RGB = new Set([...BRAND_HEX].map((h) => [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)).join(",")));
+  const hex6 = (h: string) => {
+    const x = h.replace("#", "").toLowerCase();
+    return (x.length === 3 ? [...x].map((c) => c + c).join("") : x).slice(0, 6);
+  };
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "");
+  const files = (exts: RegExp) =>
+    (readdirSync(join(root, "src"), { recursive: true }) as string[])
+      .filter((f) => exts.test(f) && !f.startsWith("generated"))
+      .map((f) => join("src", f));
+  const offBrand = (text: string) => [
+    ...[...text.matchAll(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g)].map((m) => m[0]).filter((h) => !BRAND_HEX.has(hex6(h))),
+    ...[...text.matchAll(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g)].map((m) => m[0]).filter((m) => !BRAND_RGB.has(m.replace(/rgba?\(\s*/, "").split(/\s*,\s*/).slice(0, 3).join(","))),
+    ...[...text.matchAll(/:\s*(black|gray|grey|silver|purple|navy|teal|crimson|tomato|gold|yellow|pink|brown|orange|green|red|blue)\s*[;!]/g)].map((m) => m[1]),
+  ];
+
+  test("every color in every stylesheet under src is the brand's", () => {
+    const css = files(/\.css$/);
+    assert.ok(css.length > 10);
+    const found = css.flatMap((f) => offBrand(strip(readFileSync(join(root, f), "utf8"))).map((c) => `${f}: ${c}`));
+    assert.deepEqual(found, []);
+  });
+
+  test("every color a component writes into a style or a token is the brand's", () => {
+    const found = files(/\.(ts|tsx)$/).flatMap((f) => {
+      const text = readFileSync(join(root, f), "utf8");
+      // A color literal in a string: style objects, svg fills, color tokens.
+      return [...text.matchAll(/["'`](#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))["'`]/g)]
+        .flatMap((m) => offBrand(m[1]))
+        .map((c) => `${f}: ${c}`);
+    });
+    assert.deepEqual(found, []);
+  });
+
+  test("every color variable a stylesheet reads resolves", () => {
+    const tokens = ["config/design-tokens.css", "antaeus-brand-kit/css/tokens.css", "antaeus-brand-kit/css/motion.css", "src/app/globals.css"]
+      .filter((f) => existsSync(join(root, f)))
+      .flatMap((f) => [...readFileSync(join(root, f), "utf8").matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+    const global = new Set([...tokens, "--font-donor-serif", "--font-donor-sans", "--font-donor-mono"]);
+    const dangling = files(/\.css$/).flatMap((f) => {
+      const s = strip(readFileSync(join(root, f), "utf8"));
+      const local = new Set([...s.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+      return [...s.matchAll(/([\w-]+)\s*:[^;{}]*?var\((--[\w-]+)\s*(,[^)]*)?\)/g)]
+        .filter((m) => /color|background|border|fill|stroke|shadow|outline|font/.test(m[1]))
+        .filter((m) => !m[3] && !global.has(m[2]) && !local.has(m[2]))
+        .map((m) => `${f}: ${m[1]} reads ${m[2]}`);
+    });
+    assert.deepEqual([...new Set(dangling)], []);
+  });
+});

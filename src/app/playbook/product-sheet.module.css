@@ -250,19 +250,19 @@
 }
 .vOk {
   background: var(--ds-green-soft);
-  color: #166534;
+  color: #0a1c40;
 }
 .vAsk {
   background: var(--ds-amber-soft);
-  color: #92400e;
+  color: #0a1c40;
 }
 .vNo {
   background: var(--ds-red-soft);
-  color: #991b1b;
+  color: #ef4444;
 }
 .vNote {
   background: var(--ds-blue-soft);
-  color: #1e40af;
+  color: var(--ds-blue-strong);
 }
 .cName {
   font: 400 27px/1.1 var(--font-serif);
