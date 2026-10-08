@@ -519,7 +519,8 @@ describe("no rule stamps with an empty label (D27)", () => {
   });
 
   test("no stamp is a bare noun: each opens on what the operator did", () => {
-    const VERB = /^(SENT|NUDGED|REVIVED|BRIEFED|REFRESHED|RAN|DUG|ASKED|WORKED|ACTED|OPENED)\b/;
+    const VERB =
+      /^(SENT|NUDGED|REVIVED|BRIEFED|REFRESHED|RAN|DUG|ASKED|WORKED|ACTED|OPENED)\b/;
     for (const id of QUEUE_RULE_IDS) {
       const sub = stampSubtext(id, {});
       assert.match(sub, VERB, `${id} stamps ${sub}`);
@@ -715,6 +716,38 @@ describe("Groundwork is outbound only: no rule stages a reactive move (A9.10)", 
       if (q.ruleId === "seated" || q.ruleId === "second-record-gem") continue;
       assert.match(q.action, OUTBOUND, `${q.ruleId}: ${q.action}`);
     }
+  });
+
+  // The writing canon, rules 2, 5 and 6 (pass 10, A12.2 and A12.6 on the
+  // queue): every rule's action and reason line, as the stage paints them,
+  // keeps each sentence to six words or fewer, carries no dash aside and no
+  // parenthetical, and the action names no deadline.
+  test("every rule's action and reason line: six words a sentence, no aside, no deadline in the action", () => {
+    const { all } = buildQueue(fuel as never);
+    const sentences = (t: string) =>
+      t
+        .split(/(?<=[.?!])\s+/)
+        .map((x) => x.trim())
+        .filter(Boolean);
+    for (const q of all)
+      for (const [which, line] of [
+        ["action", q.action],
+        ["reason", q.reason],
+      ] as const) {
+        assert.ok(line.trim().length > 0, `${q.ruleId}: an empty ${which}`);
+        for (const x of sentences(line))
+          assert.ok(
+            x.split(/\s+/).length <= 6,
+            `${q.ruleId}: ${which} over six words: "${x}"`,
+          );
+        assert.doesNotMatch(line, / — |\(/, `${q.ruleId}: ${which} aside: "${line}"`);
+        if (which === "action")
+          assert.doesNotMatch(
+            line,
+            /\b(by|before|until)\s+(mon|tue|wed|thu|fri|sat|sun|today|tomorrow|end of|\d)/i,
+            `${q.ruleId}: a deadline in the action: "${line}"`,
+          );
+      }
   });
 
   test("a reply owed stages nothing: the account leaves the queue, and the drumbeat falls silent", () => {
