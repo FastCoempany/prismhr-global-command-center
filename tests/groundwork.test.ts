@@ -2219,6 +2219,10 @@ describe("every count on Groundwork's face opens what it counts (pass 10, the cl
     assert.ok(
       textOf(html).startsWith("SECOND RECORD · 9 DAYS OLD · DROP THE FRESH EXPORT"),
     );
+    // The anchor is the dock's own (a server face cannot import the client
+    // module's constant, so the two are pinned equal here).
+    const dock = readFileSync("src/app/activity/dock.tsx", "utf8");
+    assert.match(dock, /export const DOCK_ANCHOR = "second-record";/);
     const fresh = await render(
       createElement(Tallyfoot, { week: faceWeek, staleDropDays: null }),
     );
