@@ -1,10 +1,10 @@
 // The HomeRoom for the browser suite: three rows, one per MULTI tone, the
 // first with every register the Spring draws (THEIRS, UNKNOWN with asks,
-// COMPARABLE with a peer, TODAY), and the drawers' edge tabs. The room's
-// own frame carries its tokens (src/app/room/page.tsx).
+// COMPARABLE with a peer, TODAY), and the drawers' edge tabs, in the room's
+// own frame: the Chute at the top, then the board.
 
-import { RoomClient, type RoomRow } from "@/app/room/room-client";
-import styles from "@/app/room/room.module.css";
+import type { RoomRow } from "@/app/room/room-client";
+import { RoomFace } from "@/app/room/face";
 
 export const ROW_A = "001F000000w38BOIAY";
 
@@ -91,22 +91,24 @@ const ROWS: RoomRow[] = [
 ];
 
 export default function Fixture() {
+  // The page's own frame (src/app/room/page.tsx renders RoomFace).
   return (
-    <main className={styles.room}>
-      <RoomClient
-        rows={ROWS}
-        cadence={[]}
-        checkins={[{ subjectKey: "outreach:001simploy", label: "Simploy", ask: "the signed order form", quietDays: 4, kind: "partner" }]}
-        followUps={[{ subjectKey: "manual:abc-123", label: "chase Acme Logistics about their Brazil hires", armedAt: "2026-09-25T15:00:00Z", filed: ["Simploy"], newName: "Acme Logistics" }]}
-        warming={[]}
-        later={[]}
-        canWrite
-        dbUnavailable={false}
-        boardNames={[]}
-        pipeline={[]}
-        pipelineDay=""
-        pipelineStale=""
-      />
-    </main>
+    <RoomFace
+      fontVars=""
+      room={{
+        rows: ROWS,
+        cadence: [],
+        checkins: [{ subjectKey: "outreach:001simploy", label: "Simploy", ask: "the signed order form", quietDays: 4, kind: "partner" }],
+        followUps: [{ subjectKey: "manual:abc-123", label: "chase Acme Logistics about their Brazil hires", armedAt: "2026-09-25T15:00:00Z", filed: ["Simploy"], newName: "Acme Logistics" }],
+        warming: [],
+        later: [],
+        canWrite: true,
+        dbUnavailable: false,
+        boardNames: [],
+        pipeline: [],
+        pipelineDay: "",
+        pipelineStale: "",
+      }}
+    />
   );
 }

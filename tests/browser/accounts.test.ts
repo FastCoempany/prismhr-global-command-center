@@ -11,18 +11,13 @@ import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import type { Browser, Page } from "playwright-core";
 import { cls, mount, openBrowser, requestsOf } from "../helpers/browser";
+import { EVIDENCE } from "./evidence";
 
 const FIX = "tests/browser/fixtures/accounts.tsx";
 const $ = (n: string) => cls("command-center.module.css", n);
 const ORANGE = "rgb(230, 112, 30)";
 const BLUE = "rgb(37, 99, 235)";
 const QUIET = "rgba(10, 28, 64, 0.42)";
-const EVIDENCE = {
-  "/activity/evidence": (u: URL) =>
-    u.searchParams.get("k") === "r1"
-      ? { ok: true, row: { excerpt: "Can we talk Mexico next week? We have two hires there." } }
-      : { ok: false, reason: "No such row." },
-};
 
 let browser: Browser;
 before(async () => {
@@ -198,6 +193,21 @@ describe("A4.19 · LAST HUMAN TOUCH, THE SIGNAL and ACT take the width; the gem 
     assert.match(await page.locator($("srFoldTd")).innerText(), /◆ MEXICO ASK/);
     // The acted gem keeps its ↺ in the same fold (A8.5).
     assert.match(await page.locator($("srActed")).innerText(), /Send the Canada one-pager\.[\s\S]*↺/);
+    await page.close();
+  });
+});
+
+describe("A4.27 · the sheet's citations, cases and touch drill to row-level meat", () => {
+  test("THE SIGNAL's cite opens its excerpt; LAST HUMAN TOUCH opens the entry it read", async () => {
+    const page = await mount(browser, FIX, { routes: EVIDENCE });
+    await page.locator($("srTerm")).first().click();
+    await page.locator(`${$("srFoldTd")} ${$("srCite")}`).first().click();
+    await page.waitForSelector(`${$("srFoldTd")} ${$("srExcerpt")}`);
+    assert.match(await page.locator(`${$("srFoldTd")} ${$("srExcerpt")}`).innerText(), /Can we talk Mexico next week\?/);
+    await page.locator($("srTerm")).first().click();
+    await page.locator(`button${$("srTouch")}`).first().click();
+    await page.waitForSelector(`text=Can we talk Mexico?`);
+    assert.match(await page.locator($("srFoldTd")).innerText(), /09\/22 · Pat Lee · REPLY/);
     await page.close();
   });
 });

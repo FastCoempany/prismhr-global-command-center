@@ -78,9 +78,9 @@ describe("A6.3 · filing or composing springs TODAY open; the mint springs UNKNO
     await ta.fill("Call Chassie back about Mexico.");
     await ta.press("Enter");
     await page.waitForSelector(`${$("sumkOn")}:text-is("TODAY")`);
-    const calls = await callsOf(page);
-    assert.equal(calls[0][0], "roomCompose");
-    assert.equal(calls[0][1][0], ROW_A);
+    const compose = (await callsOf(page)).find(([n]) => n === "roomCompose");
+    assert.ok(compose, "the line never reached the server");
+    assert.equal(compose[1][0], ROW_A);
     assert.match(await page.locator($("splayed")).first().innerText(), /Call Chassie back about Mexico\./);
     await page.close();
   });
@@ -215,6 +215,43 @@ describe("A12.7 · the Drop's held file comes back after a reload, saying since 
     // The line is kept again under today's day, with its first day.
     const kept = await page.evaluate(() => JSON.parse(localStorage.getItem("prismhr.drop-held.v1") ?? "{}"));
     assert.equal(kept[ROW_A].items[0].heldSince, "10/7");
+    await page.close();
+  });
+});
+
+describe("A4.27 · the THEIRS line's citations drill to the cleaned excerpt", () => {
+  test("THEIRS opens its gem; the cite opens the email it stands on", async () => {
+    const page = await mount(browser, FIX, {
+      routes: {
+        "/activity/evidence": (u: URL) =>
+          u.searchParams.get("k") === "r1"
+            ? { ok: true, row: { excerpt: "Can we talk Mexico next week? We have two hires there." } }
+            : { ok: false },
+      },
+    });
+    await page.locator(`${$("theirs")} button`).first().click();
+    await page.locator($("theirsCite")).first().click();
+    await page.waitForSelector("text=Can we talk Mexico next week? We have two hires there.");
+    await page.close();
+  });
+});
+
+describe("A1.1 · the HomeRoom carries ONE intake at the top: the Chute", () => {
+  test("the Chute is the frame's first child, above every row; each row's Drop is its own, and no other intake exists", async () => {
+    const page = await mount(browser, FIX, { returns: { chuteBook: [] } });
+    const first = await page.locator(`main${$("room")}`).evaluate((m) => m.firstElementChild?.className ?? "");
+    assert.match(first, /room__chute\b/);
+    assert.equal(await page.locator($("chute")).count(), 1);
+    const chute = await box(page, $("chute"));
+    const rows = await page.locator("text=Shaping up to be EOR").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().y));
+    assert.ok(rows.every((y) => y > chute.y + chute.height - 1), "a row sits above the Chute");
+    // Every file input on the page is the Chute's or a row's Drop: one each.
+    const inputs = await page.locator("input[type=file]").count();
+    assert.equal(inputs, 1 + 3, `${inputs} file inputs for one Chute and three Drops`);
+    // The page renders this frame.
+    const src = (await import("node:fs")).readFileSync("src/app/room/page.tsx", "utf8");
+    assert.match(src, /<RoomFace\b/);
+    assert.ok(!/<Chute\b/.test(src), "the page mounts a Chute of its own");
     await page.close();
   });
 });
