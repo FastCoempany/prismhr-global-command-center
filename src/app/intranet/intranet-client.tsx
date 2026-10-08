@@ -1295,8 +1295,10 @@ export function IntranetClient({
             </div>
             {passage.accountId && (
               <p className={styles.itDrawerFoot}>
+                {/* Account names are plain links: no arrow, no affordance
+                    glyph (standing decree). */}
                 <Link href={`/accounts?peo=${passage.accountId}`}>
-                  Open {passage.accountName || "the account"} →
+                  Open {passage.accountName || "the account"}.
                 </Link>
               </p>
             )}

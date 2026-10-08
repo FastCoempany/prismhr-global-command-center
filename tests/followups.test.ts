@@ -295,13 +295,21 @@ describe("the follow-up list is wired where the operator can reach it", () => {
     assert.ok(textOf(block).includes("1 open"));
   });
   test("the count rides the add button", async () => {
+    // Pass 10 (the click-depth law): the count is its own button beside
+    // ＋ add, a door that opens the menu with the list already open.
     const room = await roomClient();
     const withOne = await render(createElement(room.RoomClient, roomProps));
-    assert.match(withOne, /title="follow-ups still owed">1</);
+    assert.match(
+      withOne,
+      /<button type="button" class="addBadge" title="Show the follow-ups still owed">1</,
+    );
     const withNone = await render(
       createElement(room.RoomClient, { ...roomProps, followUps: [] }),
     );
-    assert.ok(!withNone.includes("follow-ups still owed"), "an empty list shows no badge");
+    assert.ok(
+      !withNone.includes("follow-ups still owed"),
+      "an empty list shows no badge",
+    );
   });
   test("arming a chase offers no when — everything is now", async () => {
     // The dropdown is gone from the composer, and the arm reads no window
@@ -328,8 +336,7 @@ describe("the follow-up list is wired where the operator can reach it", () => {
     // The action reaches the right-hand panel; the note reaches the history.
     // Returned ids are the ones that actually took, at most three.
     const composed: string[] = [];
-    const noted: { accountId: string; body: string; lane: string; source: string }[] =
-      [];
+    const noted: { accountId: string; body: string; lane: string; source: string }[] = [];
     const filed = await fileFollowUpToAccounts(
       "chase Bryce for the signed SOW",
       [
@@ -416,7 +423,10 @@ describe("every open panel closes on a click away", () => {
         bound.set(type, [...(bound.get(type) ?? []), fn]);
       },
       removeEventListener: (type: string, fn: Listener) => {
-        bound.set(type, (bound.get(type) ?? []).filter((f) => f !== fn));
+        bound.set(
+          type,
+          (bound.get(type) ?? []).filter((f) => f !== fn),
+        );
       },
       fire: (type: string, e: unknown) => {
         for (const fn of bound.get(type) ?? []) fn(e);
@@ -460,7 +470,11 @@ describe("every open panel closes on a click away", () => {
   test("a panel with no element yet ignores the pointer", () => {
     const doc = fakeDoc();
     let closed = 0;
-    bindDismiss(doc as unknown as DismissTarget, () => null, () => closed++);
+    bindDismiss(
+      doc as unknown as DismissTarget,
+      () => null,
+      () => closed++,
+    );
     doc.fire("pointerdown", { target: {} });
     assert.equal(closed, 0);
   });
@@ -554,7 +568,10 @@ describe("the Capture page is the shelf the grabs live on", () => {
   });
   test("the paste workflow is gone — filing happens at the account", async () => {
     // The old client and its tabs are no longer modules anyone can load.
-    for (const dead of ["../src/app/intake/intake-client", "../src/app/intake/intake-tabs"]) {
+    for (const dead of [
+      "../src/app/intake/intake-client",
+      "../src/app/intake/intake-tabs",
+    ]) {
       await assert.rejects(import(dead), { code: "ERR_MODULE_NOT_FOUND" });
     }
     const shelf = await captureShelf();
@@ -567,7 +584,10 @@ describe("the Capture page is the shelf the grabs live on", () => {
     ]) {
       assert.ok(!textOf(html).includes(dead), `${dead} survived`);
     }
-    const actions = (await import("../src/app/intake/actions")) as Record<string, unknown>;
+    const actions = (await import("../src/app/intake/actions")) as Record<
+      string,
+      unknown
+    >;
     for (const gone of ["fileTimeline", "fileTranscript", "cleanWithAI"]) {
       assert.equal(actions[gone], undefined, `${gone} is still an action`);
     }
@@ -640,7 +660,10 @@ describe("the Sales Nav grab files through the pipeline, never the Intranet dock
     const now = new Date("2026-10-07T15:00:00.000Z");
     const { head: line, rows } = splitGrab(grab);
     const readOf = (row: string) =>
-      intentFor([{ body: `${line}\n\n${row}`, source, createdAt: now.toISOString() }], now);
+      intentFor(
+        [{ body: `${line}\n\n${row}`, source, createdAt: now.toISOString() }],
+        now,
+      );
     assert.equal(readOf(rows[0])?.level, "high");
     assert.equal(readOf(rows[1]), null, "the Acme row's intent is not the Beta row's");
   });

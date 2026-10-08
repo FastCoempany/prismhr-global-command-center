@@ -105,7 +105,8 @@ import {
   MOVE_DONE_STATUS,
 } from "@/lib/room/bind";
 import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
-import { SEAT_NS, parseSeatBody, renderSeatBody } from "@/lib/act/lane";
+import { SEAT_NS } from "@/lib/act/lane";
+import { editedSeatBody, editedSheetBody } from "@/lib/room/sheet-view";
 import { groundworkDoneKey } from "@/lib/groundwork/file";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
@@ -1906,13 +1907,9 @@ export async function roomTodoEdit(
       // do. The grammar's own separator leaves the text, and the fork's cap
       // on the act holds.
       const seat = await seatRowFor(acct.id, id);
-      const parsed = seat ? parseSeatBody(seat.body) : null;
-      if (!seat || !parsed) return { ok: false, reason: "That item is gone." };
-      const act = next.replace(/·/g, "-").slice(0, 200);
-      await prisma.accountNote.update({
-        where: { id },
-        data: { body: renderSeatBody({ act, term: parsed.term, day: parsed.day }) },
-      });
+      const body = seat ? editedSeatBody(seat.body, next) : null;
+      if (!seat || !body) return { ok: false, reason: "That item is gone." };
+      await prisma.accountNote.update({ where: { id }, data: { body } });
       return { ok: true };
     }
     let owned = (t.accountId ?? "") === acct.id;
@@ -1927,15 +1924,9 @@ export async function roomTodoEdit(
       }
     }
     if (!owned) return { ok: false, reason: "That item belongs to a different account." };
-    const marker = splitMarker(t.body);
-    const { tags } = splitTags(marker.text);
-    // Hand-typed grammar must never masquerade as real markers.
-    const clean = next
-      .replace(/[⟦⟧⟪⟫]|[⇢⚑]\s*\[/g, " ")
-      .replace(/[ \t]+/g, " ")
-      .trim();
-    let body = withTags(clean, tags);
-    if (marker.refs) body = withMarker(body, marker.refs, marker.label);
+    // The tags and the routing marker ride along byte for byte (the pure
+    // half lives in sheet-view.ts, where the suite calls it).
+    const body = editedSheetBody(t.body, next);
     await prisma.todo.update({ where: { id }, data: { body } });
     return { ok: true };
   } catch {

@@ -17,7 +17,7 @@ import {
 import { effectiveAt } from "@/lib/intel/clock";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { MINE_RE, normPerson } from "@/lib/intel/provenance";
-import { parseSeatBody } from "@/lib/act/lane";
+import { parseSeatBody, renderSeatBody } from "@/lib/act/lane";
 import { LEGACY_HEAD_START_RE } from "@/lib/ingest/dialect";
 import { splitFallback } from "@/lib/room/deliverables";
 import { clip } from "@/lib/room/move-line";
@@ -113,6 +113,32 @@ export function todoBelongsTo(
   } catch {
     return false;
   }
+}
+
+// ✎ on a sheet line (the Spring, 2026-08-13): the visible text changes; the
+// tags and the routing marker survive verbatim (roomTodoEdit). Everything
+// after the visible text is carried byte for byte, never re-serialized, so a
+// key this codec no longer reads (the retired dl: delay) and a line in its
+// own key order both survive the edit. Hand-typed grammar never masquerades
+// as a real marker.
+export function editedSheetBody(body: string, next: string): string {
+  const visible = splitTags(splitMarker(body).text).text;
+  const tail = body.slice(visible.length).trimStart();
+  const clean = next
+    .replace(/[⟦⟧⟪⟫]|[⇢⚑]\s*\[/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+  return tail ? `${clean}\n${tail}` : clean;
+}
+
+// ✎ on a seat (C8): the act is rewritten; the term and the seated day
+// survive, as a todo's tags do. The grammar's own separator leaves the text,
+// and the fork's cap on the act holds. Null when the body is not a seat.
+export function editedSeatBody(body: string, next: string): string | null {
+  const parsed = parseSeatBody(body);
+  if (!parsed) return null;
+  const act = next.replace(/·/g, "-").slice(0, 200);
+  return renderSeatBody({ act, term: parsed.term, day: parsed.day });
 }
 
 const LINE_CAP = 140;

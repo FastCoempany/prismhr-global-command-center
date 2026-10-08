@@ -4,7 +4,9 @@
 // model roster ("Opus or better, always", founder-decreed 2026-07-31; one
 // roster, ruled 2026-09-25). Every test calls a function or reads a
 // module's exported values, except the two import scans under P1, which read
-// import statements and nothing else.
+// import statements and nothing else, and pass 10's sweeps at the foot: the
+// account links every page holds, the MULTI badge's surfaces, the edge tabs'
+// stylesheet and package.json's verify chain, each named where it reads.
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
@@ -24,7 +26,8 @@ import {
   payrollDemoSteps,
 } from "../../src/lib/payroll-demo-sidekick";
 import { prismhrGlobalMasterDemoFlow } from "../../src/lib/sidekick-flows";
-import { render } from "../helpers/room-render";
+import { receipt, render, roomClient, roomRow, textOf } from "../helpers/room-render";
+import { multiTone } from "../../src/lib/room/multi";
 
 const root = cwd();
 
@@ -271,9 +274,8 @@ describe("the mark is ink only, and a selection dot is one role", () => {
   });
 
   test("every selected rail row carries the one blue, whatever its place", async () => {
-    const { SELECTION_DOT, selectionDot } = await import(
-      "../../src/app/intranet/selection"
-    );
+    const { SELECTION_DOT, selectionDot } =
+      await import("../../src/app/intranet/selection");
     assert.equal(SELECTION_DOT, "var(--ds-blue)");
     for (let i = 0; i < 12; i++) assert.equal(selectionDot(i), SELECTION_DOT);
     assert.equal(selectionDot(-1), null);
@@ -289,9 +291,8 @@ describe("the demo sidekicks never say steps", () => {
   const STEPS = /\bsteps\b/i;
 
   test("the payroll demo's first paint, in both lenses", async () => {
-    const { PayrollDemoClient } = await import(
-      "../../src/app/payroll-demo-sidekick/payroll-demo-client"
-    );
+    const { PayrollDemoClient } =
+      await import("../../src/app/payroll-demo-sidekick/payroll-demo-client");
     for (const initialLens of ["flow", "questions"] as const) {
       const html = await render(
         createElement(PayrollDemoClient, {
@@ -308,7 +309,14 @@ describe("the demo sidekicks never say steps", () => {
   test("every line the payroll demo and the master flow can render", () => {
     const lines: string[] = [];
     for (const st of payrollDemoSteps)
-      lines.push(st.title, st.navContext, st.visualSummary, st.say, st.demoPurpose, ...st.onScreen);
+      lines.push(
+        st.title,
+        st.navContext,
+        st.visualSummary,
+        st.say,
+        st.demoPurpose,
+        ...st.onScreen,
+      );
     for (const q of payrollDemoQuestions)
       lines.push(q.asker, q.question, q.askedWhileShowing, q.answer, q.answerQuote);
     lines.push(JSON.stringify(prismhrGlobalMasterDemoFlow));
@@ -374,10 +382,7 @@ describe("a parked note names no recipient in the Partner Room", () => {
     const notes = new Map([
       [
         "A1",
-        [
-          note("n1", "Dana Reyes → Antaeus Coe"),
-          note("n2", "Morgan Pike → Antaeus Coe"),
-        ],
+        [note("n1", "Dana Reyes → Antaeus Coe"), note("n2", "Morgan Pike → Antaeus Coe")],
       ],
     ]);
     const dispositions = new Set(["hide:note:n2"]);
@@ -416,8 +421,292 @@ describe("the surfaces' actions refresh only their own page (D15, pass 8 call 2)
       const text = readFileSync(join(root, f), "utf8");
       for (const m of text.matchAll(/revalidate(?:Path|Tag)\(\s*["'`]([^"'`]+)["'`]/g))
         if (m[1] !== own) off.push(`${f} → ${m[1]}`);
-      assert.doesNotMatch(text, /revalidate(?:Path|Tag)\(\s*[^"'`\s]/, `${f} revalidates a computed path`);
+      assert.doesNotMatch(
+        text,
+        /revalidate(?:Path|Tag)\(\s*[^"'`\s]/,
+        `${f} revalidates a computed path`,
+      );
     }
     assert.deepEqual(off, []);
+  });
+});
+
+// ── pass 10 · "Account names are plain links — no ↗ arrows or affordance
+// glyphs." ─────────────────────────────────────────────────────────────────
+// The Intranet's passage drawer said "Open {account} →". Every surface that
+// links an account is swept: the rendered room and receipts, the brain's
+// answer links by call, and every <Link>/<a> in src whose href reaches the
+// Accounts page, server pages included, by its source.
+describe("account names are plain links, with no arrow or affordance glyph", () => {
+  // The arrow blocks, the triangles and chevrons a link might wear, and ⊞.
+  const GLYPH = /[←-⇿⟰-⟿⤀-⥿⬀-⯿▶-▻➜-➿›»⊞]/;
+  const accountLinks = (html: string) =>
+    [...html.matchAll(/<a\b[^>]*href="\/accounts\?[^"]*"[^>]*>([\s\S]*?)<\/a>/g)].map(
+      (m) => textOf(m[1]),
+    );
+
+  test("every <Link> or <a> in src that reaches /accounts carries no glyph", () => {
+    const off: string[] = [];
+    const seen = new Set<string>();
+    for (const f of walk(join(root, "src")).filter((x) => x.endsWith(".tsx"))) {
+      const text = readFileSync(f, "utf8");
+      for (const m of text.matchAll(/<(Link|a)(?=[\s>])/g)) {
+        const at = m.index ?? 0;
+        const end = text.indexOf(`</${m[1]}>`, at);
+        if (end < 0) continue;
+        const el = text.slice(at, end);
+        if (!/\/accounts\?/.test(el)) continue;
+        // The opening tag ends at the first ">" outside a JSX expression.
+        let depth = 0;
+        let open = -1;
+        for (let i = 0; i < el.length && open < 0; i++) {
+          if (el[i] === "{") depth++;
+          else if (el[i] === "}") depth--;
+          else if (el[i] === ">" && depth === 0) open = i;
+        }
+        const children = el.slice(open + 1);
+        // An account name link: its words carry the account's name. A door
+        // to the record ("the full record (12) ▸") names no account.
+        if (!/\{[^}]*name[^}]*\}/i.test(children)) continue;
+        seen.add(relative(root, f));
+        if (GLYPH.test(el))
+          off.push(`${relative(root, f)}: ${el.replace(/\s+/g, " ").slice(0, 120)}`);
+      }
+    }
+    // The surfaces that link an account by name today; a new one joins the
+    // sweep on its own.
+    for (const f of [
+      "src/app/groundwork/page.tsx",
+      "src/app/intranet/intranet-client.tsx",
+      "src/app/room/ingest/receipt.tsx",
+      "src/app/room/room-client.tsx",
+      "src/app/sendbook/page.tsx",
+    ])
+      assert.ok(seen.has(f), `the sweep missed ${f}`);
+    assert.deepEqual(off, []);
+  });
+
+  test("the brain's answer links name the account in plain words", () => {
+    const cite = { origin: "", originRef: "", accountId: "", docTitle: "" };
+    const links = askLinks(
+      {
+        question: "Where does Simploy stand?",
+        accounts: [{ id: "001F000000w38BOIAY", name: "Simploy" }],
+        citations: [
+          { ...cite, origin: "activity", originRef: "001F000000w38OHIAY:digest" },
+          { ...cite, origin: "account-note", accountId: "001F000000w38ADVPY" },
+        ],
+      },
+      (id) => (id.endsWith("OHIAY") ? "Regis HR Group" : ""),
+    ).filter((l) => l.href.startsWith("/accounts?"));
+    assert.deepEqual(
+      links.map((l) => l.label),
+      ["Open Simploy.", "Open Regis HR Group.", "Open the account."],
+    );
+  });
+
+  test("the room's row, its warm drawer and the receipts link the account bare", async () => {
+    const room = await roomClient();
+    const { ReceiptLine } = await receipt();
+    const simploy = { id: "001F000000w38BOIAY", name: "Simploy" };
+    const regis = { id: "001F000000w38OHIAY", name: "Regis HR Group" };
+    const row = await render(
+      createElement(room.Row, { row: roomRow(), collapsed: false, onToggle: () => {} }),
+    );
+    assert.deepEqual(accountLinks(row), ["Simploy"]);
+    const filed = await render(
+      createElement(ReceiptLine, {
+        row: {
+          key: 1,
+          filename: "",
+          state: "filed",
+          account: simploy,
+          filed: 2,
+          day: "10/7",
+        },
+        canWrite: true,
+      }),
+    );
+    assert.deepEqual(accountLinks(filed), ["Simploy"]);
+    const grab = await render(
+      createElement(ReceiptLine, {
+        row: {
+          key: 2,
+          filename: "",
+          state: "filed",
+          filed: 2,
+          day: "10/7",
+          grab: {
+            accounts: [
+              { ...simploy, rung: "name", noteId: "N1", filingId: "F1" },
+              { ...regis, rung: "name", noteId: "N2", filingId: "F2" },
+            ],
+            duplicates: [],
+            failed: [],
+            unmatched: 0,
+            dupeCheck: "ran",
+          },
+        },
+        canWrite: true,
+        defaultOpen: true,
+      }),
+    );
+    assert.deepEqual(accountLinks(grab), ["Simploy", "Regis HR Group"]);
+    for (const html of [row, filed, grab])
+      for (const t of accountLinks(html)) assert.doesNotMatch(t, GLYPH);
+  });
+});
+
+// ── pass 10 · "Threading badge reads exactly MULTI, colored by the semantic
+// ladder (red 1 thread / amber 2 / green 3+)." ─────────────────────────────
+// One ladder (src/lib/room/multi.ts) feeds both surfaces that paint the
+// badge. The row renders; Groundwork's file is a server page, so its call
+// into the ladder is read from source.
+describe("MULTI reads exactly MULTI, on the one ladder", () => {
+  test("the ladder: one thread red, two amber, three or more green", () => {
+    assert.equal(multiTone(1), "r");
+    assert.equal(multiTone(2), "y");
+    for (const n of [3, 4, 9]) assert.equal(multiTone(n), "g");
+  });
+
+  // The coordinator's call (pass 10): zero is at least as thin as one, so
+  // it takes the ladder's red wherever the badge shows.
+  test("zero threads take the ladder's red, whatever shape the count comes in", () => {
+    for (const n of [0, -1, Number.NaN, undefined as unknown as number])
+      assert.equal(multiTone(n), "r", `${n}`);
+  });
+
+  test("the row's badge says MULTI and nothing else, in its tone's class", async () => {
+    const room = await roomClient();
+    for (const tone of ["r", "y", "g"] as const) {
+      const html = await render(
+        createElement(room.Row, {
+          row: roomRow({ multiTone: tone }),
+          collapsed: false,
+          onToggle: () => {},
+        }),
+      );
+      assert.match(
+        html,
+        new RegExp(
+          `<button type="button" class="multi m_${tone}" aria-expanded="false" title="Who&#x27;s in this deal">MULTI<span class="hovercard">`,
+        ),
+      );
+    }
+  });
+
+  test("each tone's class wears its role: red, amber, green", () => {
+    const room = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
+    const gw = readFileSync(
+      join(root, "src/app/groundwork/groundwork.module.css"),
+      "utf8",
+    );
+    const block = (css: string, sel: string) =>
+      new RegExp(`(?:^|\\n)${sel.replace(".", "\\.")}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ??
+      "";
+    assert.match(block(room, ".m_r"), /background:\s*var\(--red\)/);
+    assert.match(block(room, ".m_y"), /background:\s*var\(--amber\)/);
+    assert.match(block(room, ".m_g"), /background:\s*var\(--green\)/);
+    for (const [t, hex] of [
+      ["red", "#ef4444"],
+      ["amber", "#f59e0b"],
+      ["green", "#22c55e"],
+    ])
+      assert.match(room, new RegExp(`--${t}:\\s*${hex};`));
+    assert.match(block(gw, ".multiRed"), /color:\s*var\(--ds-red\)/);
+    assert.match(block(gw, ".multiAmber"), /color:\s*var\(--ds-amber\)/);
+    assert.match(block(gw, ".multiGreen"), /color:\s*var\(--ds-green\)/);
+  });
+
+  test("every surface that paints MULTI reads the one ladder", () => {
+    const painters = walk(join(root, "src"))
+      .filter((f) => f.endsWith(".tsx"))
+      .filter((f) => /^\s*MULTI\s*$/m.test(readFileSync(f, "utf8")))
+      .map((f) => relative(root, f))
+      .sort();
+    assert.deepEqual(painters, [
+      "src/app/groundwork/page.tsx",
+      "src/app/room/room-client.tsx",
+    ]);
+    assert.match(
+      readFileSync(join(root, "src/app/groundwork/page.tsx"), "utf8"),
+      /\[multiTone\(file\.threadCount\)\]/,
+    );
+    assert.match(
+      readFileSync(join(root, "src/app/room/page.tsx"), "utf8"),
+      /multiTone = multiToneOf\(peopleCount\)/,
+    );
+  });
+});
+
+// ── pass 10 · "Edge tabs (Roundups · Check-ins) are thin AND inconspicuous —
+// quiet ink, color on hover only." ─────────────────────────────────────────
+// The names are pinned by render in tests/room-parity.test.ts; the colors
+// are the stylesheet's, read here.
+describe("the edge tabs rest in quiet ink and take color on hover only", () => {
+  const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8").replace(
+    /\/\*[\s\S]*?\*\//g,
+    "",
+  );
+  const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+    .map((m) => ({ sel: m[1].trim(), body: m[2] }))
+    .filter((r) => /\.edge\w*/.test(r.sel));
+  const COLOR = /var\(--(?:orange|blue|green|amber|red)\)|#(?:fff|ffffff)\b|var\(--ink\)/;
+
+  test("at rest the tab and its count wear the ink ladder's quiet steps", () => {
+    const at = (sel: string) => rules.find((r) => r.sel === sel)?.body ?? "";
+    assert.match(at(".edge"), /color:\s*var\(--quiet\);/);
+    assert.match(at(".edgeCount"), /color:\s*var\(--soft\);/);
+    assert.match(at(".edgeCount"), /background:\s*rgba\(10, 28, 64, 0\.08\);/);
+  });
+
+  test("solid ink, white and every accent appear only under :hover", () => {
+    const off = rules
+      .filter((r) => COLOR.test(r.body) && !r.sel.includes(":hover"))
+      .map((r) => r.sel);
+    assert.deepEqual(off, []);
+    assert.ok(
+      rules.some(
+        (r) => r.sel === ".edge:hover .edgeDue" && /var\(--amber\)/.test(r.body),
+      ),
+    );
+  });
+});
+
+// ── pass 10 · the ship pattern's verify chain ─────────────────────────────
+// "Verify chain uses &&: prettier → tsc → eslint (0 warnings) → tsx tests →
+// next build." package.json's verify script is the chain (#369), and the
+// test script runs every test file in tests/. The branch, the PR and the
+// squash merge are process; nothing here can show them.
+describe("the verify chain: five checks in the decreed order, joined by &&", () => {
+  const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
+    scripts: Record<string, string>;
+  };
+
+  test("prettier, tsc, eslint with no warnings, the tests, the build", () => {
+    const steps = pkg.scripts.verify.split(" && ");
+    assert.equal(steps.length, 5, pkg.scripts.verify);
+    assert.match(steps[0], /^npm run -s format:check$/);
+    assert.match(pkg.scripts["format:check"], /^prettier --check /);
+    assert.match(steps[1], /^tsc --noEmit$/);
+    assert.match(steps[2], /^eslint \. --max-warnings 0\b/);
+    assert.match(steps[3], /^npm test$/);
+    assert.match(steps[4], /^next build$/);
+    assert.match(pkg.scripts.lint, /--max-warnings 0/);
+  });
+
+  test("the test script runs every test file in tests/, each once", () => {
+    const listed = pkg.scripts.test.split(/\s+/).filter((x) => x.endsWith(".test.ts"));
+    const files: string[] = [];
+    const walkTests = (d: string) => {
+      for (const n of readdirSync(d)) {
+        const p = join(d, n);
+        if (statSync(p).isDirectory()) walkTests(p);
+        else if (n.endsWith(".test.ts")) files.push(relative(root, p));
+      }
+    };
+    walkTests(join(root, "tests"));
+    assert.equal(new Set(listed).size, listed.length, "a file listed twice");
+    assert.deepEqual([...listed].sort(), files.sort());
   });
 });
