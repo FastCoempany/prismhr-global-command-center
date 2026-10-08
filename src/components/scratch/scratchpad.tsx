@@ -524,7 +524,7 @@ export function Scratchpad() {
               </div>
               {pending && (
                 <div className={styles.asking}>
-                  Asking. Leave the page — the button pulses when it lands.
+                  Asking. The button pulses when the answer lands.
                 </div>
               )}
               {askNote && <div className={styles.note}>{askNote}</div>}
@@ -543,10 +543,7 @@ export function Scratchpad() {
                     ) : a.world ? (
                       <div className={styles.askA}>
                         {cleanAskText(a.world)}
-                        <span className={styles.worldTag}>
-                          {" "}
-                          — general knowledge, not the record
-                        </span>
+                        <span className={styles.worldTag}> · general knowledge</span>
                       </div>
                     ) : (
                       <div className={styles.quiet}>

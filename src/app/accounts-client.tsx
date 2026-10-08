@@ -67,7 +67,8 @@ import SecondRecordPanel, {
 import type { LastHumanTouch } from "@/lib/record/accounts";
 import {
   csmThreadFlagOf,
-  sendFlagOf,
+  filterDoor,
+  laneActOf,
   type Collision,
   type TouchCite,
 } from "./accounts/rules";
@@ -755,14 +756,8 @@ export function AccountsClient({
   }, [rows, q, csm, industry, tier, play, stageF, colSort]);
 
   // The door stays lit and named while any filter is live — filtered state
-  // is never invisible behind a closed strip.
-  const activeFilters = [
-    csm && "PARTNERS",
-    industry && "MODELS",
-    tier && "FIT",
-    play && "PLAYS",
-    stageF && "STAGES",
-  ].filter((f): f is string => Boolean(f));
+  // is never invisible behind a closed strip (filterDoor, ./accounts/rules).
+  const door = filterDoor({ csm, industry, tier, play, stage: stageF });
 
   const clickSort = (key: ColKey) =>
     setColSort(
@@ -781,26 +776,11 @@ export function AccountsClient({
     router.refresh();
   };
 
-  const laneRow = laneId ? rows.find((r) => r.id === laneId) : undefined;
-  const laneGem = laneRow?.second?.gems[0];
-  const laneAct: LaneAct | null =
-    laneRow && laneRow.second?.act && laneGem
-      ? {
-          accountId: laneRow.id,
-          accountName: laneRow.name,
-          term: laneGem.term,
-          act: laneRow.second.act,
-          reason: laneGem.reason,
-          whenDay: laneGem.whenDay,
-          cites: laneGem.cites,
-          to: laneRow.actDraft?.to ?? laneRow.contactName,
-          toEmail: laneRow.contactEmail,
-          subject: laneRow.actDraft?.subject ?? laneRow.second.act,
-          body: laneRow.actDraft?.body ?? "",
-          onBoard: laneRow.onBoard,
-          flag: sendFlagOf(laneRow.collision),
-        }
-      : null;
+  // The lane's seed is a rule (laneActOf, ./accounts/rules): TO from the
+  // relationship contact, SUBJECT from the act, a saved draft over both.
+  const laneAct: LaneAct | null = laneId
+    ? laneActOf(rows.find((r) => r.id === laneId))
+    : null;
 
   const copyList = async () => {
     const text = filtered
@@ -927,13 +907,11 @@ export function AccountsClient({
       <div className={styles.fdoorRow}>
         <button
           type="button"
-          className={
-            activeFilters.length ? `${styles.fdoor} ${styles.fdoorLive}` : styles.fdoor
-          }
+          className={door.live ? `${styles.fdoor} ${styles.fdoorLive}` : styles.fdoor}
           onClick={() => setFiltersOpen(!filtersOpen)}
           aria-expanded={filtersOpen}
         >
-          FILTERS{activeFilters.map((f) => ` · ${f}`).join("")} ▾
+          {door.label}
         </button>
       </div>
       {filtersOpen && (
@@ -1187,7 +1165,7 @@ export function AccountsClient({
                               className={styles.mchip}
                               onClick={() => setLaneId(laneId === a.id ? "" : a.id)}
                               aria-expanded={laneId === a.id}
-                              title="Work the act on the lane — the draft, the evidence, the fork"
+                              title="Open the act on the lane, with its evidence and the draft."
                             >
                               {a.second.act}
                               <span className={styles.mchipSrc}>
@@ -1199,7 +1177,7 @@ export function AccountsClient({
                               <button
                                 type="button"
                                 className={styles.mtick}
-                                title="Mark acted — files the stamp, clears the nag"
+                                title="Mark it acted. The nag clears."
                                 onClick={() => tickActed(a.id, a.second!.gems[0].term)}
                               >
                                 ✓
@@ -1215,7 +1193,7 @@ export function AccountsClient({
                                 <button
                                   type="button"
                                   className={styles.actedTb}
-                                  title="Take it back — the chip returns"
+                                  title="Take it back. The chip returns."
                                   onClick={() => tickUnacted(a.id, a.actedTerm)}
                                 >
                                   ↺

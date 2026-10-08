@@ -3,6 +3,7 @@
 // AccountNote rows under SCRATCH_NS, which keeps them out of every account
 // view and out of the intranet mirror by construction: the pad stays the pad.
 
+import { redactMoney } from "@/lib/intel/lexicon";
 import { chicagoDay } from "@/lib/tz";
 
 export const SCRATCH_NS = "scratch:pad";
@@ -35,6 +36,55 @@ export type StrikeClient = {
 export async function strikeLine(client: StrikeClient, id: string): Promise<number> {
   const r = await client.accountNote.updateMany(strikeMove(id));
   return r.count;
+}
+
+/** The way back (CLAUDE.md, The Scratchpaper: "readable under the pad's
+ *  STRUCK fold, restorable by ↺"): the row moves from the struck history to
+ *  the pad. Only the namespace changes, so the line returns with its words
+ *  and its timestamp, to its own seat. */
+export function restoreMove(id: string): {
+  where: { id: string; accountId: string };
+  data: { accountId: string };
+} {
+  return { where: { id, accountId: SCRATCH_GONE_NS }, data: { accountId: SCRATCH_NS } };
+}
+
+/** Bring a struck line back: the one write the ↺ makes. Returns how many
+ *  rows moved. */
+export async function restoreLine(client: StrikeClient, id: string): Promise<number> {
+  const r = await client.accountNote.updateMany(restoreMove(id));
+  return r.count;
+}
+
+// ── The pad's one write, and the ask door ───────────────────────────────────
+// The pact (CLAUDE.md, The Scratchpaper): it stays there and only there;
+// nothing routes, nothing files, nothing becomes an action. A kept line is
+// one row under SCRATCH_NS by the hand door, and the paper keeps figures
+// (amended 2026-08-21) because nothing reads that namespace into an account
+// view, the mirror or an action. The ask door is the one way a line leaves,
+// by the operator's own act of asking (D24), and it redacts, because asks
+// leave the paper.
+
+/** The row a kept line writes, or null for a blank line. The caller hands
+ *  it to the note writer as it stands. */
+export function scratchRow(body: string, at: Date) {
+  const text = (body ?? "").trim().slice(0, 500);
+  if (!text) return null;
+  return {
+    accountId: SCRATCH_NS,
+    kind: "mine" as const,
+    body: text,
+    door: "hand" as const,
+    lane: "mine" as const,
+    source: "scratch",
+    at,
+    keepFigures: true,
+  };
+}
+
+/** What the ask door sends: the question trimmed, money redacted, capped. */
+export function padQuestion(raw: string): string {
+  return redactMoney((raw ?? "").trim()).slice(0, 300);
 }
 
 // ── Paging (pass 8 X8) ──────────────────────────────────────────────────────

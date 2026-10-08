@@ -37,7 +37,7 @@ import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
 import type { LinkedNote } from "@/components/account-notes";
 import { theirLoopOf } from "@/lib/room/owed";
 import { AccountsClient, type AccountRow } from "../accounts-client";
-import { boardWords, liveOnBoard, registersOf, touchCiteOf } from "./rules";
+import { actedStampOf, boardWords, liveOnBoard, registersOf, touchCiteOf } from "./rules";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -358,10 +358,13 @@ export default async function AccountsPage() {
           const d = n ? parseActDraftBody(n.body) : null;
           return d ? { to: d.to, subject: d.subject, body: d.body } : null;
         })(),
-        // The ✓ stamp: the newest acted gem's day and term (take-back needs
-        // the term). "" when nothing is stamped.
-        actedDay: (sr?.gems ?? []).find((x) => x.actedDay)?.actedDay ?? "",
-        actedTerm: (sr?.gems ?? []).find((x) => x.actedDay)?.term ?? "",
+        // The ✓ stamp: the newest acted gem about an account person, its day
+        // and term (take-back needs the term); a colleague's gem has no seat
+        // on the row (C16). "" when nothing is stamped.
+        ...(() => {
+          const st = actedStampOf(sr?.gems ?? []);
+          return { actedDay: st.day, actedTerm: st.term };
+        })(),
         // The fork's HomeRoom half reads a live deal: an archived card or a
         // Closed Won/Lost stamp is not one (pass 8 A4; the board lift).
         onBoard: liveOnBoard(boardById.get(p.id)),

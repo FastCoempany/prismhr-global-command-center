@@ -5,6 +5,7 @@
 
 import { csmThreadFlagOf, quietFlagOf, type Collision } from "@/lib/activity/quiet-flag";
 import type { Rollup } from "@/lib/activity/rollup";
+import type { LaneAct } from "./act-lane";
 import type { Gem } from "@/lib/activity/stores";
 import { ACT_DRAFT_NS } from "@/lib/act/lane";
 import { readOutcome } from "@/lib/dashboard/outcome";
@@ -214,4 +215,89 @@ export function stampActed(
   const at = gems.findIndex((g) => g.term === term);
   if (at < 0) return null;
   return gems.map((g, i) => (i === at ? { ...g, actedDay: day } : g));
+}
+
+// ── the ✓ stamp (the Act Lane, A8.5; C16) ────────────────────────────────────
+// The ACT cell's stamp: the newest acted gem about an account person, with
+// its term, because the ↺ takes back that gem's own actedDay. A colleague's
+// gem never raises an act on the row (C16, amended 2026-10-05), so a stamp
+// the acted sweep put on one has no seat on the row either. Nothing stamped
+// reads "" for both.
+
+export function actedStampOf(
+  gems: readonly Pick<Gem, "term" | "actedDay" | "whoKind">[],
+): { day: string; term: string } {
+  let best: { day: string; term: string } | null = null;
+  for (const g of gems) {
+    if (!g.actedDay || g.whoKind === "colleague") continue;
+    if (!best || g.actedDay > best.day) best = { day: g.actedDay, term: g.term };
+  }
+  return best ?? { day: "", term: "" };
+}
+
+// ── the lane's seed (the Act Lane, A8.8) ─────────────────────────────────────
+// Clicking the chip opens the lane on the row's leading gem. The draft is
+// seeded from the relationship contact (TO) and the act (SUBJECT); a saved,
+// unsent draft outranks the seed in every field, because the pad never eats
+// your words. No chip, no lane.
+
+export type LaneSource = {
+  id: string;
+  name: string;
+  contactName: string;
+  contactEmail: string;
+  onBoard: boolean;
+  collision: Collision | null;
+  actDraft: { to: string; subject: string; body: string } | null;
+  second: {
+    act: string | null;
+    gems: {
+      term: string;
+      reason: string;
+      whenDay: string;
+      cites: { k: string; day: string; who: string; subject: string }[];
+    }[];
+  } | null;
+};
+
+export function laneActOf(row: LaneSource | undefined): LaneAct | null {
+  const gem = row?.second?.gems[0];
+  if (!row || !row.second?.act || !gem) return null;
+  return {
+    accountId: row.id,
+    accountName: row.name,
+    term: gem.term,
+    act: row.second.act,
+    reason: gem.reason,
+    whenDay: gem.whenDay,
+    cites: gem.cites,
+    to: row.actDraft?.to ?? row.contactName,
+    toEmail: row.contactEmail,
+    subject: row.actDraft?.subject ?? row.second.act,
+    body: row.actDraft?.body ?? "",
+    onBoard: row.onBoard,
+    flag: quietFlagOf(row.collision),
+  };
+}
+
+// ── the Filter Door (the Act Lane, A8.21) ────────────────────────────────────
+// One mono door at the sheet's shoulder. While any filter is live the door
+// stays lit and names every live one, so filtered state is never invisible
+// behind a closed strip.
+
+export function filterDoor(f: {
+  csm: string;
+  industry: string;
+  tier: string;
+  play: string;
+  stage: string;
+}): { live: boolean; label: string } {
+  const on = [
+    f.csm && "PARTNERS",
+    f.industry && "MODELS",
+    f.tier && "FIT",
+    f.play && "PLAYS",
+    f.stage && "STAGES",
+  ].filter((x): x is string => Boolean(x));
+  return { live: on.length > 0, label: `FILTERS${on.map((x) => ` · ${x}`).join("")} ▾` };
 }
