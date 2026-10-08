@@ -1853,6 +1853,12 @@ button.sdRadio:hover {
   color: var(--ds-ink);
   overflow-wrap: anywhere;
 }
+/* A held row carried past the Chicago day says since when (Yesterday
+   carries): quiet ink, the kicker's mono. */
+.heldSince {
+  font: 500 10.5px/1.5 var(--f-mono, var(--ds-font-mono));
+  color: var(--ds-ink-soft);
+}
 .heldReason,
 .heldSay {
   display: block;

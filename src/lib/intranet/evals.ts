@@ -37,42 +37,42 @@ export const EVAL_SET: EvalCase[] = [
     question: "What do we tell people about implementation timelines, and has it held?",
     wants: ["four to six weeks", "signature to first payroll", "slipped"],
     shouldAbstain: false,
-    proves: "C1 + C3 — an answer combining a channel claim with the app's own record",
+    proves: "C1 and C3: an answer combining a channel claim with the app's own record",
   },
   {
     id: "changed-position",
-    question: "How do we enter Brazil — entity or EOR?",
+    question: "How do we enter Brazil, entity or EOR?",
     wants: ["entity", "EOR first", "year two"],
     shouldAbstain: false,
-    proves: "Phase 12 — a position that moved between March and July",
+    proves: "Phase 12: a position that moved between March and July",
   },
   {
     id: "absent",
     question: "What did we agree with the Reykjavik office about their pension scheme?",
     wants: [],
     shouldAbstain: true,
-    proves: "abstention — plausible, and completely absent from the corpus",
+    proves: "Abstention: plausible, and completely absent from the corpus",
   },
   {
     id: "vocabulary",
     question: "How long does setup take once someone signs?",
     wants: ["four to six weeks", "signature to first payroll"],
     shouldAbstain: false,
-    proves: "Phase 9 — the question shares no vocabulary with the corpus",
+    proves: "Phase 9: the question shares no vocabulary with the corpus",
   },
   {
     id: "thin",
     question: "What do we know about their Poland entity?",
     wants: [],
     shouldAbstain: true,
-    proves: "F12 — support too thin to answer from, so it says so",
+    proves: "F12: support too thin to answer from, so it says so",
   },
   {
     id: "prospect-questions",
     question: "What do prospects ask about contractor classification?",
     wants: ["contractor", "classification"],
     shouldAbstain: false,
-    proves: "C7 — buyer questions are retrievable as their own kind",
+    proves: "C7: buyer questions are retrievable as their own kind",
   },
 ];
 
@@ -155,13 +155,13 @@ export function readCeilings(today: { docs: number; asks: number }): CeilingStat
     return {
       breached: true,
       which: "docs",
-      line: `The brain has read ${today.docs} documents today — that is the daily ceiling. It will hold what you give it and keep answering from what it already knows; reading resumes tomorrow.`,
+      line: `The brain has read ${today.docs} documents today, which is the daily ceiling. It holds what you give it and keeps answering from what it already knows. Reading resumes tomorrow.`,
     };
   if (today.asks >= CEILINGS.asksPerDay)
     return {
       breached: true,
       which: "asks",
-      line: `${today.asks} questions today — the daily ceiling. The rail and the claims still work; written answers resume tomorrow.`,
+      line: `${today.asks} questions today, which is the daily ceiling. The rail and the claims still work. Written answers resume tomorrow.`,
     };
   return { breached: false, which: "", line: "" };
 }

@@ -847,7 +847,14 @@ describe("the chain that fills the brain is wired end to end", () => {
     );
     assert.ok(client.includes("stop after this pass"), "the loop cannot be stopped");
     assert.ok(/r\.pending/.test(client), "the loop never learns when it is done");
-    assert.ok(client.includes("itRunLines"), "the report is never shown");
+    // The report paints through the digest's doors (pass 10), still as the run lines.
+    assert.ok(client.includes("<DigestLines"), "the report is never shown");
+    assert.ok(
+      readFileSync(join(root, "src/app/intranet/digest-doors.tsx"), "utf8").includes(
+        "itRunLines",
+      ),
+      "the report lost its run lines",
+    );
     assert.ok(page.includes("brainQueue"), "the room can't say what is waiting");
   });
   test("reads run side by side, and catch-up passes give reading the whole clock", () => {
@@ -1132,7 +1139,7 @@ describe("cost governance degrades the room, it never breaks it (F10)", () => {
   test("the reading ceiling holds material rather than dropping it (C6)", () => {
     const s = readCeilings({ docs: CEILINGS.docsPerDay, asks: 0 });
     assert.equal(s.which, "docs");
-    assert.ok(/hold what you give it/.test(s.line));
+    assert.ok(/holds what you give it/.test(s.line));
   });
   test("a pathological candidate set is cut before it becomes a four-dollar question", () => {
     const src = readFileSync(join(root, "src/app/intranet/actions.ts"), "utf8");
@@ -1571,7 +1578,9 @@ describe("the world speaks only when the record is empty (IV.6)", () => {
     );
   });
   test("the surface labels it as from outside the record", () => {
-    assert.ok(client.includes("From the world, not the record"));
+    // Flat since pass 10 (A12.11): the old label balanced on an antithesis
+    // and a dash aside.
+    assert.ok(client.includes("General knowledge from outside the record."));
     assert.ok(client.includes("itWorld"), "the world block has no distinct dress");
   });
   test("buyers' own questions are read as intelligence in the answer path (C7)", () => {
@@ -1593,7 +1602,10 @@ describe("what prospects ask lives on the Playbook (IV.5)", () => {
   test("the Playbook carries the shelf", () => {
     assert.ok(pbClient.includes("What prospects ask"));
     // X9 (pass 9): the inverse list keeps its place under a flat heading.
-    assert.ok(pbClient.includes("Bank questions no buyer has asked yet"), "the inverse list is missing");
+    assert.ok(
+      pbClient.includes("Bank questions no buyer has asked yet"),
+      "the inverse list is missing",
+    );
     assert.ok(pbPage.includes("harvestBattlecards"));
     assert.ok(pbPage.includes("prospectAsks"));
   });
@@ -1643,8 +1655,15 @@ describe("the ingest digest says where things went, not just that the index grew
     );
   });
   test("it tallies what was kept the way a person would say it", () => {
-    assert.ok(rc.includes("questions buyers asked"), "buyer asks vanish into a number");
-    assert.ok(rc.includes("Inside it I found"), "no kinds sentence");
+    // The kinds sentence and its words live with the digest's doors (pass 10,
+    // src/lib/intranet/ledger.ts foundDoor), and the read calls it.
+    const ledger = readFileSync(join(root, "src/lib/intranet/ledger.ts"), "utf8");
+    assert.ok(
+      ledger.includes("questions buyers asked"),
+      "buyer asks vanish into a number",
+    );
+    assert.ok(ledger.includes("Inside it I found"), "no kinds sentence");
+    assert.ok(rc.includes("foundDoor(claims)"), "the read stopped saying the kinds");
     assert.ok(!/["`]claims?["`:]/.test(rc), "pipeline vocabulary in the digest");
   });
   test("it says where buyer asks travel — the Playbook", () => {
@@ -1659,7 +1678,8 @@ describe("the ingest digest says where things went, not just that the index grew
     assert.ok(runnersAll.includes("function listOut"), "the human list helper is gone");
     assert.ok(runnersAll.includes("grewSentence"), "index growth fell back to shorthand");
     const norm = readFileSync(join(root, "src/lib/intranet/normalize.ts"), "utf8");
-    assert.ok(norm.includes("Got it —"), "the receipt stopped talking like a person");
+    // Flat since pass 10 (A12.5): two sentences, no dash aside.
+    assert.ok(norm.includes("Got it. "), "the receipt stopped talking like a person");
   });
   test("the button says Send it, and never Keep it (IV.9)", () => {
     const cl = readFileSync(join(root, "src/app/intranet/intranet-client.tsx"), "utf8");
@@ -1761,7 +1781,12 @@ describe("the ledger surface holds the decrees (IV.8)", () => {
     );
   });
   test("the country lens note states the no-duplication doctrine", () => {
-    assert.ok(client.includes("A country is a lens, not a copy"));
+    // Flat since pass 10 (A12.11): the same doctrine without the antithesis.
+    assert.ok(
+      client.includes(
+        "Each country reads the same record through one place. Nothing is copied.",
+      ),
+    );
   });
 });
 
@@ -1905,9 +1930,10 @@ describe("the bench gadget is wired to the truth", () => {
   test("the gadget is docked, stamps its run, and takes you to it on Send it", () => {
     assert.ok(client.includes("itBgPlate"), "the gadget lost its plate");
     assert.ok(client.includes("scrollIntoView"), "Send it no longer brings you to it");
-    assert.ok(client.includes("Send-it run — your paste"));
-    assert.ok(client.includes("Refresh run — the whole backlog"));
-    assert.ok(client.includes("At rest — caught up"), "rest is not stated honestly");
+    // The run's name and its unit sit on the mono dot since pass 10 (A12.5).
+    assert.ok(client.includes("Send-it run · your paste"));
+    assert.ok(client.includes("Refresh run · the whole backlog"));
+    assert.ok(client.includes("At rest · caught up"), "rest is not stated honestly");
   });
   test("a failure holds the gadget open until it is seen (V.6)", () => {
     assert.ok(client.includes("failHold"), "a failed run folds away unseen");
@@ -1925,7 +1951,8 @@ describe("the bench gadget is wired to the truth", () => {
     assert.ok(/r\.halt/.test(client), "the client hammers on regardless");
   });
   test("repeated failures collapse to one line per pass", () => {
-    assert.ok(runners.includes("failed this pass — queued for retry"));
+    // Flat since pass 10 (A12.5): no dash aside.
+    assert.ok(runners.includes("failed this pass and wait"));
     assert.ok(
       !runners.includes("One entry failed — it retries next pass"),
       "the wall of identical red lines is back",
@@ -1967,5 +1994,195 @@ describe("structured-output schemas stay inside what the API accepts", () => {
   test("a server error surfaces as its message, not a JSON blob", () => {
     const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
     assert.ok(/"message"/.test(runners), "reasonOf stopped unwrapping the server error");
+  });
+});
+
+// ── pass 10: every count on the Intranet and the Playbook opens (A5.1–A5.3) ──
+// The click-depth law: the Send-it digest's counts, the health page's
+// meters, the bank questions no buyer has asked, and the country wing's
+// tally each open what they count, one click deep.
+
+describe("the digest's counts open what they count (pass 10, the click-depth law)", () => {
+  test("the found line and its doors come from one builder, each kind holding its claims", async () => {
+    const { foundDoor, grewDoor, doorsOf } = await import("../src/lib/intranet/ledger");
+    const found = foundDoor([
+      { id: "c1", kind: "commitment" },
+      { id: "c2", kind: "question" },
+      { id: "c3", kind: "commitment" },
+      { id: "c4", kind: "made-up" },
+    ]);
+    assert.ok(found);
+    assert.equal(
+      found.line,
+      "Inside it I found 2 commitments people made and 1 open questions.",
+    );
+    assert.deepEqual(
+      found.kinds.map((k) => [k.kind, k.n, k.claimIds]),
+      [
+        ["commitment", 2, ["c1", "c3"]],
+        ["question", 1, ["c2"]],
+      ],
+    );
+    assert.equal(foundDoor([]), undefined);
+    const grew = grewDoor([
+      { id: "t2", label: "Brazil", n: 3, fresh: true },
+      { id: "t1", label: "Pricing", n: 6, fresh: false },
+    ]);
+    assert.ok(grew);
+    assert.equal(
+      grew.line,
+      'The index grew: Pricing picked up 6 and "Brazil" is brand new.',
+    );
+    assert.deepEqual(
+      grew.topics.map((t) => t.id),
+      ["t1", "t2"],
+    );
+    // A stored digest reads its doors back; anything malformed reads as words.
+    assert.deepEqual(doorsOf({ doors: { found, grew } }), { found, grew });
+    assert.equal(doorsOf({ doors: { found: { line: 3 } } }), undefined);
+    assert.equal(doorsOf({}), undefined);
+    assert.equal(doorsOf(null), undefined);
+  });
+
+  test("the digest paints each count as a button, and an open kind lists its claims as doors", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { createElement } = await import("react");
+    const { DigestLines } = await import("../src/app/intranet/digest-doors");
+    const { foundDoor, grewDoor } = await import("../src/lib/intranet/ledger");
+    const found = foundDoor([
+      { id: "c1", kind: "commitment" },
+      { id: "c2", kind: "question" },
+    ])!;
+    const grew = grewDoor([{ id: "t1", label: "Pricing", n: 6, fresh: false }])!;
+    const html = await render(
+      createElement(DigestLines, {
+        lines: ["Got it. 4 messages.", found.line, grew.line],
+        doors: { found, grew },
+        loadClaims: async () => [],
+        onDrill: () => {},
+        onTopic: () => {},
+        initial: {
+          kind: "commitment",
+          claims: [
+            {
+              id: "c1",
+              text: "We will send the census.",
+              speaker: "Pat Lee",
+              saidAt: "2026-10-07T15:00:00Z",
+            },
+          ],
+        },
+      }),
+    );
+    const buttons = [...html.matchAll(/<button[^>]*>([^<]*)<\/button>/g)].map(
+      (m) => m[1],
+    );
+    for (const b of [
+      "1 commitments people made",
+      "1 open questions",
+      "Pricing picked up 6",
+    ])
+      assert.ok(buttons.includes(b), `${b} is not a door`);
+    const text = textOf(html);
+    assert.ok(text.includes("Got it. 4 messages."));
+    assert.ok(text.includes("We will send the census."), "the open kind lists no claim");
+    // A digest stored before the doors reads as plain words.
+    const plain = await render(
+      createElement(DigestLines, {
+        lines: [found.line],
+        loadClaims: async () => [],
+        onDrill: () => {},
+        onTopic: () => {},
+      }),
+    );
+    assert.ok(!plain.includes("<button"));
+    assert.ok(textOf(plain).includes(found.line));
+    // The runner stores the doors beside the lines, and the feed reads them.
+    const runners = readFileSync(join(root, "src/app/intranet/runners.ts"), "utf8");
+    assert.match(runners, /doors\.found = foundDoor\(claims\);/);
+    assert.match(runners, /digest: lines,\s*doors,/);
+    const store = readFileSync(join(root, "src/lib/intranet/store.ts"), "utf8");
+    assert.match(store, /doors: doorsOf\(meta\)/);
+  });
+
+  test("every corpus and ceiling meter on the health page is a door to its rows", () => {
+    const page = readFileSync(join(root, "src/app/intranet/health/page.tsx"), "utf8");
+    const doors = [...page.matchAll(/<MeterDoor label="([^"]+)" which="(\w+)">/g)].map(
+      (m) => [m[1], m[2]],
+    );
+    assert.deepEqual(doors, [
+      ["Documents", "docs"],
+      ["Claims", "claims"],
+      ["Questions prospects asked", "prospect"],
+      ["Live topics", "topics"],
+      ["Waiting to be read", "pending"],
+      ["Proposed topics not yet on the rail", "proposed"],
+      ["Documents read", "todayDocs"],
+      ["Questions answered", "todayAsks"],
+    ]);
+    // What stays a plain meter is a setting or a target, not a count of rows.
+    const plain = [
+      ...page.matchAll(/<div className=\{styles\.itMeter\}>\s*<span>([^<]+)<\/span>/g),
+    ].map((m) => m[1]);
+    assert.deepEqual(plain, [
+      "Reading rubric",
+      "Claims into one answer",
+      "Recall on what a human marked relevant",
+      "Every citation credited to the right speaker",
+      "Declines what the record cannot answer",
+      "Every assertion traces to a cited claim",
+    ]);
+    // The list reads the same where-clauses the meters count by.
+    const store = readFileSync(join(root, "src/lib/intranet/store.ts"), "utf8");
+    const list = store.slice(store.indexOf("export async function brainList"));
+    assert.match(
+      list,
+      /OR: \[\{ extractedAt: null \}, \{ promptVersion: \{ not: PROMPT_VERSION \} \}\]/,
+    );
+    assert.match(list, /kind: "prospect-question"/);
+    assert.match(list, /status: which === "topics" \? "live" : "pending"/);
+    assert.match(list, /extractedAt: \{ gte: start \}/);
+    assert.match(list, /askedAt: \{ gte: start \}/);
+  });
+});
+
+describe("the Playbook's counts open their lists (pass 10, the click-depth law)", () => {
+  test("bank questions no buyer has asked: four inline, every other one behind one fold", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { createElement } = await import("react");
+    const { BankUnasked } = await import("../src/app/playbook/playbook-client");
+    const list = ["Q1?", "Q2?", "Q3?", "Q4?", "Q5?", "Q6?"];
+    const shut = textOf(await render(createElement(BankUnasked, { list })));
+    assert.ok(shut.includes("Q4?") && !shut.includes("Q5?"));
+    assert.ok(shut.includes("2 more ▾"), "the rest has no door");
+    const open = textOf(
+      await render(createElement(BankUnasked, { list, defaultOpen: true })),
+    );
+    for (const q of list) assert.ok(open.includes(q), `${q} is unreachable`);
+    const short = await render(createElement(BankUnasked, { list: list.slice(0, 3) }));
+    assert.ok(!short.includes("<button"), "a list that fits has no fold");
+  });
+
+  test("the wing's tally opens to every country it counts, each a door to its card", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { createElement } = await import("react");
+    const { TallyList, tallyLists } = await import("../src/app/playbook/product-sheet");
+    const index = [
+      { name: "Mexico", priced: true, points: 16 },
+      { name: "Puerto Rico", priced: true, points: 0 },
+      { name: "Atlantis", priced: false, points: 0 },
+    ] as unknown as Parameters<typeof tallyLists>[0];
+    assert.deepEqual(tallyLists(index), {
+      written: ["Mexico"],
+      pricedOnly: ["Puerto Rico"],
+    });
+    const html = await render(createElement(TallyList, { index, onPick: () => {} }));
+    const buttons = [...html.matchAll(/<button[^>]*>([^<]*)<\/button>/g)].map(
+      (m) => m[1],
+    );
+    assert.deepEqual(buttons, ["Mexico", "Puerto Rico"]);
+    assert.ok(!textOf(html).includes("Atlantis"));
+    const face = readFileSync(join(root, "src/app/playbook/product-sheet.tsx"), "utf8");
+    assert.match(face, /aria-expanded=\{tallyOpen\}/);
   });
 });

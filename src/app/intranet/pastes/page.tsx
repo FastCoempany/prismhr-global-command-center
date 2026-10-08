@@ -39,8 +39,8 @@ export default async function IntranetPastesPage() {
         <div className={styles.pageHead}>
           <h1 className={styles.h1}>Every paste, verbatim</h1>
           <p className={styles.sub}>
-            The raw record of everything the room has been handed — nothing rewritten,
-            nothing thinned. <Link href="/intranet">Back to the room</Link>.
+            Everything the room has been handed, exactly as it arrived.{" "}
+            <Link href="/intranet">Back to the room</Link>.
           </p>
         </div>
 

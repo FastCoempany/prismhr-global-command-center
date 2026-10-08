@@ -651,7 +651,8 @@ describe("undo by filing id removes every row and todo it wrote and nothing else
     await fileCompletion("A1", "t1", "Send the model.\n⚑[d:2026-10-09,u:high,k:a]", client);
     assert.equal(notes.size, 1);
     const [[noteId, line]] = [...notes];
-    assert.match(line.body, /^✓ Send the model\. — done \d{1,2}\/\d{1,2}$/);
+    // Flat since pass 10 (A12.5): two sentences, no dash aside.
+    assert.match(line.body, /^✓ Send the model\. Done \d{1,2}\/\d{1,2}\.$/);
     assert.equal(line.door, "hand");
     assert.equal(line.source, "done");
     assert.equal(marks.get(completionKey("t1"))?.reason, `completion filed·${noteId}`);

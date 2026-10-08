@@ -864,7 +864,7 @@ export default async function RoomPage() {
   const pipeStale = !pipeDrop
     ? "no second record"
     : pipeDropAge > DROP_STALE_DAYS
-      ? `second record ${pipeDrop.slice(5)} — stale`
+      ? `second record ${pipeDrop.slice(5)} · stale`
       : `second record ${pipeDrop.slice(5)}`;
 
   return (

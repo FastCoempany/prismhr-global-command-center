@@ -56,6 +56,48 @@ function CopyBtn({ payload, label }: { payload: string; label: string }) {
   );
 }
 
+/** The bank questions no buyer has asked yet, all of them: the first few
+ *  inline, the rest behind one fold (pass 10, the click-depth law; the
+ *  line used to show four and drop the rest). */
+export const BANK_UNASKED_INLINE = 4;
+
+export function BankUnasked({
+  list,
+  defaultOpen = false,
+}: {
+  list: string[];
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const rest = list.slice(BANK_UNASKED_INLINE);
+  return (
+    <div className={styles.kHint}>
+      Bank questions no buyer has asked yet:{" "}
+      {list.slice(0, BANK_UNASKED_INLINE).join(" · ")}
+      {rest.length > 0 && (
+        <>
+          {" "}
+          <button
+            type="button"
+            className={styles.copyBtn}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? "fewer ▴" : `${rest.length} more ▾`}
+          </button>
+          {open && (
+            <ul className={styles.bankRest}>
+              {rest.map((q) => (
+                <li key={q}>{q}</li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export function PlaybookClient({
   lessons,
   market,
@@ -127,12 +169,7 @@ export function PlaybookClient({
                 </div>
               ))
             )}
-            {oursNotTheirs.length > 0 && (
-              <p className={styles.kHint}>
-                Bank questions no buyer has asked yet:{" "}
-                {oursNotTheirs.slice(0, 4).join(" · ")}
-              </p>
-            )}
+            {oursNotTheirs.length > 0 && <BankUnasked list={oursNotTheirs} />}
           </div>
           <div className={styles.kBlock}>
             <h2 className={styles.kHead}>

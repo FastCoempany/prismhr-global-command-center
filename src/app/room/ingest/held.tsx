@@ -145,6 +145,7 @@ export function HeldBox({
   busy = false,
   dismissTitle = HELD_X_TITLE,
   status,
+  since,
   onPick,
   onDismiss,
   defaultOpen,
@@ -166,6 +167,9 @@ export function HeldBox({
   dismissTitle?: string;
   /** What the box is doing while a choice runs: a backup's progress. */
   status?: string;
+  /** The Chicago day, M/D, a held row was carried past: it returns saying
+   *  so (Yesterday carries; ruled pass 10). */
+  since?: string;
   onPick: (account: HeldAccount, how: HeldChoice) => void;
   onDismiss: () => void;
   /** Opens the grounds or the account list on first paint, for the suite. */
@@ -220,6 +224,7 @@ export function HeldBox({
       <div className={styles.heldTop}>
         <span className={styles.heldPill}>Held</span>
         {file && <span className={styles.heldFile}>{file}</span>}
+        {since && <span className={styles.heldSince}>Held since {since}.</span>}
       </div>
       {verdict?.reason && hasGrounds ? (
         <button

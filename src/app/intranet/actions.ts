@@ -20,6 +20,7 @@ import {
 } from "@/lib/intranet/doctrine";
 import { descendantIds } from "@/lib/intranet/index-topics";
 import {
+  brainList,
   claimsByEntities,
   claimsByIds,
   claimsByPhrases,
@@ -30,7 +31,13 @@ import {
   loadTopics,
   todayCounts,
 } from "@/lib/intranet/store";
-import { countryOf, type LedgerEntry } from "@/lib/intranet/ledger";
+import {
+  HEALTH_LISTS,
+  countryOf,
+  type HealthList,
+  type HealthRow,
+  type LedgerEntry,
+} from "@/lib/intranet/ledger";
 import {
   CEILINGS,
   EVAL_SET,
@@ -85,7 +92,7 @@ function recordLinesAnswer(cands: Candidate[]): Answer {
     return `• ${tag ? `[${tag}] ` : ""}${c.claim.text}`;
   });
   return {
-    answer: `Composed without the brain — the record's own closest lines:\n${lines.join("\n")}`,
+    answer: `Composed without the brain, from the record's own closest lines:\n${lines.join("\n")}`,
     // The printed lines ARE claims 1..n — they keep their provenance doors.
     citations: lines.map((_, i) => i + 1),
     reasoning: "",
@@ -236,7 +243,7 @@ export async function intranetAsk(
             question: q,
             plan: { priceDesk: true } as unknown as object,
             candidateIds: [],
-            answer: `${redactMoney(quote.answer)} Priced live from the Pricing page — open it for the figures.`,
+            answer: `${redactMoney(quote.answer)} Priced live from the Pricing page. Open it for the figures.`,
             reasoning: "",
             citations: [] as unknown as object,
             coverage: {} as unknown as object,
@@ -370,13 +377,13 @@ export async function intranetAsk(
       score: 1,
     }));
     candidates = [...liveCands, ...candidates];
-    docLabel.set(liveDocId, `${live.name} — derived live`);
+    docLabel.set(liveDocId, `${live.name} · derived live`);
     docs.set(liveDocId, {
       id: liveDocId,
       origin: "live",
       originRef: `account:${live.accountId}`,
       space: "Live",
-      title: `${live.name} — the app's live read`,
+      title: `${live.name} · the app's live read`,
       accountId: live.accountId,
       occurredAt: nowIso,
       originGone: "",
@@ -682,7 +689,7 @@ export async function intranetSelfCheck(): Promise<SelfCheckReply> {
     return {
       ok: false,
       lines: [],
-      reason: "The brain is unreachable — the room can't check itself right now.",
+      reason: "The brain is unreachable. The room can't check itself right now.",
     };
 
   const lines: string[] = [];
@@ -695,10 +702,12 @@ export async function intranetSelfCheck(): Promise<SelfCheckReply> {
     let note: string;
     if (c.shouldAbstain) {
       ok = didAbstain;
-      note = ok ? "it declined, honestly" : "it answered what the record cannot support";
+      note = ok
+        ? "it declined, as it should"
+        : "it answered what the record cannot support";
     } else if (didAbstain) {
       ok = false;
-      note = "the record has nothing on this yet — feed it and check again";
+      note = "the record has nothing on this yet. Feed it and check again";
     } else {
       const hay = [r.answer.answer, ...cited.map((x) => x.text)]
         .join(" • ")
@@ -718,7 +727,7 @@ export async function intranetSelfCheck(): Promise<SelfCheckReply> {
           : "found, answered, credited correctly";
     }
     if (ok) passed += 1;
-    lines.push(`${ok ? "✓" : "✕"} ${c.question} — ${note}.`);
+    lines.push(`${ok ? "✓" : "✕"} ${c.question} · ${note}.`);
   }
   lines.unshift(`${passed} of ${EVAL_SET.length} checks passed.`);
   return { ok: true, lines };
@@ -750,6 +759,26 @@ export type PassageReply = {
    *  the drawer opens to above the mirrored passage (C13). */
   bank: AskFold | null;
 };
+
+/** A health meter's door (pass 10, the click-depth law): the rows it counts. */
+export async function intranetHealthList(which: HealthList): Promise<HealthRow[]> {
+  if (!(await canRead()) || !HEALTH_LISTS.includes(which)) return [];
+  return brainList(which);
+}
+
+/** A digest count's door (pass 10, the click-depth law): the claims a Send-it
+ *  digest counted under one kind, each a door on to its passage. */
+export type ClaimLine = { id: string; text: string; speaker: string; saidAt: string };
+
+export async function intranetClaimLines(ids: string[]): Promise<ClaimLine[]> {
+  if (!(await canRead()) || !Array.isArray(ids) || ids.length === 0) return [];
+  const want = ids.filter((x) => typeof x === "string").slice(0, 200);
+  const byId = new Map((await claimsByIds(want)).map((c) => [c.id, c]));
+  return want
+    .map((id) => byId.get(id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+    .map((c) => ({ id: c.id, text: c.text, speaker: c.speaker, saidAt: c.saidAt }));
+}
 
 /** Level 2 and 3: the claim in its surrounding turns, and the whole document
  *  behind it. */

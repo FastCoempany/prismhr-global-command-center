@@ -25,6 +25,7 @@ import {
   intranetAsk,
   intranetContents,
   intranetLedgerDay,
+  intranetClaimLines,
   intranetPassage,
 } from "./actions";
 import { intranetCapture } from "./capture-actions";
@@ -33,6 +34,7 @@ import type { RunReport } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
 import { SELECTION_DOT, selectionDot } from "./selection";
 import { dockRefuses } from "./grab";
+import { DigestLines } from "./digest-doors";
 import type {
   AskReply,
   PassageReply,
@@ -360,6 +362,7 @@ export function IntranetClient({
                 ],
                 briefs: g.briefs ?? [],
                 detail: g.detail ?? [],
+                doors: g.doors,
               }
             : e,
         ),
@@ -564,7 +567,7 @@ export function IntranetClient({
                       onClick={() =>
                         toggleSel({
                           key: lKey,
-                          label: `${c.name} — ${l.label}`,
+                          label: `${c.name} · ${l.label}`,
                           scope: {
                             type: "country",
                             code: c.code,
@@ -589,8 +592,7 @@ export function IntranetClient({
         })}
         {countries.length > 0 && (
           <p className={styles.itLensNote}>
-            A country is a lens, not a copy — the same record, read through one place. One
-            brain, nothing duplicated.
+            Each country reads the same record through one place. Nothing is copied.
           </p>
         )}
       </>
@@ -721,11 +723,19 @@ export function IntranetClient({
               {b}
             </p>
           ))}
-          <ul className={styles.itRunLines}>
-            {(e.lines.length ? e.lines : ["Sent to the brain."]).map((l, i) => (
-              <li key={i}>{l}</li>
-            ))}
-          </ul>
+          <DigestLines
+            lines={e.lines.length ? e.lines : ["Sent to the brain."]}
+            doors={e.doors}
+            loadClaims={intranetClaimLines}
+            onDrill={drill}
+            onTopic={(t) =>
+              toggleSel({
+                key: `t:${t.id}`,
+                label: t.label,
+                scope: { type: "topic", id: t.id, label: t.label },
+              })
+            }
+          />
           {renderDetailFold(e.id, e.detail)}
         </>
       );
@@ -795,7 +805,7 @@ export function IntranetClient({
         {reply.world && (
           <div className={styles.itWorld}>
             <p className={styles.itWorldTag}>
-              From the world, not the record — general knowledge, nothing internal.
+              General knowledge from outside the record. Nothing here is internal.
             </p>
             <p className={styles.itProse}>{reply.world}</p>
           </div>
@@ -834,8 +844,8 @@ export function IntranetClient({
                     onClick={() => promote(c.promoteLine, c.claimId)}
                   >
                     {copied === c.claimId
-                      ? "copied — paste it in the Playbook"
-                      : `keep in the Playbook (${c.promoteNs})`}
+                      ? "Copied. Paste it in the Playbook."
+                      : `keep in the Playbook's ${c.promoteNs}`}
                   </button>
                 )}
               </div>
@@ -893,7 +903,7 @@ export function IntranetClient({
                 )}
                 <p className={styles.itCoverage}>
                   Answered by {reply.model || "—"}
-                  {reply.escalated ? ` — escalated on ${reply.escalated}` : ""}.
+                  {reply.escalated ? `. Escalated on ${reply.escalated}` : ""}.
                 </p>
               </div>
             )}
@@ -965,7 +975,7 @@ export function IntranetClient({
               onKeyDown={(e) => {
                 if (e.key === "Enter") ask(q);
               }}
-              placeholder="What do we tell people about implementation timelines — and has it held?"
+              placeholder="What do we tell people about implementation timelines, and has it held?"
               aria-label="Ask the brain"
             />
             <button
@@ -1005,13 +1015,13 @@ export function IntranetClient({
                 <span className={styles.itBgRun}>
                   {gadgetLive
                     ? pulseS?.kind === "sendit"
-                      ? "Send-it run — your paste"
+                      ? "Send-it run · your paste"
                       : pulseS?.kind === "activity"
-                        ? "Activity run — the second record"
-                        : "Refresh run — the whole backlog"
+                        ? "Activity run · the second record"
+                        : "Refresh run · the whole backlog"
                     : failHold
-                      ? "Paused — the log says why"
-                      : "At rest — caught up"}
+                      ? "Paused · the log says why"
+                      : "At rest · caught up"}
                 </span>
                 {runBusy || capBusy ? (
                   <button
@@ -1153,7 +1163,7 @@ export function IntranetClient({
                 <p className={styles.itPaneEmpty}>
                   {within.trim()
                     ? "Nothing in the selection matches that."
-                    : "Nothing filed here yet — it fills as the brain reads."}
+                    : "Nothing filed here yet. It fills as the brain reads."}
                 </p>
               )}
               <div className={styles.itPaneList}>
@@ -1191,7 +1201,7 @@ export function IntranetClient({
 
           {!canAnswer && (
             <p className={styles.itWarn}>
-              The brain is unreachable — asks answer from the record&apos;s own closest
+              The brain is unreachable. Asks answer from the record&apos;s own closest
               lines, and new pastes wait to be read into the index.
             </p>
           )}
@@ -1336,7 +1346,7 @@ export function IntranetClient({
                 className={styles.itDockPaste}
                 value={paste}
                 onChange={(e) => setPaste(e.target.value)}
-                placeholder="Paste a Teams thread, a meeting transcript, a demo — anything worth keeping. It gets read the moment you send it."
+                placeholder="Paste a Teams thread, a meeting transcript, a demo or anything else worth keeping. It gets read the moment you send it."
                 aria-label="Paste into the brain"
               />
               <button

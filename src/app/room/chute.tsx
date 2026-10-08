@@ -25,6 +25,7 @@
 import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf } from "./actions";
 import { activityRun, activityStage, activityTakeBack } from "../activity/actions";
+import { DOCK_ANCHOR } from "../activity/dock";
 import { intranetKeep } from "../intranet/capture-actions";
 import { chuteBook, type BookName } from "./route-actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
@@ -66,6 +67,23 @@ const heldOf = (v: Verdict): HeldVerdict => ({
 
 const count = (n: number, one: string, many: string): string =>
   `${n} ${n === 1 ? one : many}`;
+
+/** The counts a second-record drop came in with. They are a door to the
+ *  run's receipt on the Intranet dock, which the link opens on arrival: one
+ *  click from a count to the lines that explain it (the click-depth law;
+ *  pass 10). */
+export function ActivityCame({
+  came,
+}: {
+  came: { rows: number; accounts: number; textRows: number };
+}) {
+  return (
+    <a href={`/intranet#${DOCK_ANCHOR}`} title="Open the run's receipt on the Intranet">
+      {count(came.rows, "row", "rows")} · {count(came.accounts, "account", "accounts")} ·{" "}
+      {came.textRows} carrying email text.
+    </a>
+  );
+}
 
 export function Chute({ canWrite }: { canWrite: boolean }) {
   const ingest = useIngest({ door: "chute", readPdf: chuteReadPdf });
@@ -532,11 +550,13 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
       {it.state === "activity" && <span className={styles.rcptLine}>{it.reason}</span>}
       {it.state === "activityDone" && (
         <span className={styles.rcptLine}>
-          {it.came ? `${it.came.rows} rows · ` : ""}
-          {it.came ? `${it.came.accounts} accounts · ` : ""}
-          {it.came ? `${it.came.textRows} carrying email text. ` : ""}
+          {it.came && (
+            <>
+              <ActivityCame came={it.came} />{" "}
+            </>
+          )}
           {it.came?.textRows === 0 ? "This drop read nothing. " : `${it.reason} `}
-          <a href="/intranet">The receipt waits on the Intranet.</a>{" "}
+          <a href={`/intranet#${DOCK_ANCHOR}`}>The receipt waits on the Intranet.</a>{" "}
           <button
             type="button"
             className={styles.chuteUndo}
@@ -599,6 +619,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
           canWrite={canWrite}
           busy={working.has(it.key)}
           status={it.vault?.going ? it.vault.text : undefined}
+          since={it.heldSince}
           dismissTitle={it.door === "intranet" ? HELD_X_TITLE_BRAIN : HELD_X_TITLE}
           onPick={(a, how) => pickHeld(it, a, how)}
           onDismiss={() => void dismissRow(it)}

@@ -168,6 +168,59 @@ function CountryCardView({ card }: { card: CountryCard }) {
   );
 }
 
+/** The wing's tally as the lists it counts (pass 10, the click-depth law):
+ *  every country written up, then every one priced and not yet written up.
+ *  Together they are the priced count; the first is the written count. */
+export function tallyLists(index: readonly CountryRow[]): {
+  written: string[];
+  pricedOnly: string[];
+} {
+  const priced = index.filter((r) => r.priced);
+  return {
+    written: priced.filter((r) => r.points > 0).map((r) => r.name),
+    pricedOnly: priced.filter((r) => r.points === 0).map((r) => r.name),
+  };
+}
+
+/** The tally opened: each country a door to its card. */
+export function TallyList({
+  index,
+  onPick,
+}: {
+  index: readonly CountryRow[];
+  onPick: (name: string) => void;
+}) {
+  const { written, pricedOnly } = tallyLists(index);
+  return (
+    <div className={styles.tallyList}>
+      {(
+        [
+          ["Written up", written],
+          ["Priced, not yet written up", pricedOnly],
+        ] as const
+      ).map(([head, names]) =>
+        names.length ? (
+          <div key={head}>
+            <span className={styles.kick}>{head}</span>
+            <div className={styles.pins}>
+              {names.map((n) => (
+                <button
+                  type="button"
+                  key={n}
+                  className={styles.pin}
+                  onClick={() => onPick(n)}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null,
+      )}
+    </div>
+  );
+}
+
 function CountryWing({
   index,
   tally,
@@ -187,6 +240,7 @@ function CountryWing({
 }) {
   const [typed, setTyped] = useState("");
   const [hi, setHi] = useState(0);
+  const [tallyOpen, setTallyOpen] = useState(false);
   const hits = useMemo(() => search(typed, index), [typed, index]);
 
   const take = (name: string) => {
@@ -199,10 +253,25 @@ function CountryWing({
     <aside className={styles.wing}>
       <div className={styles.wingHead}>
         <span className={styles.kick}>The country</span>
-        <span className={styles.wingN}>
+        <button
+          type="button"
+          className={`${styles.wingN} ${styles.wingNDoor}`}
+          aria-expanded={tallyOpen}
+          title={tallyOpen ? "Hide the countries" : "Show the countries"}
+          onClick={() => setTallyOpen((v) => !v)}
+        >
           {tally.priced} priced · {tally.written} written
-        </span>
+        </button>
       </div>
+      {tallyOpen && (
+        <TallyList
+          index={index}
+          onPick={(n) => {
+            setTallyOpen(false);
+            take(n);
+          }}
+        />
+      )}
       <div className={styles.field}>
         <input
           type="text"
