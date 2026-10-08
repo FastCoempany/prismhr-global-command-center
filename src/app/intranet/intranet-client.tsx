@@ -25,6 +25,7 @@ import {
   intranetAsk,
   intranetContents,
   intranetLedgerDay,
+  intranetReceiptDocs,
   intranetClaimLines,
   intranetPassage,
 } from "./actions";
@@ -727,6 +728,7 @@ export function IntranetClient({
             lines={e.lines.length ? e.lines : ["Sent to the brain."]}
             doors={e.doors}
             loadClaims={intranetClaimLines}
+            loadDocs={() => intranetReceiptDocs(e.id)}
             onDrill={drill}
             onTopic={(t) =>
               toggleSel({

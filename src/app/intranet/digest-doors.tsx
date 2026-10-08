@@ -29,10 +29,20 @@ function listed<T>(items: T[], one: (t: T, i: number) => ReactNode) {
   ));
 }
 
+/** The receipt's head line, "Got it. 4 messages from X.", split at its
+ *  count so the count can be a door; null when the line carries none. */
+export function receiptCount(
+  line: string,
+): { before: string; count: string; after: string } | null {
+  const m = /^(Got it\. )(\d+ messages?)(.*)$/.exec(line);
+  return m ? { before: m[1], count: m[2], after: m[3] } : null;
+}
+
 export function DigestLines({
   lines,
   doors,
   loadClaims,
+  loadDocs,
   onDrill,
   onTopic,
   initial,
@@ -40,6 +50,8 @@ export function DigestLines({
   lines: string[];
   doors?: DigestDoors;
   loadClaims: (ids: string[]) => Promise<DoorClaim[]>;
+  /** The capture's messages, for the receipt's count (pass 11). */
+  loadDocs?: () => Promise<{ text: string; meta: string }[]>;
   onDrill: (claimId: string) => void;
   onTopic: (topic: DigestTopic) => void;
   /** A kind open on first paint with its claims, for the suite. */
@@ -63,6 +75,12 @@ export function DigestLines({
   };
 
   const shown = open ? doors?.found?.kinds.find((k) => k.kind === open) : undefined;
+  const [docs, setDocs] = useState<{ text: string; meta: string }[] | null>(null);
+  const [docsOpen, setDocsOpen] = useState(false);
+  const toggleDocs = () => {
+    setDocsOpen((v) => !v);
+    if (docs === null && loadDocs) void loadDocs().then(setDocs);
+  };
 
   return (
     <ul className={styles.itRunLines}>
@@ -117,6 +135,36 @@ export function DigestLines({
               </button>
             ))}
             .
+          </li>
+        ) : loadDocs && receiptCount(l) ? (
+          <li key={i}>
+            {receiptCount(l)!.before}
+            <button
+              type="button"
+              className={styles.itDoor}
+              aria-expanded={docsOpen}
+              title="Show the messages"
+              onClick={toggleDocs}
+            >
+              {receiptCount(l)!.count}
+            </button>
+            {receiptCount(l)!.after}
+            {docsOpen && (
+              <div className={styles.itFold}>
+                {docs === null ? (
+                  <span>Opening…</span>
+                ) : docs.length === 0 ? (
+                  <span>The brain holds none of them now.</span>
+                ) : (
+                  docs.map((d, j) => (
+                    <span key={j} className={styles.itCiteBody}>
+                      {d.text}
+                      {d.meta && <span className={styles.itCiteMeta}>{d.meta}</span>}
+                    </span>
+                  ))
+                )}
+              </div>
+            )}
           </li>
         ) : (
           <li key={i}>{l}</li>

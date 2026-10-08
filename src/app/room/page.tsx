@@ -54,7 +54,7 @@ import { settledByRecord } from "@/lib/room/settled";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
 import { prospectAsks } from "@/lib/intranet/store";
-import { Chute } from "./chute";
+import { RoomFace } from "./face";
 import {
   acceptedForMove,
   filedWarmth,
@@ -66,7 +66,6 @@ import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/
 import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
 import { multiTone as multiToneOf } from "@/lib/room/multi";
 import {
-  RoomClient,
   type CadenceRow,
   type CheckinRow,
   type FollowUpRow,
@@ -871,29 +870,25 @@ export default async function RoomPage() {
   return (
     <>
       <AppWayfinder current="HomeRoom" />
-      <main
-        className={`${styles.room} ${serif.variable} ${sans.variable} ${mono.variable}`}
-      >
-        {/* The Chute routes on the server over the joined roster (C2, D13);
-            no roster rides the page. */}
-        <Chute canWrite={data.canWrite} />
-        <RoomClient
-          rows={rows}
-          cadence={cadence}
-          checkins={checkins}
-          followUps={followUpRows}
-          warming={warming}
-          later={later}
-          canWrite={data.canWrite}
-          dbUnavailable={data.status === "database-unavailable"}
-          boardNames={rows
+      <RoomFace
+        fontVars={`${serif.variable} ${sans.variable} ${mono.variable}`}
+        room={{
+          rows,
+          cadence,
+          checkins,
+          followUps: followUpRows,
+          warming,
+          later,
+          canWrite: data.canWrite,
+          dbUnavailable: data.status === "database-unavailable",
+          boardNames: rows
             .filter((r) => r.cardId)
-            .map((r) => ({ id: r.accountId, name: r.name }))}
-          pipeline={pipeReport}
-          pipelineDay={pipeDayLabel}
-          pipelineStale={pipeStale}
-        />
-      </main>
+            .map((r) => ({ id: r.accountId, name: r.name })),
+          pipeline: pipeReport,
+          pipelineDay: pipeDayLabel,
+          pipelineStale: pipeStale,
+        }}
+      />
     </>
   );
 }

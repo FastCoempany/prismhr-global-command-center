@@ -1690,3 +1690,60 @@ test("a settled receipt clears by hand; in-flight and waiting rows cannot", () =
   for (const st of ["pick", "mismatch", "reading", "filing", "activity"] as const)
     assert.equal(isSettled(st), false, `settled must not include ${st}`);
 });
+
+// ── pass 11 · A4.30: the evidence route is the one place staged bodies leave ─
+// The whole scope, every module in src: the slice readers are the evidence
+// route's, the activity library's own, and Groundwork's page; and every row
+// that page reads reaches the page only through a head-only builder, each
+// shown here to drop the body.
+describe("staged bodies leave the store by the evidence route alone (A4.30, whole scope)", () => {
+  test("only the route, the activity library and Groundwork's page read a slice", async () => {
+    const { readFileSync, readdirSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const walk = (dir: string): string[] =>
+      readdirSync(dir).flatMap((n) => {
+        const p = join(dir, n);
+        return statSync(p).isDirectory() ? walk(p) : /\.tsx?$/.test(n) ? [p] : [];
+      });
+    const readers = /\b(fetchStageRows|readStageSlice|parseStageBody|STAGE_NS)\b/;
+    const reading = walk("src")
+      .filter((f) => !f.startsWith(join("src", "generated")))
+      .filter((f) => readers.test(readFileSync(f, "utf8")))
+      .filter((f) => !f.startsWith(join("src", "lib", "activity")));
+    assert.deepEqual(reading.sort(), [
+      join("src", "app", "activity", "evidence", "route.ts"),
+      join("src", "app", "groundwork", "page.tsx"),
+    ]);
+  });
+
+  test("Groundwork's page hands every row it reads to a head-only builder", async () => {
+    const { readFileSync } = await import("node:fs");
+    const page = readFileSync("src/app/groundwork/page.tsx", "utf8");
+    // Each read of a slice is an argument to a builder…
+    const reads = [...page.matchAll(/await fetchStageRows\(/g)].length;
+    const wrapped = [...page.matchAll(/supportCites\(await fetchStageRows\(/g)].length;
+    const held = /const stageRows =[^;]*?await fetchStageRows\(/.test(page) ? 1 : 0;
+    assert.equal(reads, wrapped + held, "a slice read reaches the page unbuilt");
+    // …and the held rows travel only into builders.
+    const uses = [...page.matchAll(/\bstageRows\b/g)].length - 1;
+    const built = [...page.matchAll(/(csmPrepRows|collisionCite|spikeCites)\(\s*stageRows\b/g)].length;
+    assert.equal(uses, built, "the page's rows reach something that is not a builder");
+    // Every builder drops the body.
+    const { collisionCite, csmPrepRows, spikeCites, supportCites } = await import(
+      "../src/lib/groundwork/chips"
+    );
+    const body = "The census is attached. Our renewal is in March.";
+    const rows: StagedRow[] = [
+      staged({ k: "s1", d: "2026-07-22", lane: "support", s: "Payroll stuck", c: body }),
+      staged({ k: "c1", d: "2026-07-20", a: "Lesha Cyphers", lane: "csm", s: "Renewal", c: body }),
+    ];
+    const out = JSON.stringify([
+      supportCites(rows),
+      spikeCites(rows, "2026-07-22"),
+      csmPrepRows(rows, "Lesha Cyphers", "2026-07-30"),
+      collisionCite(rows, { who: "Lesha Cyphers", day: "2026-07-20" }),
+    ]);
+    assert.ok(out.includes("s1") && out.includes("c1"));
+    assert.ok(!out.includes("census"), out);
+  });
+});

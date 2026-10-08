@@ -766,6 +766,34 @@ export async function intranetHealthList(which: HealthList): Promise<HealthRow[]
   return brainList(which);
 }
 
+/** The receipt's "N messages" as a door (pass 11, the click-depth law): the
+ *  messages the capture became, each with its speakers and its day. */
+export async function intranetReceiptDocs(captureId: string): Promise<HealthRow[]> {
+  if (
+    !(await canRead()) ||
+    !hasDatabaseEnv() ||
+    typeof captureId !== "string" ||
+    !captureId
+  )
+    return [];
+  try {
+    const docs = await getPrisma().intranetDoc.findMany({
+      where: { captureId },
+      select: { title: true, space: true, speakers: true, occurredAt: true },
+      orderBy: { occurredAt: "asc" },
+      take: 500,
+    });
+    return docs.map((d) => ({
+      text: d.title || d.space || "A message",
+      meta: [d.speakers.join(", "), d.occurredAt.toISOString().slice(0, 10)]
+        .filter(Boolean)
+        .join(" · "),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 /** A digest count's door (pass 10, the click-depth law): the claims a Send-it
  *  digest counted under one kind, each a door on to its passage. */
 export type ClaimLine = { id: string; text: string; speaker: string; saidAt: string };

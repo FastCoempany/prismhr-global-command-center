@@ -141,6 +141,18 @@ function channelLine(t: ChannelTouch | null | undefined): string {
     .join(" · ");
 }
 
+/** What a channel line opens to (the click-depth law, pass 11): the name
+ *  the line shortened, whole, and the touch's own words. Null with no touch. */
+export function channelOpens(
+  t: (ChannelTouch & { clause?: string }) | null | undefined,
+): string[] | null {
+  if (!t) return null;
+  return [
+    t.contact ? `To ${t.contact}.` : "No name on file.",
+    ...(t.clause ? [t.clause] : []),
+  ];
+}
+
 /** The wing's stamp subtext, chosen once (D27, ship order 2026-10-06): a
  *  filed touch's channel line still leads the stamp when there is one, and
  *  the rule's own stamp words speak otherwise, so the wing never stamps

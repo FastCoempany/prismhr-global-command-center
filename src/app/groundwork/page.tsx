@@ -39,7 +39,7 @@ import {
   secondOnlyMotionIds,
   sweepAtFor,
 } from "@/lib/groundwork/day";
-import { wingStamp } from "@/lib/groundwork/stamp";
+import { channelOpens, wingStamp } from "@/lib/groundwork/stamp";
 import {
   collisionFor,
   dropAgeDays,
@@ -51,12 +51,11 @@ import {
   DROP_STALE_DAYS,
   type SecondRecord,
 } from "@/lib/activity/read";
-import EvidenceChips, { CiteRows } from "./evidence-chips";
+import EvidenceChips from "./evidence-chips";
 import {
   chipGems,
   collisionCite,
   csmPrepRows,
-  prepKicker,
   spikeCites,
   supportCites,
 } from "@/lib/groundwork/chips";
@@ -72,7 +71,6 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { READOUT_READ_KEY, buildFile } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
-import { multiTone } from "@/lib/room/multi";
 import { isWire } from "@/lib/ingest/dialect";
 import {
   intentFor,
@@ -111,7 +109,13 @@ import {
 import { SEAT_NS, parseSeatBody } from "@/lib/act/lane";
 import { markWorked, runResearchNow } from "./actions";
 import { CopyStamp } from "./copy-stamp";
-import { GroundworkFace, WorkedControl, type DoneStamp } from "./face";
+import {
+  CsmPrep,
+  GroundworkFace,
+  MultiBadge,
+  WorkedControl,
+  type DoneStamp,
+} from "./face";
 import styles from "./groundwork.module.css";
 
 export const dynamic = "force-dynamic";
@@ -541,11 +545,13 @@ export default async function GroundworkPage({
       sub: wingStamp(touch, st.ruleKey, facts),
       mk: st.mk,
       accountId: st.accountId,
-      // Every count opens (the click-depth law): when the rule's words
+      // Every compression opens (the click-depth law): when the rule's words
       // speak, "{N} SUPPORT CASES" opens to its rows and "{N} SALES NAV
       // READS" to the grab line it was read from.
+      // The channel line shortens a name, so it opens too: the name whole and
+      // the touch's own words (pass 11).
       opens: touch
-        ? null
+        ? { lines: channelOpens(touch) ?? [] }
         : st.ruleKey === "engaged-never-introduced" && facts.supportCases
           ? {
               cites: supportCites(await fetchStageRows(st.accountId).catch(() => [])),
@@ -910,40 +916,16 @@ export default async function GroundworkPage({
                           {file.collisionLine && (
                             <span
                               className={styles.collideFlag}
-                              title="Your note lands beside live motion. It informs; it never blocks."
+                              title="Your note lands beside live motion. Nothing is held back."
                             >
                               ⚠ {file.collisionLine}
                             </span>
                           )}
                           {file.composed.payload}
-                          {file.csmPrep.length > 0 && (
-                            <details className={styles.prepFold}>
-                              <summary>{prepKicker(file.csmPrep.length)} ▾</summary>
-                              <div className={styles.prepLine}>
-                                <CiteRows
-                                  accountId={file.accountId}
-                                  rows={file.csmPrep}
-                                />
-                              </div>
-                            </details>
-                          )}
+                          <CsmPrep accountId={file.accountId} rows={file.csmPrep} />
                         </div>
                         <div className={styles.people}>
-                          {file.threadCount >= 1 && (
-                            <span
-                              className={[
-                                styles.multi,
-                                {
-                                  r: styles.multiRed,
-                                  y: styles.multiAmber,
-                                  g: styles.multiGreen,
-                                }[multiTone(file.threadCount)],
-                              ].join(" ")}
-                              title={`${file.threadCount} ${file.threadCount === 1 ? "person carries" : "people carry"} this conversation`}
-                            >
-                              MULTI
-                            </span>
-                          )}
+                          <MultiBadge count={file.threadCount} />
                           {file.people.map((person) => (
                             <span
                               key={person.name}
