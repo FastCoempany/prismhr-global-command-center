@@ -69,6 +69,7 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { READOUT_READ_KEY, buildFile } from "@/lib/groundwork/file";
 import { proximityMark } from "@/lib/groundwork/proximity";
+import { multiTone } from "@/lib/room/multi";
 import { isWire } from "@/lib/ingest/dialect";
 import {
   intentFor,
@@ -1020,11 +1021,11 @@ export default async function GroundworkPage({
                         <span
                           className={[
                             styles.multi,
-                            file.threadCount === 1
-                              ? styles.multiRed
-                              : file.threadCount === 2
-                                ? styles.multiAmber
-                                : styles.multiGreen,
+                            {
+                              r: styles.multiRed,
+                              y: styles.multiAmber,
+                              g: styles.multiGreen,
+                            }[multiTone(file.threadCount)],
                           ].join(" ")}
                           title={`${file.threadCount} ${file.threadCount === 1 ? "person carries" : "people carry"} this conversation`}
                         >

@@ -455,12 +455,25 @@ export function Row({
   const worked = row.workedToday || workedNow;
   const [freshCaps, setFreshCaps] = useState<FreshCap[]>([]);
   const [freshInfo, setFreshInfo] = useState<FreshEntry[]>([]);
+  // The Spring (triptych winner, 2026-08-13): each register rests as one
+  // summary line; ⊕ springs it out in place, one register out at a time.
+  const [spring, setSpring] = useState<"unknown" | "peers" | "today" | null>(
+    defaultSpring,
+  );
   // Each receipt's key, so a backup that lands later finds its filing.
   const receiptSeq = useRef(0);
+  // Filing or composing anything springs TODAY open so receipts never land
+  // behind a fold (the Spring, 2026-08-13). Every receipt this row adds, a
+  // filing's line or a plain one, enters through these two doors.
   const addReceipt = (rc: Omit<LedgerRow, "key">): number => {
     const key = ++receiptSeq.current;
     setFreshInfo((f) => [{ receipt: { ...rc, key } }, ...f]);
+    setSpring("today");
     return key;
+  };
+  const addInfo = (text: string) => {
+    setFreshInfo((f) => [{ text }, ...f]);
+    setSpring("today");
   };
   const patchReceipt = (key: number, up: Partial<LedgerRow>) =>
     setFreshInfo((f) =>
@@ -477,14 +490,8 @@ export function Row({
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
   const [recOpen, setRecOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  // The Spring (triptych winner, 2026-08-13): each register rests as one
-  // summary line; ⊕ springs it out in place, one register out at a time.
-  const [spring, setSpring] = useState<"unknown" | "peers" | "today" | null>(
-    defaultSpring,
-  );
-  // Filing or composing anything springs TODAY open so receipts never land
-  // behind a fold (the Spring, 2026-08-13). Every fresh line this row adds
-  // enters through here (H4).
+  // Every fresh line this row adds enters through here, and it springs
+  // TODAY like the receipt doors above (H4).
   const landToday = (cap: FreshCap) => {
     setFreshCaps((f) => [cap, ...f]);
     setSpring("today");
@@ -995,12 +1002,9 @@ export function Row({
       const r = took(await call(row.accountId, row.cardId, l.noteId, l.phrase));
       if (r.ok) {
         setLossState("lost");
-        setFreshInfo((f) => [
-          {
-            text: `${status === "won" ? "Closed Won" : "Closed Lost"}. The meter says so now. Retire the row when you're done.`,
-          },
-          ...f,
-        ]);
+        addInfo(
+          `${status === "won" ? "Closed Won" : "Closed Lost"}. The meter says so now. Retire the row when you're done.`,
+        );
       } else setNote(r.reason ?? "That didn't save.");
     });
   };
@@ -1010,7 +1014,7 @@ export function Row({
     if (pending) return;
     start(async () => {
       const r = took(await roomRetire(row.accountId, row.cardId));
-      if (r.ok) setFreshInfo((f) => [{ text: "Retired from the board." }, ...f]);
+      if (r.ok) addInfo("Retired from the board.");
       else setNote(r.reason ?? "That didn't save.");
     });
   };
@@ -1040,14 +1044,11 @@ export function Row({
     startAsk(async () => {
       const r = took(await roomGapsRefill(row.accountId));
       if (r.ok)
-        setFreshInfo((f) => [
-          {
-            text: r.added
-              ? `${r.added} new ask${r.added === 1 ? "" : "s"} minted from what the app knows.`
-              : "Nothing new to ask. The list already has it all.",
-          },
-          ...f,
-        ]);
+        addInfo(
+          r.added
+            ? `${r.added} new ask${r.added === 1 ? "" : "s"} minted from what the app knows.`
+            : "Nothing new to ask. The list already has it all.",
+        );
       else setNote(r.reason ?? "Minting didn't complete.");
     });
   };
@@ -1136,7 +1137,7 @@ export function Row({
         if (r.ok) {
           wrote = true;
           setClosedKey(o.doneKey);
-          setFreshInfo((f) => [{ text: `Closed: ${o.item}` }, ...f]);
+          addInfo(`Closed: ${o.item}`);
         } else {
           setNote(r.reason ?? "The close didn't save.");
           return;

@@ -169,6 +169,36 @@ describe("whatever lands in TODAY springs it open (H4)", () => {
     assert.ok(handler("promoteCap").includes('setSpring("today")'), "promoteCap");
   });
 
+  // Pass 10 (A6.3): a Mark-it-done close, a Closed Won or Lost stamp, a
+  // retire and a mint each added a receipt to TODAY and left it folded.
+  // Every receipt now enters through one of two doors, and both spring.
+  test("every receipt enters through a door, and both doors spring TODAY", () => {
+    for (const door of ["addReceipt", "addInfo"])
+      assert.ok(handler(door).includes('setSpring("today")'), `${door} springs TODAY`);
+    const adds = client.split("setFreshInfo((f) => [").length - 1;
+    assert.equal(adds, 2, "a receipt is added outside addReceipt and addInfo");
+  });
+
+  test("every path that files or composes lands through a door", () => {
+    // Each write a row makes that leaves something in TODAY, by its handler.
+    const paths: Record<string, RegExp> = {
+      submitCompose: /landToday\(|filePaste\(/,
+      promoteCap: /setSpring\("today"\)/,
+      promoteNote: /landToday\(/,
+      owedAccept: /landToday\(/,
+      filePaste: /addReceipt\(/,
+      fileText: /addReceipt\(/,
+      unfileHeld: /addReceipt\(/,
+      archiveFiles: /addReceipt\(/,
+      confirmClose: /addInfo\(/,
+      retireRow: /addInfo\(/,
+      refillAsks: /addInfo\(/,
+      submitClose: /addInfo\(/,
+    };
+    for (const [name, door] of Object.entries(paths))
+      assert.match(handler(name), door, `${name} lands behind the fold`);
+  });
+
   test("the row springs TODAY when the next paint holds a line it did not", () => {
     assert.ok(
       /if \(landedSince\(seenLines, lines\)\) setSpring\("today"\);/.test(client),

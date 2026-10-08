@@ -64,6 +64,7 @@ import {
 } from "./room-reads";
 import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/build";
 import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
+import { multiTone as multiToneOf } from "@/lib/room/multi";
 import {
   RoomClient,
   type CadenceRow,
@@ -248,7 +249,7 @@ export default async function RoomPage() {
     // digest's thread roster — a record-quiet deal with a known room must
     // never render "nobody exists."
     const peopleCount = Math.max(people.length, intel.threads.people.length);
-    const multiTone = peopleCount >= 3 ? "g" : peopleCount === 2 ? "y" : "r";
+    const multiTone = multiToneOf(peopleCount);
 
     // Who this deal runs through — the record's most-seen person outranks the
     // book's seeded primary the moment real communication files.
