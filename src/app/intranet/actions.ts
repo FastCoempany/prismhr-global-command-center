@@ -768,7 +768,7 @@ export async function intranetHealthList(which: HealthList): Promise<HealthRow[]
 
 /** The receipt's "N messages" as a door (pass 11, the click-depth law): the
  *  messages the capture became, each with its speakers and its day. */
-export async function intranetCaptureDocs(captureId: string): Promise<HealthRow[]> {
+export async function intranetReceiptDocs(captureId: string): Promise<HealthRow[]> {
   if (
     !(await canRead()) ||
     !hasDatabaseEnv() ||

@@ -106,7 +106,7 @@ describe("the doors pass 11 opened each reach their evidence in one click", () =
   test("the Intranet receipt's message count opens the messages the capture became", async () => {
     const page = await mount(browser, "tests/browser/fixtures/intranet.tsx", {
       returns: {
-        intranetCaptureDocs: [
+        intranetReceiptDocs: [
           { text: "Simploy renewal", meta: "Pat Lee, Lesha Cyphers · 2026-10-07" },
           { text: "Census timing", meta: "Pat Lee · 2026-10-07" },
         ],
@@ -116,7 +116,7 @@ describe("the doors pass 11 opened each reach their evidence in one click", () =
     await page.waitForSelector("text=Census timing");
     assert.ok(
       (await page.evaluate(() => (window as unknown as { __calls: [string, unknown[]][] }).__calls)).some(
-        ([n, a]) => n === "intranetCaptureDocs" && a[0] === "cap1",
+        ([n, a]) => n === "intranetReceiptDocs" && a[0] === "cap1",
       ),
     );
     await page.close();

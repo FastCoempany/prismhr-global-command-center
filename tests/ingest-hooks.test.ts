@@ -240,10 +240,16 @@ describe("the door reads each file on the spot (A1.3)", () => {
 // stays by the same decree. Rendered: every file input on the board is a
 // row's Drop, one per writable row, and the Chute is one file door.
 describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
+  // Rewritten in pass 11: the page renders its frame through RoomFace
+  // (src/app/room/face.tsx) so the browser suite can mount it
+  // (tests/browser/room.test.ts › "the Chute is the frame's first child").
   test("the page mounts the Chute once, first in main, above the board", () => {
     const page = read("src/app/room/page.tsx");
-    const main = page.slice(page.lastIndexOf("<main"));
-    assert.equal((page.match(/<Chute\b/g) ?? []).length, 1, "one Chute");
+    assert.equal((page.match(/<RoomFace\b/g) ?? []).length, 1, "one frame");
+    assert.equal((page.match(/<Chute\b/g) ?? []).length, 0, "the page mounts a Chute of its own");
+    const face = read("src/app/room/face.tsx");
+    const main = face.slice(face.lastIndexOf("<main"));
+    assert.equal((face.match(/<Chute\b/g) ?? []).length, 1, "one Chute");
     const chuteAt = main.indexOf("<Chute ");
     const boardAt = main.indexOf("<RoomClient");
     assert.ok(chuteAt > 0 && boardAt > chuteAt, "the Chute leads the board");
