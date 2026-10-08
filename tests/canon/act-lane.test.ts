@@ -1264,7 +1264,7 @@ describe("the sheet's copy obeys the writing canon and the plain-speech law", ()
   ];
   // What is code, not copy: class lists, URLs, keys, ids and the like.
   const SKIP_ATTR = new Set(["className", "href", "key", "id", "name", "type", "value"]);
-  const CODE = /^(use client|[\w.:/?&=%-]+|[\w-]+(\s[\w-]+)*\.(csv|eml))$/;
+  const CODE = /^(use client|[\w-]*[./:?&=%][\w./:?&=%-]*|[a-z]+(-[a-z]+)+)$/;
   const copyOf = (file: string): { at: string; text: string }[] => {
     const src = readFileSync(join(process.cwd(), file), "utf8");
     const sf = ts.createSourceFile(
@@ -1340,6 +1340,12 @@ describe("the sheet's copy obeys the writing canon and the plain-speech law", ()
         texts.includes("Salesforce is the record"),
     );
     assert.ok(texts.includes("· general knowledge"));
+    // The CSM's rhythm with the client is their check-ins; never "Cadence".
+    assert.ok(texts.includes("Check-ins"));
+    assert.equal(
+      texts.some((t) => /\bcadence\b/i.test(t)),
+      false,
+    );
     const faults = (t: string) => sentencesOf(t).flatMap((x) => lintReason(x).faults);
     assert.ok(
       faults("The app is your operating layer, not the truth.").includes("antithesis"),
@@ -1349,5 +1355,53 @@ describe("the sheet's copy obeys the writing canon and the plain-speech law", ()
         "When it's sent, drop the .eml in the Chute — that files the touch.",
       ).includes("a dash hinge"),
     );
+  });
+});
+
+// ── Pass 10, the sheet's green: the brand's #22C55E by role. On the pale
+// field it is too light for words, so a green state is tint and border and
+// its words stay ink (room.module.css .worked). The stylesheet is the only
+// place a color lives, so this pin reads it.
+describe("the sheet's green is the brand's, by role", () => {
+  const css = readFileSync(
+    join(process.cwd(), "src/app/command-center.module.css"),
+    "utf8",
+  );
+  const rule = (sel: string) => {
+    const m = new RegExp(
+      `(?:^|\\n)${sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`,
+    ).exec(css);
+    assert.ok(m, `${sel} is gone`);
+    return m[1];
+  };
+
+  test("the token is the brand green, and no rule writes words in it", () => {
+    assert.match(rule(".wrap"), /--green:\s*#22c55e;/i);
+    assert.doesNotMatch(css, /(?:^|[\s;{])color:\s*var\(--green\)/);
+    assert.doesNotMatch(css, /#1a7f3c|#15803d(?=;\s*\n\s*border-radius: 5px)/i);
+  });
+
+  test("every green state is tint and border with ink words", () => {
+    for (const sel of [
+      ".stageWon",
+      ".approachGo",
+      ".valConfirmed",
+      ".prTag_reply",
+      ".mtick:hover",
+      ".actedStamp b",
+    ]) {
+      const r = rule(sel);
+      assert.match(r, /rgba\(34, 197, 94, 0\.1\d?\)/, `${sel} has no green tint`);
+      assert.match(r, /color:\s*(?:var\(--ink\)|#0a1c40)/i, `${sel} words are not ink`);
+      assert.match(
+        r,
+        /(?:border(?:-color)?:[^;]*(?:#22c55e|var\(--green\)|rgba\(34, 197, 94)|box-shadow:\s*inset[^;]*rgba\(34, 197, 94)/i,
+        `${sel} has no green edge`,
+      );
+    }
+  });
+
+  test("the dead stash tag is gone", () => {
+    assert.equal(css.includes(".prTag_stash"), false);
   });
 });

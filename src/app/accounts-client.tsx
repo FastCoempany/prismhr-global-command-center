@@ -597,7 +597,7 @@ function EngagementPanel({ a }: { a: AccountRow }) {
         <input type="hidden" name="accountId" value={a.id} />
         <div className={styles.engageGrid}>
           <label className={styles.engageField}>
-            <span>Cadence</span>
+            <span>Check-ins</span>
             <input
               name="cadence"
               defaultValue={e.cadence}
