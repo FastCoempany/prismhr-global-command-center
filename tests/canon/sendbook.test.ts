@@ -512,16 +512,47 @@ describe("the Sendbook's marks speak plainly and wear the brand palette (pass 8 
     }
   });
 
-  test("GONE COLD and MKTG LIVE carry those titles on the page", async () => {
+  // Rewritten in pass 10: the two marks were hover titles only, a dead end
+  // on touch (the click-depth law). Each is now a door whose fold carries
+  // the same words, after the evidence it stands on.
+  test("GONE COLD and MKTG LIVE open, one click deep, to their evidence and those words", async () => {
     const { MARK_TITLES, SendMarks } = await import("../../src/app/sendbook/marks");
     const html = await render(
+      createElement(SendMarks, {
+        mktg: true,
+        cold: true,
+        coldSince: "2026-08-14T15:00:00.000Z",
+        mktgSends: 3,
+        reply: null,
+        booking: null,
+      }),
+    );
+    const doors = [
+      ...html.matchAll(
+        /<details class="door"><summary class="(\w+)">([^<]*)<\/summary><div class="answer">([\s\S]*?)<\/div><\/details>/g,
+      ),
+    ].map((m) => [m[1], m[2], textOf(m[3])]);
+    assert.deepEqual(doors, [
+      [
+        "mktgLive",
+        "MKTG LIVE",
+        `Marketing sent 3 emails here in the last seven days. ${MARK_TITLES.mktg}`,
+      ],
+      ["cold", "GONE COLD", `Last warm 8/14. ${MARK_TITLES.cold}`],
+    ]);
+    assert.ok(!/<details[^>]* open/.test(html), "a fold opened on arrival");
+    assert.doesNotMatch(html, /re-open, not an introduction/);
+    // With no evidence on file, the door still opens to the plain words.
+    const bare = await render(
       createElement(SendMarks, { mktg: true, cold: true, reply: null, booking: null }),
     );
-    const titles = [...html.matchAll(/title="([^"]*)"/g)].map((m) =>
-      m[1].replace(/&#x27;/g, "'"),
-    );
-    assert.deepEqual(titles, [MARK_TITLES.mktg, MARK_TITLES.cold]);
-    assert.doesNotMatch(html, /re-open, not an introduction/);
+    assert.ok(textOf(bare).includes(MARK_TITLES.cold));
+    assert.ok(!textOf(bare).includes("Last warm"));
+    // The page hands each line its evidence from both records.
+    const page = readFileSync(join(cwd(), "src/app/sendbook/page.tsx"), "utf8");
+    assert.match(page, /\[read\.warmth\.lastWarmAt, org\.theirsAt\]/);
+    assert.match(page, /coldSince: lastWarm\.get\(l\.accountId\)/);
+    assert.match(page, /mktgSends: mktgSends\.get\(l\.accountId\)/);
   });
 
   test("every color the register's stylesheet names is the brand's", () => {

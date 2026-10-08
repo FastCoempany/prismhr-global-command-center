@@ -26,6 +26,10 @@ export type RegisterLine = {
   /** A live marketing cadence, marked once per account on its newest line. */
   mktg: boolean;
   cold: boolean;
+  /** The account's last warm moment on either record (GONE COLD's door). */
+  coldSince?: string;
+  /** Marketing sends in the last seven days (MKTG LIVE's door). */
+  mktgSends?: number;
 };
 
 export function SendbookRegister({
@@ -115,7 +119,14 @@ export function SendbookRegister({
               {l.clause}
               {l.contact ? (l.clause ? ` · ${l.contact}` : l.contact) : ""}
             </span>
-            <SendMarks mktg={l.mktg} cold={l.cold} reply={l.reply} booking={l.booking} />
+            <SendMarks
+              mktg={l.mktg}
+              cold={l.cold}
+              coldSince={l.coldSince}
+              mktgSends={l.mktgSends}
+              reply={l.reply}
+              booking={l.booking}
+            />
           </div>
         </div>
       ))}

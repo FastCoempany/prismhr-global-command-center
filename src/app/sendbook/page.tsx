@@ -106,8 +106,20 @@ export default async function SendbookPage({
   const book = buildSendbook({ readsById, tapsById, now });
   // A live marketing cadence marks the line. It informs and blocks nothing.
   const mktgLive = new Set<string>();
-  for (const [id, read] of readsById)
-    if (orgSignalsOf(read.secondRecord).mktgLive) mktgLive.add(id);
+  // What each mark opens to (the click-depth law): the marketing sends behind
+  // MKTG LIVE, and the last warm moment behind GONE COLD, the later of the
+  // record's warmth and the export's attributed inbound (both records, C1).
+  const mktgSends = new Map<string, number>();
+  const lastWarm = new Map<string, string>();
+  for (const [id, read] of readsById) {
+    const org = orgSignalsOf(read.secondRecord);
+    if (org.mktgLive) {
+      mktgLive.add(id);
+      mktgSends.set(id, read.secondRecord?.intent?.windows.w7?.s ?? 0);
+    }
+    const warm = [read.warmth.lastWarmAt, org.theirsAt].filter(Boolean).sort().pop();
+    if (warm) lastWarm.set(id, warm);
+  }
   // The cadence marker speaks once per account — on its newest line — never
   // as a wall down the register (quiet ink, the canon's way).
   const newestLineAt = new Map<string, string>();
@@ -139,6 +151,8 @@ export default async function SendbookPage({
           ...l,
           mktg: mktgLive.has(l.accountId) && newestLineAt.get(l.accountId) === l.at,
           cold: book.laneById.get(l.accountId) === "gone-cold",
+          coldSince: lastWarm.get(l.accountId) ?? "",
+          mktgSends: mktgSends.get(l.accountId) ?? 0,
         }))}
         total={
           filter
