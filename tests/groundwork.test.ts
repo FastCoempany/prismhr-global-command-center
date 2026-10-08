@@ -2259,6 +2259,8 @@ describe("the readout's verified cold is cold on both records (pass 10)", () => 
     assert.deepEqual(secondRecordStats(["A", "B", "C", "D"], second, reads, NOW), {
       active30: 1,
       verifiedCold: 1,
+      activeIds: ["C"],
+      coldIds: ["A"],
     });
     assert.equal(secondRecordStats(["A"], new Map(), reads, NOW), null);
     // The sentence says it flat, in two sentences.
@@ -2266,6 +2268,65 @@ describe("the readout's verified cold is cold on both records (pass 10)", () => 
     assert.match(
       src,
       /in the last thirty days\. \$\{inp\.secondRecord\.verifiedCold\} are verified cold on both records\./,
+    );
+  });
+});
+
+// ── pass 12 · A4.27: every count in the readout's book paragraph opens ─────
+describe("the readout's counts open what they count (A4.27, the meat law)", () => {
+  test("each count the sentence says carries a door to its names or its page; the words stay plain", () => {
+    const a = acct({ id: "R1", name: "Alpha HR" });
+    const b = acct({ id: "R2", name: "Bravo PEO" });
+    const r = buildReadout({
+      accounts: [a, b],
+      queue: [],
+      intelById: new Map(),
+      intentById: new Map(),
+      outreachAccountIds: new Set(["R2"]),
+      partnerUpdatesSent: 2,
+      partnerUpdatesReplied: 1,
+      partnerUpdatesWho: [
+        { name: "Lesha Cyphers", replied: true },
+        { name: "Anika Steenstra", replied: false },
+      ],
+      secondRecord: { active30: 1, verifiedCold: 1, activeIds: ["R2"], coldIds: ["R1"] },
+      now: NOW,
+    });
+    const book = r.sections.find((s) => s.title === "The rest of the book")!
+      .paragraphs[0];
+    const doors = Object.fromEntries(
+      (book.doors ?? []).map((d) => [d.phrase, d.href ?? d.lines]),
+    );
+    const pm = /(\d+) of the (\d+) partner managers/.exec(book.text)!;
+    assert.deepEqual(doors, {
+      "2 PrismHR and PrismHCM customer accounts": "/accounts",
+      "1 of the 2 have an open conversation": ["Bravo PEO"],
+      [pm[0]]: ["Lesha Cyphers", "Anika Steenstra"],
+      "1 replied": ["Lesha Cyphers"],
+      "1 of the 2 saw human motion": ["Bravo PEO"],
+      "1 are verified cold": ["Alpha HR"],
+    });
+    for (const d of book.doors ?? []) assert.ok(book.text.includes(d.phrase), d.phrase);
+    // The text read to Russ carries no door markup.
+    assert.ok(!/[<>]/.test(book.text));
+  });
+
+  test("a count with nothing behind it opens nothing", () => {
+    const r = buildReadout({
+      accounts: [acct({ id: "R1", name: "Alpha HR" })],
+      queue: [],
+      intelById: new Map(),
+      intentById: new Map(),
+      outreachAccountIds: new Set(),
+      partnerUpdatesSent: 0,
+      partnerUpdatesReplied: 0,
+      now: NOW,
+    });
+    const book = r.sections.find((s) => s.title === "The rest of the book")!
+      .paragraphs[0];
+    assert.deepEqual(
+      (book.doors ?? []).map((d) => d.phrase),
+      ["1 PrismHR and PrismHCM customer accounts"],
     );
   });
 });

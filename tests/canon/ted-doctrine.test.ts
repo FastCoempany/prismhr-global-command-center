@@ -265,28 +265,37 @@ describe("every derived fact comes from the account read or a named adapter (A2.
     .filter((f) => /\.(ts|tsx)$/.test(f) && !f.startsWith("generated"))
     .map((f) => `src/${f}`);
   const callers = (fn: string) =>
-    files.filter((f) => new RegExp(`\\b${fn}\\(`).test(read(f, "utf8").replace(/^\s*(\/\/|\*).*$/gm, ""))).sort();
+    files
+      .filter((f) =>
+        new RegExp(`\\b${fn}\\(`).test(read(f, "utf8").replace(/^\s*(\/\/|\*).*$/gm, "")),
+      )
+      .sort();
 
   const GATE: Record<string, Record<string, string>> = {
     // Who the relationship is.
     relationshipFor: {
       "src/lib/intel/relationship.ts": "its own module",
       "src/lib/record/read.ts": "the account read",
-      "src/app/partners/recipients.ts": "the read's rule with the declared home side over the whole book (pass 8 call 7; tests/canon/act-lane.test.ts)",
-      "src/app/groundwork/page.tsx": "the seed alone, only when the account has no read (readById ?? relationshipFor([], …))",
+      "src/app/partners/recipients.ts":
+        "the read's rule with the declared home side over the whole book (pass 8 call 7; tests/canon/act-lane.test.ts)",
+      "src/app/groundwork/page.tsx":
+        "the seed alone, only when the account has no read (readById ?? relationshipFor([], …))",
     },
     // Who is in the deal.
     peopleFor: {
       "src/lib/intel/people.ts": "its own module",
       "src/lib/intel/relationship.ts": "the relationship's own reader",
       "src/lib/record/read.ts": "the account read",
-      "src/lib/pipeline/build.ts": "the report's contacts line, over the room's own notes, our side filtered out (tests/pipeline-build.test.ts)",
+      "src/lib/pipeline/build.ts":
+        "the report's contacts line, over the room's own notes, our side filtered out (tests/pipeline-build.test.ts)",
     },
     // Whose move it is, and whether a reply is owed.
     whoseMoveFrom: {
       "src/lib/record/whose-move.ts": "its own module",
-      "src/lib/groundwork/day.ts": "the read's verdict first (moveById), the rungs over the same facts only without a read",
-      "src/lib/room/engine.ts": "the read's verdict first (i.whoseMove), the rungs over the same facts only without a read",
+      "src/lib/groundwork/day.ts":
+        "the read's verdict first (moveById), the rungs over the same facts only without a read",
+      "src/lib/room/engine.ts":
+        "the read's verdict first (i.whoseMove), the rungs over the same facts only without a read",
     },
     owedByThem: {
       "src/lib/room/owed.ts": "its own module",
@@ -295,12 +304,14 @@ describe("every derived fact comes from the account read or a named adapter (A2.
     },
     owedToMe: {
       "src/lib/room/owed.ts": "its own module",
-      "src/app/room/page.tsx": "the room's register, over every note the read holds (allNotes) and the sheet",
+      "src/app/room/page.tsx":
+        "the room's register, over every note the read holds (allNotes) and the sheet",
     },
     // When we last touched, on the Accounts sheet: both records by latest (C1).
     lastHumanTouch: {
       "src/lib/record/accounts.ts": "its own module",
-      "src/app/accounts/page.tsx": "the sheet's column, from the read's touch and the export's row (C1)",
+      "src/app/accounts/page.tsx":
+        "the sheet's column, from the read's touch and the export's row (C1)",
     },
   };
 
@@ -311,10 +322,55 @@ describe("every derived fact comes from the account read or a named adapter (A2.
 
   test("whether a deal is over reads the board card, the stamp's one store, everywhere", () => {
     const calls = files.flatMap((f) =>
-      [...read(f, "utf8").matchAll(/\breadOutcome\(([^)]*)\)/g)].map((m) => `${f}: ${m[1]}`),
+      [...read(f, "utf8").matchAll(/\breadOutcome\(([^)]*)\)/g)].map(
+        (m) => `${f}: ${m[1]}`,
+      ),
     );
     assert.ok(calls.length > 5);
     for (const c of calls)
-      if (!c.startsWith("src/lib/dashboard/outcome.ts")) assert.match(c, /: \w+\.notes$/, c);
+      if (!c.startsWith("src/lib/dashboard/outcome.ts"))
+        assert.match(c, /: \w+\.notes$/, c);
+  });
+});
+
+// ── A2.8 · new surfaces are audited before they ship (pass 12) ──────────────
+// docs/architecture/surfaces.md holds one row per page route: its face, the
+// audit that read it against this doctrine and the order that shipped it
+// (A6.12). A page.tsx the table does not name fails here, so a new route
+// cannot ship until its audit is on file.
+describe("every page route carries a recorded audit and ship order (A2.8)", () => {
+  const routeOf = (dir: string): string =>
+    "/" + dir.replace(/^src\/app\/?/, "").replace(/\/page\.tsx$|^page\.tsx$/, "");
+  const pages = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory()
+        ? pages(`${dir}/${e.name}`)
+        : e.name === "page.tsx"
+          ? [routeOf(`${dir}/${e.name}`)]
+          : [],
+    );
+  const rows = new Map<string, string[]>();
+  for (const line of read("docs/architecture/surfaces.md", "utf8").split("\n")) {
+    const cells = line.split("|").map((c) => c.trim());
+    if (cells.length === 6 && cells[1].startsWith("/"))
+      rows.set(cells[1], cells.slice(2, 5));
+  }
+
+  test("the registry names every page under src/app, and nothing that is gone", () => {
+    const routes = pages("src/app").sort();
+    assert.ok(routes.length >= 20, `only ${routes.length} routes`);
+    assert.deepEqual([...rows.keys()].sort(), routes);
+  });
+
+  test("every row names its face, its audit and its ship order", () => {
+    for (const [route, [face, audit, order]] of rows) {
+      assert.ok(face, `${route}: no face`);
+      assert.match(audit, /\bpass \d+\b/, `${route}: no audit`);
+      assert.match(
+        order,
+        /ship order|ratified|predates the rule/,
+        `${route}: no ship order`,
+      );
+    }
   });
 });

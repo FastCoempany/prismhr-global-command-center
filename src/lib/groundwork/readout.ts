@@ -15,7 +15,11 @@ import { verifiedCold, type SecondRecord } from "@/lib/activity/read";
 import type { IntentSignal } from "./signals";
 import type { QueueItem } from "./day";
 
-type ReadoutParagraph = { accountId: string; text: string };
+/** A count in a paragraph that opens what it counts (the meat law, pass 12):
+ *  the phrase as the text says it, and the names behind it or the page that
+ *  holds them. The text itself stays the plain words read to Russ. */
+export type ReadoutDoor = { phrase: string; lines?: string[]; href?: string };
+type ReadoutParagraph = { accountId: string; text: string; doors?: ReadoutDoor[] };
 type ReadoutSection = { title: string; paragraphs: ReadoutParagraph[] };
 type Readout = { asOfIso: string; sections: ReadoutSection[] };
 
@@ -30,10 +34,17 @@ type ReadoutInput = {
   outreachAccountIds: Set<string>; // accounts with a LIVE outreach thread
   partnerUpdatesSent: number; // partner-manager updates sent, last 7 days
   partnerUpdatesReplied: number;
+  /** The partner managers those updates went to, and whether each replied. */
+  partnerUpdatesWho?: { name: string; replied: boolean }[];
   nextSevenDays?: string[]; // dated items, already phrased plainly
   /** The second record's arithmetic — counts from the rollup builder, never
    *  model text. Absent when no drop has landed. */
-  secondRecord?: { active30: number; verifiedCold: number } | null;
+  secondRecord?: {
+    active30: number;
+    verifiedCold: number;
+    activeIds?: string[];
+    coldIds?: string[];
+  } | null;
   now: Date;
 };
 
@@ -195,6 +206,40 @@ export function buildReadout(inp: ReadoutInput): Readout {
     }`,
   );
 
+  // Every count in the book paragraph opens what it counts (the meat law,
+  // pass 12); a count with nothing behind it is said and opens nothing.
+  const names = (ids: Iterable<string>) =>
+    [...ids].map((id) => byId.get(id)?.name ?? id).sort((a, b) => a.localeCompare(b));
+  const who = inp.partnerUpdatesWho ?? [];
+  const sr = inp.secondRecord;
+  const bookDoors: ReadoutDoor[] = [
+    { phrase: `${total} PrismHR and PrismHCM customer accounts`, href: "/accounts" },
+    {
+      phrase: `${open} of the ${total} have an open conversation`,
+      lines: names(inp.outreachAccountIds),
+    },
+    {
+      phrase: `${inp.partnerUpdatesSent} of the ${pmCount} partner managers`,
+      lines: who.map((w) => w.name),
+    },
+    {
+      phrase: `${inp.partnerUpdatesReplied} replied`,
+      lines: who.filter((w) => w.replied).map((w) => w.name),
+    },
+    ...(sr
+      ? [
+          {
+            phrase: `${sr.active30} of the ${total} saw human motion`,
+            lines: names(sr.activeIds ?? []),
+          },
+          {
+            phrase: `${sr.verifiedCold} are verified cold`,
+            lines: names(sr.coldIds ?? []),
+          },
+        ]
+      : []),
+  ].filter((d) => bookText.includes(d.phrase) && (d.href || (d.lines?.length ?? 0) > 0));
+
   const sections: ReadoutSection[] = [];
   if (deals.length > 0)
     sections.push({
@@ -207,7 +252,7 @@ export function buildReadout(inp: ReadoutInput): Readout {
     sections.push({ title: "Also in front of me today", paragraphs: also });
   sections.push({
     title: "The rest of the book",
-    paragraphs: [{ accountId: "", text: bookText }],
+    paragraphs: [{ accountId: "", text: bookText, doors: bookDoors }],
   });
   if (inp.nextSevenDays && inp.nextSevenDays.length > 0)
     sections.push({
@@ -245,19 +290,24 @@ export function secondRecordStats(
   secondById: ReadonlyMap<string, SecondRecord>,
   readById: ReadonlyMap<string, Pick<AccountRead, "warmth">>,
   now: Date,
-): { active30: number; verifiedCold: number } | null {
+): {
+  active30: number;
+  verifiedCold: number;
+  activeIds: string[];
+  coldIds: string[];
+} | null {
   if (secondById.size === 0) return null;
-  let active30 = 0;
-  let cold = 0;
+  const activeIds: string[] = [];
+  const coldIds: string[] = [];
   for (const id of accountIds) {
     const sr = secondById.get(id);
     if (!sr) continue;
     const lh = sr.rollup?.lastHuman?.day ?? "";
     if (lh && (now.getTime() - Date.parse(`${lh}T12:00:00Z`)) / 86_400_000 <= 30)
-      active30 += 1;
-    if (verifiedCold(sr) && !readById.get(id)?.warmth.lastWarmAt) cold += 1;
+      activeIds.push(id);
+    if (verifiedCold(sr) && !readById.get(id)?.warmth.lastWarmAt) coldIds.push(id);
   }
-  return { active30, verifiedCold: cold };
+  return { active30: activeIds.length, verifiedCold: coldIds.length, activeIds, coldIds };
 }
 
 // ── The lint — the mechanical half of the §3 bar ─────────────────────────────

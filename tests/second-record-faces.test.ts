@@ -1726,16 +1726,24 @@ describe("staged bodies leave the store by the evidence route alone (A4.30, whol
     assert.equal(reads, wrapped + held, "a slice read reaches the page unbuilt");
     // …and the held rows travel only into builders.
     const uses = [...page.matchAll(/\bstageRows\b/g)].length - 1;
-    const built = [...page.matchAll(/(csmPrepRows|collisionCite|spikeCites)\(\s*stageRows\b/g)].length;
+    const built = [
+      ...page.matchAll(/(csmPrepRows|collisionCite|spikeCites)\(\s*stageRows\b/g),
+    ].length;
     assert.equal(uses, built, "the page's rows reach something that is not a builder");
     // Every builder drops the body.
-    const { collisionCite, csmPrepRows, spikeCites, supportCites } = await import(
-      "../src/lib/groundwork/chips"
-    );
+    const { collisionCite, csmPrepRows, spikeCites, supportCites } =
+      await import("../src/lib/groundwork/chips");
     const body = "The census is attached. Our renewal is in March.";
     const rows: StagedRow[] = [
       staged({ k: "s1", d: "2026-07-22", lane: "support", s: "Payroll stuck", c: body }),
-      staged({ k: "c1", d: "2026-07-20", a: "Lesha Cyphers", lane: "csm", s: "Renewal", c: body }),
+      staged({
+        k: "c1",
+        d: "2026-07-20",
+        a: "Lesha Cyphers",
+        lane: "csm",
+        s: "Renewal",
+        c: body,
+      }),
     ];
     const out = JSON.stringify([
       supportCites(rows),
@@ -1745,5 +1753,38 @@ describe("staged bodies leave the store by the evidence route alone (A4.30, whol
     ]);
     assert.ok(out.includes("s1") && out.includes("c1"));
     assert.ok(!out.includes("census"), out);
+  });
+});
+
+// ── pass 12 · A4.27: a Playbook draft carries the theme and accounts its
+// counts stand on, so both counts open to the cases (the meat law) ─────────
+describe("a second-record draft carries its theme and every account it counted (A4.27)", () => {
+  test("the theme's label and its accounts, most cases first, with their counts", async () => {
+    const { secondRecordDrafts } = await import("../src/app/playbook/drafts");
+    const sr = (themes: { label: string; n: number }[]) => ({ support: { themes } });
+    const drafts = secondRecordDrafts({
+      secondById: new Map([
+        ["A", sr([{ label: "Ontario payroll", n: 2 }])],
+        ["B", sr([{ label: "Ontario payroll", n: 5 }])],
+      ]),
+      nameById: new Map([
+        ["A", "Regis HR Group"],
+        ["B", "Simploy"],
+      ]),
+      marketKeys: new Set(),
+      dismissed: new Set(),
+    });
+    assert.equal(drafts.length, 1);
+    assert.equal(drafts[0].theme, "Ontario payroll");
+    assert.deepEqual(drafts[0].accounts, [
+      { id: "B", name: "Simploy", n: 5 },
+      { id: "A", name: "Regis HR Group", n: 2 },
+    ]);
+    assert.match(drafts[0].text, /7 cases across 2 accounts/);
+    const page = (await import("node:fs")).readFileSync(
+      "src/app/playbook/page.tsx",
+      "utf8",
+    );
+    assert.match(page, /<DraftEvidence theme=\{d\.theme\} accounts=\{d\.accounts\} \/>/);
   });
 });

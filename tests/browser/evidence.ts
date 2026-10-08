@@ -1,6 +1,7 @@
 // The evidence route as the browser suite answers it (src/app/activity/
 // evidence/route.ts, a GET): one row's cleaned excerpt by key, the case list,
-// a case's timeline, and the campaign table. Every answer carries words a
+// a case's timeline (asked by case, with or without its theme), and the
+// campaign table. Every answer carries words a
 // test can find on the page once the door it asked through opens.
 
 export const EXCERPT: Record<string, string> = {
@@ -12,25 +13,49 @@ export const EXCERPT: Record<string, string> = {
 export const EVIDENCE = {
   "/activity/evidence": (u: URL) => {
     const k = u.searchParams.get("k");
-    if (k) return EXCERPT[k] ? { ok: true, row: { excerpt: EXCERPT[k] } } : { ok: false, reason: "No such row." };
-    if (u.searchParams.has("theme"))
-      return {
-        ok: true,
-        cases: [
-          { caseNo: "00123456", rows: 3, firstDay: "2026-09-01", lastDay: "2026-09-12", who: "Dana Ruiz", subject: "Ontario payroll" },
-        ],
-      };
+    if (k)
+      return EXCERPT[k]
+        ? { ok: true, row: { excerpt: EXCERPT[k] } }
+        : { ok: false, reason: "No such row." };
     if (u.searchParams.get("case"))
       return {
         ok: true,
         timeline: [
-          { k: "t1", day: "2026-09-01", who: "Dana Ruiz", subject: "Ontario payroll", excerpt: "The Ontario run is stuck on a tax table." },
+          {
+            k: "t1",
+            day: "2026-09-01",
+            who: "Dana Ruiz",
+            subject: "Ontario payroll",
+            excerpt: "The Ontario run is stuck on a tax table.",
+          },
+        ],
+      };
+    if (u.searchParams.has("theme"))
+      return {
+        ok: true,
+        cases: [
+          {
+            caseNo: "00123456",
+            rows: 3,
+            firstDay: "2026-09-01",
+            lastDay: "2026-09-12",
+            who: "Dana Ruiz",
+            subject: "Ontario payroll",
+          },
         ],
       };
     if (u.searchParams.get("camps"))
-      return { ok: true, windows: { top: [{ campaign: "Global payroll webinar", o: 4, c: 1, last: "2026-09-28" }] } };
+      return {
+        ok: true,
+        windows: {
+          top: [{ campaign: "Global payroll webinar", o: 4, c: 1, last: "2026-09-28" }],
+        },
+      };
     if (u.searchParams.has("rows"))
-      return { ok: true, rows: [{ k: "r1", day: "2026-09-30", who: "Pat Lee", subject: "Mexico" }] };
+      return {
+        ok: true,
+        rows: [{ k: "r1", day: "2026-09-30", who: "Pat Lee", subject: "Mexico" }],
+      };
     return { ok: false, reason: "Unknown ask." };
   },
 };

@@ -1,7 +1,11 @@
 {
   "accounts-row": 13,
+  "draft-desk": 2,
   "groundwork-stage": 15,
   "homeroom-row": 39,
   "intranet-entry": 6,
-  "sendbook-line": 10
+  "playbook-draft": 8,
+  "roundup-prep": 3,
+  "sendbook-line": 10,
+  "state-of-play": 3
 }

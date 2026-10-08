@@ -1532,7 +1532,7 @@ export function AccountsClient({
 // brain against the account's record; step two opens Outlook with the
 // addresses and the text already on it. Other people from the account ride
 // as one-click cc chips.
-function DraftDialog({
+export function DraftDialog({
   accountId,
   accountName,
   contact,
