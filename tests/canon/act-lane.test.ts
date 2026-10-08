@@ -187,6 +187,7 @@ const sheetRow = async (over: Record<string, unknown> = {}) => {
     actDraft: null,
     actedDay: "",
     actedTerm: "",
+    acted: [],
     onBoard: false,
     name: "Simploy",
     industry: "PEO",
@@ -1579,5 +1580,87 @@ describe("a colleague is never an account's relationship or contact (A2.4; pass 
       panel,
       /The staged slice holds no case rows\. The drop&rsquo;s cap kept newer/,
     );
+  });
+});
+
+// ── A8.5 · every acted gem keeps its ↺, one click down (ship order
+// 2026-10-08: "ship the fold for A8.5") ──────────────────────────────────────
+// The ACT cell shows one gem: the leading chip, or the newest stamp. While a
+// second gem leads, an earlier ✓ had no reachable ↺. THE SIGNAL's fold now
+// lists every acted gem about an account person, newest acted first, each
+// with its take-back; with nothing live to lead, THE SIGNAL still opens.
+describe("every acted gem keeps its ↺ in THE SIGNAL's fold (A8.5)", () => {
+  test("the acted list: account people's gems only, newest acted first", async () => {
+    const { actedGemsOf } = await import("../../src/app/accounts/rules");
+    const acted = actedGemsOf([
+      gem("MEXICO ASK", { actedDay: "2026-10-02" }),
+      gem("CANADA ASK", { actedDay: "2026-10-06", act: "Send the Canada one-pager." }),
+      gem("LIVE ONE"),
+      gem("LESHA NOTE", { actedDay: "2026-10-07", whoKind: "colleague" }),
+    ]);
+    assert.deepEqual(acted, [
+      { term: "CANADA ASK", act: "Send the Canada one-pager.", actedDay: "2026-10-06" },
+      { term: "MEXICO ASK", act: "Answer Pat about Mexico.", actedDay: "2026-10-02" },
+    ]);
+    const page = readFileSync(join(process.cwd(), "src/app/accounts/page.tsx"), "utf8");
+    assert.match(page, /acted: actedGemsOf\(sr\?\.gems \?\? \[\]\)/);
+  });
+
+  test("the fold lists each acted gem with its ↺ while another gem leads the ACT cell", async () => {
+    const { default: SecondRecordPanel } = await import(
+      "../../src/app/accounts/second-record-panel"
+    );
+    const taken: string[] = [];
+    const acted = [
+      { term: "CANADA ASK", act: "Send the Canada one-pager.", actedDay: "2026-10-06" },
+      { term: "MEXICO ASK", act: "Answer Pat about Mexico.", actedDay: "2026-10-02" },
+    ];
+    const html = await render(
+      createElement(SecondRecordPanel, {
+        accountId: ACCT,
+        second: chipSecond([gem("PAYROLL ASK", { act: "Answer Pat about payroll." })]),
+        acted,
+        onTakeBack: (t: string) => taken.push(t),
+      }),
+    );
+    const lines = [
+      ...html.matchAll(/<div class="srActedLine">([\s\S]*?)<\/div>/g),
+    ].map((m) => textOf(m[1]));
+    assert.deepEqual(lines, [
+      "✓ Send the Canada one-pager. ◆ CANADA ASK · ACTED 10/06 ↺",
+      "✓ Answer Pat about Mexico. ◆ MEXICO ASK · ACTED 10/02 ↺",
+    ]);
+    // The leading gem still leads the fold; the acted list rides at its foot.
+    assert.ok(html.indexOf("PAYROLL ASK") < html.indexOf("srActed"));
+    // A read-only session sees the list and no ↺.
+    const ro = await render(
+      createElement(SecondRecordPanel, { accountId: ACCT, second: chipSecond(), acted }),
+    );
+    assert.ok(ro.includes("CANADA ASK") && !ro.includes("↺"));
+    // The sheet hands the fold the row's list and the take-back.
+    const client = readFileSync(join(process.cwd(), "src/app/accounts-client.tsx"), "utf8");
+    assert.match(client, /acted=\{a\.acted\}/);
+    assert.match(client, /canWrite \? \(term\) => tickUnacted\(a\.id, term\) : undefined/);
+  });
+
+  test("with nothing live to lead, THE SIGNAL still opens the acted gems", async () => {
+    const row = await sheetRow({
+      second: { gems: [], act: null, verdict: "", supportTotal: 0, spikeDay: "" },
+      acted: [{ term: "MEXICO ASK", act: "Answer Pat about Mexico.", actedDay: "2026-10-02" }],
+      actedDay: "2026-10-02",
+      actedTerm: "MEXICO ASK",
+    });
+    const html = await renderSheet([row]);
+    assert.match(
+      html,
+      /<button type="button" class="srTerm" aria-expanded="false"[^>]*>✓ 1 ACTED<\/button>/,
+    );
+    // With no acted gem and nothing else, the cell stays a plain dash.
+    const bare = await renderSheet([
+      await sheetRow({
+        second: { gems: [], act: null, verdict: "", supportTotal: 0, spikeDay: "" },
+      }),
+    ]);
+    assert.ok(!bare.includes("ACTED</button>"));
   });
 });

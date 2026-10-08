@@ -5,7 +5,9 @@
 // meat law: gem → citation → email excerpt; support → case list → per-case
 // timeline; a verdict → the staged rows it counted → each row's excerpt.
 // Served by the evidence route (a GET, never a server action). The touch
-// fold beside it opens LAST HUMAN TOUCH the same way (pass 8 A5).
+// fold beside it opens LAST HUMAN TOUCH the same way (pass 8 A5). The acted
+// gems ride at the fold's foot, each with its ↺ (A8.5, ship order
+// 2026-10-08): the ACT cell shows one gem, so an earlier ✓ is taken back here.
 
 import { useState } from "react";
 import styles from "../command-center.module.css";
@@ -149,9 +151,15 @@ export function TouchEvidence({
 export default function SecondRecordPanel({
   accountId,
   second,
+  acted = [],
+  onTakeBack,
 }: {
   accountId: string;
   second: RowSecond;
+  /** Every acted gem about an account person, newest acted first. */
+  acted?: { term: string; act: string; actedDay: string }[];
+  /** The ↺ on each acted gem; absent in a read-only session. */
+  onTakeBack?: (term: string) => void;
 }) {
   const [excerpts, setExcerpts] = useState<Record<string, string>>({});
   const [cases, setCases] = useState<CaseLine[] | null>(null);
@@ -329,6 +337,33 @@ export default function SecondRecordPanel({
               traffic.
             </p>
           )}
+        </div>
+      )}
+
+      {acted.length > 0 && (
+        <div className={styles.srActed}>
+          <span className={styles.srGemStamp}>ACTED</span>
+          {acted.map((g) => (
+            <div key={g.term} className={styles.srActedLine}>
+              <span className={styles.srActedTick}>✓</span> {g.act}{" "}
+              <span className={styles.srGemStamp}>
+                ◆ {g.term} · ACTED {mmdd(g.actedDay)}
+              </span>
+              {onTakeBack && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    className={styles.actedTb}
+                    title="Take it back. The chip returns."
+                    onClick={() => onTakeBack(g.term)}
+                  >
+                    ↺
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>

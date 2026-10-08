@@ -37,7 +37,14 @@ import { EMPTY_ENGAGEMENT } from "@/lib/engagement";
 import type { LinkedNote } from "@/components/account-notes";
 import { theirLoopOf } from "@/lib/room/owed";
 import { AccountsClient, type AccountRow } from "../accounts-client";
-import { actedStampOf, boardWords, liveOnBoard, registersOf, touchCiteOf } from "./rules";
+import {
+  actedGemsOf,
+  actedStampOf,
+  boardWords,
+  liveOnBoard,
+  registersOf,
+  touchCiteOf,
+} from "./rules";
 import styles from "../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -365,6 +372,8 @@ export default async function AccountsPage() {
           const st = actedStampOf(sr?.gems ?? []);
           return { actedDay: st.day, actedTerm: st.term };
         })(),
+        // Every acted gem with its ↺, for THE SIGNAL's fold (A8.5).
+        acted: actedGemsOf(sr?.gems ?? []),
         // The fork's HomeRoom half reads a live deal: an archived card or a
         // Closed Won/Lost stamp is not one (pass 8 A4; the board lift).
         onBoard: liveOnBoard(boardById.get(p.id)),
