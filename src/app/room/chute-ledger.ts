@@ -162,7 +162,7 @@ export const CHUTE_PARALLEL = 3;
 // The decree's words, verbatim (CLAUDE.md, The Chute: mid-flight reads come
 // back as "interrupted — drop it again"; B48).
 const READ_CUT_SHORT = "interrupted — drop it again";
-const PICK_LOST = "The pick did not survive. Drop the file again.";
+export const PICK_LOST = "The pick did not survive. Drop the file again.";
 
 export type LedgerStorage = {
   getItem(key: string): string | null;
@@ -249,7 +249,7 @@ function reconcileRow(x: LedgerRow): LedgerRow {
 const EMPTY = { items: [] as LedgerRow[], maxKey: 0 };
 
 /** A ledger day key (YYYY-MM-DD, Chicago) as M/D; "" when it is not one. */
-function monthDayOfKey(key: string): string {
+export function monthDayOfKey(key: string): string {
   const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(key);
   return m ? `${Number(m[1])}/${Number(m[2])}` : "";
 }

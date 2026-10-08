@@ -2137,3 +2137,58 @@ describe("a held row left unpicked carries past the Chicago day and says since w
     assert.match(read("src/app/room/chute.tsx"), /since=\{it\.heldSince\}/);
   });
 });
+
+// ── pass 10: the Drop's held question carries too (A12.7) ───────────────────
+// The row's Drop held its disputed filing in component state, so a reload or
+// the day line forgot a pick the room asked for, and the held file, which
+// vaults only after its pick, was never backed up. The Drop keeps its line
+// per account the way the Chute's ledger keeps a waiting row (C20).
+
+describe("the Drop's held question survives a reload and the day line, and says since when (pass 10, A12.7)", () => {
+  const DAY1 = new Date("2026-10-07T18:00:00Z");
+  const DAY2 = new Date("2026-10-08T18:00:00Z");
+  const held = { ...TEXT_VERDICT, claim: SIMPLOY.name, bound: REGIS.name, text: "OUTLOOK THREAD — renewal.eml\nthe board meets" };
+
+  test("the same day the line comes back whole; the next day it says Held since; a file's name rides, the file does not", async () => {
+    const { saveDropHolds, loadDropHolds } = await import("../src/app/room/ingest/drop-held");
+    const storage = memory();
+    const file = new File(["x"], "renewal.eml");
+    saveDropHolds(storage, REGIS.id, [{ ...held, files: [file] }], DAY1);
+    assert.ok(!storage.raw().includes('"files"'), "a File went to storage");
+    const same = loadDropHolds(storage, REGIS.id, DAY1);
+    assert.deepEqual(same.lost, []);
+    assert.equal(same.holds.length, 1);
+    assert.equal(same.holds[0].text, held.text);
+    assert.equal(same.holds[0].claim, SIMPLOY.name);
+    assert.equal(same.holds[0].filename, "renewal.eml");
+    assert.equal(same.holds[0].heldSince, undefined);
+    const next = loadDropHolds(storage, REGIS.id, DAY2);
+    assert.equal(next.holds[0].heldSince, "10/7");
+    // Kept again on the new day, it keeps the first day it was left.
+    saveDropHolds(storage, REGIS.id, next.holds, DAY2);
+    assert.equal(loadDropHolds(storage, REGIS.id, new Date("2026-10-09T18:00:00Z")).holds[0].heldSince, "10/7");
+    // Another account's line is its own; an empty line clears the account.
+    assert.deepEqual(loadDropHolds(storage, SIMPLOY.id, DAY2), { holds: [], lost: [] });
+    saveDropHolds(storage, REGIS.id, [], DAY2);
+    assert.deepEqual(loadDropHolds(storage, REGIS.id, DAY2), { holds: [], lost: [] });
+  });
+
+  test("a hold whose text cannot be kept comes back as a re-drop, by its file's name", async () => {
+    const { saveDropHolds, loadDropHolds } = await import("../src/app/room/ingest/drop-held");
+    const { LEDGER_TEXT_CAP } = await import("../src/app/room/chute-ledger");
+    const storage = memory();
+    saveDropHolds(storage, REGIS.id, [{ ...held, text: "x".repeat(LEDGER_TEXT_CAP + 1), files: [new File(["x"], "big.pdf")] }], DAY1);
+    assert.deepEqual(loadDropHolds(storage, REGIS.id, DAY1), { holds: [], lost: ["big.pdf"] });
+  });
+
+  test("the Drop keeps its line, loads it back, and the box says since when; a carried file's hold never dies with the paste pane", () => {
+    const src = read("src/app/room/room-client.tsx");
+    assert.match(src, /saveDropHolds\(localStorage, row\.accountId, heldLine\)/);
+    assert.match(src, /loadDropHolds\(localStorage, row\.accountId\)/);
+    assert.match(src, /reason: PICK_LOST/);
+    assert.match(src, /since=\{mismatch\.heldSince\}/);
+    assert.match(src, /!mismatch\.files\?\.length && !mismatch\.filename/);
+    // The keeper is declared before the loader, so its first run writes nothing.
+    assert.ok(src.indexOf("saveDropHolds(localStorage") < src.indexOf("loadDropHolds(localStorage"));
+  });
+});
