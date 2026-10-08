@@ -1,9 +1,10 @@
 // The marks a Sendbook line carries after its clause: the live campaign, the
-// lane, and the two annotations. ↩ REPLIED and BOOKED are doors (the
-// click-depth law; pass 8 S2): one click opens, in place, the message each
-// one reports, its writer, subject and day, and the words they wrote when
-// the record holds them. No page and no link: a <details>, so the register
-// stays a server render.
+// lane, and the two annotations. Every mark is a door (the click-depth law):
+// ↩ REPLIED and BOOKED open, in place, the message each one reports, its
+// writer, subject and day, and the words they wrote when the record holds
+// them (pass 8 S2); GONE COLD opens the day the account was last warm and
+// MKTG LIVE the count of marketing sends behind it (pass 10). No page and no
+// link: a <details>, so the register stays a server render.
 
 import type { SendAnswer } from "@/lib/sendbook/read";
 import styles from "./sendbook.module.css";
@@ -47,28 +48,64 @@ function Answer({ a, label, title }: { a: SendAnswer; label: string; title?: str
   );
 }
 
+/** A mark that opens to the plain lines behind it, in place. */
+function Door({ label, cls, lines }: { label: string; cls: string; lines: string[] }) {
+  return (
+    <details className={styles.door}>
+      <summary className={cls}>{label}</summary>
+      <div className={styles.answer}>
+        {lines.map((l) => (
+          <span key={l} className={styles.answerBody}>
+            {l}
+          </span>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export function SendMarks({
   mktg,
   cold,
+  coldSince = "",
+  mktgSends = 0,
   reply,
   booking,
 }: {
   mktg: boolean;
   cold: boolean;
+  /** The account's last warm moment on either record, for GONE COLD's door. */
+  coldSince?: string;
+  /** Marketing sends in the last seven days, for MKTG LIVE's door. */
+  mktgSends?: number;
   reply: SendAnswer | null;
   booking: SendAnswer | null;
 }) {
   return (
     <>
       {mktg && (
-        <span className={styles.mktgLive} title={MARK_TITLES.mktg}>
-          MKTG LIVE
-        </span>
+        <Door
+          label="MKTG LIVE"
+          cls={styles.mktgLive}
+          lines={[
+            ...(mktgSends > 0
+              ? [
+                  `Marketing sent ${mktgSends} email${mktgSends === 1 ? "" : "s"} here in the last seven days.`,
+                ]
+              : []),
+            MARK_TITLES.mktg,
+          ]}
+        />
       )}
       {cold && (
-        <span className={styles.cold} title={MARK_TITLES.cold}>
-          GONE COLD
-        </span>
+        <Door
+          label="GONE COLD"
+          cls={styles.cold}
+          lines={[
+            ...(shortDate(coldSince) ? [`Last warm ${shortDate(coldSince)}.`] : []),
+            MARK_TITLES.cold,
+          ]}
+        />
       )}
       {reply && <Answer a={reply} label="↩ REPLIED" />}
       {booking && <Answer a={booking} label="BOOKED" title={MARK_TITLES.booked} />}

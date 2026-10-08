@@ -783,7 +783,9 @@ describe("the ring reads the second record", () => {
     assert.equal(line?.repliedAt, "2026-08-10T12:00:00.000Z");
     // The account-level Last Email Received is a datetime, never their voice:
     // with no attributed row behind it the lane stays and nothing annotates.
-    const datetime = bookWith(sr({ rollup: rollup({ lastOrgInbound: "2026-08-10 09:00" }) }));
+    const datetime = bookWith(
+      sr({ rollup: rollup({ lastOrgInbound: "2026-08-10 09:00" }) }),
+    );
     assert.equal(datetime.laneById.get("A1"), "never-met");
     assert.equal(datetime.lines.find((l) => l.accountId === "A1")?.repliedAt, "");
     // The operator's own outbound still never warms (the decree).
@@ -979,19 +981,42 @@ describe("the staged fold sinks a row dated ahead below every row that happened 
     const { foldStageRows } = await import("../src/lib/activity/read");
     const { csmPrepRows, prepKicker } = await import("../src/lib/groundwork/chips");
     const csm = "Lesha Cyphers";
-    const due = staged({ k: "due", d: "2027-01-15", s: "Follow up", a: csm, lane: "csm", fl: "f" });
-    const happened = ["2026-09-20", "2026-09-18", "2026-09-10", "2026-09-02", "2026-08-30"].map(
-      (d, i) => staged({ k: `h${i}`, d, s: `Call ${i}`, a: csm, lane: "csm" }),
-    );
+    const due = staged({
+      k: "due",
+      d: "2027-01-15",
+      s: "Follow up",
+      a: csm,
+      lane: "csm",
+      fl: "f",
+    });
+    const happened = [
+      "2026-09-20",
+      "2026-09-18",
+      "2026-09-10",
+      "2026-09-02",
+      "2026-08-30",
+    ].map((d, i) => staged({ k: `h${i}`, d, s: `Call ${i}`, a: csm, lane: "csm" }));
     const other = staged({ k: "x", d: "2026-09-25", s: "Re: hello", a: "Antaeus Coe" });
     const rows = foldStageRows([{ own: true, rows: [due, other, ...happened] }]);
     assert.equal(rows[rows.length - 1].k, "due", "the due date sinks to the foot");
-    assert.deepEqual(rows.slice(0, 2).map((r) => r.k), ["x", "h0"]);
-    const prep = csmPrepRows(rows, csm);
-    assert.deepEqual(prep.map((c) => c.k), ["h0", "h1", "h2", "h3", "h4"]);
+    assert.deepEqual(
+      rows.slice(0, 2).map((r) => r.k),
+      ["x", "h0"],
+    );
+    const prep = csmPrepRows(rows, csm, "2026-09-25");
+    // A short prep is never filled by the due-dated row (pass 10, A4.23 note 4).
+    assert.deepEqual(
+      csmPrepRows([due, ...happened.slice(0, 2)], csm, "2026-09-25").map((c) => c.k),
+      ["h0", "h1"],
+    );
+    assert.deepEqual(
+      prep.map((c) => c.k),
+      ["h0", "h1", "h2", "h3", "h4"],
+    );
     assert.equal(prepKicker(prep.length), "THE CSM’S OWN LAST 5 ROWS · SHARPEN THE ASK");
     // Each prep line is a door: it carries its row key and no body.
-    for (const c of prep) assert.deepEqual(Object.keys(c).sort(), ["day", "k", "subject", "who"]);
+    for (const c of prep)
+      assert.deepEqual(Object.keys(c).sort(), ["day", "k", "subject", "who"]);
     // A shell's slice folds the same way.
     const folded = foldStageRows([
       { own: false, rows: [due] },
@@ -1008,7 +1033,12 @@ const buttonsOf = (html: string): string[] =>
   [...html.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)].map((m) => textOf(m[1]));
 
 describe("the second record's faces: every chip, cite, theme, count and case is a door (A4.16, A4.27)", () => {
-  const cite = (k: string, day: string, who: string, subject: string) => ({ k, day, who, subject });
+  const cite = (k: string, day: string, who: string, subject: string) => ({
+    k,
+    day,
+    who,
+    subject,
+  });
   const gemOf = (term: string, cites: ReturnType<typeof cite>[]) => ({
     term,
     act: "Answer Pat about Mexico.",
@@ -1018,7 +1048,8 @@ describe("the second record's faces: every chip, cite, theme, count and case is 
   });
 
   test("Groundwork's chip row holds only doors, one per chip", async () => {
-    const { default: EvidenceChips } = await import("../src/app/groundwork/evidence-chips");
+    const { default: EvidenceChips } =
+      await import("../src/app/groundwork/evidence-chips");
     const html = await render(
       createElement(EvidenceChips, {
         accountId: "001TEST",
@@ -1062,7 +1093,8 @@ describe("the second record's faces: every chip, cite, theme, count and case is 
   });
 
   test("the Accounts panel: every cite, the verdict's rows and the case count are doors", async () => {
-    const { default: SecondRecordPanel } = await import("../src/app/accounts/second-record-panel");
+    const { default: SecondRecordPanel } =
+      await import("../src/app/accounts/second-record-panel");
     const withGems = await render(
       createElement(SecondRecordPanel, {
         accountId: "001TEST",
@@ -1081,16 +1113,27 @@ describe("the second record's faces: every chip, cite, theme, count and case is 
       }),
     );
     const doors = buttonsOf(withGems);
-    assert.ok(doors.includes("09/30 · Pat Lee · Mexico ▸ read it"), JSON.stringify(doors));
+    assert.ok(
+      doors.includes("09/30 · Pat Lee · Mexico ▸ read it"),
+      JSON.stringify(doors),
+    );
     assert.ok(doors.includes("09/28 · Pat Lee · Re: Mexico hire ▸ read it"));
     assert.ok(doors.some((d) => /^▮ 9 SUPPORT CASES IN WINDOW · SPIKE 09\/02/.test(d)));
     const verdictOnly = await render(
       createElement(SecondRecordPanel, {
         accountId: "001TEST",
-        second: { gems: [], act: null, verdict: "Quiet for 40 days.", supportTotal: 0, spikeDay: "" },
+        second: {
+          gems: [],
+          act: null,
+          verdict: "Quiet for 40 days.",
+          supportTotal: 0,
+          spikeDay: "",
+        },
       }),
     );
-    assert.ok(buttonsOf(verdictOnly).some((d) => d.startsWith("THE STAGED ROWS, NEWEST FIRST")));
+    assert.ok(
+      buttonsOf(verdictOnly).some((d) => d.startsWith("THE STAGED ROWS, NEWEST FIRST")),
+    );
   });
 });
 
@@ -1147,18 +1190,29 @@ describe("the Playbook's draft queue: approve by hand, nothing auto-publishes (A
       marketKeys: new Set([all[0].key]),
       dismissed: new Set([all[1].key]),
     });
-    assert.deepEqual(left.map((d) => d.key), [all[2].key]);
+    assert.deepEqual(
+      left.map((d) => d.key),
+      [all[2].key],
+    );
   });
 
   test("reading the queue publishes nothing: it is a pure read with no store", async () => {
     const { secondRecordDrafts } = await import("../src/app/playbook/drafts");
     // Nothing to write to: the derivation takes data and hands back data, so
     // the same input reads the same queue however often the page loads.
-    const input = { secondById, nameById: names, marketKeys: new Set<string>(), dismissed: new Set<string>() };
+    const input = {
+      secondById,
+      nameById: names,
+      marketKeys: new Set<string>(),
+      dismissed: new Set<string>(),
+    };
     assert.deepEqual(secondRecordDrafts(input), secondRecordDrafts(input));
     assert.equal(secondRecordDrafts.length, 1, "one argument, no store");
     // The one write is the Approve button's form action.
-    const actions = (await import("../src/app/playbook/actions")) as Record<string, unknown>;
+    const actions = (await import("../src/app/playbook/actions")) as Record<
+      string,
+      unknown
+    >;
     assert.equal(typeof actions.approveSecondDraft, "function");
   });
 });
@@ -1167,7 +1221,10 @@ describe("the Playbook's draft queue: approve by hand, nothing auto-publishes (A
 
 describe("staged bodies leave the store only by the evidence route, a GET (A4.30)", () => {
   test("the route answers GET and nothing else", async () => {
-    const route = (await import("../src/app/activity/evidence/route")) as Record<string, unknown>;
+    const route = (await import("../src/app/activity/evidence/route")) as Record<
+      string,
+      unknown
+    >;
     const verbs = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
     assert.deepEqual(
       verbs.filter((v) => typeof route[v] === "function"),
@@ -1177,16 +1234,30 @@ describe("staged bodies leave the store only by the evidence route, a GET (A4.30
   });
 
   test("the page loader's doors carry a row's key and head, never its body", async () => {
-    const { collisionCite, csmPrepRows, spikeCites } = await import("../src/lib/groundwork/chips");
+    const { collisionCite, csmPrepRows, spikeCites } =
+      await import("../src/lib/groundwork/chips");
     const body = "The census is attached. Our renewal is in March.";
     const rows: StagedRow[] = [
       staged({ k: "s1", d: "2026-07-22", lane: "support", s: "Payroll stuck", c: body }),
-      staged({ k: "c1", d: "2026-07-20", a: "Lesha Cyphers", lane: "csm", s: "Renewal", c: body }),
-      staged({ k: "h1", d: "2026-07-28", a: "Anika Steenstra", s: "Re: Global intro", c: body }),
+      staged({
+        k: "c1",
+        d: "2026-07-20",
+        a: "Lesha Cyphers",
+        lane: "csm",
+        s: "Renewal",
+        c: body,
+      }),
+      staged({
+        k: "h1",
+        d: "2026-07-28",
+        a: "Anika Steenstra",
+        s: "Re: Global intro",
+        c: body,
+      }),
     ];
     const doors = [
       ...spikeCites(rows, "2026-07-22"),
-      ...csmPrepRows(rows, "Lesha Cyphers"),
+      ...csmPrepRows(rows, "Lesha Cyphers", "2026-07-30"),
       collisionCite(rows, { who: "Anika Steenstra", day: "2026-07-28" })!,
     ];
     assert.equal(doors.length, 3);

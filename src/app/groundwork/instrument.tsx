@@ -11,36 +11,10 @@
 // room never invents a sky.
 
 import { useEffect, useState } from "react";
-import { BAND_TABLE, currentBand } from "@/lib/groundwork/bands";
+import { klaxonReading, type KlaxonReading } from "@/lib/groundwork/klaxon";
 import styles from "./groundwork.module.css";
 
 const CHICAGO = { latitude: 41.8781, longitude: -87.6298 };
-
-const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
-const hm = (min: number) => `${Math.floor(min / 60)}:${pad(min % 60)}`;
-
-// The working day's bands. The times are the one band table in day.ts
-// (ruled 2026-09-25, D26); only the words live here.
-const WORDS = [
-  { label: "THE SEND WINDOW", verb: "Send." },
-  { label: "THE PEOPLE WINDOW", verb: "Get on the phone." },
-  { label: "RESEARCH & FILING", verb: "Research and file." },
-] as const;
-const BANDS = BAND_TABLE.map((b, i) => {
-  const after = BAND_TABLE[i + 1];
-  return {
-    id: b.id,
-    from: b.from,
-    to: b.to,
-    label: WORDS[i]?.label ?? "",
-    verb: WORDS[i]?.verb ?? "",
-    next: after
-      ? `NEXT · ${WORDS[i + 1]?.label ?? ""} · ${hm(after.from)}–${hm(after.to)}`
-      : `NEXT · TOMORROW'S SENDS · ${hm(BAND_TABLE[0].from)}`,
-  };
-});
-const DAY_FROM = BANDS[0].from;
-const DAY_TO = BANDS[BANDS.length - 1].to;
 
 // Open-meteo WMO weather codes, folded to one plain word.
 function skyWord(code: number): string {
@@ -96,84 +70,43 @@ export function Instrument() {
     };
   }, []);
 
-  // Chicago wall-clock minutes, derived once per tick.
-  const chi = now
-    ? new Date(
-        now.toLocaleString("en-US", { timeZone: "America/Chicago", hour12: false }),
-      )
-    : null;
-  const min = chi ? chi.getHours() * 60 + chi.getMinutes() + chi.getSeconds() / 60 : null;
-  const sec = chi ? chi.getSeconds() : 0;
+  return <KlaxonFace reading={klaxonReading(now)} wx={wx} />;
+}
 
-  // The band is the table's own reading (currentBand, D26): null before the
-  // day opens, and before the day the send band is the one on the masthead.
-  const bandId = now ? currentBand(now) : null;
-  const band = BANDS.find((b) => b.id === bandId) ?? BANDS[0];
-  const afterDay = min != null && min >= DAY_TO;
-  // Before the day opens the send band is NEXT, not now (D26): the count runs
-  // to its opening and the bar waits full.
-  const beforeDay = min != null && min < DAY_FROM;
-  const left =
-    min == null
-      ? null
-      : beforeDay
-        ? Math.max(0, band.from - min)
-        : Math.max(0, band.to - min);
-  const frac =
-    min == null || beforeDay
-      ? 0
-      : Math.min(1, Math.max(0, (min - band.from) / (band.to - band.from)));
-  const late = left != null && left <= 5 && !afterDay && !beforeDay;
-
-  const clock = chi
-    ? `${chi.getHours()}:${pad(chi.getMinutes())}:${pad(sec)}`
-    : "—:——:——";
-  const date = chi
-    ? chi
-        .toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
-        .toUpperCase()
-        .replace(/,/g, " ·")
-    : "—";
-  const count =
-    left == null
-      ? "—:——"
-      : afterDay
-        ? "—"
-        : left >= 60
-          ? `${Math.floor(left / 60)}:${pad(Math.floor(left % 60))}:${pad(Math.floor((left % 1) * 60))}`
-          : `${Math.floor(left)}:${pad(Math.floor((left % 1) * 60))}`;
-
+/** The Klaxon as it paints, from one reading: the masthead (serif verb left,
+ *  count right), the sub-row (the band, the next band, and the capsule facts:
+ *  Chicago clock, date, weather), and the burn bar. Inside the last five
+ *  minutes the whole instrument carries the late class, and the count and the
+ *  bar turn red and pulse (pass 8 call 11). No weather reading, no weather:
+ *  the room never invents a sky. */
+export function KlaxonFace({ reading: r, wx }: { reading: KlaxonReading; wx: string }) {
   return (
     <div
-      className={`${styles.klaxon} ${late ? styles.kxLate : ""}`}
+      className={`${styles.klaxon} ${r.late ? styles.kxLate : ""}`}
       aria-label="The working band, its countdown, and Chicago time"
     >
       <div className={styles.kxTop}>
         <span className={styles.kxVerb} suppressHydrationWarning>
-          {afterDay ? "The day is worked." : band.verb}
+          {r.verb}
         </span>
         <span className={styles.kxCount} suppressHydrationWarning>
-          {count}
+          {r.count}
         </span>
       </div>
       <div className={styles.kxSub}>
         <span suppressHydrationWarning>
-          {beforeDay ? "NEXT · " : ""}
-          <b>{band.label}</b>
-          {afterDay
-            ? ""
-            : beforeDay
-              ? ` · OPENS ${hm(band.from)}`
-              : ` · CLOSES ${hm(band.to)}`}
+          {r.lead}
+          <b>{r.band}</b>
+          {r.edge}
         </span>
-        <span suppressHydrationWarning>{afterDay || beforeDay ? "" : band.next}</span>
+        <span suppressHydrationWarning>{r.next}</span>
         <span className={styles.kxCap} suppressHydrationWarning>
-          {clock} · AMERICA/CHICAGO · {date}
+          {r.clock} · AMERICA/CHICAGO · {r.date}
           {wx ? ` · ${wx.toUpperCase()}` : ""}
         </span>
       </div>
       <div className={styles.kxBurn}>
-        <i style={{ width: `${Math.round((1 - frac) * 100)}%` }} />
+        <i style={{ width: `${r.burnPct}%` }} />
       </div>
     </div>
   );

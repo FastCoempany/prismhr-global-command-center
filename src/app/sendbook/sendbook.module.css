@@ -129,6 +129,8 @@
   border: 1px dashed rgba(10, 28, 64, 0.22);
   border-radius: 999px;
   padding: 2px 8px;
+  cursor: pointer;
+  list-style: none;
 }
 /* ↩ REPLIED and BOOKED are doors (pass 8 S2): the mark opens, in place, to
    the message it reports. */
@@ -197,8 +199,8 @@
   max-width: 70ch;
 }
 
-/* The live-cadence marker (5.1, shipped 2026-08-20): quiet mono, click-deep
-   by title. It informs and blocks nothing. A caution, so the brand amber
+/* The live-cadence marker (5.1, shipped 2026-08-20): quiet mono, a door to
+   the sends behind it (pass 10). It informs and blocks nothing. A caution, so the brand amber
    carries it in the fill and the rule, with navy ink for the words (pass 8
    S1; the ochre it wore was ad hoc). */
 .mktgLive {
@@ -212,4 +214,10 @@
   border-radius: 4px;
   padding: 1px 6px;
   white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
+}
+.mktgLive::-webkit-details-marker,
+.cold::-webkit-details-marker {
+  display: none;
 }

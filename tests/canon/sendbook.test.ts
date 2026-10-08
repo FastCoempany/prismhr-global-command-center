@@ -7,7 +7,7 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { createElement } from "react";
@@ -15,11 +15,37 @@ import { render, textOf } from "../helpers/room-render";
 import {
   acceptanceDates,
   buildSendbook,
+  CHANNELS,
   docsFromRows,
   inboundDates,
+  parseSendbookBody,
+  sendbookNoteBody,
   warmDates,
+  weekStats,
+  type Channel,
   type NoteLike,
 } from "../../src/lib/sendbook/read";
+import {
+  ASK_IDLE,
+  ASK_MORE,
+  ASK_PRIMARY,
+  askStep,
+  type AskEvent,
+  type AskState,
+} from "../../src/lib/sendbook/ask";
+import {
+  liveMoves,
+  takeBack,
+  tapTouches,
+  todaysSends,
+  workChannel,
+  type TakeBackStore,
+  type WorkWriter,
+} from "../../src/lib/groundwork/worked";
+import { buildQueue } from "../../src/lib/groundwork/day";
+import { WAYFINDER_ROUTES, pageFileFor } from "../../src/components/wayfinder-routes";
+import { dayLabelFor } from "../../src/lib/scratch";
+import type { Peo } from "../../src/lib/book";
 import { readAccount, type RecordNote } from "../../src/lib/record/read";
 import { csms } from "../../src/lib/book";
 import type { SecondRecord } from "../../src/lib/activity/read";
@@ -257,7 +283,11 @@ describe("the register built from the read equals the register built from rows",
       now: NOW,
     });
   const fromRead = (notes: NoteLike[]) =>
-    buildSendbook({ readsById: new Map([["A1", readOf(notes)]]), tapsById: new Map(), now: NOW });
+    buildSendbook({
+      readsById: new Map([["A1", readOf(notes)]]),
+      tapsById: new Map(),
+      now: NOW,
+    });
 
   test("on every fixture this file holds", () => {
     assert.ok(FIXTURES.length >= 8, `fixtures collected: ${FIXTURES.length}`);
@@ -270,7 +300,10 @@ describe("the register built from the read equals the register built from rows",
   });
 
   test("the lane and the annotation come off the doc's flags, not a second reading of the row", () => {
-    const notes = [send("9:44 AM"), reply("10:39 AM", "We are in. Send the contract over.")];
+    const notes = [
+      send("9:44 AM"),
+      reply("10:39 AM", "We are in. Send the contract over."),
+    ];
     const read = readOf(notes);
     const [inDoc] = read.docs.filter((d) => d.direction === "in");
     assert.equal(inDoc.senderIsHome, false);
@@ -378,7 +411,9 @@ describe("Groundwork's and /sendbook's registers agree on an account with an org
   test("the account-level datetime alone sets neither (D19)", () => {
     const datetimeOnly = theirs({ lastOrgInbound: "2026-09-10 09:12" });
     const { lines, laneById } = buildSendbook({
-      readsById: new Map([["A1", { docs: docsFromRows(notes), secondRecord: datetimeOnly }]]),
+      readsById: new Map([
+        ["A1", { docs: docsFromRows(notes), secondRecord: datetimeOnly }],
+      ]),
       tapsById: new Map(),
       now: NOW,
     });
@@ -477,16 +512,47 @@ describe("the Sendbook's marks speak plainly and wear the brand palette (pass 8 
     }
   });
 
-  test("GONE COLD and MKTG LIVE carry those titles on the page", async () => {
+  // Rewritten in pass 10: the two marks were hover titles only, a dead end
+  // on touch (the click-depth law). Each is now a door whose fold carries
+  // the same words, after the evidence it stands on.
+  test("GONE COLD and MKTG LIVE open, one click deep, to their evidence and those words", async () => {
     const { MARK_TITLES, SendMarks } = await import("../../src/app/sendbook/marks");
     const html = await render(
+      createElement(SendMarks, {
+        mktg: true,
+        cold: true,
+        coldSince: "2026-08-14T15:00:00.000Z",
+        mktgSends: 3,
+        reply: null,
+        booking: null,
+      }),
+    );
+    const doors = [
+      ...html.matchAll(
+        /<details class="door"><summary class="(\w+)">([^<]*)<\/summary><div class="answer">([\s\S]*?)<\/div><\/details>/g,
+      ),
+    ].map((m) => [m[1], m[2], textOf(m[3])]);
+    assert.deepEqual(doors, [
+      [
+        "mktgLive",
+        "MKTG LIVE",
+        `Marketing sent 3 emails here in the last seven days. ${MARK_TITLES.mktg}`,
+      ],
+      ["cold", "GONE COLD", `Last warm 8/14. ${MARK_TITLES.cold}`],
+    ]);
+    assert.ok(!/<details[^>]* open/.test(html), "a fold opened on arrival");
+    assert.doesNotMatch(html, /re-open, not an introduction/);
+    // With no evidence on file, the door still opens to the plain words.
+    const bare = await render(
       createElement(SendMarks, { mktg: true, cold: true, reply: null, booking: null }),
     );
-    const titles = [...html.matchAll(/title="([^"]*)"/g)].map((m) =>
-      m[1].replace(/&#x27;/g, "'"),
-    );
-    assert.deepEqual(titles, [MARK_TITLES.mktg, MARK_TITLES.cold]);
-    assert.doesNotMatch(html, /re-open, not an introduction/);
+    assert.ok(textOf(bare).includes(MARK_TITLES.cold));
+    assert.ok(!textOf(bare).includes("Last warm"));
+    // The page hands each line its evidence from both records.
+    const page = readFileSync(join(cwd(), "src/app/sendbook/page.tsx"), "utf8");
+    assert.match(page, /\[read\.warmth\.lastWarmAt, org\.theirsAt\]/);
+    assert.match(page, /coldSince: lastWarm\.get\(l\.accountId\)/);
+    assert.match(page, /mktgSends: mktgSends\.get\(l\.accountId\)/);
   });
 
   test("every color the register's stylesheet names is the brand's", () => {
@@ -516,5 +582,812 @@ describe("the Sendbook's marks speak plainly and wear the brand palette (pass 8 
       if (!BRAND.has(full)) off.push(m[0]);
     }
     assert.deepEqual(off, []);
+  });
+});
+
+// ═══ Pass 10: the Sendbook's honor rows, pinned (CLAUDE.md "The Sendbook") ═══
+// A10.1 to A10.3 render the register, its door and the wayfinder; A10.6,
+// A10.18 and A10.22 walk the Channel Ask's steps and paint each one; A10.9,
+// A10.11, A10.20 and A10.21 call the reads and the writes the page and the
+// actions run, through a recording writer in place of the database.
+
+type El = { type: unknown; props: Record<string, unknown> };
+/** Every element in a tree a component returned, depth first. */
+const elementsOf = (node: unknown): El[] => {
+  if (Array.isArray(node)) return node.flatMap(elementsOf);
+  if (node && typeof node === "object" && "props" in node) {
+    const el = node as El;
+    return [el, ...elementsOf(el.props.children)];
+  }
+  return [];
+};
+/** A writer or store that records every method called on it, by name. */
+const recorder = <T extends object>(impl: T) => {
+  const calls: { name: string; args: unknown[] }[] = [];
+  const proxy = new Proxy(impl, {
+    get(target, name) {
+      return async (...args: unknown[]) => {
+        calls.push({ name: String(name), args });
+        const fn = (target as Record<string | symbol, unknown>)[name];
+        return typeof fn === "function" ? fn(...args) : undefined;
+      };
+    },
+  }) as T;
+  return { proxy, calls };
+};
+const peoFixture: Peo = {
+  id: "TEST0000000000001",
+  name: "Test Partner",
+  cloud: "TST",
+  csm: "Unassigned",
+  contactName: "Pat Example",
+  contactEmail: "pat@example.com",
+  size: 5000,
+  sizeBucket: "Large (5,000 - 9,999)",
+  industry: "PEO/ASO",
+  city: "St. Louis",
+  state: "MO",
+  website: "example.com",
+  lastActivity: "2026-07-01",
+  fit: 40,
+  fitTier: "low",
+};
+const tapNote = (createdAt: string, channel = "CALL") => ({
+  body: sendbookNoteBody(channel as Channel, "Adam Reyes", "Send the model."),
+  source: "sendbook",
+  createdAt,
+});
+
+describe("A10.1 · the outreach register lives at /sendbook", () => {
+  test("the route is a page, and the page paints the register: week head, day kickers, every touch", async () => {
+    assert.ok(existsSync(join(cwd(), pageFileFor("/sendbook"))));
+    const { lines, laneById } = buildSendbook({
+      readsById: new Map([
+        ["A1", { docs: docsFromRows([send("9:44 AM")]), secondRecord: null }],
+      ]),
+      tapsById: new Map([["A1", [tapNote("2026-09-25T15:00:00.000Z")]]]),
+      now: NOW,
+    });
+    const { SendbookRegister } = await import("../../src/app/sendbook/register");
+    const html = await render(
+      createElement(SendbookRegister, {
+        week: weekStats({ lines, laneById }, NOW),
+        channelsPresent: [...new Set(lines.map((l) => l.channel))],
+        filter: "",
+        lines: lines.map((l) => ({
+          ...l,
+          name: "Canon Fixture Co",
+          day: dayLabelFor(l.at, NOW),
+          mktg: false,
+          cold: laneById.get(l.accountId) === "gone-cold",
+        })),
+        total: lines.length,
+        allHref: "/sendbook?all=1",
+      }),
+    );
+    const text = textOf(html);
+    assert.match(html, /<h1 class="masthead">The Sendbook<\/h1>/);
+    assert.match(text, /1 touch this week/);
+    assert.match(
+      text,
+      /TODAY CALL Canon Fixture Co STEP 2 Send the model\. · Adam Reyes/,
+    );
+    assert.match(text, /SEP 2 EMAIL Canon Fixture Co STEP 1 Re: Canada · Adam Reyes/);
+    assert.match(html, /href="\/accounts\?focus=A1"/);
+  });
+});
+
+describe("A10.2 · doored from Groundwork's page-foot Tallyfoot line", () => {
+  test("the Tallyfoot is a door to /sendbook that reads THIS WEEK · N WORKED · …", async () => {
+    const { Tallyfoot } = await import("../../src/app/groundwork/face");
+    const week = {
+      total: 3,
+      byChannel: [
+        ["EMAIL", 2],
+        ["CALL", 1],
+      ] as [Channel, number][],
+      accounts: 2,
+      replied: 1,
+      neverMet: 2,
+      goneCold: 0,
+    };
+    const html = await render(createElement(Tallyfoot, { week, staleDropDays: null }));
+    assert.match(
+      html,
+      /^<div class="tallyfoot"><a class="tallyDoor"[^>]*href="\/sendbook">/,
+    );
+    assert.equal(
+      textOf(html),
+      "THIS WEEK · 3 WORKED · 2 EMAIL · 1 CALL · 2 ACCOUNTS · 1 REPLIED · THE SENDBOOK →",
+    );
+    const quiet = await render(
+      createElement(Tallyfoot, {
+        week: { ...week, total: 0, byChannel: [], accounts: 0, replied: 0 },
+        staleDropDays: null,
+      }),
+    );
+    assert.equal(textOf(quiet), "THIS WEEK · NOTHING WORKED YET · THE SENDBOOK →");
+  });
+
+  test("the Tallyfoot is the face's last landmark: the page foot", async () => {
+    const { GroundworkFace } = await import("../../src/app/groundwork/face");
+    const html = await render(
+      createElement(GroundworkFace, {
+        nudge: false,
+        done: [],
+        canWrite: false,
+        stage: null,
+        waiting: [],
+        rest: [],
+        hrefOf: () => "",
+        deck: {
+          canWrite: false,
+          wire: [],
+          wireCount: 0,
+          wireAll: false,
+          wireHref: "/groundwork?wire=all",
+          wireAvailable: false,
+          wireIsDue: false,
+          inst: null,
+          readout: { sections: [] },
+          readoutPayload: "",
+          lintIssues: [],
+          readoutReadAt: undefined,
+          idToName: (id: string) => id,
+          wireWhen: () => "",
+          monthDay: () => "",
+        },
+        foot: {
+          week: {
+            total: 0,
+            byChannel: [],
+            accounts: 0,
+            replied: 0,
+            neverMet: 0,
+            goneCold: 0,
+          },
+          staleDropDays: null,
+        },
+      }),
+    );
+    assert.match(
+      html,
+      /<div class="tallyfoot"><a class="tallyDoor"[^>]*href="\/sendbook">[^<]*<\/a><\/div><\/main>$/,
+    );
+  });
+});
+
+describe("A10.3 · /sendbook is never in the top wayfinder", () => {
+  test("the route table holds no /sendbook row", () => {
+    assert.equal(
+      WAYFINDER_ROUTES.some((r) => r.href.startsWith("/sendbook")),
+      false,
+    );
+  });
+
+  test("the wayfinder paints no door to it on any page, the Sendbook's own included", async () => {
+    const { AppWayfinder } = await import("../../src/components/app-wayfinder");
+    const currents = [...new Set(WAYFINDER_ROUTES.flatMap((r) => r.pages))];
+    assert.ok(currents.includes("Groundwork"), "the Sendbook mounts it as Groundwork");
+    for (const current of currents) {
+      const html = await render(await AppWayfinder({ current, trail: "The record" }));
+      assert.match(html, /href="\/groundwork"/, current);
+      assert.doesNotMatch(html, /\/sendbook|Sendbook/i, current);
+    }
+  });
+});
+
+describe("A10.6 · the Channel Ask: Worked-it springs a chip row and files a sendbook:<account> note", () => {
+  const paint = async (state: AskState, contacts: string[] = []) => {
+    const { AskRow } = await import("../../src/app/groundwork/channel-ask");
+    return render(
+      createElement(AskRow, {
+        state,
+        contacts,
+        pending: false,
+        accent: true,
+        send: () => {},
+      }),
+    );
+  };
+  const chips = (html: string) =>
+    [...html.matchAll(/<button[^>]*>([^<]*)<\/button>/g)].map((m) => m[1]);
+
+  test("the chips are the decree's channels in its order, and every channel the register knows has one", () => {
+    assert.deepEqual(ASK_PRIMARY, [
+      "EMAIL",
+      "CALL",
+      "VOICEMAIL",
+      "TEXT",
+      "LINKEDIN",
+      "INMAIL",
+    ]);
+    assert.deepEqual(ASK_MORE, [
+      "ENGAGED",
+      "CONNECT",
+      "VIDEO",
+      "EVENT",
+      "MAILER",
+      "INTRO",
+      "CSM RELAY",
+    ]);
+    assert.deepEqual([...ASK_PRIMARY, ...ASK_MORE], [...CHANNELS]);
+  });
+
+  test("Worked-it springs the row; ··· opens the rest", async () => {
+    assert.deepEqual(chips(await paint(ASK_IDLE)), ["Worked it"]);
+    const open = askStep(ASK_IDLE, { kind: "open" }, []).state;
+    assert.deepEqual(chips(await paint(open)), [...ASK_PRIMARY, "···", "✕"]);
+    const more = askStep(open, { kind: "more" }, []).state;
+    assert.deepEqual(chips(await paint(more)), [...ASK_PRIMARY, ...ASK_MORE, "✕"]);
+  });
+
+  test("one tap files when the merged names hold one; the who row asks when they hold more", () => {
+    const open = askStep(ASK_IDLE, { kind: "open" }, []).state;
+    assert.deepEqual(
+      askStep(open, { kind: "pick", channel: "CALL" }, ["Adam Reyes"]).file,
+      {
+        channel: "CALL",
+        who: "Adam Reyes",
+      },
+    );
+    assert.deepEqual(askStep(open, { kind: "pick", channel: "CALL" }, []).file, {
+      channel: "CALL",
+      who: "",
+    });
+    const asked = askStep(open, { kind: "pick", channel: "TEXT" }, [
+      "Adam Reyes",
+      "Dana Ellis",
+    ]);
+    assert.equal(asked.file, null);
+    assert.equal(asked.state.stage, "contact");
+    assert.deepEqual(askStep(asked.state, { kind: "who", name: "Dana Ellis" }, []).file, {
+      channel: "TEXT",
+      who: "Dana Ellis",
+    });
+    assert.deepEqual(askStep(asked.state, { kind: "skip" }, []).file, {
+      channel: "TEXT",
+      who: "",
+    });
+  });
+
+  test("the tap files one sendbook:<account> note and the stamp, at one moment", async () => {
+    const at = new Date("2026-09-25T15:00:00.000Z");
+    const { proxy, calls } = recorder<WorkWriter>({} as WorkWriter);
+    await workChannel(
+      proxy,
+      {
+        mk: "A1:silence-bump",
+        accountId: "A1",
+        channel: "CALL",
+        contact: "Adam Reyes",
+        clause: "Send the second touch.",
+      },
+      at,
+    );
+    assert.deepEqual(
+      calls.map((c) => c.name),
+      ["note", "stamp"],
+    );
+    const note = calls[0].args[0] as {
+      accountId: string;
+      body: string;
+      at: Date;
+      source: string;
+    };
+    assert.equal(note.accountId, "sendbook:A1");
+    assert.equal(note.source, "sendbook");
+    assert.equal(note.at, at);
+    assert.deepEqual(parseSendbookBody(note.body), {
+      channel: "CALL",
+      contact: "Adam Reyes",
+      clause: "Send the second touch.",
+    });
+    assert.deepEqual(calls[1].args, ["groundwork:2026-09-25:A1:silence-bump", at]);
+  });
+
+  test("a channel the register does not know files no note and still stamps; a lost note never costs the stamp", async () => {
+    const at = new Date("2026-09-25T15:00:00.000Z");
+    const odd = recorder<WorkWriter>({} as WorkWriter);
+    await workChannel(
+      odd.proxy,
+      { mk: "A1:x", accountId: "A1", channel: "FAX", contact: "", clause: "" },
+      at,
+    );
+    assert.deepEqual(
+      odd.calls.map((c) => c.name),
+      ["stamp"],
+    );
+    const stamps: string[] = [];
+    await workChannel(
+      {
+        note: async () => {
+          throw new Error("down");
+        },
+        stamp: async (key) => {
+          stamps.push(key);
+        },
+      },
+      { mk: "A1:x", accountId: "A1", channel: "CALL", contact: "", clause: "" },
+      at,
+    );
+    assert.deepEqual(stamps, ["groundwork:2026-09-25:A1:x"]);
+  });
+});
+
+describe("A10.9 · the pre-answer rule: an outbound the record holds today answers the ask before it opens", () => {
+  const line = (accountId: string, at: string, from: "record" | "tap") => ({
+    accountId,
+    at,
+    from,
+  });
+
+  test("a record send today pre-answers; a tap, or yesterday's send, does not", () => {
+    const { recordSent, newest } = todaysSends(
+      [
+        line("A1", "2026-09-25T16:00:00.000Z", "record"),
+        line("A2", "2026-09-25T15:00:00.000Z", "tap"),
+        // 02:00Z on the 25th is 9 PM on the 24th in Chicago.
+        line("A3", "2026-09-25T02:00:00.000Z", "record"),
+      ],
+      "2026-09-25",
+    );
+    assert.deepEqual([...recordSent], ["A1"]);
+    assert.deepEqual([...newest.keys()], ["A1", "A2"]);
+  });
+
+  test("the record's own send from the register reaches the rule", () => {
+    const { lines } = buildSendbook({
+      readsById: new Map([
+        [
+          "A1",
+          {
+            docs: docsFromRows([send("9:44 AM", "2026-09-25T12:00:00.000Z")]),
+            secondRecord: null,
+          },
+        ],
+      ]),
+      tapsById: new Map(),
+      now: NOW,
+    });
+    assert.deepEqual([...todaysSends(lines, "2026-09-25").recordSent], ["A1"]);
+  });
+
+  test("pre-answered, Worked-it is a plain stamp with no chip row; otherwise the ask opens", async () => {
+    const { WorkedControl } = await import("../../src/app/groundwork/face");
+    const props = {
+      mk: "A1:wire-trigger",
+      accountId: "A1",
+      contacts: [],
+      clause: "Send the note.",
+      accent: true,
+    };
+    const pre = await render(
+      createElement(WorkedControl, { ...props, preAnswered: true }),
+    );
+    assert.match(
+      pre,
+      /^<form[^>]*><button[^>]*type="submit" title="The record already holds today&#x27;s send\. This stamps the move worked\.">Worked it<\/button><\/form>/,
+    );
+    const forms = elementsOf(WorkedControl({ ...props, preAnswered: true })).filter(
+      (e) => e.type === "form",
+    );
+    assert.equal((forms[0]?.props.action as { name?: string })?.name, "bound markWorked");
+    const asked = await render(
+      createElement(WorkedControl, { ...props, preAnswered: false }),
+    );
+    assert.doesNotMatch(asked, /<form/);
+    assert.match(asked, /^<button type="button"[^>]*>Worked it<\/button>$/);
+  });
+});
+
+describe("A10.11 · tapped touches are synthesized into the drumbeat at read time, never written to the touch log", () => {
+  test("each tap reads as an awaiting outreach touch at its own moment", () => {
+    assert.deepEqual(
+      tapTouches(
+        new Map([
+          [
+            "A1",
+            [tapNote("2026-09-14T15:00:00.000Z"), tapNote("2026-09-10T15:00:00.000Z")],
+          ],
+        ]),
+      ),
+      [
+        {
+          subjectKey: "outreach:A1",
+          label: "",
+          contactedAt: "2026-09-14T15:00:00.000Z",
+          followUpAt: "",
+          status: "awaiting",
+          log: [],
+        },
+        {
+          subjectKey: "outreach:A1",
+          label: "",
+          contactedAt: "2026-09-10T15:00:00.000Z",
+          followUpAt: "",
+          status: "awaiting",
+          log: [],
+        },
+      ],
+    );
+  });
+
+  test("the drumbeat runs on the synthesized taps: a tap left unanswered a week bumps", () => {
+    const run = (taps: ReturnType<typeof tapNote>[]) =>
+      buildQueue({
+        accounts: [peoFixture],
+        intelById: new Map(),
+        notesById: new Map(),
+        touches: tapTouches(new Map([[peoFixture.id, taps]])),
+        contactCountById: () => 5,
+        now: NOW,
+      }).all.find((q) => q.accountId === peoFixture.id);
+    assert.equal(run([tapNote("2026-09-14T15:00:00.000Z")])?.ruleId, "silence-bump");
+    assert.notEqual(run([tapNote("2026-09-23T15:00:00.000Z")])?.ruleId, "silence-bump");
+  });
+
+  test("working a move writes the tap note and the stamp, and nothing to the touch log", async () => {
+    const { proxy, calls } = recorder<WorkWriter>({} as WorkWriter);
+    for (const channel of CHANNELS)
+      await workChannel(
+        proxy,
+        { mk: "A1:seated", accountId: "A1", channel, contact: "", clause: "" },
+        new Date(NOW),
+      );
+    assert.deepEqual([...new Set(calls.map((c) => c.name))].sort(), ["note", "stamp"]);
+    for (const c of calls.filter((x) => x.name === "note"))
+      assert.match((c.args[0] as { accountId: string }).accountId, /^sendbook:/);
+  });
+});
+
+describe("A10.18 · outcomes are never asked", () => {
+  // Every state the Channel Ask can reach, from every event, for no name, one
+  // name and two names.
+  const reachable = () => {
+    const events: AskEvent[] = [
+      { kind: "open" },
+      { kind: "more" },
+      { kind: "pick", channel: "CALL" },
+      { kind: "who", name: "Dana Ellis" },
+      { kind: "skip" },
+      { kind: "close" },
+    ];
+    const out: { state: AskState; contacts: string[]; files: unknown[] }[] = [];
+    for (const contacts of [[], ["Adam Reyes"], ["Adam Reyes", "Dana Ellis"]]) {
+      const seen = new Map<string, AskState>([[JSON.stringify(ASK_IDLE), ASK_IDLE]]);
+      const files: unknown[] = [];
+      const queue = [ASK_IDLE];
+      while (queue.length) {
+        const s = queue.shift()!;
+        for (const e of events) {
+          const r = askStep(s, e, contacts);
+          if (r.file) files.push(r.file);
+          const k = JSON.stringify(r.state);
+          if (!seen.has(k)) {
+            seen.set(k, r.state);
+            queue.push(r.state);
+          }
+        }
+      }
+      for (const state of seen.values()) out.push({ state, contacts, files });
+    }
+    return out;
+  };
+
+  test("the ask's only steps are the button, the channel and the who; a tap files a channel and a person", () => {
+    for (const { state, files } of reachable()) {
+      assert.ok(["idle", "channel", "contact"].includes(state.stage));
+      for (const f of files)
+        assert.deepEqual(Object.keys(f as object).sort(), ["channel", "who"]);
+    }
+  });
+
+  test("no painted step asks how it went", async () => {
+    const { AskRow } = await import("../../src/app/groundwork/channel-ask");
+    for (const { state, contacts } of reachable()) {
+      const text = textOf(
+        await render(
+          createElement(AskRow, {
+            state,
+            contacts,
+            pending: false,
+            accent: true,
+            send: () => {},
+          }),
+        ),
+      );
+      assert.doesNotMatch(
+        text,
+        /\?|\b(outcome|result|replied|reply|answer|answered|booked|interested|no answer|went|meeting)\b/i,
+        text,
+      );
+    }
+  });
+});
+
+describe("A10.19 · the register tells what happened; what is due next stays Groundwork's", () => {
+  test("a register line holds what happened and its annotations, and nothing ahead", () => {
+    const { lines } = book([send("9:44 AM"), reply("10:39 AM", "Tuesday works.")]);
+    assert.deepEqual(Object.keys(lines[0]).sort(), [
+      "accountId",
+      "at",
+      "bookedAt",
+      "booking",
+      "channel",
+      "clause",
+      "contact",
+      "from",
+      "repliedAt",
+      "reply",
+      "step",
+    ]);
+  });
+
+  test("the painted register carries no move and no form; its one word of what is due points at Groundwork", async () => {
+    const { lines, laneById } = book([
+      send("9:44 AM"),
+      reply("10:39 AM", "Tuesday works."),
+    ]);
+    const { SendbookRegister } = await import("../../src/app/sendbook/register");
+    const html = await render(
+      createElement(SendbookRegister, {
+        week: weekStats({ lines, laneById }, NOW),
+        channelsPresent: ["EMAIL"],
+        filter: "",
+        lines: lines.map((l) => ({
+          ...l,
+          name: "Canon Fixture Co",
+          day: dayLabelFor(l.at, NOW),
+          mktg: false,
+          cold: true,
+        })),
+        total: lines.length,
+        allHref: "/sendbook?all=1",
+      }),
+    );
+    assert.doesNotMatch(html, /<form|<input|<textarea|<button/);
+    const text = textOf(html).replace(/ \./g, ".");
+    assert.deepEqual(
+      [
+        ...text.matchAll(
+          /[^.]*\b(due|next|follow[- ]?up|overdue|chase|send the|call the)\b[^.]*\./gi,
+        ),
+      ].map((m) => m[0].trim()),
+      ["What’s due next is on Groundwork."],
+    );
+    assert.match(html, /What’s due next is on <a href="\/groundwork">Groundwork<\/a>\./);
+  });
+});
+
+describe("A10.20, A10.21 · every stamp's ↺ returns the move and withdraws its tap; the record's own entries are never unwritten", () => {
+  const stampAt = new Date("2026-09-25T15:00:00.000Z");
+  const store = () => {
+    const stamps = new Map([["groundwork:2026-09-25:A1:silence-bump", stampAt]]);
+    const notes = [
+      // An earlier move's tap today, this move's own tap, and the record's
+      // own send on the account in the same minute.
+      {
+        id: "tap-earlier",
+        key: "sendbook:A1",
+        createdAt: new Date("2026-09-25T14:00:00.000Z"),
+      },
+      { id: "tap-own", key: "sendbook:A1", createdAt: stampAt },
+      { id: "record-send", key: "A1", createdAt: stampAt },
+    ];
+    return recorder<TakeBackStore>({
+      stampAt: async (key) => stamps.get(key) ?? null,
+      deleteStamp: async (key) => {
+        stamps.delete(key);
+      },
+      tapsBetween: async (key, from, to) =>
+        notes.filter((n) => n.key === key && n.createdAt >= from && n.createdAt <= to),
+      deleteTap: async () => {},
+    });
+  };
+
+  test("the take-back deletes today's stamp and the tap filed with it, and nothing else", async () => {
+    const { proxy, calls } = store();
+    await takeBack(proxy, "A1:silence-bump", "A1", new Date("2026-09-25T18:00:00.000Z"));
+    assert.deepEqual(
+      calls.map((c) => [c.name, c.args[0]]),
+      [
+        ["stampAt", "groundwork:2026-09-25:A1:silence-bump"],
+        ["deleteStamp", "groundwork:2026-09-25:A1:silence-bump"],
+        ["tapsBetween", "sendbook:A1"],
+        ["deleteTap", "tap-own"],
+      ],
+    );
+  });
+
+  test("a stamp with no tap (a Copy stamp) takes nothing back but itself; the record's send stays", async () => {
+    const { proxy, calls } = store();
+    await takeBack(proxy, "A1:silence-bump", "A1", new Date("2026-09-25T18:00:00.000Z"));
+    const deleted = calls.filter((c) => c.name === "deleteTap").map((c) => c.args[0]);
+    assert.ok(!deleted.includes("record-send"));
+    assert.ok(
+      calls
+        .filter((c) => c.name === "tapsBetween")
+        .every((c) => String(c.args[0]).startsWith("sendbook:")),
+      "the take-back only ever looks under sendbook:",
+    );
+    const copy = store();
+    await takeBack(
+      copy.proxy,
+      "A1:wire-trigger",
+      "A1",
+      new Date("2026-09-25T18:00:00.000Z"),
+    );
+    assert.deepEqual(
+      copy.calls.map((c) => c.name),
+      ["stampAt", "deleteStamp"],
+    );
+  });
+
+  test("with the stamp gone the move is live again, and the withdrawn tap leaves the register", () => {
+    const moves = [
+      { accountId: "A1", ruleId: "silence-bump" },
+      { accountId: "A2", ruleId: "wire-trigger" },
+    ];
+    const stamps = new Map([
+      ["groundwork:2026-09-25:A1:silence-bump", stampAt.toISOString()],
+    ]);
+    assert.deepEqual(liveMoves(moves, stamps, "2026-09-25"), [moves[1]]);
+    stamps.delete("groundwork:2026-09-25:A1:silence-bump");
+    assert.deepEqual(liveMoves(moves, stamps, "2026-09-25"), moves);
+    const registerOf = (taps: ReturnType<typeof tapNote>[]) =>
+      buildSendbook({ readsById: new Map(), tapsById: new Map([["A1", taps]]), now: NOW })
+        .lines.length;
+    assert.equal(registerOf([tapNote(stampAt.toISOString())]), 1);
+    assert.equal(registerOf([]), 0);
+  });
+
+  test("every stamp on the wing carries the ↺, bound to the take-back; a read-only session sees none", async () => {
+    const { DoneWing } = await import("../../src/app/groundwork/face");
+    const done = [
+      {
+        name: "One",
+        at: "9:10 AM",
+        sub: "CALL · STEP 1",
+        mk: "A1:silence-bump",
+        accountId: "A1",
+      },
+      {
+        name: "Two",
+        at: "9:40 AM",
+        sub: "COPIED THE NOTE",
+        mk: "A2:wire-trigger",
+        accountId: "A2",
+      },
+    ];
+    const forms = elementsOf(DoneWing({ done, canWrite: true })).filter(
+      (e) => e.type === "form",
+    );
+    assert.deepEqual(
+      forms.map((f) => (f.props.action as { name?: string }).name),
+      ["bound unWork", "bound unWork"],
+    );
+    const html = await render(createElement(DoneWing, { done, canWrite: true }));
+    assert.equal((html.match(/>↺<\/button>/g) ?? []).length, 2);
+    assert.match(
+      html,
+      /title="Take it back\. The move returns to the queue, and the tap it filed leaves the register\. A filed email stays on the record\."/,
+    );
+    const ro = await render(createElement(DoneWing, { done, canWrite: false }));
+    assert.doesNotMatch(ro, /↺/);
+  });
+});
+
+describe("A10.22 · the chip rows carry ✕ to close without filing", () => {
+  test("✕ closes the channel row and the who row, and files nothing", () => {
+    const open = askStep(ASK_IDLE, { kind: "open" }, []).state;
+    const more = askStep(open, { kind: "more" }, []).state;
+    const who = askStep(open, { kind: "pick", channel: "CALL" }, [
+      "Adam Reyes",
+      "Dana Ellis",
+    ]).state;
+    for (const s of [open, more, who]) {
+      const r = askStep(s, { kind: "close" }, ["Adam Reyes", "Dana Ellis"]);
+      assert.deepEqual(r, { state: ASK_IDLE, file: null });
+    }
+  });
+
+  test("both rows paint ✕ last, titled to say nothing files", async () => {
+    const { AskRow } = await import("../../src/app/groundwork/channel-ask");
+    const open = askStep(ASK_IDLE, { kind: "open" }, []).state;
+    const who = askStep(open, { kind: "pick", channel: "CALL" }, [
+      "Adam Reyes",
+      "Dana Ellis",
+    ]).state;
+    for (const state of [open, who]) {
+      const html = await render(
+        createElement(AskRow, {
+          state,
+          contacts: ["Adam Reyes", "Dana Ellis"],
+          pending: false,
+          accent: true,
+          send: () => {},
+        }),
+      );
+      assert.match(
+        html,
+        /<button type="button" class="[^"]*" title="Never mind\. Nothing files\.">✕<\/button><\/span>$/,
+      );
+    }
+  });
+
+  test("the ✕ sends the close step, and the close step is the one that files nothing", async () => {
+    const { AskRow } = await import("../../src/app/groundwork/channel-ask");
+    const sent: AskEvent[] = [];
+    const open = askStep(ASK_IDLE, { kind: "open" }, []).state;
+    for (const el of elementsOf(
+      AskRow({
+        state: open,
+        contacts: [],
+        pending: false,
+        accent: true,
+        send: (e: AskEvent) => sent.push(e),
+      }),
+    ))
+      if (el.type === "button" && el.props.children === "✕")
+        (el.props.onClick as () => void)();
+    assert.deepEqual(sent, [{ kind: "close" }]);
+  });
+});
+
+// ── pass 10: the register's cap is a door (the click-depth law) ────────────
+describe("the register past its cap opens every line (pass 10, the click-depth law)", () => {
+  test("Show all N is a link to every line under the same filter; under the cap there is no door", async () => {
+    const { SendbookRegister } = await import("../../src/app/sendbook/register");
+    const week = {
+      total: 0,
+      byChannel: [],
+      accounts: 0,
+      replied: 0,
+      neverMet: 0,
+      goneCold: 0,
+    };
+    const line = {
+      accountId: "A1",
+      at: "2026-09-02T15:00:00Z",
+      channel: "EMAIL" as Channel,
+      contact: "",
+      clause: "Re: Canada",
+      step: 1,
+      name: "Canon Fixture Co",
+      day: "SEP 2",
+      reply: null,
+      booking: null,
+      mktg: false,
+      cold: false,
+    };
+    const capped = await render(
+      createElement(SendbookRegister, {
+        week,
+        channelsPresent: ["EMAIL"],
+        filter: "EMAIL",
+        lines: [line],
+        total: 250,
+        allHref: "/sendbook?ch=EMAIL&all=1",
+      }),
+    );
+    assert.match(textOf(capped), /The register shows the last 1\. Show all 250\./);
+    assert.match(capped, /<a href="\/sendbook\?ch=EMAIL&amp;all=1">Show all 250\.<\/a>/);
+    const whole = await render(
+      createElement(SendbookRegister, {
+        week,
+        channelsPresent: ["EMAIL"],
+        filter: "",
+        lines: [line],
+        total: 1,
+        allHref: "/sendbook?all=1",
+      }),
+    );
+    assert.ok(!textOf(whole).includes("Show all"));
+    const page = readFileSync(join(process.cwd(), "src/app/sendbook/page.tsx"), "utf8");
+    assert.match(
+      page,
+      /const cap = all === "1" \? Number\.POSITIVE_INFINITY : LINE_CAP;/,
+    );
   });
 });
