@@ -27,7 +27,9 @@ export default function Fixture() {
       nudge={false}
       canWrite
       done={[
-        { name: "Worked One", at: "9:10 AM", sub: "EMAIL · STEP 1 · PAT E.", mk: "W1:wire-trigger", accountId: "W1" },
+        // A filed touch's channel line opens to the name whole and the
+        // touch's words, as the page hands it (channelOpens).
+        { name: "Worked One", at: "9:10 AM", sub: "EMAIL · STEP 1 · PAT E.", mk: "W1:wire-trigger", accountId: "W1", opens: { lines: ["To Pat Eriksen.", "Re: the Mexico hires"] } },
       ]}
       stage={{ item: item({}), prox: "", body: null }}
       waiting={[

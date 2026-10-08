@@ -20,7 +20,8 @@ import {
   sweepWire,
   unWork,
 } from "./actions";
-import type { Cite } from "@/lib/groundwork/chips";
+import { prepKicker, type Cite } from "@/lib/groundwork/chips";
+import { multiTone } from "@/lib/room/multi";
 import { ChannelAsk } from "./channel-ask";
 import { CiteRows } from "./evidence-chips";
 import { CopyStamp } from "./copy-stamp";
@@ -535,5 +536,46 @@ export function Tallyfoot({ week, staleDropDays }: TallyfootProps) {
         )}
       </Link>
     </div>
+  );
+}
+
+/** The roundup brief's folded CSM prep (5.3; pass 8 G5, G6): the partner
+ *  manager's own last rows, folded on arrival under a kicker that says the
+ *  real count, each row a door to its excerpt. Nothing when there are none. */
+export function CsmPrep({
+  accountId,
+  rows,
+}: {
+  accountId: string;
+  rows: readonly Cite[];
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <details className={styles.prepFold}>
+      <summary>{prepKicker(rows.length)} ▾</summary>
+      <div className={styles.prepLine}>
+        <CiteRows accountId={accountId} rows={[...rows]} />
+      </div>
+    </details>
+  );
+}
+
+/** The threading badge: exactly MULTI, in the one ladder's tone (red one
+ *  thread, amber two, green three or more; src/lib/room/multi.ts). No badge
+ *  when no one is on file. */
+export function MultiBadge({ count }: { count: number }) {
+  if (!(count >= 1)) return null;
+  return (
+    <span
+      className={[
+        styles.multi,
+        { r: styles.multiRed, y: styles.multiAmber, g: styles.multiGreen }[
+          multiTone(count)
+        ],
+      ].join(" ")}
+      title={`${count} ${count === 1 ? "person carries" : "people carry"} this conversation`}
+    >
+      MULTI
+    </span>
   );
 }

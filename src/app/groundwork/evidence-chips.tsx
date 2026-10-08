@@ -276,7 +276,7 @@ export default function EvidenceChips({
             onClick={() =>
               collision.mktgSends7 > 0 ? loadCamps("collision") : toggle("collision")
             }
-            title="Your note would land beside live motion. It informs; it never blocks."
+            title="Your note would land beside live motion. Nothing is held back."
           >
             ⚠ {quietChipOf(collision)}
           </button>

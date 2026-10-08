@@ -707,6 +707,9 @@ export function AccountsClient({
   const params = useSearchParams();
   const focusId = params.get("focus") ?? params.get("peo") ?? "";
   const [openId, setOpenId] = useState(focusId);
+  // The fit score opens the drilldown on the score's parts (the click-depth
+  // law, pass 11): the profile fold opens with it.
+  const [profileOpen, setProfileOpen] = useState("");
   // The second-record fold — one open at a time, from THE SIGNAL cell.
   const [srOpenId, setSrOpenId] = useState("");
   // The touch fold — LAST HUMAN TOUCH's evidence, one open at a time.
@@ -1034,7 +1037,10 @@ export function AccountsClient({
                       <td>
                         <button
                           className={styles.rowBtn}
-                          onClick={() => setOpenId(openId === a.id ? "" : a.id)}
+                          onClick={() => {
+                            setProfileOpen("");
+                            setOpenId(openId === a.id ? "" : a.id);
+                          }}
                           aria-expanded={openId === a.id}
                         >
                           {a.name}
@@ -1071,16 +1077,41 @@ export function AccountsClient({
                         )}{" "}
                         <ValBadge v={a.validation} />
                       </td>
+                      {/* Each score is a door to its evidence (the
+                          click-depth law, pass 11): the drilldown holds the
+                          fit's breakdown and the demand's read. */}
                       <td>
-                        <span className={`${styles.fit} ${fitClass[a.tier]}`}>
-                          {a.score}
-                        </span>
+                        <button
+                          type="button"
+                          className={styles.scoreDoor}
+                          onClick={() => {
+                            setProfileOpen(a.id);
+                            setOpenId(openId === a.id ? "" : a.id);
+                          }}
+                          aria-expanded={openId === a.id}
+                          title="Open the fit's breakdown."
+                        >
+                          <span className={`${styles.fit} ${fitClass[a.tier]}`}>
+                            {a.score}
+                          </span>
+                        </button>
                       </td>
                       <td>
                         {a.researched && a.demand != null ? (
-                          <span className={`${styles.fit} ${demandClass(a.demand)}`}>
-                            {a.demand}
-                          </span>
+                          <button
+                            type="button"
+                            className={styles.scoreDoor}
+                            onClick={() => {
+                              setProfileOpen("");
+                              setOpenId(openId === a.id ? "" : a.id);
+                            }}
+                            aria-expanded={openId === a.id}
+                            title="Open the demand read."
+                          >
+                            <span className={`${styles.fit} ${demandClass(a.demand)}`}>
+                              {a.demand}
+                            </span>
+                          </button>
                         ) : (
                           <span className={styles.muted} title="Not researched">
                             —
@@ -1403,8 +1434,10 @@ export function AccountsClient({
                             </Fold>
 
                             <Fold
+                              key={profileOpen === a.id ? "profile-open" : "profile"}
                               label="Account profile"
                               hint="firmographics and the score's parts"
+                              defaultOpen={profileOpen === a.id}
                             >
                               <div className={styles.bars}>
                                 <div className={styles.barsHead}>
