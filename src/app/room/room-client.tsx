@@ -70,7 +70,7 @@ import { useUndo } from "./ingest/use-undo";
 import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
 import type { PipelineRecord } from "@/lib/pipeline/build";
-import { todayRegister } from "@/lib/room/springs";
+import { researchChip, todayRegister } from "@/lib/room/springs";
 import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 
@@ -434,12 +434,15 @@ export function Row({
   collapsed,
   onToggle,
   defaultSpring = null,
+  defaultMinted = null,
 }: {
   row: RoomRow;
   collapsed: boolean;
   onToggle: () => void;
   /** The register sprung on first paint, for the suite. */
   defaultSpring?: "unknown" | "peers" | "today" | null;
+  /** The mint's receipt on first paint, for the suite. */
+  defaultMinted?: string | null;
 }) {
   // The shared door (src/app/room/ingest, slice 8 of the Chute brains
   // refactor plan): this row is the Drop, bound to its account, reading
@@ -557,6 +560,9 @@ export function Row({
   const stageRef = useDismiss<HTMLDivElement>(stageOpen !== null, () =>
     setStageOpen(null),
   );
+  // Who's in the deal, opened by a click on MULTI (the click-depth law).
+  const [multiOpen, setMultiOpen] = useState(false);
+  const multiRef = useDismiss<HTMLButtonElement>(multiOpen, () => setMultiOpen(false));
   const [pending, start] = useTransition();
   // The move button owns its own spinner — a register-row op must never
   // dress the Mark-it-done button in "Saving…".
@@ -1039,17 +1045,23 @@ export function Row({
       else setNote(r.reason ?? "The research pass didn't complete.");
     });
   };
+  // The mint (⟳) is neither filing nor composing: its result is asks, and
+  // they land in UNKNOWN. So it springs UNKNOWN open, its receipt rides there
+  // with the new asks in view, and TODAY stays the filings' register
+  // (coordinator's call, pass 10).
+  const [minted, setMinted] = useState<string | null>(defaultMinted);
   const refillAsks = () => {
     if (askPending) return;
     startAsk(async () => {
       const r = took(await roomGapsRefill(row.accountId));
-      if (r.ok)
-        addInfo(
+      if (r.ok) {
+        setMinted(
           r.added
             ? `${r.added} new ask${r.added === 1 ? "" : "s"} minted from what the app knows.`
             : "Nothing new to ask. The list already has it all.",
         );
-      else setNote(r.reason ?? "Minting didn't complete.");
+        setSpring("unknown");
+      } else setNote(r.reason ?? "Minting didn't complete.");
     });
   };
   const dismissAsk = (id: string) => {
@@ -1271,7 +1283,23 @@ export function Row({
           <span className={styles.chips}>
             <span className={styles.chip}>{row.shape}</span>
             {row.meta && <span className={styles.metaIn}>{row.meta}</span>}
-            <span className={`${styles.multi} ${styles[`m_${row.multiTone}`]}`}>
+            {/* MULTI opens on a click as well as a hover (the click-depth
+                law): a touch screen has no hover, and the room is one click
+                deep. A click anywhere else folds it. */}
+            <button
+              type="button"
+              ref={multiRef}
+              className={[
+                styles.multi,
+                styles[`m_${row.multiTone}`],
+                multiOpen ? styles.multiOpen : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-expanded={multiOpen}
+              title="Who's in this deal"
+              onClick={() => setMultiOpen((v) => !v)}
+            >
               MULTI
               <span className={styles.hovercard}>
                 <span className={styles.hk}>
@@ -1285,11 +1313,11 @@ export function Row({
                 {row.people.map((p) => (
                   <span key={p.name} className={styles.hp}>
                     <b>{p.name}</b>
-                    {p.line ? ` — ${p.line}` : ""}
+                    {p.line ? ` · ${p.line}` : ""}
                   </span>
                 ))}
               </span>
-            </span>
+            </button>
             {row.canWrite && (
               <button
                 type="button"
@@ -1303,9 +1331,9 @@ export function Row({
                 ⚡
               </button>
             )}
-            {/* Research rides the title line. The run date leaves the label
-                for the tooltip: it matters when you're about to re-run, not on
-                every glance down the page. */}
+            {/* Research rides the title line as the Spring draws it, a dated
+                mono chip: `RESEARCH 7/2 ⟳`, the latest run of either store on
+                its face, NEVER only when neither store has touched it. */}
             {row.canWrite && row.accountId && (
               <button
                 type="button"
@@ -1322,11 +1350,7 @@ export function Row({
                     : "Never run. The first pass is the deep one."
                 } Runs the deep pass: their site, their postings, the news, the people on this deal.`}
               >
-                {rsrchPending
-                  ? "RESEARCHING…"
-                  : row.researchAt
-                    ? "RESEARCH ⟳"
-                    : "RESEARCH — NEVER ⟳"}
+                {rsrchPending ? "RESEARCHING…" : researchChip(row.researchAt)}
               </button>
             )}
             {/* The day's mark. It rides the title line so it survives the fold —
@@ -1727,6 +1751,13 @@ export function Row({
                 ⊖
               </button>
             </div>
+            {/* The mint's receipt, above the asks it brought. */}
+            {minted && (
+              <div className={`${styles.it} ${styles.fresh}`}>
+                <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
+                <span className={styles.tx}>{minted}</span>
+              </div>
+            )}
             {/* The stage's open question leads the register (founder-decreed
                 2026-08-19) — ✓ checks it in the stage record. */}
             {row.outstanding && !closed && (
@@ -1794,7 +1825,7 @@ export function Row({
             <span className={styles.sumk}>COMPARABLE</span>
             <span className={styles.sumn}>{row.peers.length}</span>
             <span className={styles.sumtx}>
-              {(row.peers[0].shared || "shared situation").toUpperCase()} —{" "}
+              {(row.peers[0].shared || "shared situation").toUpperCase()} ·{" "}
               {row.peers[0].question}
             </span>
             <button
@@ -2075,7 +2106,7 @@ export function Row({
                       contingency is the move now. */}
                         {!did && t.settled && (
                           <span className={styles.settledWhy}>
-                            The record shows this went out — {t.settled}. Close it when
+                            The record shows this went out, and {t.settled}. Close it when
                             you agree.
                           </span>
                         )}
@@ -2776,9 +2807,16 @@ export function CadenceDrawer({
 // The follow-up block inside the add menu: the composer that arms a chase, and
 // beside it the count that raises the whole list. A chase is always "now" —
 // there is no when to pick, because writing it down is the deciding.
-export function FollowUpBlock({ rows }: { rows: FollowUpRow[] }) {
+export function FollowUpBlock({
+  rows,
+  defaultPinned = false,
+}: {
+  rows: FollowUpRow[];
+  /** The list pinned open on mount: the add menu opened from its count. */
+  defaultPinned?: boolean;
+}) {
   const [open, setOpen] = useState(false);
-  const [pinned, setPinned] = useState(false);
+  const [pinned, setPinned] = useState(defaultPinned);
   const show = open || pinned;
   const ref = useDismiss<HTMLDivElement>(pinned, () => setPinned(false));
   return (
@@ -2888,7 +2926,7 @@ export function EyeDrawer({
         </button>
       </div>
       <p className={styles.dpEsub}>
-        Watched, not worked. Things leave here by being seeded, scheduled, or dismissed.
+        You watch these here until you seed, schedule, or dismiss them.
       </p>
       <span className={styles.zone}>WARMING · SIGNALS ON FILE</span>
       {warming.map((w) => (
@@ -2961,6 +2999,8 @@ export function RoomClient({
   pipelineStale: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  // The menu opened from the follow-up count, with the list already open.
+  const [fuOpen, setFuOpen] = useState(false);
   const [drawer, setDrawer] = useState<"cadence" | "eye" | "pipeline" | null>(null);
   // Which rows are folded. Kept per browser, not per account: this is how the
   // operator wants to READ the board today, not a fact about the deal. The
@@ -3030,15 +3070,29 @@ export function RoomClient({
           <button
             type="button"
             className={styles.addBtn}
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              setFuOpen(false);
+              setMenuOpen((v) => !v);
+            }}
           >
             ＋ add <span className={styles.car}>▾</span>
-            {followUps.length > 0 && (
-              <span className={styles.addBadge} title="follow-ups still owed">
-                {followUps.length}
-              </span>
-            )}
           </button>
+          {/* The count is a door (the click-depth law): one click opens the
+              menu with the list of what is still owed already open, no hover
+              needed, so it works on touch too. */}
+          {canWrite && followUps.length > 0 && (
+            <button
+              type="button"
+              className={styles.addBadge}
+              title="Show the follow-ups still owed"
+              onClick={() => {
+                setFuOpen(true);
+                setMenuOpen(true);
+              }}
+            >
+              {followUps.length}
+            </button>
+          )}
           {menuOpen && (
             <div className={styles.menu}>
               <Link
@@ -3067,7 +3121,7 @@ export function RoomClient({
                   </span>
                 </span>
               </Link>
-              {canWrite && <FollowUpBlock rows={followUps} />}
+              {canWrite && <FollowUpBlock rows={followUps} defaultPinned={fuOpen} />}
             </div>
           )}
         </span>
@@ -3150,7 +3204,7 @@ export function RoomClient({
           className={styles.edge}
           style={{ top: "16%" }}
           onClick={() => setDrawer((d) => (d === "pipeline" ? null : "pipeline"))}
-          title="Pipeline Status — every active account"
+          title="Pipeline Status for every active account"
         >
           <span>PIPELINE</span>
           {pipeline.length > 0 && (

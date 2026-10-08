@@ -10,8 +10,15 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { createElement } from "react";
-import { render, roomClient, roomRow, textOf } from "../helpers/room-render";
-import { todayRegister } from "../../src/lib/room/springs";
+import {
+  followUpRow,
+  render,
+  roomClient,
+  roomRow,
+  textOf,
+  warmRow,
+} from "../helpers/room-render";
+import { researchChip, todayRegister } from "../../src/lib/room/springs";
 import { editedSeatBody, editedSheetBody } from "../../src/lib/room/sheet-view";
 import { parseSeatBody, renderSeatBody } from "../../src/lib/act/lane";
 import {
@@ -114,10 +121,17 @@ const rule = (sel: string): string =>
     .map((m) => m[2])
     .join("\n");
 
-const ask = (id: string, question: string) => ({ id, question, at: "2026-10-01T15:00:00Z" });
+const ask = (id: string, question: string) => ({
+  id,
+  question,
+  at: "2026-10-01T15:00:00Z",
+});
 const springRow = (over: Parameters<typeof roomRow>[0] = {}) =>
   roomRow({
-    gaps: [ask("g1", "Which countries come first?"), ask("g2", "Who signs for the client?")],
+    gaps: [
+      ask("g1", "Which countries come first?"),
+      ask("g2", "Who signs for the client?"),
+    ],
     peers: [
       {
         question: "How do they handle the thirteenth month?",
@@ -132,8 +146,13 @@ const springRow = (over: Parameters<typeof roomRow>[0] = {}) =>
     owed: [{ noteId: "n9", key: "owed-1", text: "the invoices", src: "promised 9/25" }],
     ...over,
   });
-const paintRow = (row: ReturnType<typeof roomRow>, defaultSpring: "unknown" | "peers" | "today" | null) =>
-  render(createElement(room.Row, { row, collapsed: false, onToggle: () => {}, defaultSpring }));
+const paintRow = (
+  row: ReturnType<typeof roomRow>,
+  defaultSpring: "unknown" | "peers" | "today" | null,
+) =>
+  render(
+    createElement(room.Row, { row, collapsed: false, onToggle: () => {}, defaultSpring }),
+  );
 /** Every resting summary line in a render, in order. A summary line holds
  *  spans, buttons and links, never a div, so the first </div> closes it. */
 const restingLines = (html: string): string[] =>
@@ -156,46 +175,91 @@ describe("each register rests as one summary line (A6.1)", () => {
     });
     const want = [
       { count: String(row.gaps.length), top: "Which countries come first?" },
-      { count: String(row.peers.length), top: "PHILIPPINES — How do they handle the thirteenth month?" },
+      {
+        count: String(row.peers.length),
+        top: "PHILIPPINES · How do they handle the thirteenth month?",
+      },
       { count: `${today.count} · 1 done`, top: "Send the model." },
     ];
     lines.forEach((line, i) => {
       assert.match(line, /<span class="sumk">/, "the kicker");
-      assert.equal(textOf(/<span class="sumn">([\s\S]*?)<\/span>/.exec(line)?.[1] ?? ""), want[i].count);
-      assert.equal(textOf(/<span class="sumtx">([\s\S]*?)<\/span>/.exec(line)?.[1] ?? ""), want[i].top);
-      assert.match(line, /<button type="button" class="splayBtn" title="Expand them out">⊕<\/button>/);
+      assert.equal(
+        textOf(/<span class="sumn">([\s\S]*?)<\/span>/.exec(line)?.[1] ?? ""),
+        want[i].count,
+      );
+      assert.equal(
+        textOf(/<span class="sumtx">([\s\S]*?)<\/span>/.exec(line)?.[1] ?? ""),
+        want[i].top,
+      );
+      assert.match(
+        line,
+        /<button type="button" class="splayBtn" title="Expand them out">⊕<\/button>/,
+      );
     });
   });
 
   test("COMPARABLE rests only when peers exist", async () => {
     const html = await paintRow(springRow({ peers: [] }), null);
     assert.deepEqual(restingLines(html).map(kickerOf), ["UNKNOWN", "TODAY"]);
-    assert.ok(!textOf(html).includes("COMPARABLE"), "a COMPARABLE register with no peers");
+    assert.ok(
+      !textOf(html).includes("COMPARABLE"),
+      "a COMPARABLE register with no peers",
+    );
     for (const sprung of ["unknown", "today", "peers"] as const)
-      assert.ok(!textOf(await paintRow(springRow({ peers: [] }), sprung)).includes("COMPARABLE"));
+      assert.ok(
+        !textOf(await paintRow(springRow({ peers: [] }), sprung)).includes("COMPARABLE"),
+      );
   });
 
   test("the counts follow the record: an outstanding gate counts in UNKNOWN", async () => {
-    const outstanding = { item: "Book the room", node: "first_meeting", index: 0, doneKey: "k", closedCount: 0 };
+    const outstanding = {
+      item: "Book the room",
+      node: "first_meeting",
+      index: 0,
+      doneKey: "k",
+      closedCount: 0,
+    };
     const [unknown] = restingLines(await paintRow(springRow({ outstanding }), null));
-    assert.equal(textOf(/<span class="sumn">([\s\S]*?)<\/span>/.exec(unknown)?.[1] ?? ""), "3");
-    assert.equal(textOf(/<span class="sumtx">([\s\S]*?)<\/span>/.exec(unknown)?.[1] ?? ""), "Book the room");
+    assert.equal(
+      textOf(/<span class="sumn">([\s\S]*?)<\/span>/.exec(unknown)?.[1] ?? ""),
+      "3",
+    );
+    assert.equal(
+      textOf(/<span class="sumtx">([\s\S]*?)<\/span>/.exec(unknown)?.[1] ?? ""),
+      "Book the room",
+    );
   });
 
   test("one register out at a time: the others keep resting as their one line", async () => {
-    const rest = { unknown: ["COMPARABLE", "TODAY"], peers: ["UNKNOWN", "TODAY"], today: ["UNKNOWN", "COMPARABLE"] };
+    const rest = {
+      unknown: ["COMPARABLE", "TODAY"],
+      peers: ["UNKNOWN", "TODAY"],
+      today: ["UNKNOWN", "COMPARABLE"],
+    };
     for (const sprung of ["unknown", "peers", "today"] as const) {
       const html = await paintRow(springRow(), sprung);
-      assert.equal(html.split('class="splayed"').length - 1, 1, `${sprung}: one register out`);
+      assert.equal(
+        html.split('class="splayed"').length - 1,
+        1,
+        `${sprung}: one register out`,
+      );
       assert.deepEqual(restingLines(html).map(kickerOf), rest[sprung], sprung);
-      assert.match(html, /title="Fold them back">⊖<\/button>/, `${sprung} folds back with ⊖`);
+      assert.match(
+        html,
+        /title="Fold them back">⊖<\/button>/,
+        `${sprung} folds back with ⊖`,
+      );
     }
   });
 
   test("the kicker is mono and the top entry trails off", () => {
     assert.match(rule(".sumk"), /font-family:\s*var\(--f-mono\)/);
     const tx = rule(".sumtx");
-    for (const d of [/white-space:\s*nowrap/, /overflow:\s*hidden/, /text-overflow:\s*ellipsis/])
+    for (const d of [
+      /white-space:\s*nowrap/,
+      /overflow:\s*hidden/,
+      /text-overflow:\s*ellipsis/,
+    ])
       assert.match(tx, d);
   });
 });
@@ -223,19 +287,33 @@ describe("the per-row keybar is retired; one legend lives at the page foot (A6.5
   test("a row carries no legend, in any register", async () => {
     for (const sprung of [null, "unknown", "peers", "today"] as const) {
       const text = textOf(await paintRow(springRow(), sprung));
-      for (const k of KEYS) assert.ok(!text.includes(k), `${sprung ?? "folded"} row keys ${k}`);
+      for (const k of KEYS)
+        assert.ok(!text.includes(k), `${sprung ?? "folded"} row keys ${k}`);
     }
   });
 
   test("the board paints the legend once, after the last row", async () => {
     const html = await board([
       springRow(),
-      springRow({ accountId: "001F000000w38OHIAY", cardId: "card-regis", name: "Regis HR Group" }),
-      springRow({ accountId: "001F000000OFFB01", cardId: "", name: "Gulf Coast PEO", stages: [] }),
+      springRow({
+        accountId: "001F000000w38OHIAY",
+        cardId: "card-regis",
+        name: "Regis HR Group",
+      }),
+      springRow({
+        accountId: "001F000000OFFB01",
+        cardId: "",
+        name: "Gulf Coast PEO",
+        stages: [],
+      }),
     ]);
     assert.equal(html.split('class="footLegend"').length - 1, 1, "one legend");
-    for (const k of KEYS) assert.equal(textOf(html).split(k).length - 1, 1, `${k} keyed once`);
-    assert.ok(html.indexOf('class="footLegend"') > html.lastIndexOf("Gulf Coast PEO"), "at the foot");
+    for (const k of KEYS)
+      assert.equal(textOf(html).split(k).length - 1, 1, `${k} keyed once`);
+    assert.ok(
+      html.indexOf('class="footLegend"') > html.lastIndexOf("Gulf Coast PEO"),
+      "at the foot",
+    );
   });
 
   test("an empty board keys nothing", async () => {
@@ -269,12 +347,20 @@ describe("the minimalist controls are glyphs with titles, never words (A6.6)", (
           assert.equal(m[3], c.glyph, `${c.title} shows only ${c.glyph}`);
         }
     }
-    assert.deepEqual([...seen].sort(), CONTROLS.map((c) => c.title).sort(), "every control painted");
+    assert.deepEqual(
+      [...seen].sort(),
+      CONTROLS.map((c) => c.title).sort(),
+      "every control painted",
+    );
   });
 
   test("no row spells a control out on its surface", async () => {
     for (const sprung of [null, "unknown", "peers", "today"] as const)
-      assert.doesNotMatch(textOf(await paintRow(springRow(), sprung)), WORDS, `${sprung ?? "folded"}`);
+      assert.doesNotMatch(
+        textOf(await paintRow(springRow(), sprung)),
+        WORDS,
+        `${sprung ?? "folded"}`,
+      );
   });
 
   test("a read-only session gets ⌕ and →, and neither ⟳ nor ✕", async () => {
@@ -292,8 +378,15 @@ describe("the minimalist controls are glyphs with titles, never words (A6.6)", (
 
 describe("a sheet line's edit keeps its tags and routing marker verbatim (A6.10)", () => {
   const refs = { accountNoteIds: ["an1", "an2"], partnerNoteIds: ["pn1"] };
-  const tags = { ...NO_TAGS, date: "2026-10-09", urgency: "high" as const, kind: "action" as const, country: "ph" };
-  const tailOf = (body: string) => body.slice(splitTags(splitMarker(body).text).text.length).trimStart();
+  const tags = {
+    ...NO_TAGS,
+    date: "2026-10-09",
+    urgency: "high" as const,
+    kind: "action" as const,
+    country: "ph",
+  };
+  const tailOf = (body: string) =>
+    body.slice(splitTags(splitMarker(body).text).text.length).trimStart();
 
   test("the visible text changes; the tag line and the marker ride along byte for byte", () => {
     const body = withMarker(withTags("Send the model.", tags), refs, "Simploy · Lesha");
@@ -308,7 +401,8 @@ describe("a sheet line's edit keeps its tags and routing marker verbatim (A6.10)
   test("a key the codec no longer reads and a line in its own order survive", () => {
     // The retired dl: delay (removed from the codec 2026-09-25) still sits
     // on rows written before; an edit must not strip it or reorder anything.
-    const body = "Send the model.\n⚑[u:high,dl:waiting%20on%20Adam,k:a]\n⇢[p:pn1,a:an1] Simploy · Lesha";
+    const body =
+      "Send the model.\n⚑[u:high,dl:waiting%20on%20Adam,k:a]\n⇢[p:pn1,a:an1] Simploy · Lesha";
     assert.equal(
       editedSheetBody(body, "Call Adam."),
       "Call Adam.\n⚑[u:high,dl:waiting%20on%20Adam,k:a]\n⇢[p:pn1,a:an1] Simploy · Lesha",
@@ -319,10 +413,16 @@ describe("a sheet line's edit keeps its tags and routing marker verbatim (A6.10)
     const tagged = withTags("Send the model.", tags);
     assert.equal(tailOf(editedSheetBody(tagged, "x")), tailOf(tagged));
     const routed = withMarker("Send the model.", refs, "");
-    assert.equal(editedSheetBody(routed, "Call the CSM."), `Call the CSM.\n${tailOf(routed)}`);
+    assert.equal(
+      editedSheetBody(routed, "Call the CSM."),
+      `Call the CSM.\n${tailOf(routed)}`,
+    );
     assert.equal(editedSheetBody("Send the model.  ", "Call the CSM."), "Call the CSM.");
     const bare = "⇢[a:an1] Simploy";
-    assert.equal(editedSheetBody(bare, "Call the CSM."), "Call the CSM.\n⇢[a:an1] Simploy");
+    assert.equal(
+      editedSheetBody(bare, "Call the CSM."),
+      "Call the CSM.\n⇢[a:an1] Simploy",
+    );
   });
 
   test("hand-typed grammar never masquerades as a real marker", () => {
@@ -336,9 +436,189 @@ describe("a sheet line's edit keeps its tags and routing marker verbatim (A6.10)
   });
 
   test("a seat's act is rewritten; its term and seated day survive", () => {
-    const body = renderSeatBody({ act: "Send the model", term: "PEO", day: "2026-10-06" });
+    const body = renderSeatBody({
+      act: "Send the model",
+      term: "PEO",
+      day: "2026-10-06",
+    });
     const out = editedSeatBody(body, "Call Adam · today");
-    assert.deepEqual(parseSeatBody(out ?? ""), { act: "Call Adam - today", term: "PEO", day: "2026-10-06" });
+    assert.deepEqual(parseSeatBody(out ?? ""), {
+      act: "Call Adam - today",
+      term: "PEO",
+      day: "2026-10-06",
+    });
     assert.equal(editedSeatBody("Send the model.", "x"), null, "not a seat");
+  });
+});
+
+// ── pass 10, the coordinator's second list ─────────────────────────────────
+// The research chip carries its date on its face as the Spring draws it; the
+// copy the lint found is flat; the follow-up count and MULTI each open one
+// click deep, no hover needed. Each pinned by render; the open state's CSS
+// and the badge's one wire read their source.
+describe("the research control is a dated chip: RESEARCH 7/2 ⟳", () => {
+  test("the latest run's Chicago day rides the face; NEVER only when nothing ran", () => {
+    assert.equal(researchChip("2026-07-02T15:00:00Z"), "RESEARCH 7/2 ⟳");
+    // 11pm Chicago on 7/2 is 7/3 in UTC: the day is Chicago's.
+    assert.equal(researchChip("2026-07-03T04:00:00Z"), "RESEARCH 7/2 ⟳");
+    assert.equal(researchChip(""), "RESEARCH NEVER ⟳");
+    assert.equal(
+      researchChip("not a date"),
+      "RESEARCH ⟳",
+      "a run that cannot be read is not NEVER",
+    );
+  });
+
+  test("the row paints the chip with its date, and NEVER on an account nothing touched", async () => {
+    const ran = await paintRow(roomRow({ researchAt: "2026-07-02T15:00:00Z" }), null);
+    assert.match(
+      ran,
+      /<button type="button" class="rsrchChip"[^>]*>RESEARCH 7\/2 ⟳<\/button>/,
+    );
+    const never = await paintRow(roomRow({ researchAt: "" }), null);
+    assert.match(
+      never,
+      /<button type="button" class="rsrchChip"[^>]*>RESEARCH NEVER ⟳<\/button>/,
+    );
+  });
+});
+
+describe("the row's copy is flat: no dash asides, no antithesis", () => {
+  test("a stakeholder's line, COMPARABLE's top entry and a landed line read flat", async () => {
+    const html = await paintRow(
+      springRow({
+        people: [{ name: "Chassie Smith", line: "VP Operations · 2 threads" }],
+        sheetOpen: [
+          {
+            id: "todo-1",
+            body: "Send the invite.",
+            settled: "they accepted the invitation",
+          },
+        ],
+      }),
+      "today",
+    );
+    const text = textOf(html);
+    assert.ok(
+      text.includes("Chassie Smith · VP Operations · 2 threads"),
+      "the stakeholder line",
+    );
+    assert.ok(
+      text.includes(
+        "The record shows this went out, and they accepted the invitation. Close it when you agree.",
+      ),
+      "the landed line",
+    );
+    const folded = textOf(await paintRow(springRow(), null));
+    assert.ok(
+      folded.includes("PHILIPPINES · How do they handle"),
+      "COMPARABLE's top entry",
+    );
+    for (const t of [text, folded])
+      assert.ok(!t.includes("—"), `a dash in the row: ${t}`);
+  });
+
+  test("the eye drawer says what it holds without an antithesis", async () => {
+    const eye = textOf(
+      await render(
+        createElement(room.EyeDrawer, {
+          warming: [warmRow()],
+          later: [],
+          onClose: () => {},
+        }),
+      ),
+    );
+    assert.ok(!eye.includes("not worked"), eye);
+    assert.ok(
+      eye.includes("You watch these here until you seed, schedule, or dismiss them."),
+    );
+  });
+
+  test("the Pipeline edge tab's title is a plain phrase", async () => {
+    const html = await render(
+      createElement(room.RoomClient, {
+        rows: [roomRow()],
+        cadence: [],
+        checkins: [],
+        followUps: [],
+        warming: [],
+        later: [],
+        canWrite: true,
+        dbUnavailable: false,
+        boardNames: [],
+        pipeline: [],
+        pipelineDay: "",
+        pipelineStale: "",
+      }),
+    );
+    assert.ok(html.includes('title="Pipeline Status for every active account"'));
+    assert.ok(!html.includes("Pipeline Status —"));
+  });
+});
+
+describe("the follow-up count and MULTI open one click deep, no hover", () => {
+  const board = (canWrite: boolean) =>
+    render(
+      createElement(room.RoomClient, {
+        rows: [roomRow()],
+        cadence: [],
+        checkins: [],
+        followUps: [followUpRow()],
+        warming: [],
+        later: [],
+        canWrite,
+        dbUnavailable: false,
+        boardNames: [],
+        pipeline: [],
+        pipelineDay: "",
+        pipelineStale: "",
+      }),
+    );
+
+  test("the count is its own button, beside ＋ add, never inside it", async () => {
+    const html = await board(true);
+    assert.match(
+      html,
+      /<button type="button" class="addBtn">＋ add <span class="car">▾<\/span><\/button><button type="button" class="addBadge" title="Show the follow-ups still owed">1<\/button>/,
+    );
+    assert.ok(
+      !(await board(false)).includes("addBadge"),
+      "a read-only count with no door",
+    );
+  });
+
+  test("opened from the count, the list of what is owed is already open", async () => {
+    const owed = followUpRow().label;
+    const pinned = textOf(
+      await render(
+        createElement(room.FollowUpBlock, { rows: [followUpRow()], defaultPinned: true }),
+      ),
+    );
+    assert.ok(pinned.includes(owed), "the pinned list shows the follow-up");
+    const shut = textOf(
+      await render(createElement(room.FollowUpBlock, { rows: [followUpRow()] })),
+    );
+    assert.ok(!shut.includes(owed), "the list rests shut from ＋ add");
+    const client = readFileSync(join(cwd(), "src/app/room/room-client.tsx"), "utf8");
+    assert.match(
+      client,
+      /title="Show the follow-ups still owed"\s*onClick=\{\(\) => \{\s*setFuOpen\(true\);\s*setMenuOpen\(true\);/,
+    );
+    assert.match(
+      client,
+      /<FollowUpBlock rows=\{followUps\} defaultPinned=\{fuOpen\} \/>/,
+    );
+  });
+
+  test("MULTI is a button that opens who is in the deal on a click", async () => {
+    const html = await paintRow(roomRow(), null);
+    assert.match(
+      html,
+      /<button type="button" class="multi m_y" aria-expanded="false" title="Who&#x27;s in this deal">MULTI<span class="hovercard">/,
+    );
+    assert.match(
+      css,
+      /\.multi:hover \.hovercard,\s*\.multiOpen \.hovercard \{\s*display: block;/,
+    );
   });
 });

@@ -43,3 +43,20 @@ export function todayRegister(args: {
     count: owed.length + open.length + rest,
   };
 }
+
+// The research control is a dated mono chip, `RESEARCH 7/2 ⟳` (the Spring,
+// 2026-08-13): the Chicago day of the latest run of either store, the deep
+// pass or the book-wide sweep, rides the chip's face. NEVER only when
+// neither store has touched the account. A stamp that cannot be read is
+// still a run, so it never reads NEVER.
+export function researchChip(researchAt: string): string {
+  if (!researchAt) return "RESEARCH NEVER ⟳";
+  const at = new Date(researchAt);
+  if (Number.isNaN(at.getTime())) return "RESEARCH ⟳";
+  const day = at.toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    month: "numeric",
+    day: "numeric",
+  });
+  return `RESEARCH ${day} ⟳`;
+}

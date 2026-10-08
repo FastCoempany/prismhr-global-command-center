@@ -566,13 +566,21 @@ describe("the room wires every new mechanism", () => {
     assert.ok(!actions.includes("export async function roomActionUndo"));
     assert.ok(!client.includes("openedChip"), "the opened chips are back on the receipt");
     assert.ok(client.includes("<ReceiptLine"), "the Drop paints the one receipt");
-    assert.ok(client.includes("useUndo()"), "and takes the filing back through the shared undo");
+    assert.ok(
+      client.includes("useUndo()"),
+      "and takes the filing back through the shared undo",
+    );
     const hook = readFileSync(join(root, "src/app/room/ingest/use-undo.ts"), "utf8");
     assert.ok(
-      hook.includes("return [accountId, row.noteIds ?? [], row.todoIds ?? [], row.filingId];"),
+      hook.includes(
+        "return [accountId, row.noteIds ?? [], row.todoIds ?? [], row.filingId];",
+      ),
       "the shared undo hands the filing's id",
     );
-    assert.ok(actions.includes("await undoFiling(filing, acct.id)"), "and the server takes back by it");
+    assert.ok(
+      actions.includes("await undoFiling(filing, acct.id)"),
+      "and the server takes back by it",
+    );
   });
   // Pass 8, X1: the research prompt named the people of rows the operator
   // ✕-parked, because the pass read the newest sixty raw rows on the
@@ -593,7 +601,10 @@ describe("the room wires every new mechanism", () => {
     });
     const read = readAccount({
       account: { id: "A1", name: "Acme PEO" },
-      notes: [row("kept", "Dana Ellis → Antaeus Coe"), row("parked", "Wrong Person → Antaeus Coe")],
+      notes: [
+        row("kept", "Dana Ellis → Antaeus Coe"),
+        row("parked", "Wrong Person → Antaeus Coe"),
+      ],
       touches: [],
       todos: [],
       dispositions: new Map([["hide:note:parked", { status: "parked" }]]),
@@ -607,18 +618,34 @@ describe("the room wires every new mechanism", () => {
       actions.indexOf("export async function roomResearch("),
       actions.indexOf("export async function roomGapsRefill("),
     );
-    assert.match(research, /const read = readFromStores\(/, "the pass reads the account read");
-    assert.match(research, /const people = read\.people\s*\.map\(\(p\) => p\.name\)/, "the pass names the read's people");
+    assert.match(
+      research,
+      /const read = readFromStores\(/,
+      "the pass reads the account read",
+    );
+    assert.match(
+      research,
+      /const people = read\.people\s*\.map\(\(p\) => p\.name\)/,
+      "the pass names the read's people",
+    );
     // Its countries are the record's too, never the last pass's own.
     assert.match(research, /countries: read\.countries\.map\(/);
-    assert.ok(!/where: \{ accountId: acct\.id \},\s*orderBy: \{ createdAt: "desc" \},\s*take: 60/.test(research), "the raw sixty rows are read again");
+    assert.ok(
+      !/where: \{ accountId: acct\.id \},\s*orderBy: \{ createdAt: "desc" \},\s*take: 60/.test(
+        research,
+      ),
+      "the raw sixty rows are read again",
+    );
   });
   test("the research control states when it last ran", () => {
-    // The Spring's chip grammar (2026-08-13), amended since: the label is the
-    // verb, the run date rides the tooltip, and NEVER stands when neither
-    // research store has touched the account.
+    // The Spring's chip grammar (2026-08-13), as the decree draws it: the run
+    // date rides the chip's face, `RESEARCH 7/2 ⟳`, and NEVER stands only
+    // when neither research store has touched the account. Rewritten in pass
+    // 10: this pin used to assert the date lived only in the tooltip. The
+    // face is pinned by render in tests/canon/spring.test.ts.
     assert.ok(client.includes("Last run ${new Date(row.researchAt)"));
-    assert.ok(client.includes("RESEARCH — NEVER"));
+    assert.ok(client.includes("researchChip(row.researchAt)"));
+    assert.ok(!client.includes("RESEARCH — NEVER"));
   });
   test("a closed row can still be read, and retired separately", () => {
     assert.ok(client.includes("CLOSED WON"));
@@ -651,10 +678,21 @@ describe("the room wires every new mechanism", () => {
   // accent as the tint or the rule and its words in ink, and the move's hover
   // is the kit's --ds-orange-strong (pass 9, after H8 and X6).
   test("the room's text shades are the brand's, by role", () => {
-    const shades = ["#15803d", "#b45309", "#b42318", "#7a4b00", "#3a2600", "#1e3a8a", "#cf6318"];
+    const shades = [
+      "#15803d",
+      "#b45309",
+      "#b42318",
+      "#7a4b00",
+      "#3a2600",
+      "#1e3a8a",
+      "#cf6318",
+    ];
     for (const off of shades)
       assert.ok(!css.toLowerCase().includes(off), `room.module.css still carries ${off}`);
-    assert.match(css, /\.pipeCopyPrimary:hover \{\s*background: var\(--ds-orange-strong\);/);
+    assert.match(
+      css,
+      /\.pipeCopyPrimary:hover \{\s*background: var\(--ds-orange-strong\);/,
+    );
   });
   test("the edge tabs rest in quiet ink and take color on hover only", () => {
     const rule = (sel: string): string => {
@@ -791,12 +829,7 @@ describe("the repairs hold", () => {
   test("the room's own actions guard the new ids", () => {
     const actions = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
     // Every new writer binds to the book before it writes.
-    for (const fn of [
-      "roomGapDismiss",
-      "roomGapsRefill",
-      "roomResearch",
-      "roomRetire",
-    ]) {
+    for (const fn of ["roomGapDismiss", "roomGapsRefill", "roomResearch", "roomRetire"]) {
       const i = actions.indexOf(`export async function ${fn}(`);
       assert.ok(i > 0, `${fn} is gone`);
       const body = actions.slice(i, i + 1400);

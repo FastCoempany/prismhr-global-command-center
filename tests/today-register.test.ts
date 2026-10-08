@@ -87,7 +87,11 @@ describe("the row reads one derivation, not two", () => {
       !client.includes("liveOpen.length + restCount"),
       "a render site is still summing the count itself",
     );
-    assert.equal(client.split("{today.count}").length - 1, 2, "both sites read today.count");
+    assert.equal(
+      client.split("{today.count}").length - 1,
+      2,
+      "both sites read today.count",
+    );
   });
 
   test("the text comes from the same call as the count", () => {
@@ -130,7 +134,9 @@ describe("whatever lands in TODAY springs it open (H4)", () => {
   test("an owed line the filing found is a landing too", () => {
     const before = room.todayLines(roomRow());
     const after = room.todayLines(
-      roomRow({ owed: [{ noteId: "n9", key: "owed-1", text: "the invoices", src: "9/25" }] }),
+      roomRow({
+        owed: [{ noteId: "n9", key: "owed-1", text: "the invoices", src: "9/25" }],
+      }),
     );
     assert.equal(room.landedSince(before, after), true);
   });
@@ -192,11 +198,50 @@ describe("whatever lands in TODAY springs it open (H4)", () => {
       archiveFiles: /addReceipt\(/,
       confirmClose: /addInfo\(/,
       retireRow: /addInfo\(/,
-      refillAsks: /addInfo\(/,
       submitClose: /addInfo\(/,
     };
     for (const [name, door] of Object.entries(paths))
       assert.match(handler(name), door, `${name} lands behind the fold`);
+  });
+
+  // The coordinator's call (pass 10): the mint (⟳) is neither filing nor
+  // composing, and its asks land in UNKNOWN, so it springs UNKNOWN with its
+  // receipt there and leaves TODAY alone.
+  test("the mint springs UNKNOWN, never TODAY, and keeps its receipt out of TODAY", () => {
+    const mint = handler("refillAsks");
+    assert.ok(mint.includes('setSpring("unknown")'), "the mint springs UNKNOWN");
+    assert.ok(mint.includes("setMinted("), "the mint keeps its own receipt");
+    assert.ok(!mint.includes('setSpring("today")'), "the mint springs TODAY");
+    assert.ok(
+      !/addInfo\(|addReceipt\(|landToday\(/.test(mint),
+      "the mint's receipt lands in TODAY",
+    );
+  });
+
+  test("the mint's receipt paints in the sprung UNKNOWN, above the asks", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { createElement } = await import("react");
+    const line = "2 new asks minted from what the app knows.";
+    const paint = (defaultSpring: "unknown" | "today") =>
+      render(
+        createElement(room.Row, {
+          row: roomRow({
+            gaps: [{ id: "g1", question: "Which countries come first?", at: "" }],
+          }),
+          collapsed: false,
+          onToggle: () => {},
+          defaultSpring,
+          defaultMinted: line,
+        }),
+      );
+    const text = textOf(await paint("unknown"));
+    const at = text.indexOf(line);
+    assert.ok(at > text.indexOf("STILL UNKNOWN"), "the receipt is in UNKNOWN");
+    assert.ok(
+      at < text.indexOf("Which countries come first?"),
+      "above the asks it brought",
+    );
+    assert.ok(!textOf(await paint("today")).includes(line), "the receipt rides in TODAY");
   });
 
   test("the row springs TODAY when the next paint holds a line it did not", () => {
@@ -253,7 +298,11 @@ describe("a released commitment shows in TODAY as a quiet line with its why", ()
   test("it leaves the count: TODAY counts what is still open", async () => {
     const html = await paint();
     // The one open line, not two; the done is the row's own done today.
-    assert.match(html, /<span class="sumn">1 · 1 done<\/span>/, "the released line is counted");
+    assert.match(
+      html,
+      /<span class="sumn">1 · 1 done<\/span>/,
+      "the released line is counted",
+    );
     const read = await paint({ canWrite: false });
     assert.ok(!lineOf(read).includes('title="done"'), "a read-only session gets no ✓");
   });
@@ -264,7 +313,11 @@ describe("a released commitment shows in TODAY as a quiet line with its why", ()
     assert.ok(rules.length > 0, "the quiet line has its rule");
     for (const r of rules)
       for (const m of r.matchAll(/color:\s*([^;]+);/g))
-        assert.match(m[1].trim(), /^var\(--(soft|faint|quiet|ink)\)$/, `a new color: ${m[1]}`);
+        assert.match(
+          m[1].trim(),
+          /^var\(--(soft|faint|quiet|ink)\)$/,
+          `a new color: ${m[1]}`,
+        );
   });
 
   test("the room hands the read's released lines to the row", () => {

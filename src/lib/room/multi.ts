@@ -3,12 +3,15 @@
 // every surface that paints the badge, the HomeRoom row and Groundwork's
 // file, so the two can never read one count two ways.
 //
-// The ladder names no color for zero. The row paints red there, beside "No
-// stakeholders on file yet", because nobody known is a single thread at
-// best; Groundwork paints no badge at all below one.
+// Zero threads takes the ladder's red on every surface: nobody known is at
+// least as thin as one thread (coordinator's call, pass 10). Anything that
+// is not a count of two or more, zero, a negative or a missing number,
+// reads red. Groundwork paints no badge below one, and when a surface does
+// paint one at zero, it is red.
 
 type MultiTone = "r" | "y" | "g";
 
 export function multiTone(threads: number): MultiTone {
-  return threads >= 3 ? "g" : threads === 2 ? "y" : "r";
+  if (!(threads >= 2)) return "r";
+  return threads >= 3 ? "g" : "y";
 }
