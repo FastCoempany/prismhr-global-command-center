@@ -22,6 +22,7 @@ import {
   actedSweep,
   contextPackFor,
   fileGems,
+  firstRecordReadFor,
   runActivityPass,
   stageActivityBatch,
   takeBackSecondRecord,
@@ -516,6 +517,108 @@ describe("a refused upload leaves the prior drop untouched (D17)", () => {
   test("the pending slices sit inside the take-back's reach and outside every face's read", () => {
     assert.ok(STAGE_PENDING_NS.startsWith(STAGE_NS));
     assert.ok(SECOND_RECORD_SPANS.some((s) => STAGE_PENDING_NS.startsWith(s.ns)));
+  });
+});
+
+// ── A4.11 · an incomplete upload refuses to run ─────────────────────────────
+// The run is the distillation pass both doors drive after the upload
+// (src/app/room/chute.tsx, src/app/activity/dock.tsx, through activityRun).
+// Whatever a client does, the pass itself refuses a drop whose manifest has
+// not verified it whole: it distills nothing, writes no rollup or gem, and
+// says why.
+
+describe("an incomplete upload refuses to run (A4.11)", () => {
+  const written = (notes: NoteRow[]) =>
+    notes.filter(
+      (n) =>
+        n.accountId.startsWith(GEMS_NS) ||
+        (n.accountId.startsWith(ACTIVITY_NS) &&
+          !n.accountId.startsWith(STAGE_NS) &&
+          n.accountId !== MANIFEST_ID),
+    );
+
+  test("a drop still uploading, with no manifest yet, does not run", async () => {
+    const { db, notes } = memoryDb();
+    const next = await sliceOf({ rowKey: "next-row" });
+    const first = await stageActivityBatch(
+      { dropSha: SHA_B, batchIndex: 0, totalBatches: 2, slices: [next] },
+      db,
+    );
+    assert.equal(first.ok, true);
+    const before = notes.length;
+    const pass = await runActivityPass({ db, deadlineMs: Date.now() + 5_000 });
+    assert.equal(pass.ok, false);
+    assert.equal(pass.done, false);
+    assert.equal(pass.reason, "The drop is still uploading.");
+    assert.equal(notes.length, before, "a refused pass wrote something");
+    assert.deepEqual(written(notes), []);
+  });
+
+  test("a batch that never arrived refuses the drop, and the pass refuses with its line", async () => {
+    const { db, notes } = memoryDb();
+    const next = await sliceOf({ rowKey: "next-row" });
+    await stageActivityBatch(
+      { dropSha: SHA_B, batchIndex: 0, totalBatches: 3, slices: [next] },
+      db,
+    );
+    const last = await stageActivityBatch(
+      {
+        dropSha: SHA_B,
+        batchIndex: 2,
+        totalBatches: 3,
+        slices: [],
+        manifest: manifestFor(SHA_B, [next], { totalBatches: 3 }),
+      },
+      db,
+    );
+    assert.equal(last.ok, false);
+    const pass = await runActivityPass({ db, deadlineMs: Date.now() + 5_000 });
+    assert.equal(pass.ok, false);
+    assert.equal(pass.done, true, "a refused drop is finished: nothing runs later either");
+    assert.equal(pass.remaining, 0);
+    assert.match(
+      pass.reason ?? "",
+      /^\d{2}:\d{2} · 1 of 3 batches never arrived\. The last drop still stands\./,
+    );
+    assert.deepEqual(written(notes), []);
+    // Asked again, it refuses again; nothing queues behind the refusal.
+    const again = await runActivityPass({ db, deadlineMs: Date.now() + 5_000 });
+    assert.equal(again.ok, false);
+    assert.deepEqual(written(notes), []);
+  });
+
+  test("a slice whose checksum fails verification refuses the drop and the pass", async () => {
+    const { db, notes } = memoryDb();
+    const next = await sliceOf({ rowKey: "next-row" });
+    // The slice's rows changed in transit: its checksum no longer matches.
+    const tampered = { ...next, rows: [{ ...next.rows[0], k: "other-row" }] };
+    const reply = await stageActivityBatch(
+      {
+        dropSha: SHA_B,
+        batchIndex: 0,
+        totalBatches: 1,
+        slices: [tampered],
+        manifest: manifestFor(SHA_B, [next], { totalBatches: 1 }),
+      },
+      db,
+    );
+    assert.equal(reply.ok, false);
+    assert.ok(reply.mismatched?.includes(ACCT));
+    const pass = await runActivityPass({ db, deadlineMs: Date.now() + 5_000 });
+    assert.equal(pass.ok, false);
+    assert.match(
+      pass.reason ?? "",
+      /account slices? failed verification\. The last drop still stands\./,
+    );
+    assert.deepEqual(written(notes), []);
+  });
+
+  test("with no drop staged at all, nothing runs", async () => {
+    const { db, notes } = memoryDb();
+    const pass = await runActivityPass({ db, deadlineMs: Date.now() + 5_000 });
+    assert.equal(pass.ok, false);
+    assert.equal(pass.reason, "No drop staged.");
+    assert.equal(notes.length, 0);
   });
 });
 
@@ -1078,6 +1181,64 @@ describe("the context pack's last outbound is the account read's (A2.4; C3)", ()
 });
 
 // ── C4 · the run's receipts in plain speech, every count arithmetic ────────
+
+// The second record's faces read the first record's half of a fact from
+// the one assembly the context pack reads (A2.4; A4.1): the draft desk's
+// "last touched" takes its first-record day from here (src/app/activity/
+// evidence/route.ts), so a shell-filed send and the touch log both count.
+describe("the first record's read for the second record's faces is the account read (A2.4; A4.1)", () => {
+  const SPMI = "001F000000w389qIAA";
+  const SHELL = "0013k00002dGqODAA0";
+  const send = {
+    id: "send",
+    accountId: SHELL,
+    body: "✉ Re: the census template — sent to Joseph Lyon.",
+    createdAt: new Date("2026-09-20T15:00:00.000Z"),
+    source: "act-lane",
+    actors: "Antaeus Coe → Joseph Lyon",
+  };
+
+  test("a send under the shell id and a later logged touch both reach the last touch", async () => {
+    const { db } = memoryDb([send]);
+    const { read } = await firstRecordReadFor(SPMI, "myhrpros (SPMI)", db);
+    assert.equal(read.lastTouch?.at.slice(0, 10), "2026-09-20");
+    const logged = memoryDb(
+      [send],
+      [],
+      [
+        {
+          subjectKey: `outreach:${SPMI}`,
+          kind: "account",
+          label: "myhrpros (SPMI)",
+          contactedAt: new Date("2026-09-25T15:00:00.000Z"),
+          status: "awaiting",
+          message: "Sent the census template again.",
+          detail: "",
+        },
+      ],
+    );
+    const both = await firstRecordReadFor(SPMI, "myhrpros (SPMI)", logged.db);
+    assert.equal(both.read.lastTouch?.at.slice(0, 10), "2026-09-25");
+  });
+
+  test("a ✕-parked send is not the last touch", async () => {
+    const { db } = memoryDb(
+      [{ ...send, id: "parked", accountId: SPMI }],
+      [{ accountId: "hide:note:parked", status: "parked" }],
+    );
+    const { read } = await firstRecordReadFor(SPMI, "myhrpros (SPMI)", db);
+    assert.equal(read.lastTouch, null);
+  });
+
+  test("the evidence route hands the read's last touch to the desk line", () => {
+    const route = readFileSync(join(cwd(), "src/app/activity/evidence/route.ts"), "utf8");
+    assert.match(route, /firstRecordReadFor\(acct, getPeo\(acct\)\?\.name \?\? ""\)/);
+    assert.match(
+      route,
+      /deskLineFor\(\s*who,\s*rows,\s*second\?\.rollup \?\? null,\s*touched \? chicagoDay\(touched\) : "",\s*\)/,
+    );
+  });
+});
 
 describe("the run's receipt lines are plain and keep their counts (C4)", () => {
   test("the drop's opening lines", async () => {

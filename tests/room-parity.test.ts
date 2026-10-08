@@ -421,3 +421,61 @@ describe("a row off the board (pass 8 call 1)", () => {
     assert.ok(textOf(html).includes("Mark it done ✓"), "the move still answers");
   });
 });
+
+// A4.20, the HomeRoom face shipped 2026-08-20: the THEIRS line is one line
+// atop the register panel, and the move keeps its seat unconditionally. The
+// line takes the palette's blue since C16 (room.module.css .theirs); the
+// stylesheet's color is CSS and stays on the honor list.
+describe("the THEIRS line sits atop the register panel and the move keeps its seat (A4.20)", () => {
+  const theirs = {
+    label: "MEXICO ASK · PAT LEE",
+    gems: [
+      {
+        term: "MEXICO ASK",
+        act: "Answer Pat about Mexico.",
+        reason: "They asked on 9/30.",
+        whenDay: "2026-09-30",
+        cites: [{ k: "r1", day: "2026-09-30", who: "Pat Lee", subject: "Mexico" }],
+      },
+    ],
+  };
+  const paint = (over: Partial<Parameters<typeof roomRow>[0]>) =>
+    render(
+      createElement(room.RoomClient, {
+        rows: [roomRow(over)],
+        cadence: [],
+        checkins: [],
+        followUps: [],
+        warming: [],
+        later: [],
+        canWrite: true,
+        dbUnavailable: false,
+        boardNames: [],
+        pipeline: [],
+        pipelineDay: "",
+        pipelineStale: "",
+      }),
+    );
+  // The register panel: from its opening tag to the next row-level block.
+  const panelOf = (html: string) => html.slice(html.indexOf('<div class="rec">'));
+
+  test("the line is the panel's first line, one line, before UNKNOWN", async () => {
+    const html = await paint({ theirs });
+    const panel = panelOf(html);
+    assert.ok(panel.startsWith('<div class="rec"><div class="theirs">'), panel.slice(0, 120));
+    assert.equal((html.match(/class="theirs"/g) ?? []).length, 1, "one line");
+    const line = /<div class="theirs">([\s\S]*?)<\/div>/.exec(panel)?.[1] ?? "";
+    assert.equal(textOf(line), "THEIRS · MEXICO ASK · PAT LEE");
+    assert.ok(textOf(panel).indexOf("THEIRS") < textOf(panel).indexOf("UNKNOWN"));
+  });
+
+  test("the move keeps its seat and its words whether THEIRS speaks or not", async () => {
+    const moveOf = (html: string) =>
+      textOf(/<div class="movewrap">([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "");
+    const quiet = await paint({});
+    const loud = await paint({ theirs });
+    assert.ok(moveOf(quiet).includes("Send the model."), moveOf(quiet));
+    assert.equal(moveOf(loud), moveOf(quiet));
+    assert.ok(!panelOf(quiet).includes('class="theirs"'), "no gem, no line");
+  });
+});

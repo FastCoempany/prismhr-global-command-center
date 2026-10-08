@@ -23,6 +23,9 @@ import {
   themeCaseGroups,
 } from "@/lib/activity/excerpt";
 import { rowPerson } from "@/lib/activity/classify";
+import { firstRecordReadFor } from "@/lib/activity/run";
+import { getPeo } from "@/lib/book";
+import { chicagoDay } from "@/lib/tz";
 import type { StagedRow } from "@/lib/activity/types";
 
 export const dynamic = "force-dynamic";
@@ -79,12 +82,22 @@ export async function GET(req: Request) {
     // one line, and every line cites the row it stands on or says nothing
     // (evidence or nothing). Salesforce's account-level Last Email Received
     // has no row behind it, so it never speaks here and never as their voice
-    // (D19). The line is the read layer's (deskLineFor).
-    const [rows, second] = await Promise.all([
+    // (D19). The line is the read layer's (deskLineFor). Its "last touched"
+    // reads both records: the first record's last touch comes from the
+    // account read (the Ted doctrine; C1), and a first record that cannot be
+    // read leaves the export's row to speak alone.
+    const [rows, second, record] = await Promise.all([
       fetchStageRows(acct),
       fetchSecondRecordFor(acct),
+      firstRecordReadFor(acct, getPeo(acct)?.name ?? "").catch(() => null),
     ]);
-    const desk = deskLineFor(who, rows, second?.rollup ?? null);
+    const touched = record?.read.lastTouch?.at;
+    const desk = deskLineFor(
+      who,
+      rows,
+      second?.rollup ?? null,
+      touched ? chicagoDay(touched) : "",
+    );
     return NextResponse.json(
       { ok: true, line: desk.line, cite: desk.cite ? rowOut(desk.cite) : null },
       noStore,

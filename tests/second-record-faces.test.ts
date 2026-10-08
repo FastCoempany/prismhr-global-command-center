@@ -7,6 +7,7 @@
 
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
+import { createElement } from "react";
 import {
   NO_CASE,
   caseNumberOf,
@@ -925,6 +926,292 @@ describe("the draft desk's line is evidence or nothing (A1, D19)", () => {
       assert.ok(d.cite, d.line);
       assert.ok(!/—|org-side|Nobody has touched/.test(d.line), d.line);
     }
+  });
+});
+
+// ── A2.4 · A4.1 · the desk's "last touched" reads both records (C1) ───────
+
+describe("the draft desk's last touched reads both records (A2.4, A4.1, C1)", () => {
+  const sent = staged({ k: "ours", d: "2026-09-12", s: "Re: the model" });
+
+  test("a first-record touch later than the export's row silences the line", () => {
+    // The operator wrote on 9/20; the export's newest human row is 9/12.
+    // "Last touched 09/12" would be the export alone speaking for a fact the
+    // first record holds, and later.
+    const desk = deskLineFor("nobody@else.com", [sent], rollup({}), "2026-09-20");
+    assert.deepEqual(desk, { line: "", cite: null });
+  });
+
+  test("the export's row speaks when it is the later or the same day, and with no record", () => {
+    for (const day of ["2026-09-01", "2026-09-12", ""]) {
+      const desk = deskLineFor("nobody@else.com", [sent], rollup({}), day);
+      assert.equal(desk.line, "Last touched 09/12: Re: the model.", day);
+      assert.equal(desk.cite?.k, "ours");
+    }
+  });
+
+  test("a row naming the person and their last attributed word are not recency claims", () => {
+    const theirs = staged({
+      k: "theirs",
+      d: "2026-09-18",
+      s: "Re: pricing",
+      a: "Automated Process",
+      w: "Dana Whitfield",
+    });
+    const named = deskLineFor("Dana Whitfield", [theirs, sent], rollup({}), "2026-09-30");
+    assert.equal(named.line, "Dana was on the 09/18 email: Re: pricing.");
+    const said = deskLineFor(
+      "nobody@else.com",
+      [theirs, sent],
+      rollup({
+        lastTheirs: { day: "2026-09-18", who: "Dana Whitfield", subject: "Re: pricing" },
+      }),
+      "2026-09-30",
+    );
+    assert.equal(said.line, "Dana wrote 09/18: Re: pricing.");
+  });
+});
+
+// ── A4.23 · the CSM prep's last rows are rows that happened ────────────────
+
+describe("the staged fold sinks a row dated ahead below every row that happened (A4.23)", () => {
+  test("the CSM's own last rows lead with what happened, not a due date", async () => {
+    const { foldStageRows } = await import("../src/lib/activity/read");
+    const { csmPrepRows, prepKicker } = await import("../src/lib/groundwork/chips");
+    const csm = "Lesha Cyphers";
+    const due = staged({ k: "due", d: "2027-01-15", s: "Follow up", a: csm, lane: "csm", fl: "f" });
+    const happened = ["2026-09-20", "2026-09-18", "2026-09-10", "2026-09-02", "2026-08-30"].map(
+      (d, i) => staged({ k: `h${i}`, d, s: `Call ${i}`, a: csm, lane: "csm" }),
+    );
+    const other = staged({ k: "x", d: "2026-09-25", s: "Re: hello", a: "Antaeus Coe" });
+    const rows = foldStageRows([{ own: true, rows: [due, other, ...happened] }]);
+    assert.equal(rows[rows.length - 1].k, "due", "the due date sinks to the foot");
+    assert.deepEqual(rows.slice(0, 2).map((r) => r.k), ["x", "h0"]);
+    const prep = csmPrepRows(rows, csm);
+    assert.deepEqual(prep.map((c) => c.k), ["h0", "h1", "h2", "h3", "h4"]);
+    assert.equal(prepKicker(prep.length), "THE CSM’S OWN LAST 5 ROWS · SHARPEN THE ASK");
+    // Each prep line is a door: it carries its row key and no body.
+    for (const c of prep) assert.deepEqual(Object.keys(c).sort(), ["day", "k", "subject", "who"]);
+    // A shell's slice folds the same way.
+    const folded = foldStageRows([
+      { own: false, rows: [due] },
+      { own: true, rows: happened },
+    ]);
+    assert.equal(folded[folded.length - 1].k, "due");
+  });
+});
+
+// ── A4.16 · A4.27 · every compression on the second record's faces is a door
+
+// The buttons of a render, by their text.
+const buttonsOf = (html: string): string[] =>
+  [...html.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)].map((m) => textOf(m[1]));
+
+describe("the second record's faces: every chip, cite, theme, count and case is a door (A4.16, A4.27)", () => {
+  const cite = (k: string, day: string, who: string, subject: string) => ({ k, day, who, subject });
+  const gemOf = (term: string, cites: ReturnType<typeof cite>[]) => ({
+    term,
+    act: "Answer Pat about Mexico.",
+    reason: "They asked on 9/30.",
+    whenDay: "2026-09-30",
+    cites,
+  });
+
+  test("Groundwork's chip row holds only doors, one per chip", async () => {
+    const { default: EvidenceChips } = await import("../src/app/groundwork/evidence-chips");
+    const html = await render(
+      createElement(EvidenceChips, {
+        accountId: "001TEST",
+        support: {
+          total: 14,
+          spikeDay: "2026-07-22",
+          spikeN: 2,
+          spikeCites: [cite("s1", "2026-07-22", "Dana Ellis", "Payroll stuck")],
+        },
+        intent: { opens30: 4, clicks30: 1, lastOpen: "2026-07-20", sends7: 2 },
+        collision: {
+          mktgSends7: 2,
+          colleague: { who: "Anika Steenstra", day: "2026-07-28", cite: null },
+        },
+        gems: [gemOf("MEXICO ASK", [cite("r1", "2026-09-30", "Pat Lee", "Mexico")])],
+      }),
+    );
+    const row = /<div class="evChips">([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "";
+    assert.ok(row, "the chip row rendered");
+    const chips = buttonsOf(row);
+    assert.equal(chips.length, 5, JSON.stringify(chips));
+    // Nothing on the row but its doors.
+    assert.equal(textOf(row.replace(/<button[\s\S]*?<\/button>/g, "")), "");
+    assert.deepEqual(
+      chips.map((c) => c.split(" ")[0]),
+      ["◆", "▮", "SPIKE", "INTENT", "⚠"],
+    );
+  });
+
+  test("the THEIRS line's label is a door, and its gems' cites open to their rows", async () => {
+    const { default: TheirsLine } = await import("../src/app/room/theirs-line");
+    const html = await render(
+      createElement(TheirsLine, {
+        accountId: "001TEST",
+        label: "MEXICO ASK · PAT LEE",
+        gems: [gemOf("MEXICO ASK", [cite("r1", "2026-09-30", "Pat Lee", "Mexico")])],
+      }),
+    );
+    assert.deepEqual(buttonsOf(html), ["MEXICO ASK · PAT LEE"]);
+    assert.match(textOf(html), /^THEIRS · MEXICO ASK · PAT LEE$/);
+  });
+
+  test("the Accounts panel: every cite, the verdict's rows and the case count are doors", async () => {
+    const { default: SecondRecordPanel } = await import("../src/app/accounts/second-record-panel");
+    const withGems = await render(
+      createElement(SecondRecordPanel, {
+        accountId: "001TEST",
+        second: {
+          gems: [
+            gemOf("MEXICO ASK", [
+              cite("r1", "2026-09-30", "Pat Lee", "Mexico"),
+              cite("r2", "2026-09-28", "Pat Lee", "Re: Mexico hire"),
+            ]),
+          ],
+          act: "Answer Pat about Mexico.",
+          verdict: "",
+          supportTotal: 9,
+          spikeDay: "2026-09-02",
+        },
+      }),
+    );
+    const doors = buttonsOf(withGems);
+    assert.ok(doors.includes("09/30 · Pat Lee · Mexico ▸ read it"), JSON.stringify(doors));
+    assert.ok(doors.includes("09/28 · Pat Lee · Re: Mexico hire ▸ read it"));
+    assert.ok(doors.some((d) => /^▮ 9 SUPPORT CASES IN WINDOW · SPIKE 09\/02/.test(d)));
+    const verdictOnly = await render(
+      createElement(SecondRecordPanel, {
+        accountId: "001TEST",
+        second: { gems: [], act: null, verdict: "Quiet for 40 days.", supportTotal: 0, spikeDay: "" },
+      }),
+    );
+    assert.ok(buttonsOf(verdictOnly).some((d) => d.startsWith("THE STAGED ROWS, NEWEST FIRST")));
+  });
+});
+
+// ── A4.25 · the Playbook's draft queue approves by hand ────────────────────
+
+describe("the Playbook's draft queue: approve by hand, nothing auto-publishes (A4.25)", () => {
+  const themes = (...t: [string, number][]) => ({
+    support: { themes: t.map(([label, n]) => ({ label, n })) },
+  });
+  const names = new Map([
+    ["A", "Alpha PEO"],
+    ["B", "Beta HR"],
+    ["C", "Gamma Staffing"],
+  ]);
+  const secondById = new Map([
+    ["A", themes(["Payroll stuck", 4], ["W-2 reprint", 2])],
+    ["B", themes(["payroll stuck", 3], ["Benefits feed", 6])],
+    ["C", themes(["Tax filing", 5], ["Time clock", 7], ["W-2 reprint", 1])],
+    ["OFFBOOK", themes(["Payroll stuck", 40])],
+  ]);
+
+  test("themes of five or more cases, top three book-wide, become drafts", async () => {
+    const { secondRecordDrafts } = await import("../src/app/playbook/drafts");
+    const drafts = secondRecordDrafts({
+      secondById,
+      nameById: names,
+      marketKeys: new Set(),
+      dismissed: new Set(),
+    });
+    assert.deepEqual(
+      drafts.map((d) => d.text),
+      [
+        'Support traffic keeps hitting "Payroll stuck": 7 cases across 2 accounts this window. Say how Global sits beside it.',
+        'Support traffic keeps hitting "Time clock": 7 cases across 1 account this window. Say how Global sits beside it.',
+        'Support traffic keeps hitting "Benefits feed": 6 cases across 1 account this window. Say how Global sits beside it.',
+      ],
+    );
+    // An account off the book counts nothing; the heaviest account names it.
+    assert.equal(drafts[0].accountId, "A");
+    assert.equal(drafts[0].accountName, "Alpha PEO");
+  });
+
+  test("an approved draft and a dismissed one leave the queue; the rest stay drafts", async () => {
+    const { secondRecordDrafts } = await import("../src/app/playbook/drafts");
+    const all = secondRecordDrafts({
+      secondById,
+      nameById: names,
+      marketKeys: new Set(),
+      dismissed: new Set(),
+    });
+    const left = secondRecordDrafts({
+      secondById,
+      nameById: names,
+      marketKeys: new Set([all[0].key]),
+      dismissed: new Set([all[1].key]),
+    });
+    assert.deepEqual(left.map((d) => d.key), [all[2].key]);
+  });
+
+  test("reading the queue publishes nothing: it is a pure read with no store", async () => {
+    const { secondRecordDrafts } = await import("../src/app/playbook/drafts");
+    // Nothing to write to: the derivation takes data and hands back data, so
+    // the same input reads the same queue however often the page loads.
+    const input = { secondById, nameById: names, marketKeys: new Set<string>(), dismissed: new Set<string>() };
+    assert.deepEqual(secondRecordDrafts(input), secondRecordDrafts(input));
+    assert.equal(secondRecordDrafts.length, 1, "one argument, no store");
+    // The one write is the Approve button's form action.
+    const actions = (await import("../src/app/playbook/actions")) as Record<string, unknown>;
+    assert.equal(typeof actions.approveSecondDraft, "function");
+  });
+});
+
+// ── A4.30 · staged bodies leave the store by the evidence route alone ─────
+
+describe("staged bodies leave the store only by the evidence route, a GET (A4.30)", () => {
+  test("the route answers GET and nothing else", async () => {
+    const route = (await import("../src/app/activity/evidence/route")) as Record<string, unknown>;
+    const verbs = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+    assert.deepEqual(
+      verbs.filter((v) => typeof route[v] === "function"),
+      ["GET"],
+    );
+    assert.equal(route.dynamic, "force-dynamic");
+  });
+
+  test("the page loader's doors carry a row's key and head, never its body", async () => {
+    const { collisionCite, csmPrepRows, spikeCites } = await import("../src/lib/groundwork/chips");
+    const body = "The census is attached. Our renewal is in March.";
+    const rows: StagedRow[] = [
+      staged({ k: "s1", d: "2026-07-22", lane: "support", s: "Payroll stuck", c: body }),
+      staged({ k: "c1", d: "2026-07-20", a: "Lesha Cyphers", lane: "csm", s: "Renewal", c: body }),
+      staged({ k: "h1", d: "2026-07-28", a: "Anika Steenstra", s: "Re: Global intro", c: body }),
+    ];
+    const doors = [
+      ...spikeCites(rows, "2026-07-22"),
+      ...csmPrepRows(rows, "Lesha Cyphers"),
+      collisionCite(rows, { who: "Anika Steenstra", day: "2026-07-28" })!,
+    ];
+    assert.equal(doors.length, 3);
+    for (const d of doors) {
+      assert.deepEqual(Object.keys(d).sort(), ["day", "k", "subject", "who"]);
+      assert.ok(!JSON.stringify(d).includes("census"), JSON.stringify(d));
+    }
+  });
+
+  test("no server action module reads the staged slices", async () => {
+    const { readFileSync, readdirSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const walk = (dir: string): string[] =>
+      readdirSync(dir).flatMap((n) => {
+        const p = join(dir, n);
+        return statSync(p).isDirectory() ? walk(p) : /\.tsx?$/.test(n) ? [p] : [];
+      });
+    const readers = /\b(fetchStageRows|readStageSlice|parseStageBody|STAGE_NS)\b/;
+    const offenders = walk("src")
+      .filter((f) => !f.startsWith(join("src", "generated")))
+      .filter((f) => {
+        const text = readFileSync(f, "utf8");
+        return /^"use server";/.test(text) && readers.test(text);
+      });
+    assert.deepEqual(offenders, []);
   });
 });
 

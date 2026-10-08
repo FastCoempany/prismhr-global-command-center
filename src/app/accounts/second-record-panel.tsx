@@ -324,7 +324,8 @@ export default function SecondRecordPanel({
             ))}
           {casesOpen && cases?.length === 0 && busy !== "cases" && (
             <p className={styles.srVerdictLine}>
-              The staged slice holds no case rows — the drop&rsquo;s cap kept newer
+              {/* Flat, no dash aside (the writing canon, rule 5). */}
+              The staged slice holds no case rows. The drop&rsquo;s cap kept newer
               traffic.
             </p>
           )}

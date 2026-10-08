@@ -162,3 +162,125 @@ describe("the hooks are the browser's, and ask for the fresh read", () => {
     assert.equal((door.match(/router\.refresh\(\)/g) ?? []).length, 1, "once");
   });
 });
+
+// A1.3, "Files ... thrown at it are read on the spot" (CLAUDE.md, The
+// Chute). The door's own hook, taken from a render: the line starts a read
+// the moment a file is handed to it, with no tick, no click and no server
+// job between, three at once (D11); and the read of an email, a transcript
+// or a text file happens right there in the browser, with no round trip. A
+// PDF or an image goes to the transcriber at once, the one read that leaves
+// the browser. The Chute's drop handler hands every file to this line as it
+// lands (pinned in tests/canon/chute.test.ts, D11's wiring).
+describe("the door reads each file on the spot (A1.3)", () => {
+  const takeHook = async () => {
+    const { useIngest } = await import("../src/app/room/ingest/use-ingest");
+    const pdfCalls: string[] = [];
+    const readPdf = async (fd: FormData) => {
+      pdfCalls.push(((fd.get("file") as File | null)?.name ?? "") || "?");
+      return { ok: true, text: "CALL TRANSCRIPT — read by the transcriber\n\nhello" };
+    };
+    const out: { ingest?: ReturnType<typeof useIngest> } = {};
+    const Probe = () => {
+      out.ingest = useIngest({ door: "chute", readPdf });
+      return null;
+    };
+    await render(createElement(Probe));
+    assert.ok(out.ingest, "the hook rendered");
+    return { ingest: out.ingest!, pdfCalls };
+  };
+
+  test("the line starts the first three reads the moment they are handed over", async () => {
+    const { ingest } = await takeHook();
+    const started: string[] = [];
+    const gates: (() => void)[] = [];
+    const task = (name: string) => () => {
+      started.push(name);
+      return new Promise<string>((done) => gates.push(() => done(name)));
+    };
+    const all = ingest.limited(["a", "b", "c", "d"].map(task));
+    // No await yet: the reads already began, as the files landed.
+    assert.deepEqual(started, ["a", "b", "c"]);
+    gates.shift()!();
+    await new Promise<void>((r) => setTimeout(r, 0));
+    assert.deepEqual(started, ["a", "b", "c", "d"], "the fourth starts when a slot frees");
+    while (gates.length) gates.shift()!();
+    assert.deepEqual(await all, ["a", "b", "c", "d"]);
+  });
+
+  test("an email, a transcript and a text file read in the browser, with no round trip", async () => {
+    const { ingest, pdfCalls } = await takeHook();
+    const emlFile = new File(
+      ["From: dana@simploy.example\nTo: acoe@prismhr.com\nSubject: Re: Canada\n\nThursday."],
+      "reply.eml",
+    );
+    const vtt = new File(
+      ["WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Dana Ellis>We have one hire in Canada.</v>\n"],
+      "call.vtt",
+    );
+    const txt = new File(["Called Dana. They want the Canada numbers."], "note.txt");
+    const [e, v, t] = await Promise.all([emlFile, vtt, txt].map((f) => ingest.read(f)));
+    assert.ok(e.ok && e.text.startsWith("OUTLOOK THREAD"), JSON.stringify(e));
+    assert.ok(v.ok && v.text.startsWith("CALL TRANSCRIPT"), JSON.stringify(v));
+    assert.ok(t.ok && t.text.includes("Canada numbers"), JSON.stringify(t));
+    assert.deepEqual(pdfCalls, [], "nothing left the browser");
+  });
+
+  test("a PDF goes to the transcriber at once, once", async () => {
+    const { ingest, pdfCalls } = await takeHook();
+    const r = await ingest.read(new File(["%PDF-1.7"], "scan.pdf", { type: "application/pdf" }));
+    assert.ok(r.ok, JSON.stringify(r));
+    assert.deepEqual(pdfCalls, ["scan.pdf"]);
+  });
+});
+
+// A1.1, "The HomeRoom carries ONE intake at the top: the Chute." The page
+// mounts the Chute first in its main and once (the page is a server
+// component that needs a request, so its order is read from source); the
+// board below it carries no intake of its own beyond each row's Drop, which
+// stays by the same decree. Rendered: every file input on the board is a
+// row's Drop, one per writable row, and the Chute is one file door.
+describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
+  test("the page mounts the Chute once, first in main, above the board", () => {
+    const page = read("src/app/room/page.tsx");
+    const main = page.slice(page.lastIndexOf("<main"));
+    assert.equal((page.match(/<Chute\b/g) ?? []).length, 1, "one Chute");
+    const chuteAt = main.indexOf("<Chute ");
+    const boardAt = main.indexOf("<RoomClient");
+    assert.ok(chuteAt > 0 && boardAt > chuteAt, "the Chute leads the board");
+    // Nothing but a comment sits between main's opening tag and the Chute.
+    const between = main.slice(main.indexOf(">") + 1, chuteAt).replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
+    assert.equal(between.trim(), "");
+  });
+
+  test("the board's only file doors are its rows' Drops; the Chute is one door", async () => {
+    const { roomClient, roomRow } = await import("./helpers/room-render");
+    const room = await roomClient();
+    const rows = [
+      roomRow(),
+      roomRow({ accountId: "001F000000w38OHIAY", cardId: "card-regis", name: "Regis HR Group" }),
+    ];
+    const board = await render(
+      createElement(room.RoomClient, {
+        rows,
+        cadence: [],
+        checkins: [],
+        followUps: [],
+        warming: [],
+        later: [],
+        canWrite: true,
+        dbUnavailable: false,
+        boardNames: [],
+        pipeline: [],
+        pipelineDay: "",
+        pipelineStale: "",
+      }),
+    );
+    const fileInputs = (board.match(/<input[^>]*type="file"/g) ?? []).length;
+    const drops = rows.map((r) => `THE DROP · FILES TO ${r.name.toUpperCase()}, EVERYWHERE`);
+    for (const d of drops) assert.ok(textOf(board).includes(d), d);
+    assert.equal(fileInputs, rows.length, "one file door per row, and no other");
+    const { Chute } = await chute();
+    const top = await render(createElement(Chute, { canWrite: true }));
+    assert.equal((top.match(/<input[^>]*type="file"/g) ?? []).length, 1);
+  });
+});

@@ -1405,3 +1405,179 @@ describe("the sheet's green is the brand's, by role", () => {
     assert.equal(css.includes(".prTag_stash"), false);
   });
 });
+
+// A4.17 and A4.19, the Accounts face the founder shipped on 2026-08-20:
+// MODEL and PRISMHR retire into the drilldown, and LAST HUMAN TOUCH, THE
+// SIGNAL and ACT take the width, each cell a door (the gem's fold opens
+// beneath the row on a click, which a first paint cannot show).
+describe("Accounts: three columns take the width; MODEL and PRISMHR live in the drilldown (A4.17, A4.19)", () => {
+  const headsOf = (html: string): string[] =>
+    [...html.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) =>
+      textOf(m[1].replace(/<span class="thCount">[\s\S]*?<\/span>/, "")),
+    );
+
+  test("the sheet's columns: no MODEL, no PRISMHR, the three at the right", async () => {
+    const html = await renderSheet([await sheetRow()]);
+    assert.deepEqual(headsOf(html), [
+      "Account",
+      "Global fit",
+      "Demand",
+      "Last human touch",
+      "The signal",
+      "Act",
+    ]);
+    assert.ok(!headsOf(html).some((h) => /model|prismhr|platform|cloud/i.test(h)));
+  });
+
+  test("the drilldown carries MODEL and PRISMHR in its meta line", async () => {
+    const row = await sheetRow({ industry: "PEO", incumbent: true, cloud: "PHR3" });
+    const shut = await renderSheet([row]);
+    assert.ok(
+      !/MODEL · PEO · PRISMHR/.test(textOf(shut)),
+      "the facts ride the sheet shut",
+    );
+    const open = await renderSheet([row], `focus=${ACCT}`);
+    assert.match(textOf(open), /MODEL · PEO · PRISMHR · PHR3/);
+  });
+
+  test("LAST HUMAN TOUCH, THE SIGNAL and ACT are each a door on the row", async () => {
+    const row = await sheetRow({
+      touch: { who: "Pat Lee", day: "2026-09-22", kind: "ours", record: "record" },
+      touchCite: {
+        from: "record",
+        day: "2026-09-22",
+        who: "Pat Lee",
+        how: "SENT",
+        text: "✉ The Mexico model — sent to Pat Lee.",
+      },
+      second: sheetSecond({
+        rollup: null,
+        support: null,
+        intent: null,
+        gems: [gem("MEXICO ASK")],
+      } as unknown as Parameters<typeof sheetSecond>[0]),
+    });
+    const html = await renderSheet([row]);
+    const tr = /<tr id="acct-[^"]*"[\s\S]*?<\/tr>/.exec(html)?.[0] ?? "";
+    const cells = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => m[1]);
+    assert.equal(cells.length, 6);
+    const [, , , touch, signal, act] = cells;
+    assert.match(touch, /^<button type="button" class="srTouch"/);
+    assert.match(signal, /^<button type="button" class="srTerm"[^>]*>MEXICO ASK/);
+    assert.match(
+      act,
+      /<button type="button" class="mchip"[^>]*>Answer Pat about Mexico\./,
+    );
+    // The fold rows are shut on arrival: nothing deep surfaces uninvited.
+    assert.ok(!html.includes("srFoldTd"), "a fold opened on arrival");
+  });
+});
+
+// Pass 10, the coordinator's second commit: the Partners relationship and
+// the contacts roster read our side by the declared roster (pass 8 call 7)
+// and the account read (the Ted doctrine), and the panel's empty-cases line
+// is flat (the writing canon, rule 5).
+describe("a colleague is never an account's relationship or contact (A2.4; pass 8 call 7)", () => {
+  const SRC = (f: string) => readFileSync(join(process.cwd(), f), "utf8");
+  // Lesha, a colleague, writes on every thread; Pat Lee is the account's.
+  const lesha = [1, 2, 3].map((i) =>
+    note({
+      id: `l${i}`,
+      body: `✉ OL 9/${i} — Re: renewal · Lesha Cyphers → Antaeus Coe\nRenewal notes.`,
+      actors: "Lesha Cyphers → Antaeus Coe",
+      createdAt: `2026-09-0${i}T15:00:00Z`,
+    }),
+  );
+  const pat = note({
+    id: "p1",
+    body: "✉ OL 9/20 — Re: Mexico · Pat Lee → Antaeus Coe\nCan we talk Mexico?",
+    actors: "Pat Lee → Antaeus Coe",
+    createdAt: "2026-09-20T15:00:00Z",
+  });
+  const notes = [...lesha, pat];
+  const homeSide = ["Lesha Cyphers"];
+
+  test("the Partners desk writes to the account's person, not the colleague", async () => {
+    const { relationshipAt } = await import("../../src/app/partners/recipients");
+    assert.equal(relationshipAt(notes, ACCT, homeSide).name, "Pat Lee");
+    // Without the roster the colleague's thread count won: the defect.
+    assert.equal(relationshipAt(notes, ACCT, []).name, "Lesha Cyphers");
+    const page = SRC("src/app/partners/page.tsx");
+    assert.match(
+      page,
+      /const homeSide = declaredHomeSide\(homeSideFrom\(allAcctNotes\)\);/,
+    );
+    assert.match(
+      page,
+      /relationshipAt\(acctNotes\.get\(a\.id\) \?\? \[\], a\.id, homeSide\)/,
+    );
+    assert.ok(
+      !/relationshipFor\(/.test(page),
+      "the page spells no relationship of its own",
+    );
+  });
+
+  test("the contacts roster adds the account's people from the read, colleagues and parked rows out", async () => {
+    const { recordContactRows } = await import("../../src/app/accounts/contacts");
+    const hidden = note({
+      id: "h1",
+      body: "✉ OL 9/21 — Re: x · Parked Person → Antaeus Coe\nWrong account. parked.person@simploy.com",
+      actors: "Parked Person → Antaeus Coe",
+      createdAt: "2026-09-21T15:00:00Z",
+    });
+    const all = [...notes, hidden];
+    const read = readAccount({
+      account: { id: ACCT, name: "Simploy" },
+      notes: all,
+      touches: [],
+      todos: [],
+      dispositions: new Map([["hide:note:h1", { status: "parked" }]]),
+      homeSide,
+      now: NOW9,
+    });
+    const rows = recordContactRows({
+      read,
+      notes: all,
+      domain: "simploy.com",
+      have: new Set(),
+      haveNames: new Set(),
+    });
+    assert.deepEqual(
+      rows.map((r) => `${r.first} ${r.last}`),
+      ["Pat Lee"],
+    );
+    assert.ok(rows.every((r) => r.fromRecord));
+    // A person the roster already holds never joins twice.
+    assert.deepEqual(
+      recordContactRows({
+        read,
+        notes: all,
+        domain: "simploy.com",
+        have: new Set(),
+        haveNames: new Set(["pat lee"]),
+      }),
+      [],
+    );
+    // getContacts reads the account read: every folded id, hidden out, the
+    // declared roster (firstRecordReadFor, pinned in canon/second-record).
+    const actions = SRC("src/app/accounts/actions.ts");
+    assert.match(
+      actions,
+      /const \{ read, notes \} = await firstRecordReadFor\(id, peo\.name\);/,
+    );
+    assert.ok(!/take: 400/.test(actions), "the narrow raw-id read is gone");
+  });
+
+  test("the panel's empty case list says it flat, no dash aside", () => {
+    const panel = SRC("src/app/accounts/second-record-panel.tsx");
+    const copy = panel
+      .split("\n")
+      .filter((l) => !/^\s*(\/\/|\*|\/\*|\{\/\*)/.test(l))
+      .join("\n");
+    assert.ok(!/[a-z] — [a-z]/.test(copy), "a dash hinges a sentence in the panel");
+    assert.match(
+      panel,
+      /The staged slice holds no case rows\. The drop&rsquo;s cap kept newer/,
+    );
+  });
+});
