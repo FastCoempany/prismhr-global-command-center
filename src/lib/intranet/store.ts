@@ -10,15 +10,18 @@
 
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import type { Claim, DocRef, Topic } from "./types";
-import { RUN_LOCK_CHECKSUM } from "./doctrine";
+import { PROMPT_VERSION, RUN_LOCK_CHECKSUM } from "./doctrine";
 import type { ClaimKind, Confidence } from "./doctrine";
 import {
   archiveRollup,
   chicagoDay,
   countryTallies,
+  doorsOf,
   launderDigest,
   type ArchiveMonth,
   type CountryRow,
+  type HealthList,
+  type HealthRow,
   type LedgerEntry,
   type StoredCitation,
 } from "./ledger";
@@ -283,6 +286,112 @@ export async function todayCounts(now = new Date()): Promise<{
   }
 }
 
+/** The most rows one health meter opens to. Generous on purpose: a meter's
+ *  door shows what it counts, not a sample of it. */
+const HEALTH_ROW_CAP = 5000;
+
+/** What one health meter counts, row by row (pass 10, the click-depth law):
+ *  the same where-clauses brainStats, brainQueue and todayCounts count by. */
+export async function brainList(
+  which: HealthList,
+  now = new Date(),
+): Promise<HealthRow[]> {
+  if (!hasDatabaseEnv()) return [];
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const day = (d: Date | null | undefined) => iso(d).slice(0, 10);
+  const docRow = (d: {
+    title: string;
+    space: string;
+    origin: string;
+    occurredAt: Date | null;
+  }): HealthRow => ({
+    text: d.title || d.space || d.origin,
+    meta: [d.space || d.origin, day(d.occurredAt)].filter(Boolean).join(" · "),
+  });
+  const docSelect = { title: true, space: true, origin: true, occurredAt: true } as const;
+  const claimRow = (c: {
+    text: string;
+    speaker: string;
+    saidAt: Date | null;
+  }): HealthRow => ({
+    text: c.text,
+    meta: [c.speaker || "unknown", day(c.saidAt)].filter(Boolean).join(" · "),
+  });
+  const claimSelect = { text: true, speaker: true, saidAt: true } as const;
+  try {
+    const p = getPrisma();
+    switch (which) {
+      case "docs":
+        return (
+          await p.intranetDoc.findMany({
+            select: docSelect,
+            orderBy: { capturedAt: "desc" },
+            take: HEALTH_ROW_CAP,
+          })
+        ).map(docRow);
+      case "pending":
+        return (
+          await p.intranetDoc.findMany({
+            where: {
+              OR: [{ extractedAt: null }, { promptVersion: { not: PROMPT_VERSION } }],
+            },
+            select: docSelect,
+            orderBy: { capturedAt: "desc" },
+            take: HEALTH_ROW_CAP,
+          })
+        ).map(docRow);
+      case "todayDocs":
+        return (
+          await p.intranetDoc.findMany({
+            where: { extractedAt: { gte: start } },
+            select: docSelect,
+            orderBy: { extractedAt: "desc" },
+            take: HEALTH_ROW_CAP,
+          })
+        ).map(docRow);
+      case "claims":
+        return (
+          await p.intranetClaim.findMany({
+            select: claimSelect,
+            orderBy: { saidAt: "desc" },
+            take: HEALTH_ROW_CAP,
+          })
+        ).map(claimRow);
+      case "prospect":
+        return (
+          await p.intranetClaim.findMany({
+            where: { kind: "prospect-question" },
+            select: claimSelect,
+            orderBy: { saidAt: "desc" },
+            take: HEALTH_ROW_CAP,
+          })
+        ).map(claimRow);
+      case "topics":
+      case "proposed":
+        return (
+          await p.intranetTopic.findMany({
+            where: { status: which === "topics" ? "live" : "pending" },
+            select: { label: true, summary: true },
+            orderBy: { label: "asc" },
+            take: HEALTH_ROW_CAP,
+          })
+        ).map((t) => ({ text: t.label, meta: t.summary ?? "" }));
+      case "todayAsks":
+        return (
+          await p.intranetAsk.findMany({
+            where: { askedAt: { gte: start } },
+            select: { question: true, askedAt: true },
+            orderBy: { askedAt: "desc" },
+            take: HEALTH_ROW_CAP,
+          })
+        ).map((a) => ({ text: a.question, meta: iso(a.askedAt).slice(11, 16) }));
+    }
+  } catch {
+    return [];
+  }
+}
+
 /** Every prospect question in the corpus, with the document context the bridges
  *  need (C7). This is the material the harvest and the gap carousel run on. */
 export async function prospectAsks(limit = 400) {
@@ -385,10 +494,10 @@ export async function ledgerEntries(opts?: {
       // rebuilt from what its meta remembers, never a bare placeholder.
       const fallback = meta.report?.messages
         ? [
-            `Got it — ${meta.report.messages} messages${meta.space ? ` from ${meta.space}` : ""}.`,
+            `Got it. ${meta.report.messages} messages${meta.space ? ` from ${meta.space}` : ""}.`,
           ]
         : c.title || meta.space
-          ? [`Got it — ${c.title || meta.space}.`]
+          ? [`Got it. ${c.title || meta.space}.`]
           : ["Sent to the brain."];
       // V.6 covers replayed history too: digests written by earlier builds
       // carried raw failure text — laundered here, original behind the fold.
@@ -410,6 +519,7 @@ export async function ledgerEntries(opts?: {
           ...washed.detail,
           ...(Array.isArray(meta.detail) ? meta.detail : []),
         ].slice(0, 12),
+        doors: doorsOf(meta),
       });
     }
 

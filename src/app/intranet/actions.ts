@@ -20,6 +20,7 @@ import {
 } from "@/lib/intranet/doctrine";
 import { descendantIds } from "@/lib/intranet/index-topics";
 import {
+  brainList,
   claimsByEntities,
   claimsByIds,
   claimsByPhrases,
@@ -30,7 +31,13 @@ import {
   loadTopics,
   todayCounts,
 } from "@/lib/intranet/store";
-import { countryOf, type LedgerEntry } from "@/lib/intranet/ledger";
+import {
+  HEALTH_LISTS,
+  countryOf,
+  type HealthList,
+  type HealthRow,
+  type LedgerEntry,
+} from "@/lib/intranet/ledger";
 import {
   CEILINGS,
   EVAL_SET,
@@ -752,6 +759,26 @@ export type PassageReply = {
    *  the drawer opens to above the mirrored passage (C13). */
   bank: AskFold | null;
 };
+
+/** A health meter's door (pass 10, the click-depth law): the rows it counts. */
+export async function intranetHealthList(which: HealthList): Promise<HealthRow[]> {
+  if (!(await canRead()) || !HEALTH_LISTS.includes(which)) return [];
+  return brainList(which);
+}
+
+/** A digest count's door (pass 10, the click-depth law): the claims a Send-it
+ *  digest counted under one kind, each a door on to its passage. */
+export type ClaimLine = { id: string; text: string; speaker: string; saidAt: string };
+
+export async function intranetClaimLines(ids: string[]): Promise<ClaimLine[]> {
+  if (!(await canRead()) || !Array.isArray(ids) || ids.length === 0) return [];
+  const want = ids.filter((x) => typeof x === "string").slice(0, 200);
+  const byId = new Map((await claimsByIds(want)).map((c) => [c.id, c]));
+  return want
+    .map((id) => byId.get(id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+    .map((c) => ({ id: c.id, text: c.text, speaker: c.speaker, saidAt: c.saidAt }));
+}
 
 /** Level 2 and 3: the claim in its surrounding turns, and the whole document
  *  behind it. */

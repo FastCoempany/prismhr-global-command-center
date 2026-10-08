@@ -25,6 +25,7 @@ import {
   intranetAsk,
   intranetContents,
   intranetLedgerDay,
+  intranetClaimLines,
   intranetPassage,
 } from "./actions";
 import { intranetCapture } from "./capture-actions";
@@ -33,6 +34,7 @@ import type { RunReport } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
 import { SELECTION_DOT, selectionDot } from "./selection";
 import { dockRefuses } from "./grab";
+import { DigestLines } from "./digest-doors";
 import type {
   AskReply,
   PassageReply,
@@ -360,6 +362,7 @@ export function IntranetClient({
                 ],
                 briefs: g.briefs ?? [],
                 detail: g.detail ?? [],
+                doors: g.doors,
               }
             : e,
         ),
@@ -720,11 +723,19 @@ export function IntranetClient({
               {b}
             </p>
           ))}
-          <ul className={styles.itRunLines}>
-            {(e.lines.length ? e.lines : ["Sent to the brain."]).map((l, i) => (
-              <li key={i}>{l}</li>
-            ))}
-          </ul>
+          <DigestLines
+            lines={e.lines.length ? e.lines : ["Sent to the brain."]}
+            doors={e.doors}
+            loadClaims={intranetClaimLines}
+            onDrill={drill}
+            onTopic={(t) =>
+              toggleSel({
+                key: `t:${t.id}`,
+                label: t.label,
+                scope: { type: "topic", id: t.id, label: t.label },
+              })
+            }
+          />
           {renderDetailFold(e.id, e.detail)}
         </>
       );

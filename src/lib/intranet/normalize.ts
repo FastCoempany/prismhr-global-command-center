@@ -205,7 +205,7 @@ export function captureReceipt(input: {
   links: number;
   report: CaptureReport | null;
 }): string {
-  let head = `Got it — ${input.kept} message${input.kept === 1 ? "" : "s"}${
+  let head = `Got it. ${input.kept} message${input.kept === 1 ? "" : "s"}${
     input.space ? ` from ${input.space}` : ""
   }`;
   if (input.report?.oldest) head += `, going back to ${input.report.oldest}`;
@@ -216,7 +216,7 @@ export function captureReceipt(input: {
     parts.push(`${input.skipped} already in the brain, so I skipped those.`);
   if (input.report?.ceilingHit)
     parts.push(
-      "The scroll stopped at its safety ceiling — run it again from further up and I'll take the rest.",
+      "The scroll stopped at its safety ceiling. Run it again from further up and I'll take the rest.",
     );
   return parts.join(" ");
 }

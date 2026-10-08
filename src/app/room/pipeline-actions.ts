@@ -117,7 +117,7 @@ export async function freshPipeline(): Promise<FreshPipeline | null> {
   const staleNote = !drop
     ? "no second record"
     : age > DROP_STALE_DAYS
-      ? `second record ${drop.slice(5)} — stale`
+      ? `second record ${drop.slice(5)} · stale`
       : `second record ${drop.slice(5)}`;
 
   // His saved corrections, read back with the record they belong to.

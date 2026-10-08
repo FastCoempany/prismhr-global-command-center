@@ -21,6 +21,7 @@ import {
 import { PROMPT_VERSION } from "@/lib/intranet/doctrine";
 import { brainQueue } from "../runners";
 import { SelfCheck } from "./self-check";
+import { MeterDoor } from "./meter-door";
 import styles from "../../command-center.module.css";
 
 export const dynamic = "force-dynamic";
@@ -76,30 +77,24 @@ export default async function IntranetHealthPage() {
 
           <section className={styles.itPanel}>
             <p className={styles.itPanelHead}>The corpus</p>
-            <div className={styles.itMeter}>
-              <span>Documents</span>
-              <span className={styles.itMeterN}>{stats.docs}</span>
-            </div>
-            <div className={styles.itMeter}>
-              <span>Claims</span>
-              <span className={styles.itMeterN}>{stats.claims}</span>
-            </div>
-            <div className={styles.itMeter}>
-              <span>Questions prospects asked</span>
-              <span className={styles.itMeterN}>{stats.prospectQuestions}</span>
-            </div>
-            <div className={styles.itMeter}>
-              <span>Live topics</span>
-              <span className={styles.itMeterN}>{stats.topics}</span>
-            </div>
-            <div className={styles.itMeter}>
-              <span>Waiting to be read</span>
-              <span className={styles.itMeterN}>{queue.pending}</span>
-            </div>
-            <div className={styles.itMeter}>
-              <span>Proposed topics not yet on the rail</span>
-              <span className={styles.itMeterN}>{queue.unindexed}</span>
-            </div>
+            <MeterDoor label="Documents" which="docs">
+              {stats.docs}
+            </MeterDoor>
+            <MeterDoor label="Claims" which="claims">
+              {stats.claims}
+            </MeterDoor>
+            <MeterDoor label="Questions prospects asked" which="prospect">
+              {stats.prospectQuestions}
+            </MeterDoor>
+            <MeterDoor label="Live topics" which="topics">
+              {stats.topics}
+            </MeterDoor>
+            <MeterDoor label="Waiting to be read" which="pending">
+              {queue.pending}
+            </MeterDoor>
+            <MeterDoor label="Proposed topics not yet on the rail" which="proposed">
+              {queue.unindexed}
+            </MeterDoor>
             <div className={styles.itMeter}>
               <span>Reading rubric</span>
               <span className={styles.itMeterN}>{PROMPT_VERSION}</span>
@@ -109,18 +104,12 @@ export default async function IntranetHealthPage() {
           <section className={styles.itPanel}>
             <p className={styles.itPanelHead}>Today, against the ceilings</p>
             {ceiling.breached && <p className={styles.itBreach}>{ceiling.line}</p>}
-            <div className={styles.itMeter}>
-              <span>Documents read</span>
-              <span className={styles.itMeterN}>
-                {today.docs} / {CEILINGS.docsPerDay}
-              </span>
-            </div>
-            <div className={styles.itMeter}>
-              <span>Questions answered</span>
-              <span className={styles.itMeterN}>
-                {today.asks} / {CEILINGS.asksPerDay}
-              </span>
-            </div>
+            <MeterDoor label="Documents read" which="todayDocs">
+              {today.docs} / {CEILINGS.docsPerDay}
+            </MeterDoor>
+            <MeterDoor label="Questions answered" which="todayAsks">
+              {today.asks} / {CEILINGS.asksPerDay}
+            </MeterDoor>
             <div className={styles.itMeter}>
               <span>Claims into one answer</span>
               <span className={styles.itMeterN}>at most {CEILINGS.claimsPerAsk}</span>
@@ -149,7 +138,7 @@ export default async function IntranetHealthPage() {
               <div key={c.id} className={styles.itEvalRow}>
                 <span>
                   {c.question}
-                  <span className={styles.itEvalProves}> — {c.proves}</span>
+                  <span className={styles.itEvalProves}> {c.proves}</span>
                 </span>
               </div>
             ))}

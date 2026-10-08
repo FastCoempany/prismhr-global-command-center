@@ -27,6 +27,120 @@ export type StoredCitation = {
   originGone: string;
 };
 
+// ── the digest's doors (pass 10, the click-depth law) ───────────────────────
+// A Send-it digest counted what a paste carried ("Inside it I found 3
+// commitments people made …") and which index rows grew ("The index grew:
+// Pricing picked up 6 …"), and neither count opened. The digest keeps, beside
+// its words, each count's door: the claims a kind counts, by id, and each
+// grown row's topic id. Additive on the capture's meta; a digest from before
+// carries none and reads as words.
+
+export type DigestKind = { kind: string; word: string; n: number; claimIds: string[] };
+export type DigestTopic = { id: string; label: string; n: number; fresh: boolean };
+export type DigestDoors = {
+  found?: { line: string; kinds: DigestKind[] };
+  grew?: { line: string; topics: DigestTopic[] };
+};
+
+/** What each claim kind is called in the digest, in the order it is said. */
+export const KIND_WORD: Record<string, string> = {
+  fact: "facts",
+  decision: "decisions",
+  commitment: "commitments people made",
+  process: "notes on how we do things",
+  question: "open questions",
+  opinion: "opinions",
+  "prospect-question": "questions buyers asked",
+};
+
+/** "a, b, and c", the way a person lists things (IV.9). */
+export function sayList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+/** How a kind is said: its count and its word. */
+export const kindWords = (k: Pick<DigestKind, "n" | "word">): string =>
+  `${k.n} ${k.word}`;
+
+/** How a grown index row is said. */
+export const topicWords = (t: Pick<DigestTopic, "label" | "n" | "fresh">): string =>
+  t.fresh ? `"${t.label}" is brand new` : `${t.label} picked up ${t.n}`;
+
+/** The most claim ids a kind's door keeps on the capture. */
+export const DOOR_CLAIM_CAP = 200;
+
+/** The "Inside it I found …" line and its doors, from the paste's claims. */
+export function foundDoor(
+  claims: readonly { id: string; kind: string }[],
+): DigestDoors["found"] {
+  const kinds: DigestKind[] = [];
+  for (const [kind, word] of Object.entries(KIND_WORD)) {
+    const ids = claims.filter((c) => c.kind === kind).map((c) => c.id);
+    if (ids.length)
+      kinds.push({ kind, word, n: ids.length, claimIds: ids.slice(0, DOOR_CLAIM_CAP) });
+  }
+  if (!kinds.length) return undefined;
+  return { line: `Inside it I found ${sayList(kinds.map(kindWords))}.`, kinds };
+}
+
+/** The "The index grew: …" line and its doors, from the rows that grew. */
+export function grewDoor(topics: readonly DigestTopic[]): DigestDoors["grew"] {
+  if (!topics.length) return undefined;
+  const ordered = [...topics.filter((t) => !t.fresh), ...topics.filter((t) => t.fresh)];
+  return {
+    line: `The index grew: ${sayList(ordered.map(topicWords))}.`,
+    topics: ordered,
+  };
+}
+
+/** The doors a stored capture's meta carries, read defensively: anything
+ *  malformed reads as no door, and the line stays words. */
+export function doorsOf(meta: unknown): DigestDoors | undefined {
+  const d = (meta as { doors?: DigestDoors } | null)?.doors;
+  if (!d || typeof d !== "object") return undefined;
+  const found =
+    d.found &&
+    typeof d.found.line === "string" &&
+    Array.isArray(d.found.kinds) &&
+    d.found.kinds.every(
+      (k) =>
+        typeof k?.word === "string" &&
+        typeof k?.n === "number" &&
+        Array.isArray(k?.claimIds),
+    )
+      ? d.found
+      : undefined;
+  const grew =
+    d.grew &&
+    typeof d.grew.line === "string" &&
+    Array.isArray(d.grew.topics) &&
+    d.grew.topics.every((t) => typeof t?.id === "string" && typeof t?.label === "string")
+      ? d.grew
+      : undefined;
+  return found || grew ? { found, grew } : undefined;
+}
+
+// ── the health page's meters (pass 10, the click-depth law) ───────────────
+// Every meter on the brain's vital signs opens what it counts: the documents,
+// the claims, the questions buyers asked, the live and the proposed topics,
+// what still waits to be read, and today's reads and questions.
+
+export const HEALTH_LISTS = [
+  "docs",
+  "claims",
+  "prospect",
+  "topics",
+  "pending",
+  "proposed",
+  "todayDocs",
+  "todayAsks",
+] as const;
+export type HealthList = (typeof HEALTH_LISTS)[number];
+/** One row a meter opens to: what it is, and where and when it came from. */
+export type HealthRow = { text: string; meta: string };
+
 export type LedgerEntry =
   | {
       kind: "ask";
@@ -51,6 +165,8 @@ export type LedgerEntry =
       briefs: string[];
       /** V.6 — the excessively-detailed version behind the one word "failed". */
       detail: string[];
+      /** The digest's doors: each count opens what it counts (pass 10). */
+      doors?: DigestDoors;
     };
 
 /** V.6 applied to REPLAYED history: digests stored by earlier builds carried
@@ -99,7 +215,7 @@ export function sentFrom(space: string, origin: string): string {
  *  that take it from here. */
 export { chicagoDay };
 
-/** The divider's words: "Today — Wednesday, Jul 30", then "Yesterday — …",
+/** The divider's words: "Today · Wednesday, Jul 30", then "Yesterday · …",
  *  then just the date. */
 export function dayLabel(dayKey: string, nowIso: string): string {
   const named = new Date(`${dayKey}T12:00:00`).toLocaleDateString("en-US", {
@@ -108,9 +224,9 @@ export function dayLabel(dayKey: string, nowIso: string): string {
     day: "numeric",
   });
   const today = chicagoDay(nowIso);
-  if (dayKey === today) return `Today — ${named}`;
+  if (dayKey === today) return `Today · ${named}`;
   const yesterday = chicagoDay(new Date(Date.parse(nowIso) - 86_400_000).toISOString());
-  if (dayKey === yesterday) return `Yesterday — ${named}`;
+  if (dayKey === yesterday) return `Yesterday · ${named}`;
   return named;
 }
 

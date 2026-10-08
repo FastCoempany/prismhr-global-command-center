@@ -63,6 +63,12 @@ import {
 } from "@/lib/intranet/mirror";
 import { getScreen } from "@/lib/catalog";
 import { accountsMentioned } from "@/lib/intranet/bridges";
+import {
+  foundDoor,
+  grewDoor,
+  type DigestDoors,
+  type DigestTopic,
+} from "@/lib/intranet/ledger";
 import { isNamespacedAccountId } from "@/lib/today/overlay";
 import { recordRowsWhere } from "@/lib/notes/record-rows";
 import {
@@ -89,6 +95,8 @@ export type RunReport = {
   detail?: string[];
   /** V.8 — the written briefs, when a paste was read. */
   briefs?: string[];
+  /** The digest's doors, when a paste was read (pass 10). */
+  doors?: DigestDoors;
   reason?: string;
 };
 
@@ -1237,11 +1245,10 @@ function listOut(items: string[]): string {
   return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
 
-/** "The index grew: X picked up 6, and Y is brand new." */
-function grewSentence(grew: { label: string; n: number; fresh: boolean }[]): string {
-  const grown = grew.filter((g) => !g.fresh).map((g) => `${g.label} picked up ${g.n}`);
-  const fresh = grew.filter((g) => g.fresh).map((g) => `"${g.label}" is brand new`);
-  return `The index grew: ${listOut([...grown, ...fresh])}.`;
+/** "The index grew: X picked up 6, and Y is brand new." The line and its
+ *  doors come from one builder (grewDoor), so each row it names opens. */
+function grewSentence(grew: DigestTopic[]): string {
+  return grewDoor(grew)?.line ?? "";
 }
 
 /** Read what was JUST pasted, settle the index, and report the visible
@@ -1310,15 +1317,19 @@ export async function readCapture(captureId: string): Promise<RunReport> {
     const idx = await indexTopics();
 
     const after = await prisma.intranetTopic.findMany({ where: { status: "live" } });
-    const grew: { label: string; n: number; fresh: boolean }[] = [];
+    const grew: DigestTopic[] = [];
     for (const t of after) {
       const b = before.get(t.id);
       if (!b) {
-        if (t.claimCount > 0) grew.push({ label: t.label, n: t.claimCount, fresh: true });
+        if (t.claimCount > 0)
+          grew.push({ id: t.id, label: t.label, n: t.claimCount, fresh: true });
       } else if (t.claimCount > b.n) {
-        grew.push({ label: t.label, n: t.claimCount - b.n, fresh: false });
+        grew.push({ id: t.id, label: t.label, n: t.claimCount - b.n, fresh: false });
       }
     }
+    // Each count the digest says keeps its door beside it (pass 10, the
+    // click-depth law): the claims a kind counts, and each grown row's id.
+    const doors: DigestDoors = { grew: grewDoor(grew) };
 
     const lines = [...read.lines];
 
@@ -1354,24 +1365,13 @@ export async function readCapture(captureId: string): Promise<RunReport> {
 
       const claims = await prisma.intranetClaim.findMany({
         where: { docId: { in: docsRead.map((d) => d.id) } },
-        select: { kind: true, entities: true },
+        select: { id: true, kind: true, entities: true },
         take: 2000,
       });
-      const KIND_WORD: Record<string, string> = {
-        fact: "facts",
-        decision: "decisions",
-        commitment: "commitments people made",
-        process: "notes on how we do things",
-        question: "open questions",
-        opinion: "opinions",
-        "prospect-question": "questions buyers asked",
-      };
       const tally = new Map<string, number>();
       for (const c of claims) tally.set(c.kind, (tally.get(c.kind) ?? 0) + 1);
-      const found = Object.keys(KIND_WORD)
-        .filter((k) => (tally.get(k) ?? 0) > 0)
-        .map((k) => `${tally.get(k)} ${KIND_WORD[k]}`);
-      if (found.length) lines.push(`Inside it I found ${listOut(found)}.`);
+      doors.found = foundDoor(claims);
+      if (doors.found) lines.push(doors.found.line);
 
       if (grew.length) lines.push(grewSentence(grew));
 
@@ -1410,6 +1410,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
           meta: {
             ...((cap?.meta ?? {}) as object),
             digest: lines,
+            doors,
             briefs: read.briefs ?? [],
             detail: read.detail ?? [],
           },
@@ -1442,6 +1443,7 @@ export async function readCapture(captureId: string): Promise<RunReport> {
       pending: read.pending,
       briefs: read.briefs,
       detail: read.detail,
+      doors,
     };
   } catch (e) {
     return { ok: false, lines: [], reason: `The reading failed: ${reasonOf(e)}.` };

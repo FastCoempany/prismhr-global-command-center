@@ -619,6 +619,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
           canWrite={canWrite}
           busy={working.has(it.key)}
           status={it.vault?.going ? it.vault.text : undefined}
+          since={it.heldSince}
           dismissTitle={it.door === "intranet" ? HELD_X_TITLE_BRAIN : HELD_X_TITLE}
           onPick={(a, how) => pickHeld(it, a, how)}
           onDismiss={() => void dismissRow(it)}

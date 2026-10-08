@@ -4,7 +4,10 @@
 //
 //   · a row waiting on the operator (pick, mismatch) keeps its text and
 //     comes back in the same state — a disputed read waits for the pick, and
-//     a reload must not quietly turn the wait into "drop it again";
+//     a reload must not quietly turn the wait into "drop it again". It
+//     carries past the Chicago day too, saying since when (Yesterday
+//     carries, ruled pass 10 under C20 and D8): the room never quietly
+//     forgets a pick it asked for, and a held file is not yet backed up;
 //   · a row mid-read when the tab died (reading, filing, activity), or still
 //     waiting its turn to be read (queued), comes back interrupted, because
 //     its read died with the tab;
@@ -121,6 +124,10 @@ export type LedgerRow = {
   door?: "intranet";
   /** The day the row settled, M/D in Chicago: a settled row keeps the day. */
   day?: string;
+  /** The Chicago day, M/D, a waiting row was first carried past: a held row
+   *  returns the next day saying "Held since M/D." (Yesterday carries; ruled
+   *  pass 10). */
+  heldSince?: string;
   /** Their promises the filing filed as loops on their side (D10). */
   promises?: number;
   /** One amber sentence for the receipt's second line: the refused export's
@@ -217,6 +224,7 @@ export function storedRow(x: LedgerRow): LedgerRow {
     note: x.note,
     prior: x.prior,
     grab: keptGrab(x.grab),
+    heldSince: x.heldSince,
   };
   if (isWaiting(x.state)) {
     const keep = !!x.text && x.text.length <= LEDGER_TEXT_CAP;
@@ -240,6 +248,12 @@ function reconcileRow(x: LedgerRow): LedgerRow {
 
 const EMPTY = { items: [] as LedgerRow[], maxKey: 0 };
 
+/** A ledger day key (YYYY-MM-DD, Chicago) as M/D; "" when it is not one. */
+function monthDayOfKey(key: string): string {
+  const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(key);
+  return m ? `${Number(m[1])}/${Number(m[2])}` : "";
+}
+
 export function loadLedger(
   storage: LedgerStorage,
   now: Date = new Date(),
@@ -248,8 +262,19 @@ export function loadLedger(
     const raw = storage.getItem(LEDGER_KEY);
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as { day?: string; items?: LedgerRow[] };
-    if (parsed.day !== chicagoDay(now) || !Array.isArray(parsed.items)) return EMPTY;
-    const items = parsed.items.slice(0, LEDGER_CAP).map(reconcileRow);
+    if (!Array.isArray(parsed.items)) return EMPTY;
+    // Settled rows reset with the Chicago day; a waiting row carries past it
+    // and says since when (Yesterday carries; ruled pass 10 under C20 and
+    // D8). One whose text the ledger could not keep comes back interrupted
+    // and asks for the re-drop, as it does on a reload the same day.
+    const since = monthDayOfKey(parsed.day ?? "");
+    const rows =
+      parsed.day === chicagoDay(now)
+        ? parsed.items
+        : parsed.items
+            .filter((x) => isWaiting(x.state))
+            .map((x) => ({ ...x, heldSince: x.heldSince || since || undefined }));
+    const items = rows.slice(0, LEDGER_CAP).map(reconcileRow);
     return { items, maxKey: items.reduce((m, x) => Math.max(m, x.key), 0) };
   } catch {
     return EMPTY;
