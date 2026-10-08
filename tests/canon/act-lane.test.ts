@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import ts from "typescript";
 import { createElement } from "react";
 import { SearchParamsContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
 // The CSS-module hook registers on this import, before any face loads.
@@ -35,9 +36,12 @@ import {
 import { createTodoRow, type NewTodo, type TodoData } from "../../src/lib/notes/write";
 import { buildAccountSheet } from "../../src/lib/room/sheet-view";
 import {
+  actedStampOf,
   boardWords,
   csmThreadFlagOf,
   draftOnClose,
+  filterDoor,
+  laneActOf,
   forkTodo,
   liveOnBoard,
   registersOf,
@@ -885,5 +889,519 @@ describe("no action revalidates another surface (D15, pass 8 call 2)", () => {
       for (const m of SRC(f).matchAll(/\brevalidatePath\(\s*"([^"]*)"/g))
         if (m[1] !== "/accounts") offenders.push(`${f}: ${m[1]}`);
     assert.deepEqual(offenders, []);
+  });
+});
+
+// ── Pass 10: the Act Lane's and the sheet's honor rows, pinned (A8.1, A8.2,
+// A8.5 to A8.9, A8.20 to A8.24). The sheet and the lane render under
+// node:test as the operator's first paint; what a click opens is reached by
+// the rule the click runs (laneActOf, filterDoor) or by the deep link the
+// page honors (?focus= opens the drilldown). Colors, the stickiness and the
+// corner are the stylesheet's and stay on the honor list.
+
+const chipSecond = (gems: Gem[] = [gem("MEXICO ASK")]) => ({
+  gems: gems.map((g) => ({
+    term: g.term,
+    act: g.act,
+    reason: g.reason,
+    whenDay: g.whenDay,
+    cites: g.cites,
+  })),
+  act: gems[0]?.act ?? null,
+  verdict: "",
+  supportTotal: 0,
+  spikeDay: "",
+});
+const actCells = (html: string) =>
+  [...html.matchAll(/<td class="srActCell">([\s\S]*?)<\/td>/g)].map((m) => m[1]);
+const headOf = (html: string) => html.slice(0, html.indexOf("<table"));
+
+describe("the ACT column is the Move Chip, its source line beneath (A8.1, A8.2)", () => {
+  test("a row with an act shows one chip: the act, then the source line inside it", async () => {
+    const html = await renderSheet([await sheetRow({ second: chipSecond() })]);
+    const [cell] = actCells(html);
+    assert.match(
+      cell,
+      /^<span class="mchipWrap"><button type="button" class="mchip" aria-expanded="false"[^>]*>Answer Pat about Mexico\.<span class="mchipSrc">◆ MEXICO ASK · 09\/30<\/span><\/button>/,
+      cell,
+    );
+    // The chip is the cell's one shape: the hover ✓ rides it, nothing else.
+    assert.equal((cell.match(/<button/g) ?? []).length, 2);
+    assert.match(cell, /class="mtick"[^>]*>✓<\/button><\/span>$/);
+  });
+
+  test("a read-only session keeps the chip and loses the ✓", async () => {
+    const { AccountsClient } = await import("../../src/app/accounts-client");
+    const html = await render(
+      createElement(
+        SearchParamsContext.Provider,
+        { value: new URLSearchParams("") },
+        createElement(AccountsClient, {
+          rows: [await sheetRow({ second: chipSecond() })],
+          canAdd: false,
+          canWrite: false,
+          onDashboard: [],
+        }),
+      ),
+    );
+    const [cell] = actCells(html);
+    assert.ok(cell.includes('class="mchip"'));
+    assert.equal(cell.includes("mtick"), false);
+  });
+
+  test("a row with no act and no stamp leaves the cell empty", async () => {
+    const html = await renderSheet([await sheetRow()]);
+    assert.deepEqual(actCells(html), [""]);
+  });
+});
+
+describe("every ✓ stamp the sheet shows carries ↺ (A8.5)", () => {
+  test("the stamp reads the newest acted gem about an account person", () => {
+    const gems = [
+      gem("OLD ASK", { actedDay: "2026-10-01" }),
+      gem("NEW ASK", { actedDay: "2026-10-06" }),
+      gem("OPEN ASK"),
+    ];
+    assert.deepEqual(actedStampOf(gems), { day: "2026-10-06", term: "NEW ASK" });
+    assert.deepEqual(actedStampOf([gem("OPEN ASK")]), { day: "", term: "" });
+  });
+
+  test("a colleague's acted gem raises no stamp on the row (C16)", () => {
+    // The acted sweep stamps any gem the record answers, a colleague's too;
+    // the row never offered that gem's act, so it shows no stamp for it.
+    const gems = [gem("ANIKA NOTE", { whoKind: "colleague", actedDay: "2026-10-07" })];
+    assert.deepEqual(actedStampOf(gems), { day: "", term: "" });
+    assert.deepEqual(
+      actedStampOf([...gems, gem("MEXICO ASK", { actedDay: "2026-10-02" })]),
+      { day: "2026-10-02", term: "MEXICO ASK" },
+    );
+  });
+
+  test("the stamp renders with its ↺, which names the gem it takes back", async () => {
+    const html = await renderSheet([
+      await sheetRow({ actedDay: "2026-10-06", actedTerm: "MEXICO ASK" }),
+    ]);
+    const [cell] = actCells(html);
+    assert.match(
+      cell,
+      /^<span class="actedStamp"><b>✓ ACTED<\/b> · 10\/06 · <button type="button" class="actedTb"[^>]*>↺<\/button><\/span>$/,
+      cell,
+    );
+  });
+});
+
+describe("the chip opens the Act Lane on its own act (A8.6, partial)", () => {
+  test("the chip is the lane's door, and the lane it opens is the standing workbench", async () => {
+    const row = await sheetRow({ second: chipSecond() });
+    const html = await renderSheet([row]);
+    // The door: a button that says whether the lane is out.
+    assert.match(
+      actCells(html)[0],
+      /<button type="button" class="mchip" aria-expanded="false"/,
+    );
+    // The sheet sits in the lane's wrap, so the lane opens beside it.
+    assert.match(html, /<div class="laneWrap"><div class="laneMain"><table/);
+    // What the click opens: the lane on the chip's own act.
+    const act = laneActOf(row as unknown as AccountRow);
+    assert.ok(act);
+    assert.equal(act.act, "Answer Pat about Mexico.");
+    assert.equal(act.term, "MEXICO ASK");
+    const lane = await renderLane(act);
+    assert.match(lane, /^<aside class="actLane" aria-label="The act workbench">/);
+  });
+
+  test("no chip, no lane", async () => {
+    assert.equal(laneActOf((await sheetRow()) as unknown as AccountRow), null);
+    assert.equal(laneActOf(undefined), null);
+  });
+});
+
+describe("the lane runs top to bottom: evidence, the draft, then Send, File and the fork (A8.7, A8.8, A8.9)", () => {
+  const cites = [
+    { k: "r1", day: "2026-09-30", who: "Pat Lee", subject: "Mexico" },
+    { k: "r2", day: "2026-10-02", who: "Pat Lee", subject: "Re: Mexico" },
+  ];
+
+  test("every citation is a door above the draft (A8.7, partial)", async () => {
+    const html = await renderLane(laneAct({ cites }));
+    const doors = [
+      ...html.matchAll(/<button type="button" class="srCite">([\s\S]*?)<\/button>/g),
+    ];
+    assert.equal(doors.length, 2);
+    assert.match(textOf(doors[0][1]), /^09\/30 · Pat Lee · Mexico ▸ read it$/);
+    const lastDoor = html.lastIndexOf('class="srCite"');
+    assert.ok(
+      lastDoor < html.indexOf('aria-label="To"'),
+      "evidence sits above the draft",
+    );
+    assert.ok(html.indexOf('class="actLaneAct"') < html.indexOf('class="srCite"'));
+  });
+
+  test("TO carries the relationship contact and SUBJECT the act; the body starts blank (A8.8)", async () => {
+    const row = await sheetRow({
+      second: chipSecond(),
+      contactName: "Pat Lee",
+      contactEmail: "pat@simploy.com",
+    });
+    const act = laneActOf(row as unknown as AccountRow);
+    assert.ok(act);
+    assert.equal(act.to, "Pat Lee");
+    assert.equal(act.toEmail, "pat@simploy.com");
+    assert.equal(act.subject, "Answer Pat about Mexico.");
+    assert.equal(act.body, "");
+    const html = await renderLane(act);
+    assert.match(html, /<input aria-label="To" value="Pat Lee"\/>/);
+    assert.match(
+      html,
+      /<input aria-label="Subject" value="Answer Pat about Mexico\."\/>/,
+    );
+    assert.match(html, /<textarea[^>]*aria-label="Draft body"><\/textarea>/);
+  });
+
+  test("a saved, unsent draft outranks the seed in every field (A8.8)", async () => {
+    const row = await sheetRow({
+      second: chipSecond(),
+      actDraft: {
+        to: "Dana Reyes",
+        subject: "Mexico, the model",
+        body: "Half a thought",
+      },
+    });
+    const act = laneActOf(row as unknown as AccountRow);
+    assert.ok(act);
+    assert.deepEqual(
+      { to: act.to, subject: act.subject, body: act.body },
+      { to: "Dana Reyes", subject: "Mexico, the model", body: "Half a thought" },
+    );
+  });
+
+  test("Send, File and the fork sit at the foot, after the draft, in that order (A8.9)", async () => {
+    const html = await renderLane(laneAct());
+    const at = (needle: string) => {
+      const i = html.indexOf(needle);
+      assert.ok(i >= 0, `missing ${needle}`);
+      return i;
+    };
+    const order = [
+      at('aria-label="Draft body"'),
+      at("Send it → mail"),
+      at("✓ File as done"),
+      at("Save the draft"),
+      at("FILE IT · TODAY"),
+    ];
+    assert.deepEqual(
+      [...order].sort((a, b) => a - b),
+      order,
+    );
+    assert.ok(html.endsWith("</div></aside>"), "nothing follows the fork");
+  });
+
+  test("a read-only session gets the evidence and the draft, and no foot", async () => {
+    const { default: ActLane } = await import("../../src/app/accounts/act-lane");
+    const html = await render(
+      createElement(ActLane, {
+        act: laneAct({ cites }),
+        canWrite: false,
+        onClose: () => {},
+      }),
+    );
+    assert.ok(html.includes('class="srCite"'));
+    assert.ok(html.includes('aria-label="Draft body"'));
+    for (const gone of ["Send it → mail", "✓ File as done", "FILE IT · TODAY"])
+      assert.equal(html.includes(gone), false, gone);
+  });
+});
+
+describe("the sheet's head after the retirements (A8.20 to A8.24)", () => {
+  const rows = async () => [
+    await sheetRow({
+      second: chipSecond(),
+      play: "displacement",
+      competitors: ["Velocity Global"],
+    }),
+    await sheetRow({ id: "B2", name: "Acme", play: "greenfield" }),
+    await sheetRow({ id: "C3", name: "Brightway" }),
+  ];
+
+  test("six columns, titled; Stage, Next action and Play are gone (A8.20)", async () => {
+    const html = await renderSheet(await rows());
+    const heads = [
+      ...html.matchAll(/<button type="button" class="thSort"[^>]*>([^<]*)</g),
+    ].map((m) => m[1]);
+    assert.deepEqual(heads, [
+      "Account",
+      "Global fit",
+      "Demand",
+      "Last human touch",
+      "The signal",
+      "Act",
+    ]);
+    assert.equal((html.match(/<th[ >]/g) ?? []).length, 6);
+    // Every row carries exactly the six cells.
+    const firstRow = html.slice(
+      html.indexOf("<tbody>"),
+      html.indexOf("</tr>", html.indexOf("<tbody>")),
+    );
+    assert.equal((firstRow.match(/<td[ >]/g) ?? []).length, 6);
+  });
+
+  test("the play reads in the drilldown's meta line (A8.20)", async () => {
+    const r = await rows();
+    const disp = await renderSheet(r, `focus=${ACCT}`);
+    assert.match(
+      disp,
+      /<p class="acctMetaLine">[^<]*· PLAY · DISPLACE \(VELOCITY GLOBAL\)<\/p>/,
+    );
+    const green = await renderSheet(r, "focus=B2");
+    assert.match(green, /<p class="acctMetaLine">[^<]*· PLAY · GREENFIELD<\/p>/);
+  });
+
+  test("no rail: one mono Filter Door at the shoulder, resting closed (A8.21, partial)", async () => {
+    const head = headOf(await renderSheet(await rows()));
+    assert.match(
+      head,
+      /<div class="fdoorRow"><button type="button" class="fdoor" aria-expanded="false">FILTERS ▾<\/button><\/div>/,
+    );
+    assert.equal(head.includes("<select"), false, "a filter control rides at arrival");
+    assert.equal(head.includes("<aside"), false, "a rail rides beside the sheet");
+  });
+
+  test("a live filter keeps the door lit and names every live one (A8.21)", () => {
+    const none = { csm: "", industry: "", tier: "", play: "", stage: "" };
+    assert.deepEqual(filterDoor(none), { live: false, label: "FILTERS ▾" });
+    assert.deepEqual(filterDoor({ ...none, tier: "high" }), {
+      live: true,
+      label: "FILTERS · FIT ▾",
+    });
+    assert.deepEqual(
+      filterDoor({
+        csm: "Anika Steenstra",
+        industry: "PEO",
+        tier: "high",
+        play: "greenfield",
+        stage: "DEMO",
+      }),
+      { live: true, label: "FILTERS · PARTNERS · MODELS · FIT · PLAYS · STAGES ▾" },
+    );
+  });
+
+  test("the column titles are the only sort: each title is a button and no sort control exists (A8.22, partial)", async () => {
+    const html = await renderSheet(await rows());
+    const ths = [...html.matchAll(/<th(?:\s[^>]*)?>([\s\S]*?)<\/th>/g)].map((m) => m[1]);
+    assert.equal(ths.length, 6);
+    for (const th of ths)
+      assert.match(th, /^<button type="button" class="thSort" title="Sort by /);
+    assert.equal(html.includes("<select"), false);
+    assert.equal(
+      /\bsort\b/i.test(textOf(headOf(html))),
+      false,
+      "a sort control rides the head",
+    );
+  });
+
+  test("no header subtext, no hot-signal bar, no ⊞; the dashboard door is plain words (A8.23)", async () => {
+    const r = await rows();
+    const html = await renderSheet(r, "focus=B2");
+    const head = headOf(html);
+    // The page head is the title and its two icons; nothing between the
+    // search and the sheet but the Filter Door's row.
+    assert.match(
+      head,
+      /^<div class="pageHead"><h1 class="h1">Account Room<\/h1><button[^>]*>⧉<\/button><button[^>]*>⇩<\/button><\/div><div class="searchWrap">[\s\S]*?<\/div><div class="fdoorRow">[\s\S]*?<\/div><div class="laneWrap"><div class="laneMain">$/,
+      head,
+    );
+    assert.equal(html.includes("⊞"), false);
+    assert.match(
+      html,
+      /<button class="addMini" type="submit">Put it on the dashboard<\/button>/,
+    );
+    const { AccountsClient } = await import("../../src/app/accounts-client");
+    const on = await render(
+      createElement(
+        SearchParamsContext.Provider,
+        { value: new URLSearchParams("focus=B2") },
+        createElement(AccountsClient, {
+          rows: r,
+          canAdd: true,
+          canWrite: true,
+          onDashboard: ["Acme"],
+        }),
+      ),
+    );
+    assert.ok(textOf(on).includes("ON THE DASHBOARD · CLEARED WITH THE CSM"));
+    assert.equal(on.includes("⊞"), false);
+  });
+
+  test("the count rides the Account title; ⧉ and ⇩ ride the page title; the search has its glyph (A8.24, partial)", async () => {
+    const html = await renderSheet(await rows());
+    assert.match(
+      html,
+      /<th><button type="button" class="thSort" title="Sort by account">Account<\/button><span class="thCount">3 of 3<\/span><\/th>/,
+    );
+    assert.match(
+      html,
+      /<div class="pageHead"><h1 class="h1">Account Room<\/h1><button type="button" class="iconBtn" title="Copy the list" aria-label="Copy the list">⧉<\/button><button type="button" class="iconBtn" title="Export CSV" aria-label="Export CSV">⇩<\/button><\/div>/,
+    );
+    assert.match(
+      html,
+      /<div class="searchWrap"><span class="searchGlyph" aria-hidden="true">⌕<\/span><input class="searchDeep"/,
+    );
+  });
+});
+
+// ── Pass 10, the copy beside the rows: every operator string on the sheet,
+// the Salesforce checkpoint's tooltip, the THEIRS line's empty excerpt and
+// the bank's world tag, run through the canon lint. The strings are read out
+// of the source by the compiler's own parser (JSX text, string attributes,
+// string and template literals), so a new tooltip is linted the day it
+// lands. An empty cell's lone "—" is a glyph, not an aside.
+describe("the sheet's copy obeys the writing canon and the plain-speech law", () => {
+  const FILES = [
+    "src/app/accounts-client.tsx",
+    "src/components/sf.tsx",
+    "src/app/room/theirs-line.tsx",
+    "src/app/asks/page.tsx",
+  ];
+  // What is code, not copy: class lists, URLs, keys, ids and the like.
+  const SKIP_ATTR = new Set(["className", "href", "key", "id", "name", "type", "value"]);
+  const CODE = /^(use client|[\w-]*[./:?&=%][\w./:?&=%-]*|[a-z]+(-[a-z]+)+)$/;
+  const copyOf = (file: string): { at: string; text: string }[] => {
+    const src = readFileSync(join(process.cwd(), file), "utf8");
+    const sf = ts.createSourceFile(
+      file,
+      src,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const out: { at: string; text: string }[] = [];
+    const push = (n: ts.Node, text: string) => {
+      const t = text.replace(/\s+/g, " ").trim();
+      if (!t || t === "—" || !/[a-z]{2}/i.test(t) || CODE.test(t)) return;
+      out.push({
+        at: `${file}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1}`,
+        text: t,
+      });
+    };
+    const visit = (n: ts.Node): void => {
+      if (ts.isImportDeclaration(n) || ts.isExportDeclaration(n)) return;
+      if (ts.isJsxAttribute(n) && SKIP_ATTR.has(n.name.getText())) return;
+      if (
+        ts.isCallExpression(n) &&
+        /\b(encodeURIComponent|fetch|getElementById|startsWith|split|replace|join|test|match)\b/.test(
+          n.expression.getText(),
+        )
+      )
+        return;
+      if (ts.isElementAccessExpression(n) || ts.isPropertyAccessExpression(n)) return;
+      if (ts.isJsxText(n)) push(n, n.text.replace(/&rsquo;/g, "\u2019"));
+      else if (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n))
+        push(n, n.text);
+      else if (ts.isTemplateExpression(n)) {
+        // The static words, with each slot read as a name.
+        push(
+          n,
+          [n.head.text, ...n.templateSpans.map((x) => `Simploy${x.literal.text}`)].join(
+            "",
+          ),
+        );
+        return;
+      }
+      ts.forEachChild(n, visit);
+    };
+    visit(sf);
+    return out;
+  };
+  const FORMAT_ONLY = /the cap is eight|a digit that is not a date/;
+  const sentencesOf = (t: string) =>
+    t
+      .split(/(?<=[.!?])\s+/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+  test("no string carries a dash aside, a parenthetical or a device", () => {
+    const found: string[] = [];
+    for (const file of FILES)
+      for (const { at, text } of copyOf(file)) {
+        if (/[—–]/.test(text.replace(/^—$/, ""))) found.push(`${at}: a dash · ${text}`);
+        if (/\(/.test(text)) found.push(`${at}: a parenthetical · ${text}`);
+        for (const line of sentencesOf(text))
+          for (const f of lintReason(line).faults.filter((x) => !FORMAT_ONLY.test(x)))
+            found.push(`${at}: ${f} · ${line}`);
+      }
+    assert.deepEqual(found, []);
+  });
+
+  test("the sweep reads real copy: the strings it fixed are in scope and the lint catches them", () => {
+    const texts = FILES.flatMap(copyOf).map((x) => x.text);
+    assert.ok(texts.includes("Open the gem with its citations and emails."));
+    assert.ok(
+      texts.some((t) => t.startsWith("Salesforce is the record")) ||
+        texts.includes("Salesforce is the record"),
+    );
+    assert.ok(texts.includes("· general knowledge"));
+    // The CSM's rhythm with the client is their check-ins; never "Cadence".
+    assert.ok(texts.includes("Check-ins"));
+    assert.equal(
+      texts.some((t) => /\bcadence\b/i.test(t)),
+      false,
+    );
+    const faults = (t: string) => sentencesOf(t).flatMap((x) => lintReason(x).faults);
+    assert.ok(
+      faults("The app is your operating layer, not the truth.").includes("antithesis"),
+    );
+    assert.ok(
+      faults(
+        "When it's sent, drop the .eml in the Chute — that files the touch.",
+      ).includes("a dash hinge"),
+    );
+  });
+});
+
+// ── Pass 10, the sheet's green: the brand's #22C55E by role. On the pale
+// field it is too light for words, so a green state is tint and border and
+// its words stay ink (room.module.css .worked). The stylesheet is the only
+// place a color lives, so this pin reads it.
+describe("the sheet's green is the brand's, by role", () => {
+  const css = readFileSync(
+    join(process.cwd(), "src/app/command-center.module.css"),
+    "utf8",
+  );
+  const rule = (sel: string) => {
+    const m = new RegExp(
+      `(?:^|\\n)${sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`,
+    ).exec(css);
+    assert.ok(m, `${sel} is gone`);
+    return m[1];
+  };
+
+  test("the token is the brand green, and no rule writes words in it", () => {
+    assert.match(rule(".wrap"), /--green:\s*#22c55e;/i);
+    assert.doesNotMatch(css, /(?:^|[\s;{])color:\s*var\(--green\)/);
+    assert.doesNotMatch(css, /#1a7f3c|#15803d(?=;\s*\n\s*border-radius: 5px)/i);
+  });
+
+  test("every green state is tint and border with ink words", () => {
+    for (const sel of [
+      ".stageWon",
+      ".approachGo",
+      ".valConfirmed",
+      ".prTag_reply",
+      ".mtick:hover",
+      ".actedStamp b",
+    ]) {
+      const r = rule(sel);
+      assert.match(r, /rgba\(34, 197, 94, 0\.1\d?\)/, `${sel} has no green tint`);
+      assert.match(r, /color:\s*(?:var\(--ink\)|#0a1c40)/i, `${sel} words are not ink`);
+      assert.match(
+        r,
+        /(?:border(?:-color)?:[^;]*(?:#22c55e|var\(--green\)|rgba\(34, 197, 94)|box-shadow:\s*inset[^;]*rgba\(34, 197, 94)/i,
+        `${sel} has no green edge`,
+      );
+    }
+  });
+
+  test("the dead stash tag is gone", () => {
+    assert.equal(css.includes(".prTag_stash"), false);
   });
 });

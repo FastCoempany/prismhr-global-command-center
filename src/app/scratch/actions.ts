@@ -10,11 +10,13 @@
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
-import { redactMoney } from "@/lib/intel/lexicon";
 import {
   SCRATCH_GONE_NS,
   SCRATCH_NS,
+  padQuestion,
+  restoreLine,
   scratchPage,
+  scratchRow,
   strikeLine,
   type ScratchCursor,
   type ScratchLine,
@@ -76,22 +78,14 @@ export async function scratchAdd(
   // The paper keeps figures (founder-decreed 2026-08-21): the pad routes
   // nowhere by construction — no account view, no mirror, no brain — so the
   // money doctrine's boundary holds at the pad's edge. The ask door still
-  // redacts; asks leave the paper.
-  const text = (body ?? "").trim().slice(0, 500);
-  if (!text) return { ok: false, reason: "Write something first." };
+  // redacts; asks leave the paper. The row is scratchRow's (src/lib/scratch.ts).
+  const at = new Date();
+  const row = scratchRow(body, at);
+  if (!row) return { ok: false, reason: "Write something first." };
   try {
-    const at = new Date();
-    const n = await createAccountNoteRow({
-      accountId: SCRATCH_NS,
-      kind: "mine",
-      body: text,
-      door: "hand",
-      lane: "mine",
-      source: "scratch",
-      at,
-      keepFigures: true,
-    });
-    return { ok: true, line: { id: n.id, body: text, at: at.toISOString() } };
+    // The door rides on the row; it is named here for the writer contract (P3).
+    const n = await createAccountNoteRow({ ...row, door: row.door });
+    return { ok: true, line: { id: n.id, body: row.body, at: at.toISOString() } };
   } catch {
     return { ok: false, reason: "The line didn't keep. Try again." };
   }
@@ -160,7 +154,7 @@ function emptyNote(considered: number, backlog: number): string {
       : "The record held nothing on this.";
   const behind =
     backlog > 0
-      ? ` The brain is ${backlog} docs behind on reading — ask again in a minute.`
+      ? ` The brain is ${backlog} docs behind on reading. Ask again in a minute.`
       : "";
   return `${read}${behind}`;
 }
@@ -178,7 +172,7 @@ export async function padAsk(question: string): Promise<{
 }> {
   const access = await padAccess();
   if (access !== "write") return { ok: false, reason: "Read-only session." };
-  const q = redactMoney((question ?? "").trim()).slice(0, 300);
+  const q = padQuestion(question);
   if (!q) return { ok: false, reason: "Ask something first." };
 
   if ((await unreadDocs()) > 0)
@@ -296,7 +290,7 @@ export async function padAskRead(): Promise<void> {
 
 // Edit in place (founder-decreed 2026-08-21): the visible text changes, the
 // line keeps its seat and its timestamp — the same ✎ gesture the room's
-// sheet lines carry. Money is redacted on the rewrite like on the write.
+// sheet lines carry. Figures survive the rewrite as they survive the write.
 export async function scratchEdit(
   id: string,
   body: string,
@@ -376,10 +370,7 @@ export async function scratchRestore(
   const clean = (id ?? "").trim().slice(0, 40);
   if (!clean) return { ok: false, reason: "Nothing to bring back." };
   try {
-    await getPrisma().accountNote.updateMany({
-      where: { id: clean, accountId: SCRATCH_GONE_NS },
-      data: { accountId: SCRATCH_NS },
-    });
+    await restoreLine(getPrisma(), clean);
     return { ok: true };
   } catch {
     return { ok: false, reason: "The restore didn't take. Try again." };

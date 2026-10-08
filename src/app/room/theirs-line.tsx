@@ -61,7 +61,7 @@ export default function TheirsLine({
         ...excerpts,
         [k]: j.ok
           ? j.row?.excerpt ||
-            "The row carries no comment body — the subject is the whole entry."
+            "The row carries no comment body. The subject is the whole entry."
           : (j.reason ?? "The row isn't in the staged slice."),
       });
     } catch {
@@ -79,7 +79,7 @@ export default function TheirsLine({
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          title="The second record's verified read on this account — opens the gems, the meat one click deeper"
+          title="The second record's verified read on this account. Opens the gems and their emails."
         >
           {label}
         </button>

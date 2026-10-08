@@ -194,7 +194,7 @@ export default function ActLane({
         ...excerpts,
         [k]: j.ok
           ? j.row?.excerpt ||
-            "The row carries no comment body — the subject is the whole entry."
+            "The row carries no comment body. The subject is the whole entry."
           : (j.reason ?? "The row isn't in the staged slice."),
       });
     } catch {

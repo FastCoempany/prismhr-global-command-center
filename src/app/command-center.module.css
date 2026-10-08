@@ -8,7 +8,10 @@
   --line: #e6ebf3;
   --ink: #0a1c40;
   --muted: #5b6b86;
-  --green: #1a7f3c;
+  /* The brand's green (#22C55E), by role: real health. On this pale field it
+     is too light for words, so a green state takes it as tint and border
+     and keeps its words in ink. */
+  --green: #22c55e;
   max-width: 1200px;
   margin: 0 auto;
   padding: 22px 28px 90px;
@@ -453,8 +456,9 @@
   color: var(--blue-d);
 }
 .stageWon {
-  background: #e4f7ea;
-  color: var(--green);
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.55);
 }
 .chip {
   font-size: 11px;
@@ -483,8 +487,9 @@
   color: #b6531a;
 }
 .approachGo {
-  background: #e4f7ea;
-  color: var(--green);
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.55);
 }
 .hint {
   color: var(--muted);
@@ -740,8 +745,9 @@
   white-space: nowrap;
 }
 .valConfirmed {
-  background: #e4f7ea;
-  color: var(--green);
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.55);
 }
 .valFlagged {
   background: #fde7e7;
@@ -1200,14 +1206,9 @@
   border-color: #f5cfae;
 }
 .prTag_reply {
-  background: #e4f7ea;
-  color: var(--green);
-  border-color: #a7e0bd;
-}
-.prTag_stash {
-  background: #efe9fa;
-  color: #5b3aa8;
-  border-color: #d7c8f2;
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--ink);
+  border-color: rgba(34, 197, 94, 0.55);
 }
 .prBody {
   flex: 1;
@@ -3856,8 +3857,8 @@ button.srVerdict:hover {
   opacity: 1;
 }
 .mtick:hover {
-  color: #fff;
-  background: var(--green);
+  color: var(--ink);
+  background: rgba(34, 197, 94, 0.12);
   border-color: var(--green);
 }
 .actedStamp {
@@ -3867,8 +3868,15 @@ button.srVerdict:hover {
   color: rgba(10, 28, 64, 0.42);
   white-space: nowrap;
 }
+/* The stamp's mark: the brand's green by role, because the act is real work
+   done. The accent is the border and the tint; the words stay ink, as the
+   room's worked mark does (room.module.css .worked). */
 .actedStamp b {
-  color: #15803d;
+  border: 1px solid #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  color: #0a1c40;
+  border-radius: 5px;
+  padding: 0 6px;
 }
 .actedTb {
   border: 0;

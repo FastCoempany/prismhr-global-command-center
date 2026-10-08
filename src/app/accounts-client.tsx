@@ -67,7 +67,8 @@ import SecondRecordPanel, {
 import type { LastHumanTouch } from "@/lib/record/accounts";
 import {
   csmThreadFlagOf,
-  sendFlagOf,
+  filterDoor,
+  laneActOf,
   type Collision,
   type TouchCite,
 } from "./accounts/rules";
@@ -146,7 +147,7 @@ function ValidateControls({
             min="0"
             max="100"
             required
-            placeholder="Demand 0–100"
+            placeholder="Demand, 0 to 100"
             aria-label="Adjusted demand"
           />
           <input
@@ -596,7 +597,7 @@ function EngagementPanel({ a }: { a: AccountRow }) {
         <input type="hidden" name="accountId" value={a.id} />
         <div className={styles.engageGrid}>
           <label className={styles.engageField}>
-            <span>Cadence</span>
+            <span>Check-ins</span>
             <input
               name="cadence"
               defaultValue={e.cadence}
@@ -755,14 +756,8 @@ export function AccountsClient({
   }, [rows, q, csm, industry, tier, play, stageF, colSort]);
 
   // The door stays lit and named while any filter is live — filtered state
-  // is never invisible behind a closed strip.
-  const activeFilters = [
-    csm && "PARTNERS",
-    industry && "MODELS",
-    tier && "FIT",
-    play && "PLAYS",
-    stageF && "STAGES",
-  ].filter((f): f is string => Boolean(f));
+  // is never invisible behind a closed strip (filterDoor, ./accounts/rules).
+  const door = filterDoor({ csm, industry, tier, play, stage: stageF });
 
   const clickSort = (key: ColKey) =>
     setColSort(
@@ -781,34 +776,19 @@ export function AccountsClient({
     router.refresh();
   };
 
-  const laneRow = laneId ? rows.find((r) => r.id === laneId) : undefined;
-  const laneGem = laneRow?.second?.gems[0];
-  const laneAct: LaneAct | null =
-    laneRow && laneRow.second?.act && laneGem
-      ? {
-          accountId: laneRow.id,
-          accountName: laneRow.name,
-          term: laneGem.term,
-          act: laneRow.second.act,
-          reason: laneGem.reason,
-          whenDay: laneGem.whenDay,
-          cites: laneGem.cites,
-          to: laneRow.actDraft?.to ?? laneRow.contactName,
-          toEmail: laneRow.contactEmail,
-          subject: laneRow.actDraft?.subject ?? laneRow.second.act,
-          body: laneRow.actDraft?.body ?? "",
-          onBoard: laneRow.onBoard,
-          flag: sendFlagOf(laneRow.collision),
-        }
-      : null;
+  // The lane's seed is a rule (laneActOf, ./accounts/rules): TO from the
+  // relationship contact, SUBJECT from the act, a saved draft over both.
+  const laneAct: LaneAct | null = laneId
+    ? laneActOf(rows.find((r) => r.id === laneId))
+    : null;
 
   const copyList = async () => {
     const text = filtered
       .map(
         (r) =>
-          `${r.name} — fit ${r.score}${r.demand != null ? `, demand ${r.demand}` : ""}${
+          `${r.name} · fit ${r.score}${r.demand != null ? `, demand ${r.demand}` : ""}${
             r.play
-              ? `, ${r.play}${r.competitors.length ? ` (${r.competitors.join("/")})` : ""}`
+              ? `, ${r.play}${r.competitors.length ? ` of ${r.competitors.join("/")}` : ""}`
               : ""
           } · ${r.csm}`,
       )
@@ -927,13 +907,11 @@ export function AccountsClient({
       <div className={styles.fdoorRow}>
         <button
           type="button"
-          className={
-            activeFilters.length ? `${styles.fdoor} ${styles.fdoorLive}` : styles.fdoor
-          }
+          className={door.live ? `${styles.fdoor} ${styles.fdoorLive}` : styles.fdoor}
           onClick={() => setFiltersOpen(!filtersOpen)}
           aria-expanded={filtersOpen}
         >
-          FILTERS{activeFilters.map((f) => ` · ${f}`).join("")} ▾
+          {door.label}
         </button>
       </div>
       {filtersOpen && (
@@ -946,7 +924,7 @@ export function AccountsClient({
             <option value="">Partners</option>
             {partners.map((c) => (
               <option key={c} value={c}>
-                {c} — {partnerRole(c)}
+                {c} · {partnerRole(c)}
               </option>
             ))}
           </select>
@@ -1145,7 +1123,7 @@ export function AccountsClient({
                             className={styles.srTerm}
                             onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
                             aria-expanded={srOpenId === a.id}
-                            title="A verified gem — opens the card, citations, and the email meat"
+                            title="Open the gem with its citations and emails."
                           >
                             {a.second.gems[0].term}
                             {a.second.gems.length > 1 && (
@@ -1161,7 +1139,7 @@ export function AccountsClient({
                             className={`${styles.srTerm} ${styles.srTermSupport}`}
                             onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
                             aria-expanded={srOpenId === a.id}
-                            title="Heavy support traffic — opens the case list and the meat"
+                            title="Heavy support traffic. Open the cases and their emails."
                           >
                             ▮ {a.second.supportTotal} CASES
                           </button>
@@ -1187,7 +1165,7 @@ export function AccountsClient({
                               className={styles.mchip}
                               onClick={() => setLaneId(laneId === a.id ? "" : a.id)}
                               aria-expanded={laneId === a.id}
-                              title="Work the act on the lane — the draft, the evidence, the fork"
+                              title="Open the act on the lane, with its evidence and the draft."
                             >
                               {a.second.act}
                               <span className={styles.mchipSrc}>
@@ -1199,7 +1177,7 @@ export function AccountsClient({
                               <button
                                 type="button"
                                 className={styles.mtick}
-                                title="Mark acted — files the stamp, clears the nag"
+                                title="Mark it acted. The nag clears."
                                 onClick={() => tickActed(a.id, a.second!.gems[0].term)}
                               >
                                 ✓
@@ -1215,7 +1193,7 @@ export function AccountsClient({
                                 <button
                                   type="button"
                                   className={styles.actedTb}
-                                  title="Take it back — the chip returns"
+                                  title="Take it back. The chip returns."
                                   onClick={() => tickUnacted(a.id, a.actedTerm)}
                                 >
                                   ↺
@@ -1446,7 +1424,7 @@ export function AccountsClient({
                                     {a.contactName}, the relationship
                                     {a.contactEmail && (
                                       <>
-                                        {" — "}
+                                        {" · "}
                                         <a href={`mailto:${a.contactEmail}`}>
                                           {a.contactEmail}
                                         </a>
@@ -1609,7 +1587,7 @@ function DraftDialog({
 
   const mailto = `mailto:${encodeURIComponent(contact.email)}${
     cc.length ? `?cc=${encodeURIComponent(cc.join(","))}&` : "?"
-  }subject=${encodeURIComponent(subject || `${accountName} — PrismHR Global`)}&body=${encodeURIComponent(
+  }subject=${encodeURIComponent(subject || `PrismHR Global for ${accountName}`)}&body=${encodeURIComponent(
     body.slice(0, 1800),
   )}`;
 
@@ -1812,7 +1790,7 @@ function DraftDialog({
         </div>
         <p className={styles.draftFoot}>
           Outlook opens with the addresses and the draft on it. When it&rsquo;s sent, drop
-          the .eml in the Chute — that files the touch.
+          the .eml in the Chute. That files the touch.
         </p>
       </div>
     </div>
@@ -1859,7 +1837,7 @@ function ContactsPanel({
         className={`${styles.ctcToggle} ${styles.ctcLead}`}
         onClick={openUp}
       >
-        {open ? "▾" : "▸"} Contacts ({list ? list.length : count})
+        {open ? "▾" : "▸"} Contacts · {list ? list.length : count}
         {list?.some((c) => c.fromRecord) && (
           <span className={styles.ctcFromRec}>
             {list.filter((c) => c.fromRecord).length} from the record
@@ -1909,11 +1887,11 @@ function ContactsPanel({
                       {c.first} {c.last}
                     </b>
                   )}
-                  {c.title && <span className={styles.ctcTitle}> — {c.title}</span>}
+                  {c.title && <span className={styles.ctcTitle}> · {c.title}</span>}
                   {c.fromRecord && (
                     <span
                       className={styles.ctcFromRec}
-                      title={`Discovered in the account's own record${c.firstSeen ? ` · first seen ${c.firstSeen.slice(0, 10)}` : ""} — not in the SF export yet.`}
+                      title={`Found in the account's own record${c.firstSeen ? ` · first seen ${c.firstSeen.slice(0, 10)}` : ""}. The SF export doesn't have them yet.`}
                     >
                       from the record
                     </span>
@@ -1922,7 +1900,7 @@ function ContactsPanel({
                     <button
                       type="button"
                       className={styles.ctcDraft}
-                      title="Draft an email to them — the brain helps write it, Outlook sends it."
+                      title="Draft an email to them. The brain helps write it and Outlook sends it."
                       onClick={() => setDrafting(c)}
                     >
                       ✎ Draft
