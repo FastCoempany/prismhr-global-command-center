@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
-import { csms, getPeo } from "@/lib/book";
+import { csms } from "@/lib/book";
 import { EXTRA_PARTNERS, partnerRole } from "@/lib/book/partners";
 import {
   loadAccountNotes,
@@ -10,8 +10,8 @@ import {
   loadPartnerNotes,
   loadTouches,
 } from "@/lib/today/overlay";
-import { contactsFor } from "@/lib/book/contacts";
-import { relationshipFor } from "@/lib/intel/relationship";
+import { homeSideFrom } from "@/lib/pipeline/build";
+import { declaredHomeSide } from "@/lib/record/stores";
 import { accountIntel, partnerKickoff, partnerOutreachKey } from "@/lib/today/build";
 import { ownPassesFrom } from "@/lib/intel/deep-research";
 import type { Touch } from "@/lib/today/follow-ups";
@@ -19,6 +19,7 @@ import type { DraftRecipient } from "@/lib/claude/prompt";
 import { LocalTime } from "../today-client";
 import { addPartnerNote, deletePartnerNote } from "./actions";
 import { DraftDesk } from "./draft-desk";
+import { relationshipAt } from "./recipients";
 import { visibleNotes } from "./visible";
 import styles from "../command-center.module.css";
 
@@ -123,6 +124,10 @@ export default async function PartnersPage() {
     new Set(),
   );
 
+  // Our side, declared, over the whole book: a colleague is never the
+  // relationship (pass 8 call 7).
+  const homeSide = declaredHomeSide(homeSideFrom(allAcctNotes));
+
   // Recipient intelligence for the drafting desk: the partner themselves,
   // then the RELATIONSHIP at each teed-up account — the record's person, the
   // book seed only when the record is silent (Ted doctrine). A draft to the
@@ -132,11 +137,7 @@ export default async function PartnersPage() {
       { name: partner, role: `${partnerRole(partner)} partner at PrismHR` },
     ];
     for (const a of kickoff.find((k) => k.partner === partner)?.accounts ?? []) {
-      const p = getPeo(a.id);
-      const rel = relationshipFor(acctNotes.get(a.id) ?? [], contactsFor(a.id), {
-        name: p?.contactName,
-        email: p?.contactEmail,
-      });
+      const rel = relationshipAt(acctNotes.get(a.id) ?? [], a.id, homeSide);
       if (rel.name) out.push({ name: rel.name, role: `contact at ${a.name}` });
     }
     return out;

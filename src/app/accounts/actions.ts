@@ -16,12 +16,11 @@ export async function applyPlay(formData: FormData) {
 import { redirect } from "next/navigation";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { contactsFor, type BookContact } from "@/lib/book/contacts";
+import { contactsFor } from "@/lib/book/contacts";
 import { getPeo } from "@/lib/book";
-import { discoveredContacts, domainOfAccount } from "@/lib/book/live-contacts";
-import { peopleFor } from "@/lib/intel/people";
-import { loadDispositions } from "@/lib/today/overlay";
-import { unparked } from "./rules";
+import { domainOfAccount } from "@/lib/book/live-contacts";
+import { firstRecordReadFor } from "@/lib/activity/run";
+import { EMPTY_CONTACT, recordContactRows, type ContactRow } from "./contacts";
 
 function str(fd: FormData, key: string, max = 4000) {
   const v = fd.get(key);
@@ -119,20 +118,7 @@ export async function toggleSfChecked(formData: FormData) {
 // The account's full contact roster (from the 7/24 SF contact reports) —
 // fetched on demand when a Contacts panel opens, so the 1.5MB roster never
 // rides in the page payload.
-export type ContactRow = BookContact & { fromRecord?: boolean; firstSeen?: string };
-
-const EMPTY_CONTACT: Omit<BookContact, "first" | "last" | "email"> = {
-  id: "",
-  title: "",
-  street: "",
-  city: "",
-  state: "",
-  zip: "",
-  country: "",
-  phone: "",
-  mobile: "",
-  owner: "",
-};
+export type { ContactRow } from "./contacts";
 
 // The roster PLUS everything else the app knows (founder-decreed 2026-08-20,
 // widened same day for Back Office Risk, whose SF export held no one): the
@@ -174,57 +160,19 @@ export async function getContacts(accountId: string): Promise<ContactRow[]> {
 
   if (!hasDatabaseEnv()) return roster;
   try {
-    // Hidden is hidden (pass 8 X1): a ✕-parked entry never adds a person.
-    const [rows, dispositions] = await Promise.all([
-      getPrisma().accountNote.findMany({
-        where: { accountId: id },
-        select: { id: true, body: true, createdAt: true, actors: true, lane: true },
-        orderBy: { createdAt: "desc" },
-        take: 400,
-      }),
-      loadDispositions(),
-    ]);
-    const notes = unparked(rows, dispositions);
-    const found = discoveredContacts(
-      notes.map((n) => ({ body: n.body, createdAt: n.createdAt.toISOString() })),
-      domainOfAccount(peo.website ?? "", peo.contactEmail ?? ""),
+    // The account read: every row under every id the account folds into,
+    // hidden rows out (pass 8 X1), the declared roster for our side (pass 8
+    // call 7), so a shell-filed voice joins and a colleague never does (the
+    // Ted doctrine). It used to read the newest 400 rows under the raw id.
+    const { read, notes } = await firstRecordReadFor(id, peo.name);
+    const added = recordContactRows({
+      read,
+      notes,
+      domain: domainOfAccount(peo.website ?? "", peo.contactEmail ?? ""),
       have,
-    );
-    for (const f of found) haveNames.add(`${f.first} ${f.last}`.trim().toLowerCase());
-
-    // Name-only people from the record's traffic — a VTT voice, an actors
-    // line, a filed thread — join without an email; the draft door stays
-    // shut until an address arrives.
-    const traffic = peopleFor(
-      notes.map((n) => ({
-        actors: n.actors ?? "",
-        lane: n.lane === "mine" ? ("mine" as const) : ("background" as const),
-        body: n.body,
-        createdAt: n.createdAt.toISOString(),
-      })),
-      roster,
-      24,
-    );
-    const named: ContactRow[] = [];
-    for (const p of traffic) {
-      const key = p.name.trim().toLowerCase();
-      if (!key || haveNames.has(key)) continue;
-      if (p.email && have.has(p.email.toLowerCase())) continue;
-      // Two words minimum — "IT Help" style artifacts and single tokens stay out.
-      if (p.name.trim().split(/\s+/).length < 2) continue;
-      const parts = p.name.trim().split(/\s+/);
-      named.push({
-        ...EMPTY_CONTACT,
-        first: parts[0],
-        last: parts.slice(1).join(" "),
-        title: p.title,
-        email: p.email,
-        fromRecord: true,
-        firstSeen: p.lastSeen,
-      });
-      haveNames.add(key);
-    }
-    return [...found, ...named, ...roster];
+      haveNames,
+    });
+    return [...added, ...roster];
   } catch {
     return roster;
   }
