@@ -476,11 +476,13 @@ describe("account names are plain links, with no arrow or affordance glyph", () 
     // The surfaces that link an account by name today; a new one joins the
     // sweep on its own.
     for (const f of [
-      "src/app/groundwork/page.tsx",
+      // Groundwork's stage and the Sendbook's lines paint from their faces
+      // (split out in pass 10 so the suite can render them).
+      "src/app/groundwork/face.tsx",
       "src/app/intranet/intranet-client.tsx",
       "src/app/room/ingest/receipt.tsx",
       "src/app/room/room-client.tsx",
-      "src/app/sendbook/page.tsx",
+      "src/app/sendbook/register.tsx",
     ])
       assert.ok(seen.has(f), `the sweep missed ${f}`);
     assert.deepEqual(off, []);
