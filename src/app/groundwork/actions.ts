@@ -14,14 +14,8 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
-import { TAP_PAIR_MS, tapOfStamp } from "@/lib/groundwork/worked";
+import { takeBack, workChannel } from "@/lib/groundwork/worked";
 import { roomResearch } from "@/app/room/actions";
-import {
-  CHANNELS,
-  SENDBOOK_NS,
-  sendbookNoteBody,
-  type Channel,
-} from "@/lib/sendbook/read";
 import {
   WIRE_NS,
   parseWireBody,
@@ -64,6 +58,8 @@ export async function runResearchNow(
 // Channels that leave a file behind never come through here — the record's
 // own outbound IS the touch, and the ask pre-answers. The tap and the stamp
 // carry one moment, so the take-back finds the move's own tap (pass 8 G8).
+// What it writes, and that it never writes a touch, is workChannel's
+// (src/lib/groundwork/worked.ts).
 export async function workedChannel(
   mk: string,
   accountId: string,
@@ -72,32 +68,23 @@ export async function workedChannel(
   clause: string,
 ): Promise<void> {
   if (!(await requireWrite())) return;
-  if (!getPeo(accountId)) return;
-  if (!(CHANNELS as readonly string[]).includes(channel)) {
-    await markWorked(mk);
-    return;
-  }
-  const at = new Date();
-  try {
-    await createAccountNoteRow({
-      accountId: `${SENDBOOK_NS}${accountId}`,
-      kind: "account",
-      body: sendbookNoteBody(
-        channel as Channel,
-        contact.slice(0, 60),
-        clause.slice(0, 160),
-      ),
-      door: "hand",
-      lane: "background",
-      actors: "",
-      source: "sendbook",
-      at,
-    });
-  } catch {
-    // the stamp still lands below — a lost touch line costs the register a
-    // row, never the day its checkmark
-  }
-  await stamp(mk, at);
+  if (!getPeo(accountId) || !mk || mk.length > 200) return;
+  await workChannel(
+    {
+      note: async (row) => {
+        await createAccountNoteRow({
+          ...row,
+          door: row.door,
+          kind: "account",
+          actors: "",
+        });
+      },
+      stamp: writeStamp,
+    },
+    { mk, accountId, channel, contact, clause },
+    new Date(),
+  );
+  revalidatePath("/groundwork");
 }
 
 // The take-back (founder-decreed 2026-08-19): an accidental stamp must be
@@ -105,55 +92,63 @@ export async function workedChannel(
 // returns to the queue — and withdraws the tap note that stamp filed, if one
 // rode along: the move's own tap, never another move's from earlier in the
 // day (pass 8 G8). The record's own entries are never touched: a filed email
-// is a fact, not a stamp.
+// is a fact, not a stamp. The order of it is takeBack's
+// (src/lib/groundwork/worked.ts); the store below reaches only the stamp
+// table and the account's sendbook: key.
 export async function unWork(mk: string, accountId: string): Promise<void> {
   if (!(await requireWrite()) || !mk || mk.length > 200) return;
-  const key = groundworkDoneKey(new Date(), mk);
   const prisma = getPrisma();
-  let doneAt: Date | null = null;
   try {
-    doneAt =
-      (await prisma.taskDone.findUnique({ where: { key }, select: { doneAt: true } }))
-        ?.doneAt ?? null;
-    await prisma.taskDone.deleteMany({ where: { key } });
+    await takeBack(
+      {
+        stampAt: async (key) =>
+          (await prisma.taskDone.findUnique({ where: { key }, select: { doneAt: true } }))
+            ?.doneAt ?? null,
+        deleteStamp: async (key) => {
+          await prisma.taskDone.deleteMany({ where: { key } });
+        },
+        // A leftover tap line is visible in the register and strikable
+        // later; the stamp itself is already back out.
+        tapsBetween: (sendbookKey, from, to) =>
+          prisma.accountNote
+            .findMany({
+              where: { accountId: sendbookKey, createdAt: { gte: from, lte: to } },
+              select: { id: true, createdAt: true },
+            })
+            .catch(() => []),
+        deleteTap: async (id) => {
+          await prisma.accountNote.delete({ where: { id } }).catch(() => undefined);
+        },
+      },
+      mk,
+      getPeo(accountId) ? accountId : "",
+      new Date(),
+    );
   } catch {
     return;
-  }
-  if (doneAt && accountId && getPeo(accountId)) {
-    try {
-      const taps = await prisma.accountNote.findMany({
-        where: {
-          accountId: `${SENDBOOK_NS}${accountId}`,
-          createdAt: { gte: new Date(doneAt.getTime() - TAP_PAIR_MS), lte: doneAt },
-        },
-        select: { id: true, createdAt: true },
-      });
-      const own = tapOfStamp(taps, doneAt);
-      if (own) await prisma.accountNote.delete({ where: { id: own.id } });
-    } catch {
-      // a leftover tap line is visible in the register and strikable later;
-      // the stamp itself is already back out
-    }
   }
   revalidatePath("/groundwork");
 }
 
 // The worked stamp itself, at the moment given: the Channel Ask hands its
 // tap's moment in, so the two pair (tapOfStamp). Not exported, so no client
-// can call it with a moment of its own.
-async function stamp(mk: string, at: Date): Promise<void> {
-  if (!(await requireWrite()) || !mk || mk.length > 200) return;
-  const key = groundworkDoneKey(at, mk);
+// can call it with a moment of its own. A lost stamp costs a checkmark, never
+// the work.
+async function writeStamp(key: string, at: Date): Promise<void> {
   try {
-    const prisma = getPrisma();
-    await prisma.taskDone.upsert({
+    await getPrisma().taskDone.upsert({
       where: { key },
       create: { key, doneAt: at },
       update: {},
     });
   } catch {
-    return; // a lost stamp costs a checkmark, never the work
+    return;
   }
+}
+
+async function stamp(mk: string, at: Date): Promise<void> {
+  if (!(await requireWrite()) || !mk || mk.length > 200) return;
+  await writeStamp(groundworkDoneKey(at, mk), at);
   revalidatePath("/groundwork");
 }
 

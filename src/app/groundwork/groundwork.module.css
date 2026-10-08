@@ -655,8 +655,40 @@ a.wingItem:hover .wingNm {
   color: var(--color-ink);
   font-weight: 600;
 }
-.tallyfoot:hover {
+.tallyDoor {
+  color: inherit;
+  text-decoration: none;
+}
+.tallyDoor:hover {
   color: var(--color-ink);
+}
+/* Every count opens (the click-depth law): the stamp's count, the rest of
+   the queue, and the readout's flags fold open in place. */
+.stampFold summary,
+.wingMore summary,
+.flagFold summary {
+  list-style: none;
+  cursor: pointer;
+}
+.stampFold summary::-webkit-details-marker,
+.wingMore summary::-webkit-details-marker,
+.flagFold summary::-webkit-details-marker {
+  display: none;
+}
+.stampRows {
+  padding: 4px 0 2px 16px;
+}
+.stampLine {
+  display: block;
+  font-size: 11px;
+  color: var(--ds-ink-quiet);
+}
+.flagList {
+  white-space: normal;
+  margin: 4px 0 0;
+  padding-left: 16px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .wingUndoForm {
   display: inline;

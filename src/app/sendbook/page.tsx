@@ -29,7 +29,7 @@ import {
   loadTouches,
 } from "@/lib/today/overlay";
 import { dayLabelFor } from "@/lib/scratch";
-import { SendMarks } from "./marks";
+import { SendbookRegister } from "./register";
 import styles from "./sendbook.module.css";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ const LINE_CAP = 400;
 export default async function SendbookPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ch?: string }>;
+  searchParams: Promise<{ ch?: string; all?: string }>;
 }) {
   const access = await getAppAccess();
   if (access.status === "unauthenticated") {
@@ -115,11 +115,13 @@ export default async function SendbookPage({
     if (!newestLineAt.has(l.accountId)) newestLineAt.set(l.accountId, l.at);
   const week = weekStats(book, now);
 
-  const { ch } = await searchParams;
+  const { ch, all } = await searchParams;
+  // The cap's door opens every line (the click-depth law).
+  const cap = all === "1" ? Number.POSITIVE_INFINITY : LINE_CAP;
   const channelsPresent = [...new Set(book.lines.map((l) => l.channel))];
   const filter = channelsPresent.includes((ch ?? "") as Channel) ? (ch as Channel) : "";
   const lines = (filter ? book.lines.filter((l) => l.channel === filter) : book.lines)
-    .slice(0, LINE_CAP)
+    .slice(0, cap)
     .map((l) => ({
       ...l,
       name: getPeo(l.accountId)?.name ?? l.accountId,
@@ -129,96 +131,22 @@ export default async function SendbookPage({
   return (
     <>
       <AppWayfinder current="Groundwork" trail="The record" />
-      <main className={styles.wrap}>
-        <h1 className={styles.masthead}>The Sendbook</h1>
-        <p className={styles.sub}>
-          Every outreach touch, from the sends filed through the Chute and the taps in the
-          Channel Ask. Replies come from the record. What&rsquo;s due next is on{" "}
-          <Link href="/groundwork">Groundwork</Link>.
-        </p>
-
-        <div className={styles.weekhead}>
-          <span className={styles.whBig}>
-            {week.total} {week.total === 1 ? "touch" : "touches"} this week
-          </span>
-          {week.total > 0 && (
-            <>
-              <span className={styles.whMix}>
-                {week.byChannel.map(([c, n]) => `${n} ${c}`).join(" · ")}
-              </span>
-              <span className={styles.whMix}>
-                {week.accounts} ACCOUNT{week.accounts === 1 ? "" : "S"}
-                {week.goneCold > 0
-                  ? ` · ${week.neverMet} NEVER MET · ${week.goneCold} GONE COLD`
-                  : ""}
-                {week.replied > 0 ? ` · ${week.replied} REPLIED` : ""}
-              </span>
-            </>
-          )}
-        </div>
-
-        {channelsPresent.length > 1 && (
-          <div className={styles.filters}>
-            <Link href="/sendbook" className={filter ? styles.fChip : styles.fChipOn}>
-              ALL
-            </Link>
-            {channelsPresent.map((c) => (
-              <Link
-                key={c}
-                href={`/sendbook?ch=${encodeURIComponent(c)}`}
-                className={filter === c ? styles.fChipOn : styles.fChip}
-              >
-                {c}
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {lines.length === 0 && (
-          <p className={styles.empty}>
-            No outreach on the book yet. Work a move on Groundwork or drop a sent email in
-            the Chute. Every touch lands here.
-          </p>
-        )}
-
-        {lines.map((l, i) => (
-          <div key={`${l.accountId}:${l.at}:${i}`}>
-            {(i === 0 || l.day !== lines[i - 1].day) && (
-              <div className={styles.day}>{l.day}</div>
-            )}
-            <div className={styles.line}>
-              <span className={styles.ch}>{l.channel}</span>
-              <span className={styles.acct}>
-                <Link href={`/accounts?focus=${encodeURIComponent(l.accountId)}`}>
-                  {l.name}
-                </Link>
-              </span>
-              <span className={styles.step}>STEP {l.step}</span>
-              <span className={styles.clause}>
-                {l.clause}
-                {l.contact ? (l.clause ? ` — ${l.contact}` : l.contact) : ""}
-              </span>
-              <SendMarks
-                mktg={mktgLive.has(l.accountId) && newestLineAt.get(l.accountId) === l.at}
-                cold={book.laneById.get(l.accountId) === "gone-cold"}
-                reply={l.reply}
-                booking={l.booking}
-              />
-            </div>
-          </div>
-        ))}
-
-        {book.lines.length > LINE_CAP && (
-          <p className={styles.empty}>
-            The register shows the last {LINE_CAP}. The record keeps everything.
-          </p>
-        )}
-
-        <p className={styles.legend}>
-          NEVER MET means they have never replied and no meeting was ever held. Your own
-          outreach never warms an account, and a CSM intro doesn&rsquo;t either.
-        </p>
-      </main>
+      <SendbookRegister
+        week={week}
+        channelsPresent={channelsPresent}
+        filter={filter}
+        lines={lines.map((l) => ({
+          ...l,
+          mktg: mktgLive.has(l.accountId) && newestLineAt.get(l.accountId) === l.at,
+          cold: book.laneById.get(l.accountId) === "gone-cold",
+        }))}
+        total={
+          filter
+            ? book.lines.filter((l) => l.channel === filter).length
+            : book.lines.length
+        }
+        allHref={`/sendbook?${new URLSearchParams({ ...(filter ? { ch: filter } : {}), all: "1" }).toString()}`}
+      />
     </>
   );
 }

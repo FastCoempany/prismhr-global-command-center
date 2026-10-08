@@ -67,12 +67,28 @@ export function spikeCites(rows: readonly StagedRow[], day: string): Cite[] {
 }
 
 /** The roundup brief's prep (5.3): the CSM's own last five rows on the
- *  account, each a door to its excerpt (pass 8 G5). */
-export function csmPrepRows(rows: readonly StagedRow[], csm: string): Cite[] {
+ *  account, each a door to its excerpt (pass 8 G5). Last means rows that
+ *  happened: a row dated after today (a due-dated task) never leads the
+ *  prep and never fills a short one. `today` is the Chicago day key. */
+export function csmPrepRows(
+  rows: readonly StagedRow[],
+  csm: string,
+  today: string,
+): Cite[] {
   if (!csm) return [];
   return rows
-    .filter((r) => r.a === csm)
+    .filter((r) => r.a === csm && !!r.d && r.d.slice(0, 10) <= today)
     .slice(0, 5)
+    .map(citeOf);
+}
+
+/** A stamp's "{N} SUPPORT CASES" as a door: the account's support rows in
+ *  the staged slice, newest first, each opening to its excerpt (the
+ *  click-depth law: every count opens). */
+export function supportCites(rows: readonly StagedRow[]): Cite[] {
+  return rows
+    .filter((r) => r.lane === "support")
+    .slice(0, 14)
     .map(citeOf);
 }
 

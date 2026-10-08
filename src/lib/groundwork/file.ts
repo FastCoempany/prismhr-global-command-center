@@ -79,6 +79,11 @@ export function buildFile(
     // The relationship read, when the caller derived one from the record —
     // it outranks the book primary in the people head and the compose.
     relationship?: { name: string; email: string; source: "record" | "book" } | null;
+    /** The account read's people, the record's filed actors (field 7). The
+     *  MULTI count reads the larger of these and the digest's thread roster,
+     *  as the HomeRoom row counts it (one fact, the widest source: the Ted
+     *  doctrine). */
+    filedPeople?: readonly { name: string }[];
     /** The read's own last send (field 2), for the To-Russ paragraph — the
      *  same fact the full readout reads (one builder; pass 8 G3). */
     lastOutbound?: string;
@@ -198,7 +203,14 @@ export function buildFile(
   // set. It informs; it never blocks (the direct doctrine). The words are the
   // one writer's (quiet-flag.ts), which the Act Lane's send reads too (S-6).
   const collisionLine = quietFlagOf(deps.second?.collision);
-  const threadCount = intel?.threads.people.length ?? 0;
+  // The widest count the app holds: filed people AND the digest's thread
+  // roster, the HomeRoom row's own count (src/app/room/page.tsx), so a
+  // record-quiet deal with a known room, or a filed room the digest never
+  // saw, reads the same on both surfaces.
+  const threadCount = Math.max(
+    deps.filedPeople?.length ?? 0,
+    intel?.threads.people.length ?? 0,
+  );
   const singleThread = threadCount === 1;
   // The widening question travels INSIDE the composed text when one person
   // carries the conversation — so the file's claim about it is always true.

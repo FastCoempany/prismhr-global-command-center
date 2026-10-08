@@ -5,22 +5,20 @@
 // one tap names the channel, an optional second names the person when the
 // book knows more than one. Two taps, never a form. The pre-answer rule
 // lives server-side: when the record already holds today's send, the page
-// renders the plain stamp button instead of this component.
+// renders the plain stamp button instead of this component. The steps are
+// askStep's (src/lib/sendbook/ask.ts); this holds the state and files.
 
 import { useState, useTransition } from "react";
+import {
+  ASK_IDLE,
+  ASK_MORE,
+  ASK_PRIMARY,
+  askStep,
+  type AskEvent,
+  type AskState,
+} from "@/lib/sendbook/ask";
 import { workedChannel } from "./actions";
 import styles from "./groundwork.module.css";
-
-const PRIMARY = ["EMAIL", "CALL", "VOICEMAIL", "TEXT", "LINKEDIN", "INMAIL"] as const;
-const MORE = [
-  "ENGAGED",
-  "CONNECT",
-  "VIDEO",
-  "EVENT",
-  "MAILER",
-  "INTRO",
-  "CSM RELAY",
-] as const;
 
 export function ChannelAsk({
   mk,
@@ -35,38 +33,69 @@ export function ChannelAsk({
   clause: string; // the move being worked, for the register line
   accent: boolean;
 }) {
-  const [stage, setStage] = useState<"idle" | "channel" | "contact">("idle");
-  const [more, setMore] = useState(false);
-  const [channel, setChannel] = useState("");
+  const [state, setState] = useState<AskState>(ASK_IDLE);
   const [pending, startTransition] = useTransition();
 
-  const file = (ch: string, who: string) => {
-    startTransition(async () => {
-      await workedChannel(mk, accountId, ch, who, clause);
-    });
+  const send = (e: AskEvent) => {
+    const r = askStep(state, e, contacts);
+    setState(r.state);
+    const tap = r.file;
+    if (tap)
+      startTransition(async () => {
+        await workedChannel(mk, accountId, tap.channel, tap.who, clause);
+      });
   };
 
-  const pick = (ch: string) => {
-    if (contacts.length > 1) {
-      setChannel(ch);
-      setStage("contact");
-    } else {
-      file(ch, contacts[0] ?? "");
-    }
-  };
+  return (
+    <AskRow
+      state={state}
+      contacts={contacts}
+      pending={pending}
+      accent={accent}
+      send={send}
+    />
+  );
+}
 
-  if (stage === "idle")
+/** The Channel Ask as it paints in each state: the Worked-it button, the
+ *  channel row (with ··· for the rest), or the who row. Both rows carry ✕,
+ *  which closes the row and files nothing. */
+export function AskRow({
+  state,
+  contacts,
+  pending,
+  accent,
+  send,
+}: {
+  state: AskState;
+  contacts: readonly string[];
+  pending: boolean;
+  accent: boolean;
+  send: (e: AskEvent) => void;
+}) {
+  const close = (
+    <button
+      type="button"
+      className={`${styles.chChip} ${styles.chChipMore}`}
+      title="Never mind. Nothing files."
+      onClick={() => send({ kind: "close" })}
+    >
+      ✕
+    </button>
+  );
+
+  if (state.stage === "idle")
     return (
       <button
         type="button"
         className={accent ? styles.btnAccent : styles.btn2nd}
-        onClick={() => setStage("channel")}
+        onClick={() => send({ kind: "open" })}
       >
         Worked it
       </button>
     );
 
-  if (stage === "contact")
+  if (state.stage === "contact")
     return (
       <span className={styles.chipRow} aria-label="Who was reached">
         {contacts.slice(0, 6).map((c) => (
@@ -75,7 +104,7 @@ export function ChannelAsk({
             type="button"
             className={styles.chChip}
             disabled={pending}
-            onClick={() => file(channel, c)}
+            onClick={() => send({ kind: "who", name: c })}
           >
             {c.split(/\s+/)[0]}
           </button>
@@ -84,69 +113,37 @@ export function ChannelAsk({
           type="button"
           className={`${styles.chChip} ${styles.chChipMore}`}
           disabled={pending}
-          onClick={() => file(channel, "")}
+          onClick={() => send({ kind: "skip" })}
         >
           skip
         </button>
-        <button
-          type="button"
-          className={`${styles.chChip} ${styles.chChipMore}`}
-          title="Never mind. Nothing files."
-          onClick={() => {
-            setStage("idle");
-            setMore(false);
-          }}
-        >
-          ✕
-        </button>
+        {close}
       </span>
     );
 
   return (
     <span className={styles.chipRow} aria-label="How was it worked">
-      {PRIMARY.map((ch) => (
+      {[...ASK_PRIMARY, ...(state.more ? ASK_MORE : [])].map((ch) => (
         <button
           key={ch}
           type="button"
           className={styles.chChip}
           disabled={pending}
-          onClick={() => pick(ch)}
+          onClick={() => send({ kind: "pick", channel: ch })}
         >
           {ch}
         </button>
       ))}
-      {more ? (
-        MORE.map((ch) => (
-          <button
-            key={ch}
-            type="button"
-            className={styles.chChip}
-            disabled={pending}
-            onClick={() => pick(ch)}
-          >
-            {ch}
-          </button>
-        ))
-      ) : (
+      {!state.more && (
         <button
           type="button"
           className={`${styles.chChip} ${styles.chChipMore}`}
-          onClick={() => setMore(true)}
+          onClick={() => send({ kind: "more" })}
         >
           ···
         </button>
       )}
-      <button
-        type="button"
-        className={`${styles.chChip} ${styles.chChipMore}`}
-        title="Never mind. Nothing files."
-        onClick={() => {
-          setStage("idle");
-          setMore(false);
-        }}
-      >
-        ✕
-      </button>
+      {close}
     </span>
   );
 }

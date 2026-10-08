@@ -18,7 +18,7 @@ import {
 import { stampSubtext, wingStamp } from "../../src/lib/groundwork/stamp";
 import { readAccount } from "../../src/lib/record/read";
 import type { Peo } from "../../src/lib/book";
-import type { DealIntel } from "../../src/lib/intel/types";
+import { EMPTY_INTEL, type DealIntel } from "../../src/lib/intel/types";
 
 const NOW = new Date("2026-07-30T15:00:00Z"); // 10:00a Chicago, a Thursday
 // A quarter past the book sweep — the book-wide research stamp is stale.
@@ -572,5 +572,245 @@ describe("a filed touch's channel line leads the stamp; else the rule's words (D
       "WORKED THE MOVE FROM THE SHEET · SEATED 10/6",
     );
     assert.equal(read, 1);
+  });
+});
+
+// ── A9.10 · Groundwork is outbound only (CLAUDE.md "Groundwork face") ──────
+// "Groundwork is outbound only — activities the operator initiates today to
+// build pipeline; reactive account motion (replies owed, decision windows,
+// meeting prep) belongs to the HomeRoom." Every rule the queue can fire is
+// fired below, one account per rule, and each move it stages is checked; then
+// each kind of reactive motion is handed in and shown to stage nothing.
+describe("Groundwork is outbound only: no rule stages a reactive move (A9.10)", () => {
+  // The action line is the move; the reason may name our own unanswered send
+  // ("No reply since …"), which is the drumbeat's trigger and outbound.
+  const REACTIVE =
+    /\b(reply|replies|respond|answer|prep|prepare|recap|decision|decide|meeting)\b/i;
+  // The verbs the rules' own lines open on: each starts motion the operator
+  // initiates. A seat's line is the operator's own act from the sheet, and a
+  // gem's line is the verified act the harness filed; both pass through.
+  const OUTBOUND = /^(Send|Open|Ask|Revive|Refresh|Run|Find|Brief)\b/;
+  const ids = {
+    seat: "R0000000000000001",
+    wire: "R0000000000000002",
+    intent: "R0000000000000003",
+    gem: "R0000000000000004",
+    lane: "R0000000000000005",
+    bump: "R0000000000000006",
+    cold: "R0000000000000007",
+    gap: "R0000000000000008",
+    eni: "R0000000000000009",
+    fresh: "R0000000000000010",
+    roster: "R0000000000000011",
+  };
+  const AT = STALE_BOOK; // 2026-10-15, a quarter past the book sweep
+  const day = (d: string) => `${d}T12:00:00Z`;
+  const touch = (id: string, contactedAt: string, status: string) => ({
+    subjectKey: `outreach:${id}`,
+    contactedAt,
+    followUpAt: "",
+    status,
+  });
+  const gem = {
+    dropSha: "d942e0f2",
+    verdict: "CONFIRMED" as const,
+    createdDay: "2026-10-13",
+    actedDay: "",
+    who: ["Tom Harrison"],
+    whoKind: "account" as const,
+    term: "CANADA ASK",
+    what: "Tom asked about Canada",
+    whenDay: "2026-09-10",
+    signal: "asked",
+    act: "Send the Canada one-pager.",
+    reason: "Sep 10 note asks about Canada.",
+    cites: [],
+  };
+  const fuel = {
+    intelById: new Map<string, DealIntel>(),
+    contactCountById: (id: string) => (id === ids.gap ? 1 : 5),
+    now: AT,
+    accounts: [
+      ...Object.values(ids).map((id) =>
+        acct({
+          id,
+          name: `Rule ${id.slice(-2)}`,
+          // Only the free roster account is a high-fit incumbent with no
+          // record, so never-touched-incumbent fires there and nowhere else.
+          fitTier: id === ids.fresh ? "high" : "low",
+          csm: id === ids.roster ? "Lesha Cyphers" : "Unassigned",
+        }),
+      ),
+      acct({ id: STRONG, name: "Strong Demand", fitTier: "low" }),
+      acct({ id: WEAKER, name: "Weaker Demand", fitTier: "low" }),
+    ],
+    seats: new Map([[ids.seat, seatOf("Send the model.")]]),
+    wireAtById: new Map([[ids.wire, day("2026-10-14")]]),
+    // STRONG's own pass is older than the sweep, so its age reads from the
+    // sweep and is stale; WEAKER has no pass of its own and bears the book.
+    researchAtById: new Map([[STRONG, day("2026-04-01")]]),
+    researchSignalsById: new Map([[STRONG, 2]]),
+    notesById: new Map([
+      [
+        ids.intent,
+        [
+          {
+            body: "high buyer intent · 11 activities",
+            source: "salesnav-ai",
+            createdAt: day("2026-10-14"),
+          },
+        ],
+      ],
+      [
+        ids.lane,
+        [
+          {
+            body: "Amplify: ClearCo 10/20/2026",
+            source: "salesnav-ai",
+            createdAt: day("2026-10-14"),
+          },
+        ],
+      ],
+      [ids.gap, [{ body: "note", source: "room", createdAt: day("2026-10-01") }]],
+      [STRONG, [{ body: "note", source: "room", createdAt: day("2026-10-01") }]],
+      [WEAKER, [{ body: "note", source: "room", createdAt: day("2026-10-01") }]],
+    ]),
+    touches: [
+      touch(ids.bump, day("2026-10-05"), "awaiting"),
+      touch(ids.cold, day("2026-07-01"), "archived"),
+    ],
+    secondById: new Map([
+      [ids.gem, { rollup: null, support: null, intent: null, gems: [gem] }],
+      [
+        ids.eni,
+        {
+          rollup: null,
+          gems: [],
+          intent: null,
+          support: {
+            dropSha: "x",
+            total: 40,
+            spike: null,
+            themes: [
+              {
+                label: "Update Provided",
+                n: 20,
+                firstDay: "2026-09-01",
+                lastDay: "2026-10-12",
+                examples: [],
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+  };
+
+  test("every rule fires on the fixture, and each move it stages is outbound", () => {
+    const { all } = buildQueue(fuel as never);
+    const fired = new Set(all.map((q) => q.ruleId));
+    for (const r of QUEUE_RULE_IDS) assert.ok(fired.has(r), `${r} never fired`);
+    for (const q of all) {
+      assert.doesNotMatch(q.action, REACTIVE, `${q.ruleId}: ${q.action}`);
+      if (q.ruleId === "seated" || q.ruleId === "second-record-gem") continue;
+      assert.match(q.action, OUTBOUND, `${q.ruleId}: ${q.action}`);
+    }
+  });
+
+  test("a reply owed stages nothing: the account leaves the queue, and the drumbeat falls silent", () => {
+    const id = ids.bump;
+    // Their reply after our send: the read says it is our move.
+    const intel = {
+      ...EMPTY_INTEL,
+      lastInbound: day("2026-10-12"),
+      lastInboundWho: "Tom Harrison",
+    };
+    const excludedIds = liveMotionIds(new Map(), new Map([[id, intel]]), AT);
+    assert.ok(excludedIds.has(id));
+    const { all } = buildQueue({ ...fuel, excludedIds } as never);
+    assert.deepEqual(
+      all.filter((q) => q.accountId === id),
+      [],
+    );
+    // And with the board lagging and no exclusion handed in, the answered
+    // thread still bumps nothing: the reply is the HomeRoom's motion.
+    const unexcluded = buildQueue({
+      ...fuel,
+      intelById: new Map([[id, intel]]),
+      moveById: new Map([
+        [
+          id,
+          { whose: "you", since: day("2026-10-12"), who: "Tom Harrison", rung: "reply" },
+        ],
+      ]),
+    } as never).all.filter((q) => q.accountId === id);
+    assert.deepEqual(
+      unexcluded.filter(
+        (q) => q.ruleId === "silence-bump" || q.ruleId === "cold-revival",
+      ),
+      [],
+    );
+    for (const q of unexcluded) assert.doesNotMatch(q.action, REACTIVE);
+  });
+
+  test("a decision window changes nothing on the queue: no rule reads it", () => {
+    const id = ids.fresh;
+    const plain = buildQueue(fuel as never).all;
+    const dated = buildQueue({
+      ...fuel,
+      intelById: new Map([
+        [
+          id,
+          {
+            ...EMPTY_INTEL,
+            timing: {
+              value: { phrase: "deciding next Friday", dateIso: "2026-10-23" },
+              src: "note 10/12",
+              at: day("2026-10-12"),
+            },
+          },
+        ],
+      ]),
+    } as never).all;
+    assert.deepEqual(dated, plain);
+  });
+
+  test("a meeting held leaves the queue; a meeting booked bumps nothing and stages no prep", () => {
+    const id = ids.bump;
+    const met = new Map([
+      [
+        id,
+        [
+          {
+            body: "Met with Tom Harrison about Canada.",
+            source: "room",
+            createdAt: day("2026-10-12"),
+          },
+        ],
+      ],
+    ]);
+    assert.ok(
+      liveMotionIds(met, new Map(), AT).has(id),
+      "a meeting filed inside 14 days excludes",
+    );
+    const booked = buildQueue({
+      ...fuel,
+      moveById: new Map([
+        [
+          id,
+          {
+            whose: "booked",
+            since: day("2026-10-13"),
+            who: "Tom Harrison",
+            rung: "acceptance",
+          },
+        ],
+      ]),
+    } as never).all.filter((q) => q.accountId === id);
+    assert.deepEqual(
+      booked.filter((q) => q.ruleId === "silence-bump"),
+      [],
+    );
+    for (const q of booked) assert.doesNotMatch(q.action, REACTIVE);
   });
 });

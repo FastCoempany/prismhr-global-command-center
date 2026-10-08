@@ -6,7 +6,18 @@ import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { createElement } from "react";
-import { buildQueue, currentBand, moveKey, QUEUE_CAP } from "../src/lib/groundwork/day";
+import {
+  buildQueue,
+  currentBand,
+  heatOf,
+  ledgerExclusions,
+  moveKey,
+  QUEUE_CAP,
+  researchInputs,
+  type QueueItem,
+} from "../src/lib/groundwork/day";
+import { klaxonReading } from "../src/lib/groundwork/klaxon";
+import { ownPassesFrom, researchBody } from "../src/lib/intel/deep-research";
 import { stampSubtext } from "../src/lib/groundwork/stamp";
 import {
   chipGems,
@@ -15,7 +26,7 @@ import {
   prepKicker,
   spikeCites,
 } from "../src/lib/groundwork/chips";
-import { seatWorked, tapOfStamp } from "../src/lib/groundwork/worked";
+import { seatWorked, tapOfStamp, todaysStamps } from "../src/lib/groundwork/worked";
 import { readAccount, type RecordNote } from "../src/lib/record/read";
 import type { Gem } from "../src/lib/activity/stores";
 import type { StagedRow } from "../src/lib/activity/types";
@@ -1165,7 +1176,7 @@ describe("G5 · every chip drills to row-level evidence (the meat law)", () => {
 
   test("the CSM prep lines carry their row keys", () => {
     assert.deepEqual(
-      csmPrepRows(rows, "Lesha Cyphers").map((c) => c.k),
+      csmPrepRows(rows, "Lesha Cyphers", "2026-07-30").map((c) => c.k),
       ["k-lesha", "k-lesha2"],
     );
   });
@@ -1422,7 +1433,11 @@ describe("the stamp words are plain (the plain-speech law; the stamp words, 2026
   });
 
   test("no title on the Groundwork page hangs an aside on an em-dash", () => {
-    const page = readFileSync("src/app/groundwork/page.tsx", "utf8");
+    // The page's markup lives in the page and in its face (face.tsx and the
+    // Channel Ask, split out in pass 10); every one of them is read.
+    const page = ["page.tsx", "face.tsx", "channel-ask.tsx"]
+      .map((f) => readFileSync(`src/app/groundwork/${f}`, "utf8"))
+      .join("\n");
     const titles = [...page.matchAll(/title="([^"]*)"/g)].map((m) => m[1]);
     assert.ok(titles.length > 5);
     assert.deepEqual(
@@ -1450,5 +1465,803 @@ describe("the wing stamps through the one choice (D27, ship order 2026-10-06)", 
     const page = readFileSync("src/app/groundwork/page.tsx", "utf8");
     assert.match(page, /sub: wingStamp\(/);
     assert.ok(!/subFor\(m\[1\]\) \|\|/.test(page), "the inline choice is gone");
+  });
+});
+
+// ── A9.12 · the backbone inputs (CLAUDE.md "Groundwork face") ──────────────
+// "The accounts page's stores and the deep-research notes (research:<account>)
+// are backbone inputs to the queue brain." The page hands the queue what
+// researchInputs reads from the research:<account> notes and what
+// ledgerExclusions reads from the disposition ledger and the snoozes; the
+// book and its roster go in as the accounts and their contact counts.
+describe("A9.12 · the research notes and the Accounts stores feed the queue brain", () => {
+  const LOW = acct({ id: "001F000000w38PPIAY", name: "Low Sweep", csm: "Unassigned" });
+  const OCT = new Date("2026-10-15T15:00:00Z");
+  const pass = (signals: string[], at: string) => ({
+    body: researchBody(
+      {
+        summary: "A PEO in Ohio.",
+        signals,
+        countries: [],
+        people: [],
+        asks: [],
+        sources: [],
+      },
+      new Date(at),
+    ),
+    source: "research",
+    createdAt: at,
+  });
+  const queueFrom = (notesMap: Map<string, { body: string; createdAt: string }[]>) => {
+    const research = researchInputs(notesMap);
+    return buildQueue({
+      accounts: [LOW],
+      intelById: new Map(),
+      notesById: new Map([
+        [LOW.id, [{ body: "note", source: "room", createdAt: "2026-10-01T12:00:00Z" }]],
+      ]),
+      touches: [],
+      contactCountById: () => 5,
+      researchAtById: new Map([...research].map(([id, r]) => [id, r.at])),
+      researchSignalsById: new Map([...research].map(([id, r]) => [id, r.signals])),
+      now: OCT,
+    }).all.filter((q) => q.accountId === LOW.id);
+  };
+
+  test("the newest research:<account> note is the account's live research read", () => {
+    const notesMap = new Map([
+      [
+        `research:${LOW.id}`,
+        [
+          pass(["Hiring in Poland", "Opened a Mexico office"], "2026-07-10T12:00:00Z"),
+          pass([], "2026-05-01T12:00:00Z"),
+        ],
+      ],
+      [LOW.id, [{ body: "not research", createdAt: "2026-07-11T12:00:00Z" }]],
+      ["research:", [pass(["x"], "2026-07-12T12:00:00Z")]],
+    ]);
+    const read = researchInputs(notesMap);
+    assert.deepEqual([...read.keys()], [LOW.id]);
+    assert.equal(read.get(LOW.id)?.at, "2026-07-10T12:00:00Z");
+    assert.equal(read.get(LOW.id)?.signals, 2);
+    assert.match(read.get(LOW.id)?.line ?? "", /^⌕ Research/);
+    // The room's own reader says the same of the same notes: one reader.
+    const room = ownPassesFrom(notesMap).get(LOW.id);
+    assert.deepEqual(
+      { at: room?.at, signals: room?.signals },
+      { at: read.get(LOW.id)?.at, signals: read.get(LOW.id)?.signals },
+    );
+  });
+
+  test("the note's own finding moves the queue: demand found stages the refresh, none stays silent", () => {
+    const found = queueFrom(
+      new Map([
+        [
+          `research:${LOW.id}`,
+          [pass(["Hiring in Poland", "Opened a Mexico office"], "2026-07-10T12:00:00Z")],
+        ],
+      ]),
+    );
+    assert.equal(found[0]?.ruleId, "stale-above-gate");
+    assert.equal(found[0]?.reason, "Real demand. Research 97 days old.");
+    const none = queueFrom(
+      new Map([[`research:${LOW.id}`, [pass([], "2026-07-10T12:00:00Z")]]]),
+    );
+    assert.deepEqual(
+      none.filter((q) => q.ruleId === "stale-above-gate"),
+      [],
+    );
+  });
+
+  test("the disposition ledger and the snoozes keep their accounts off the queue", () => {
+    const ids = [
+      "L0000000000000001",
+      "L0000000000000002",
+      "L0000000000000003",
+      "L0000000000000004",
+    ];
+    const excluded = ledgerExclusions(
+      new Map([
+        [ids[0], { status: "not-mine" }],
+        [ids[1], { status: "parked" }],
+        [ids[3], { status: "active" }],
+        [`hide:${ids[3]}`, { status: "parked" }],
+      ]),
+      [ids[2], `seat:${ids[3]}`],
+    );
+    assert.deepEqual([...excluded].sort(), [ids[0], ids[1], ids[2]]);
+    const { all } = buildQueue({
+      accounts: ids.map((id) => acct({ id, name: id })),
+      intelById: new Map(),
+      notesById: new Map(),
+      touches: [],
+      contactCountById: () => 5,
+      excludedIds: excluded,
+      now: NOW,
+    });
+    assert.deepEqual([...new Set(all.map((q) => q.accountId))], [ids[3]]);
+  });
+
+  test("the book's fit and its roster are read: an untouched incumbent opens, a thin roster asks for a name", () => {
+    const fresh = acct({ id: "F0000000000000001", name: "Fresh", csm: "Unassigned" });
+    const lone = acct({
+      id: "F0000000000000002",
+      name: "Lone",
+      csm: "Unassigned",
+      fitTier: "low",
+    });
+    const { all } = buildQueue({
+      accounts: [fresh, lone],
+      intelById: new Map(),
+      notesById: new Map([
+        [lone.id, [{ body: "note", source: "room", createdAt: "2026-07-29T12:00:00Z" }]],
+      ]),
+      touches: [],
+      contactCountById: (id) => (id === lone.id ? 0 : 5),
+      now: NOW,
+    });
+    assert.equal(
+      all.find((q) => q.accountId === fresh.id)?.ruleId,
+      "never-touched-incumbent",
+    );
+    const gap = all.find((q) => q.accountId === lone.id);
+    assert.equal(gap?.ruleId, "stakeholder-gap");
+    assert.equal(gap?.reason, "The book knows no one.");
+  });
+});
+
+// ═══ Pass 10: the face, rendered (A9.1 to A9.9, A9.20) ═════════════════════
+// The page derives; src/app/groundwork/face.tsx and the Klaxon paint. These
+// render what the server sends on first paint and read the markup. Type,
+// colour, motion and placement inside the grid are the stylesheet's and stay
+// outside a render's reach.
+
+const faceItem = (over: Partial<QueueItem> = {}): QueueItem => ({
+  accountId: "S0000000000000001",
+  name: "On Stage",
+  ruleId: "wire-trigger",
+  weight: 88,
+  band: "now",
+  action: "Send the note about the news.",
+  reason: "They made the wire July 29.",
+  owed: "draft composed",
+  carried: false,
+  intent: null,
+  ...over,
+});
+const faceWeek = {
+  total: 0,
+  byChannel: [],
+  accounts: 0,
+  replied: 0,
+  neverMet: 0,
+  goneCold: 0,
+};
+const faceDeck = {
+  canWrite: true,
+  wire: [] as WireItem[],
+  wireCount: 0,
+  wireAll: false,
+  wireHref: "/groundwork?wire=all",
+  wireAvailable: false,
+  wireIsDue: false,
+  inst: null,
+  readout: {
+    sections: [
+      { title: "Where it stands", paragraphs: [{ text: "Six accounts are in motion." }] },
+    ],
+  },
+  readoutPayload: "Six accounts are in motion.",
+  lintIssues: [],
+  readoutReadAt: undefined,
+  idToName: (id: string) => id,
+  wireWhen: () => "",
+  monthDay: () => "",
+};
+const faceOf = async (over: Record<string, unknown> = {}) => {
+  const { render } = await import("./helpers/room-render");
+  const { GroundworkFace } = await import("../src/app/groundwork/face");
+  return render(
+    createElement(GroundworkFace, {
+      nudge: false,
+      done: [
+        {
+          name: "Worked One",
+          at: "9:10 AM",
+          sub: "EMAIL · STEP 1 · PAT E.",
+          mk: "W1:wire-trigger",
+          accountId: "W1",
+        },
+      ],
+      canWrite: true,
+      stage: { item: faceItem(), prox: "", body: null },
+      waiting: [
+        faceItem({
+          accountId: "S2",
+          name: "Behind",
+          ruleId: "stakeholder-gap",
+          action: "Find a second name.",
+          reason: "One person carries everything.",
+        }),
+      ],
+      rest: [],
+      hrefOf: (q: { accountId: string }) => `/groundwork?focus=${q.accountId}`,
+      deck: faceDeck,
+      foot: { week: faceWeek, staleDropDays: null },
+      ...over,
+    }),
+  );
+};
+/** The order the face's landmarks arrive in, by class. */
+const landmarks = (html: string) =>
+  [
+    ...html.matchAll(
+      /class="(klaxon[^"]*|wings|wing wingL|stage|wing wingR|ldeck|tallyfoot)"/g,
+    ),
+  ].map((m) => m[1].replace(/ kxLate|\s+$/g, ""));
+
+describe("A9.20 · the winged stage under the Klaxon", () => {
+  test("the Klaxon is the masthead; then the wings: done, the stage, waiting; then the deck and the foot", async () => {
+    const html = await faceOf();
+    assert.match(html, /^<main class="wrap"><div class="klaxon/);
+    assert.deepEqual(landmarks(html), [
+      "klaxon",
+      "wings",
+      "wing wingL",
+      "stage",
+      "wing wingR",
+      "ldeck",
+      "tallyfoot",
+    ]);
+  });
+});
+
+describe("A9.1 · one account center stage with an action line and a reason line", () => {
+  test("the stage holds one account, its action line, then its reason line", async () => {
+    const html = await faceOf();
+    const stage = /<section class="stage">([\s\S]*?)<\/section>/.exec(html)?.[1] ?? "";
+    const { textOf } = await import("./helpers/room-render");
+    assert.equal((html.match(/<h1/g) ?? []).length, 1, "one action line on the page");
+    assert.equal((stage.match(/class="stgName"/g) ?? []).length, 1, "one account");
+    assert.match(stage, /href="\/accounts\?focus=S0000000000000001">On Stage<\/a>/);
+    assert.match(
+      stage,
+      /<h1 class="stgAct">Send the note about the news\.<\/h1><p class="stgWhy">They made the wire July 29\.<\/p>/,
+    );
+    assert.doesNotMatch(textOf(stage), /Behind|Worked One/, "the wings keep their own");
+  });
+
+  test("a clear queue says so and stages no line", async () => {
+    const html = await faceOf({ stage: null });
+    assert.equal((html.match(/<h1/g) ?? []).length, 0);
+    assert.match(html, /The queue is clear\./);
+  });
+
+  test("a carried move says it was left from yesterday", async () => {
+    const html = await faceOf({
+      stage: { item: faceItem({ carried: true }), prox: "", body: null },
+    });
+    assert.match(html, /left from yesterday[\s\S]*class="stgName"/);
+  });
+});
+
+describe("A9.2 · a left wing holding the day's worked stamps", () => {
+  test("today's stamps only, oldest first; yesterday's and the readout's stamp never reach the wing", () => {
+    const stamps = new Map([
+      ["groundwork:2026-07-30:A1:wire-trigger", "2026-07-30T16:00:00.000Z"],
+      ["groundwork:2026-07-29:A2:seated", "2026-07-29T15:00:00.000Z"],
+      ["groundwork:2026-07-30:A3:silence-bump", "2026-07-30T14:05:00.000Z"],
+      ["groundwork:readout-read", "2026-07-30T13:00:00.000Z"],
+      ["groundwork:2026-07-30:A4", "2026-07-30T13:30:00.000Z"],
+    ]);
+    assert.deepEqual(todaysStamps(stamps, "2026-07-30"), [
+      {
+        accountId: "A3",
+        ruleKey: "silence-bump",
+        mk: "A3:silence-bump",
+        at: "2026-07-30T14:05:00.000Z",
+      },
+      {
+        accountId: "A1",
+        ruleKey: "wire-trigger",
+        mk: "A1:wire-trigger",
+        at: "2026-07-30T16:00:00.000Z",
+      },
+    ]);
+  });
+
+  test("the left wing paints every stamp with its name, time and subtext, and says so when empty", async () => {
+    const { textOf } = await import("./helpers/room-render");
+    const html = await faceOf();
+    const wing =
+      /<aside class="wing wingL"[^>]*>([\s\S]*?)<\/aside>/.exec(html)?.[1] ?? "";
+    assert.match(
+      textOf(wing),
+      /^Done today ✓ Worked One 9:10 AM ↺ EMAIL · STEP 1 · PAT E\.$/,
+    );
+    const empty = await faceOf({ done: [] });
+    const none =
+      /<aside class="wing wingL"[^>]*>([\s\S]*?)<\/aside>/.exec(empty)?.[1] ?? "";
+    assert.equal(textOf(none), "Done today Nothing worked yet.");
+  });
+});
+
+describe("A9.3, A9.4 · the waiting wing, heat-mapped, each trigger beneath its name", () => {
+  const waiting = [
+    faceItem({
+      accountId: "H1",
+      name: "Burns",
+      ruleId: "wire-trigger",
+      reason: "They made the wire July 29.",
+    }),
+    faceItem({
+      accountId: "H2",
+      name: "Dated",
+      ruleId: "silence-bump",
+      reason: "No reply since July 20.",
+    }),
+    faceItem({
+      accountId: "H3",
+      name: "Keeps",
+      ruleId: "stakeholder-gap",
+      reason: "One person carries everything.",
+    }),
+    faceItem({
+      accountId: "H4",
+      name: "Carried",
+      ruleId: "stakeholder-gap",
+      reason: "The book knows no one.",
+      carried: true,
+    }),
+  ];
+  const wingOf = async () => {
+    const { render } = await import("./helpers/room-render");
+    const { WaitingWing } = await import("../src/app/groundwork/face");
+    return render(
+      createElement(WaitingWing, {
+        waiting,
+        rest: [
+          faceItem({
+            accountId: "R1",
+            name: "Rest One",
+            ruleId: "stakeholder-gap",
+            reason: "The book knows no one.",
+          }),
+          faceItem({
+            accountId: "R2",
+            name: "Rest Two",
+            ruleId: "stakeholder-gap",
+            reason: "The book knows no one.",
+          }),
+        ],
+        hrefOf: (q: { accountId: string }) => `/groundwork?focus=${q.accountId}`,
+      }),
+    );
+  };
+
+  test("the heat ladder: perishable signals burn, dated moves are this week, the rest keep; a carried move burns", () => {
+    const heat = Object.fromEntries(
+      (
+        [
+          "seated",
+          "wire-trigger",
+          "second-record-gem",
+          "intent-warm",
+          "riding-lane",
+          "silence-bump",
+          "roundup-slot",
+          "engaged-never-introduced",
+          "stale-above-gate",
+          "cold-revival",
+          "stakeholder-gap",
+          "never-touched-incumbent",
+        ] as const
+      ).map((r) => [r, heatOf({ ruleId: r, carried: false })]),
+    );
+    assert.deepEqual(heat, {
+      seated: 3,
+      "wire-trigger": 3,
+      "second-record-gem": 3,
+      "intent-warm": 3,
+      "riding-lane": 2,
+      "silence-bump": 2,
+      "roundup-slot": 2,
+      "engaged-never-introduced": 2,
+      "stale-above-gate": 1,
+      "cold-revival": 1,
+      "stakeholder-gap": 1,
+      "never-touched-incumbent": 1,
+    });
+    assert.equal(heatOf({ ruleId: "stakeholder-gap", carried: true }), 3);
+  });
+
+  test("each name wears its heat on the name and the tick beside it", async () => {
+    // The visible wing; the rest waits behind its fold (pinned below).
+    const html = (await wingOf()).split("<details")[0];
+    const rows = [
+      ...html.matchAll(
+        /<span class="wingNm (h\d)">([^<]*)<\/span><span class="tickHeat (tick\d)">/g,
+      ),
+    ].map((m) => [m[2], m[1], m[3]]);
+    assert.deepEqual(rows, [
+      ["Burns", "h3", "tick3"],
+      ["Dated", "h2", "tick2"],
+      ["Keeps", "h1", "tick1"],
+      ["Carried", "h3", "tick3"],
+    ]);
+  });
+
+  test("each name carries its trigger beneath it, and every row opens to the stage", async () => {
+    const full = await wingOf();
+    const html = full.split("<details")[0];
+    const rows = [
+      ...html.matchAll(/<a class="wingItem"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g),
+    ];
+    assert.equal(rows.length, 4);
+    for (const [i, m] of rows.entries()) {
+      assert.equal(m[1], `/groundwork?focus=${waiting[i].accountId}`);
+      const body = m[2];
+      assert.ok(body.indexOf(waiting[i].name) < body.indexOf('class="wingWhy"'), body);
+      assert.match(
+        body,
+        new RegExp(
+          `<span class="wingWhy">${waiting[i].reason.replace(/\./g, "\\.")}</span>$`,
+        ),
+      );
+    }
+    assert.match(full, /And 2 more that can wait\./);
+  });
+
+  test("And N more that can wait opens the rest in place, each a door to its stage (pass 10, the click-depth law)", async () => {
+    const html = await wingOf();
+    const fold =
+      /<details class="wingMore"><summary class="wingFoot">And 2 more that can wait\.<\/summary>([\s\S]*)<\/details>/.exec(
+        html,
+      );
+    assert.ok(fold, "the count opens nothing");
+    const rest = [
+      ...fold[1].matchAll(
+        /<a class="wingItem"[^>]*href="([^"]*)"[^>]*>[\s\S]*?<span class="wingNm h1">([^<]*)<\/span>/g,
+      ),
+    ].map((m) => [m[1], m[2]]);
+    assert.deepEqual(rest, [
+      ["/groundwork?focus=R1", "Rest One"],
+      ["/groundwork?focus=R2", "Rest Two"],
+    ]);
+    assert.ok(!/<details[^>]* open/.test(html), "the rest surfaced uninvited");
+  });
+});
+
+describe("A9.5 to A9.8 · the Klaxon: the masthead, the burn bar, the last five minutes, the capsule", () => {
+  // 15:00Z on 7/30 is 10:00 Chicago (CDT), the send band's midpoint.
+  const at = (hhmm: string) => new Date(`2026-07-30T${hhmm}:00-05:00`);
+  const paint = async (now: Date | null, wx = "") => {
+    const { render } = await import("./helpers/room-render");
+    const { KlaxonFace } = await import("../src/app/groundwork/instrument");
+    return render(createElement(KlaxonFace, { reading: klaxonReading(now), wx }));
+  };
+
+  test("A9.5 · the band's serif verb leads the masthead and the count follows it", async () => {
+    const html = await paint(at("10:00"));
+    assert.match(
+      html,
+      /<div class="kxTop"><span class="kxVerb">Send\.<\/span><span class="kxCount">1:00:00<\/span><\/div>/,
+    );
+    assert.equal(klaxonReading(at("12:00")).verb, "Get on the phone.");
+    assert.equal(klaxonReading(at("15:00")).verb, "Research and file.");
+    assert.equal(klaxonReading(at("17:30")).verb, "The day is worked.");
+  });
+
+  test("A9.6 · the burn bar drains as the window empties, and waits full before the day", async () => {
+    assert.equal(klaxonReading(at("09:00")).burnPct, 100);
+    assert.equal(klaxonReading(at("10:00")).burnPct, 50);
+    assert.equal(klaxonReading(at("10:59")).burnPct, 1);
+    assert.equal(klaxonReading(at("12:30")).burnPct, 50);
+    assert.equal(klaxonReading(at("08:00")).burnPct, 100);
+    assert.match(
+      await paint(at("10:00")),
+      /<div class="kxBurn"><i style="width:50%"><\/i><\/div>/,
+    );
+  });
+
+  test("A9.7 · inside the last five minutes the instrument turns late; never before the day or after it", async () => {
+    assert.equal(klaxonReading(at("10:54")).late, false);
+    assert.equal(klaxonReading(at("10:55")).late, true);
+    assert.equal(klaxonReading(at("13:58")).late, true);
+    assert.equal(
+      klaxonReading(at("08:57")).late,
+      false,
+      "before the day the send band is next",
+    );
+    assert.equal(klaxonReading(at("17:30")).late, false);
+    assert.match(await paint(at("10:56")), /^<div class="klaxon kxLate"/);
+    assert.match(await paint(at("10:00")), /^<div class="klaxon "/);
+  });
+
+  test("A9.8 · the capsule facts ride the sub-row: Chicago clock, date, weather; no reading, no sky", async () => {
+    const sub = (html: string) =>
+      /<div class="kxSub">([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "";
+    const { textOf } = await import("./helpers/room-render");
+    assert.equal(
+      textOf(sub(await paint(at("10:56"), "71° fair"))),
+      "THE SEND WINDOW · CLOSES 11:00 NEXT · THE PEOPLE WINDOW · 11:00–14:00 10:56:00 · AMERICA/CHICAGO · THU · JUL 30 · 71° FAIR",
+    );
+    assert.match(
+      textOf(sub(await paint(at("10:56")))),
+      /10:56:00 · AMERICA\/CHICAGO · THU · JUL 30$/,
+    );
+    assert.equal(
+      textOf(sub(await paint(at("08:00")))),
+      "NEXT · THE SEND WINDOW · OPENS 9:00 8:00:00 · AMERICA/CHICAGO · THU · JUL 30",
+    );
+    // The server's first paint has no clock: dashes, never a guessed time.
+    assert.match(textOf(sub(await paint(null))), /—:——:—— · AMERICA\/CHICAGO · —$/);
+  });
+});
+
+describe("A9.9 · the room keeps the lower deck: the wire, the institutions, State of play", () => {
+  test("the three ribbons, in order, each over its own content", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { LowerDeck } = await import("../src/app/groundwork/face");
+    const html = await render(createElement(LowerDeck, faceDeck));
+    const labels = [...html.matchAll(/<span class="ribbonLabel">([^<]*)<\/span>/g)].map(
+      (m) => m[1],
+    );
+    assert.deepEqual(labels, ["Outside · the wire", "The institutions", "Standing by"]);
+    const text = textOf(html);
+    assert.match(text, /no sweep yet The wire watches the outside/);
+    assert.match(text, /The institutions standing No institution on the calendar yet/);
+    assert.match(
+      text,
+      /State of play ▾[\s\S]*Where it stands Six accounts are in motion\./,
+    );
+  });
+});
+
+// ── The MULTI count reads the widest source (the Ted doctrine; coordinator,
+// pass 10) ──────────────────────────────────────────────────────────────────
+// The HomeRoom row counts the larger of the record's filed people and the
+// digest's thread roster (src/app/room/page.tsx). Groundwork's file counted
+// the digest alone, so a room the record had filed and the digest never saw
+// read as one person on Groundwork and as three on the HomeRoom.
+describe("the working file's MULTI count is the HomeRoom's: filed people or the digest, whichever is larger", () => {
+  const p = acct({ id: "M0000000000000001", name: "Many Hands" });
+  const fileWith = (digest: string[], filed: string[]) =>
+    buildFile(p, {
+      queueItem: {
+        accountId: p.id,
+        name: p.name,
+        ruleId: "silence-bump",
+        weight: 72,
+        band: "now",
+        action: "Send the second touch.",
+        reason: "No reply since July 21.",
+        owed: "draft composed",
+        carried: false,
+        intent: null,
+      },
+      intel: intelWith({ threads: { people: digest, execSeen: false, opsSeen: false } }),
+      intent: null,
+      notes: [],
+      touches: [],
+      wire: [],
+      contacts: [],
+      filedPeople: filed.map((name) => ({ name })),
+      now: NOW,
+    });
+  // The HomeRoom's rule, as src/app/room/page.tsx spells it.
+  const roomCount = (digest: string[], filed: string[]) =>
+    Math.max(filed.slice(0, 6).length, digest.length);
+
+  test("three filed people and a digest of one: three, and no widening line", () => {
+    const f = fileWith(["Pat Example"], ["Pat Example", "Dana Ellis", "Tom Harrison"]);
+    assert.equal(f.threadCount, 3);
+    assert.equal(f.singleThread, false);
+    assert.ok(!f.composed.payload.endsWith(WIDENING_LINE));
+  });
+
+  test("a record-quiet deal with a known room reads the digest", () => {
+    assert.equal(fileWith(["Pat Example", "Dana Ellis"], []).threadCount, 2);
+  });
+
+  test("the two surfaces agree on every case", () => {
+    const cases: [string[], string[]][] = [
+      [[], []],
+      [["A"], []],
+      [[], ["A"]],
+      [["A"], ["A", "B"]],
+      [["A", "B", "C"], ["A"]],
+      [["A"], ["A", "B", "C", "D"]],
+    ];
+    for (const [digest, filed] of cases)
+      assert.equal(
+        fileWith(digest, filed).threadCount,
+        roomCount(digest, filed),
+        `${digest} · ${filed}`,
+      );
+  });
+});
+
+// ── pass 10: every count on Groundwork opens (the click-depth law) ─────────
+// The wire's "N on file", "N flags for the reader", a stamp's count and the
+// stale second record each open what they count, one click deep, and nothing
+// deep surfaces uninvited.
+describe("every count on Groundwork's face opens what it counts (pass 10, the click-depth law)", () => {
+  const wireItem = (i: number): WireItem =>
+    ({
+      url: `https://news.example/${i}`,
+      source: "Wire",
+      at: `2026-07-2${i}T12:00:00Z`,
+      headline: `Headline ${i}`,
+      read: `Read ${i}.`,
+      accountIds: [],
+    }) as unknown as WireItem;
+  const wire = [1, 2, 3, 4, 5].map(wireItem);
+
+  test("the wire's count is a door: three show, the link opens every item and folds them back", async () => {
+    const { render } = await import("./helpers/room-render");
+    const { LowerDeck } = await import("../src/app/groundwork/face");
+    const shut = await render(
+      createElement(LowerDeck, {
+        ...faceDeck,
+        wire,
+        wireCount: 5,
+        wireHref: "/groundwork?wire=all",
+      }),
+    );
+    assert.match(shut, /<a[^>]*href="\/groundwork\?wire=all"[^>]*>5 on file ▾<\/a>/);
+    assert.equal([...shut.matchAll(/class="wireHead"/g)].length, 3);
+    const open = await render(
+      createElement(LowerDeck, {
+        ...faceDeck,
+        wire,
+        wireCount: 5,
+        wireAll: true,
+        wireHref: "/groundwork",
+      }),
+    );
+    assert.match(open, /<a[^>]*href="\/groundwork"[^>]*>5 on file ▴<\/a>/);
+    assert.equal([...open.matchAll(/class="wireHead"/g)].length, 5);
+    // Three or fewer is everything: no door to nothing.
+    const few = await render(
+      createElement(LowerDeck, { ...faceDeck, wire: wire.slice(0, 3), wireCount: 3 }),
+    );
+    assert.ok(!/on file ▾/.test(few));
+    const page = readFileSync("src/app/groundwork/page.tsx", "utf8");
+    assert.match(page, /const wireAll = wireParam === "all";/);
+  });
+
+  test("the flags for the reader open to each flag, said plainly, and money names no figure", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { LowerDeck } = await import("../src/app/groundwork/face");
+    const html = await render(
+      createElement(LowerDeck, {
+        ...faceDeck,
+        lintIssues: [
+          { kind: "banned-word", detail: "ICP" },
+          { kind: "money", detail: "$40,000" },
+        ],
+      }),
+    );
+    assert.match(
+      html,
+      /<details class="ribbonCount flagFold"><summary>2 flags for the reader/,
+    );
+    assert.ok(!/<details[^>]* open/.test(html), "the flags surfaced uninvited");
+    const text = textOf(html);
+    assert.ok(text.includes('Trade shorthand: "ICP". Say it plainly.'));
+    assert.ok(text.includes("A dollar figure. Take it out."));
+    assert.ok(!text.includes("40,000"), "a figure rendered");
+    const clean = await render(createElement(LowerDeck, faceDeck));
+    assert.ok(!clean.includes("flags for the reader"));
+    const page = readFileSync("src/app/groundwork/page.tsx", "utf8");
+    assert.match(page, /const lintIssues = lint\(readoutPayload\);/);
+  });
+
+  test("a stamp's count opens its rows, folded on arrival; a stamp with nothing behind it is words", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { DoneWing } = await import("../src/app/groundwork/face");
+    const html = await render(
+      createElement(DoneWing, {
+        canWrite: false,
+        done: [
+          {
+            name: "Opened One",
+            at: "9:10 AM",
+            sub: "OPENED THE FIRST CONVERSATION · 14 SUPPORT CASES",
+            mk: "O1:engaged-never-introduced",
+            accountId: "O1",
+            opens: { lines: ["Payroll tax question", "W-2 reprint"] },
+          },
+          {
+            name: "Plain One",
+            at: "9:20 AM",
+            sub: "EMAIL · STEP 1 · PAT E.",
+            mk: "P1:wire-trigger",
+            accountId: "P1",
+          },
+        ],
+      }),
+    );
+    assert.match(
+      html,
+      /<details class="stampFold"><summary class="wingSub">OPENED THE FIRST CONVERSATION · 14 SUPPORT CASES ▸<\/summary>/,
+    );
+    assert.ok(textOf(html).includes("Payroll tax question"));
+    assert.ok(!/<details[^>]* open/.test(html));
+    assert.match(html, /<span class="wingSub">EMAIL · STEP 1 · PAT E\.<\/span>/);
+  });
+
+  test("the support count's door holds the account's support rows, newest first", async () => {
+    const { supportCites } = await import("../src/lib/groundwork/chips");
+    const rows = [
+      stagedOf({ k: "s1", lane: "support", d: "2026-07-28", s: "Payroll tax question" }),
+      stagedOf({ k: "h1", lane: "human", d: "2026-07-27", s: "Re: renewal" }),
+      stagedOf({ k: "s2", lane: "support", d: "2026-07-20", s: "W-2 reprint" }),
+    ];
+    assert.deepEqual(
+      supportCites(rows).map((c) => c.k),
+      ["s1", "s2"],
+    );
+  });
+
+  test("a stale second record is its own door, to the drop's receipt on the Intranet", async () => {
+    const { render, textOf } = await import("./helpers/room-render");
+    const { Tallyfoot } = await import("../src/app/groundwork/face");
+    const html = await render(
+      createElement(Tallyfoot, { week: faceWeek, staleDropDays: 9.4 }),
+    );
+    assert.match(
+      html,
+      /<a class="staleFoot" title="[^"]*" href="\/intranet#second-record">SECOND RECORD · 9 DAYS OLD/,
+    );
+    assert.match(html, /<a class="tallyDoor"[^>]*href="\/sendbook">/);
+    assert.ok(
+      textOf(html).startsWith("SECOND RECORD · 9 DAYS OLD · DROP THE FRESH EXPORT"),
+    );
+    const fresh = await render(
+      createElement(Tallyfoot, { week: faceWeek, staleDropDays: null }),
+    );
+    assert.ok(!fresh.includes("SECOND RECORD"));
+  });
+});
+
+// ── pass 10: "verified cold on both records" reads both (the second record,
+// C1; the Ted doctrine) ────────────────────────────────────────────────────
+describe("the readout's verified cold is cold on both records (pass 10)", () => {
+  test("an export-cold account with warmth on the operator's record is not counted cold", async () => {
+    const { secondRecordStats } = await import("../src/lib/groundwork/readout");
+    const cold = srOf({ rollup: rollupOf({}) });
+    const warmByExport = srOf({
+      rollup: rollupOf({
+        lastHuman: {
+          day: "2026-07-20",
+          how: "Email",
+          who: "Pat",
+          kind: "account",
+          subject: "Re: x",
+        },
+      }),
+    });
+    const second = new Map<string, SecondRecord>([
+      ["A", cold],
+      ["B", cold],
+      ["C", warmByExport],
+    ]);
+    const reads = new Map([
+      ["A", { warmth: { lastWarmAt: "" } }],
+      ["B", { warmth: { lastWarmAt: "2026-07-25T15:00:00Z" } }],
+    ]) as unknown as Parameters<typeof secondRecordStats>[2];
+    assert.deepEqual(secondRecordStats(["A", "B", "C", "D"], second, reads, NOW), {
+      active30: 1,
+      verifiedCold: 1,
+    });
+    assert.equal(secondRecordStats(["A"], new Map(), reads, NOW), null);
+    // The sentence says it flat, in two sentences.
+    const src = readFileSync("src/lib/groundwork/readout.ts", "utf8");
+    assert.match(
+      src,
+      /in the last thirty days\. \$\{inp\.secondRecord\.verifiedCold\} are verified cold on both records\./,
+    );
   });
 });

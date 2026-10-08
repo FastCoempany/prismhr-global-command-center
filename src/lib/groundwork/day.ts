@@ -13,7 +13,13 @@ import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { compositeScore, deskScore } from "@/lib/book/scoring";
 import { isMeetingNote } from "@/lib/intel/meeting";
-import { latestResearchAt, researchDemand, sweepAtFor } from "@/lib/intel/deep-research";
+import {
+  RESEARCH_NS,
+  latestResearchAt,
+  ownPassesFrom,
+  researchDemand,
+  sweepAtFor,
+} from "@/lib/intel/deep-research";
 import type { AccountRead } from "@/lib/record/read";
 import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
 import { researchGeneratedAt } from "@/lib/book/research";
@@ -146,6 +152,47 @@ export function secondOnlyMotionIds(
   const out = new Set<string>();
   for (const id of liveMotionIds(notesById, intelById, now, secondById))
     if (!first.has(id)) out.add(id);
+  return out;
+}
+
+/** The deep-research notes as the queue brain reads them (the Groundwork
+ *  face: the accounts page's stores and the research:<account> notes are
+ *  backbone inputs). The pass files as research:<account>; the newest note is
+ *  the account's live research read, read by the one reader the room and
+ *  /partners use (ownPassesFrom): its moment feeds researchAtById and the
+ *  signals it found feed researchSignalsById beside the sweep's score (G7).
+ *  Its first line is what the working file shows. */
+export function researchInputs(
+  notesById: ReadonlyMap<string, readonly { body: string; createdAt: string }[]>,
+): Map<string, { at: string; line: string; signals: number }> {
+  const out = new Map<string, { at: string; line: string; signals: number }>();
+  for (const [accountId, pass] of ownPassesFrom(notesById)) {
+    const newest = notesById.get(`${RESEARCH_NS}${accountId}`)?.[0];
+    const line =
+      (newest?.body ?? "")
+        .split("\n")
+        .map((l) => l.trim())
+        .find((l) => l.length > 0) ?? "";
+    out.set(accountId, { at: pass.at, line: line.slice(0, 160), signals: pass.signals });
+  }
+  return out;
+}
+
+/** The accounts the disposition ledger and the snoozes keep off the queue,
+ *  the stores the Accounts sheet and the room write (the Ted doctrine: the
+ *  ledger holds here too). Not-mine is excluded everywhere by decree, parked
+ *  was shelved by the operator's own hand, and a snoozed account was told to
+ *  be quiet. Namespaced keys are not accounts. */
+export function ledgerExclusions(
+  dispositions: ReadonlyMap<string, { status: string }>,
+  snoozedIds: Iterable<string>,
+): Set<string> {
+  const out = new Set<string>();
+  for (const [id, d] of dispositions) {
+    if (id.includes(":")) continue;
+    if (d.status === "not-mine" || d.status === "parked") out.add(id);
+  }
+  for (const id of snoozedIds) if (!id.includes(":")) out.add(id);
   return out;
 }
 

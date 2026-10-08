@@ -11,6 +11,7 @@ import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { redactMoney } from "@/lib/intel/lexicon";
 import type { AccountRead } from "@/lib/record/read";
+import { verifiedCold, type SecondRecord } from "@/lib/activity/read";
 import type { IntentSignal } from "./signals";
 import type { QueueItem } from "./day";
 
@@ -189,7 +190,7 @@ export function buildReadout(inp: ReadoutInput): Readout {
   const bookText = redactMoney(
     `I cover ${total} PrismHR and PrismHCM customer accounts nationwide. ${open} of the ${total} have an open conversation on file right now. In the last 7 days I sent updates to ${inp.partnerUpdatesSent} of the ${pmCount} partner managers who own these relationships${inp.partnerUpdatesSent > 0 ? `; ${inp.partnerUpdatesReplied} replied` : ""}.${
       inp.secondRecord
-        ? ` The weekly activity export says ${inp.secondRecord.active30} of the ${total} saw human motion in the last thirty days, and ${inp.secondRecord.verifiedCold} are verified cold on both records.`
+        ? ` The weekly activity export says ${inp.secondRecord.active30} of the ${total} saw human motion in the last thirty days. ${inp.secondRecord.verifiedCold} are verified cold on both records.`
         : ""
     }`,
   );
@@ -230,6 +231,33 @@ export function readoutText(r: Readout): string {
       (s) => `${s.title.toUpperCase()}.\n${s.paragraphs.map((p) => p.text).join("\n\n")}`,
     ),
   ].join("\n\n");
+}
+
+/** The second record's arithmetic for the readout, over the book's accounts.
+ *  `active30` is the export's own count of accounts with human motion in
+ *  thirty days, and the sentence says so. `verifiedCold` is cold on both
+ *  records, as the sentence says: the export's verified cold (no account
+ *  person ever spoke in the window) AND no warmth on the operator's own
+ *  record (the account read's last reply or meeting from their side). Null
+ *  when no drop has landed. */
+export function secondRecordStats(
+  accountIds: readonly string[],
+  secondById: ReadonlyMap<string, SecondRecord>,
+  readById: ReadonlyMap<string, Pick<AccountRead, "warmth">>,
+  now: Date,
+): { active30: number; verifiedCold: number } | null {
+  if (secondById.size === 0) return null;
+  let active30 = 0;
+  let cold = 0;
+  for (const id of accountIds) {
+    const sr = secondById.get(id);
+    if (!sr) continue;
+    const lh = sr.rollup?.lastHuman?.day ?? "";
+    if (lh && (now.getTime() - Date.parse(`${lh}T12:00:00Z`)) / 86_400_000 <= 30)
+      active30 += 1;
+    if (verifiedCold(sr) && !readById.get(id)?.warmth.lastWarmAt) cold += 1;
+  }
+  return { active30, verifiedCold: cold };
 }
 
 // ── The lint — the mechanical half of the §3 bar ─────────────────────────────
