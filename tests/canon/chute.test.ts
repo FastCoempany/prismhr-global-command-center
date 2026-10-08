@@ -613,6 +613,39 @@ describe("there is no revalidation list: every page derives on request (D15)", (
   // and the HomeRoom's rows (the sheet, the register, the stage, the
   // notifier). ingest-hooks pins that the filing's ask follows roomPaste and
   // happens once; this pins that every writing client carries one at all.
+  // A1.8, "and every tab re-derives" (:283), by behavior: every page module
+  // hands Next the config that makes it derive on every request. The walk
+  // reads the module's own export, as Next does, for every page under
+  // src/app; a page that reads no record (a redirect, the sign-in form, the
+  // two static demo guides) is named here with why. A new page fails until
+  // it derives on request or joins that list.
+  test("every page that reads the record derives on request (A1.8)", async () => {
+    await import("../helpers/room-render"); // the CSS and font hooks
+    const readsNothing = new Map([
+      ["src/app/page.tsx", "redirects to the HomeRoom"],
+      ["src/app/login/page.tsx", "the sign-in form"],
+      ["src/app/sidekick/flows/prismhr-global/page.tsx", "a static demo guide"],
+      ["src/app/payroll-demo-sidekick/page.tsx", "a static demo guide"],
+    ]);
+    const pages = walk(join(root, "src/app"))
+      .map((f) => relative(root, f))
+      .filter((f) => /\/page\.tsx$/.test(f));
+    assert.ok(pages.length > 10, "the walk found the pages");
+    const stale: string[] = [];
+    for (const page of pages) {
+      if (readsNothing.has(page)) continue;
+      const mod = (await import(join(root, page))) as { dynamic?: string };
+      if (mod.dynamic !== "force-dynamic") stale.push(page);
+    }
+    assert.deepEqual(stale, []);
+    for (const page of readsNothing.keys())
+      assert.ok(pages.includes(page), `${page} is gone; take it off the list`);
+    // The HomeRoom, Groundwork, Accounts, the Sendbook, the Playbook and the
+    // Intranet are each on the walk, never exempt.
+    for (const tab of ["room", "groundwork", "accounts", "sendbook", "playbook", "intranet"])
+      assert.ok(pages.includes(`src/app/${tab}/page.tsx`), tab);
+  });
+
   test("every client under src/app/room that writes asks the router for the fresh read", () => {
     const writers = [
       "src/app/room/ingest/use-ingest.ts",

@@ -1405,3 +1405,70 @@ describe("the sheet's green is the brand's, by role", () => {
     assert.equal(css.includes(".prTag_stash"), false);
   });
 });
+
+// A4.17 and A4.19, the Accounts face the founder shipped on 2026-08-20:
+// MODEL and PRISMHR retire into the drilldown, and LAST HUMAN TOUCH, THE
+// SIGNAL and ACT take the width, each cell a door (the gem's fold opens
+// beneath the row on a click, which a first paint cannot show).
+describe("Accounts: three columns take the width; MODEL and PRISMHR live in the drilldown (A4.17, A4.19)", () => {
+  const headsOf = (html: string): string[] =>
+    [...html.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) =>
+      textOf(m[1].replace(/<span class="thCount">[\s\S]*?<\/span>/, "")),
+    );
+
+  test("the sheet's columns: no MODEL, no PRISMHR, the three at the right", async () => {
+    const html = await renderSheet([await sheetRow()]);
+    assert.deepEqual(headsOf(html), [
+      "Account",
+      "Global fit",
+      "Demand",
+      "Last human touch",
+      "The signal",
+      "Act",
+    ]);
+    assert.ok(!headsOf(html).some((h) => /model|prismhr|platform|cloud/i.test(h)));
+  });
+
+  test("the drilldown carries MODEL and PRISMHR in its meta line", async () => {
+    const row = await sheetRow({ industry: "PEO", incumbent: true, cloud: "PHR3" });
+    const shut = await renderSheet([row]);
+    assert.ok(
+      !/MODEL · PEO · PRISMHR/.test(textOf(shut)),
+      "the facts ride the sheet shut",
+    );
+    const open = await renderSheet([row], `focus=${ACCT}`);
+    assert.match(textOf(open), /MODEL · PEO · PRISMHR · PHR3/);
+  });
+
+  test("LAST HUMAN TOUCH, THE SIGNAL and ACT are each a door on the row", async () => {
+    const row = await sheetRow({
+      touch: { who: "Pat Lee", day: "2026-09-22", kind: "ours", record: "record" },
+      touchCite: {
+        from: "record",
+        day: "2026-09-22",
+        who: "Pat Lee",
+        how: "SENT",
+        text: "✉ The Mexico model — sent to Pat Lee.",
+      },
+      second: sheetSecond({
+        rollup: null,
+        support: null,
+        intent: null,
+        gems: [gem("MEXICO ASK")],
+      } as unknown as Parameters<typeof sheetSecond>[0]),
+    });
+    const html = await renderSheet([row]);
+    const tr = /<tr id="acct-[^"]*"[\s\S]*?<\/tr>/.exec(html)?.[0] ?? "";
+    const cells = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => m[1]);
+    assert.equal(cells.length, 6);
+    const [, , , touch, signal, act] = cells;
+    assert.match(touch, /^<button type="button" class="srTouch"/);
+    assert.match(signal, /^<button type="button" class="srTerm"[^>]*>MEXICO ASK/);
+    assert.match(
+      act,
+      /<button type="button" class="mchip"[^>]*>Answer Pat about Mexico\./,
+    );
+    // The fold rows are shut on arrival: nothing deep surfaces uninvited.
+    assert.ok(!html.includes("srFoldTd"), "a fold opened on arrival");
+  });
+});

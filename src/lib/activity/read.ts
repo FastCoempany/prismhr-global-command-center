@@ -256,7 +256,11 @@ export async function fetchGemsNoteFor(
 /** The staged rows of every slice that folds into one account, as one list:
  *  the account's own slice first, then a duplicate's, newest day first across
  *  them, one row per key. A gem's cite names a row key, and the drill has to
- *  find it whichever id the slice was staged under. Pure. */
+ *  find it whichever id the slice was staged under. A row dated ahead (the
+ *  "f" flag) is a due date, not a thing that happened, so it sinks below
+ *  every row that did, as the ingest staged it (src/lib/activity/ingest.ts):
+ *  the CSM prep's last rows and the desk line's first hit are things that
+ *  happened (A4.23). Pure. */
 export function foldStageRows(
   slices: readonly { own: boolean; rows: readonly StagedRow[] }[],
 ): StagedRow[] {
@@ -270,7 +274,8 @@ export function foldStageRows(
       out.push(r);
     }
   // Stable: within a day the slice's own order (newest first) holds.
-  return out.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
+  const ahead = (r: StagedRow) => (r.fl.includes("f") ? 1 : 0);
+  return out.sort((a, b) => ahead(a) - ahead(b) || (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
 }
 
 /** One account's staged rows — the evidence store, read one account at a
@@ -334,7 +339,12 @@ export function hiddenIds(
 // Received is a datetime with no row behind it, so it never speaks here: it
 // is never their voice (D19), and a line with no row has no cite. Priority: a
 // row naming the person, then the account's last attributed word, then the
-// last human motion. Pure; the evidence route serves it.
+// last human motion. "Last touched" is a derived fact the first record also
+// holds, so it reads both records (the Ted doctrine; C1: no face reads the
+// export alone for a fact the first record also holds): `recordDay` is the
+// first record's last touch, a Chicago day, and when it is later than the
+// export's row the line says nothing, because the row it would cite is not
+// the last touch. Pure; the evidence route serves it.
 
 const mmdd = (d: string): string => (d ? d.slice(5).replace("-", "/") : "");
 
@@ -350,6 +360,9 @@ export function deskLineFor(
   who: string,
   rows: readonly StagedRow[],
   rollup: Rollup | null,
+  /** The first record's last touch, YYYY-MM-DD in Chicago; "" when it holds
+   *  none. */
+  recordDay = "",
 ): DeskLine {
   const needle = (who ?? "").trim().toLowerCase();
   const nameBits = needle
@@ -391,7 +404,7 @@ export function deskLineFor(
   // The last time a person moved on the account, at its row. A row dated
   // ahead is a due date, not a thing that happened (the "f" flag).
   const last = rows.filter((r) => isHumanMotion(r) && !r.fl.includes("f"))[0];
-  if (last)
+  if (last && (!recordDay || last.d.slice(0, 10) >= recordDay))
     return {
       line: `Last touched ${mmdd(last.d)}: ${cleanSubject(last.s).slice(0, 60)}.`,
       cite: last,

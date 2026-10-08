@@ -30,7 +30,7 @@ import {
 } from "@/lib/notes/write";
 import { docOf, type TouchRow } from "@/lib/record/docs";
 import { hideNoteKey } from "@/lib/record/hide";
-import type { RecordNote } from "@/lib/record/read";
+import type { AccountRead, RecordNote } from "@/lib/record/read";
 import { declaredHomeSide, readFromStores } from "@/lib/record/stores";
 import { homeSideFrom } from "@/lib/pipeline/build";
 import { theirLoopOf } from "@/lib/room/owed";
@@ -860,6 +860,49 @@ async function touchLogIn(db: ActivityDb): Promise<(TouchRow & { status?: string
   }
 }
 
+/** The first record's account read, assembled from the store the way every
+ *  surface reads it (the Ted doctrine: a derived fact reads the widest live
+ *  source, and a fact's two stores merge by latest, C3): every row under
+ *  every id the account folds into, the touch log merged by latest, the
+ *  hide filter, the declared roster. The second record's faces read the
+ *  first record's half of a fact from here, never a private narrow query of
+ *  their own (A2.4; A4.1: the second record inherits the first's laws). The
+ *  read takes no todos; a caller that needs commitments reads its own. */
+export async function firstRecordReadFor(
+  accountId: string,
+  name: string,
+  db: ActivityDb = getPrisma(),
+  homeSide?: readonly string[],
+): Promise<{
+  read: AccountRead;
+  notes: RecordNote[];
+  touches: (TouchRow & { status?: string })[];
+  hidden: Set<string>;
+}> {
+  // A ✕-parked row is hidden from the read too (X1).
+  const hidden = await hiddenNoteIdsIn(db);
+  const id = canonicalAccountId(accountId);
+  const notes = (
+    await db.accountNote.findMany({
+      where: { accountId: { in: accountIdsOf(accountId) } },
+      orderBy: { createdAt: "desc" },
+    })
+  ).map((n) => recordNoteOf(n, id));
+  const touches = await touchLogIn(db);
+  const read = readFromStores(
+    {
+      notesById: new Map([[id, notes]]),
+      touches,
+      todos: [],
+      dispositions: new Map([...hidden].map((h) => [hideNoteKey(h), true])),
+      homeSide: homeSide ?? (await declaredRosterIn(db)),
+    },
+    { id, name },
+    { now: new Date() },
+  );
+  return { read, notes, touches, hidden };
+}
+
 export async function contextPackFor(
   accountId: string,
   name: string,
@@ -873,34 +916,21 @@ export async function contextPackFor(
     "the operator is Antaeus Coe — their own logged motion is the first record, never a door to walk through",
   ];
   try {
-    // A ✕-parked row is hidden from the distiller too (X1): it leaves the
-    // pack's last outbound, its last inbound and its record lines.
-    const hidden = await hiddenNoteIdsIn(prisma);
     // The operator's last outbound and their last inbound are the account
     // read's own (A2.4; the Ted doctrine: a derived fact reads the widest
     // live source, and its two stores merge by latest, C3): every row under
     // every id the account folds into, the touch log merged by latest, the
     // declared roster. The pack used to take the newest 80 rows under the raw
-    // id alone, with no fold and no touch log. The open commitments below are
-    // the pack's own read, so the read takes no todos.
+    // id alone, with no fold and no touch log. A ✕-parked row leaves the
+    // pack's last outbound, its last inbound and its record lines (X1). The
+    // open commitments below are the pack's own read, so the read takes no
+    // todos.
     const id = canonicalAccountId(accountId);
-    const notes = (
-      await prisma.accountNote.findMany({
-        where: { accountId: { in: accountIdsOf(accountId) } },
-        orderBy: { createdAt: "desc" },
-      })
-    ).map((n) => recordNoteOf(n, id));
-    const touches = await touchLogIn(prisma);
-    const read = readFromStores(
-      {
-        notesById: new Map([[id, notes]]),
-        touches,
-        todos: [],
-        dispositions: new Map([...hidden].map((h) => [hideNoteKey(h), true])),
-        homeSide: homeSide ?? (await declaredRosterIn(prisma)),
-      },
-      { id, name },
-      { now: new Date() },
+    const { read, notes, touches, hidden } = await firstRecordReadFor(
+      accountId,
+      name,
+      prisma,
+      homeSide,
     );
 
     const out = read.lastOutbound;

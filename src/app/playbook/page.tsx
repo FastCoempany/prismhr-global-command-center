@@ -9,6 +9,7 @@ import { COUNTRY_TALLY, countryIndex } from "@/lib/playbook/countries";
 import { CUES, PRODUCTS } from "@/lib/playbook/products";
 import { fetchSecondRecords } from "@/lib/activity/read";
 import { approveSecondDraft, dismissSecondDraft } from "./actions";
+import { secondRecordDrafts } from "./drafts";
 import { loadAccountNotes, loadDispositions } from "@/lib/today/overlay";
 import { prospectAsks } from "@/lib/intranet/store";
 import { harvestBattlecards } from "@/lib/intranet/bridges";
@@ -50,57 +51,20 @@ export default async function PlaybookPage() {
   const { market, lessons } = readPlaybook(acctNotes);
 
   // The second record's draft queue (5.5): support themes crossing the
-  // threshold — ≥5 cases on a theme, top 3 book-wide — become DRAFT market
-  // facts awaiting the operator's hand. Approved and dismissed drafts leave
-  // the queue; arithmetic only, the counts come from the rollup builder.
+  // threshold become DRAFT market facts awaiting the operator's hand
+  // (./drafts.ts). Approved and dismissed drafts leave the queue.
   const srDrafts = await (async () => {
     try {
-      const secondById = await fetchSecondRecords();
-      const nameById = new Map(peos.map((p) => [p.id, p.name]));
-      const agg = new Map<
-        string,
-        { label: string; n: number; accounts: Set<string>; bestId: string; bestN: number }
-      >();
-      for (const [id, sr] of secondById) {
-        if (!nameById.has(id)) continue;
-        for (const t of sr.support?.themes ?? []) {
-          const key = t.label.toLowerCase();
-          const cur = agg.get(key) ?? {
-            label: t.label,
-            n: 0,
-            accounts: new Set<string>(),
-            bestId: id,
-            bestN: 0,
-          };
-          cur.n += t.n;
-          cur.accounts.add(id);
-          if (t.n > cur.bestN) {
-            cur.bestN = t.n;
-            cur.bestId = id;
-          }
-          agg.set(key, cur);
-        }
-      }
-      const marketKeys = new Set(market.map((m) => knowledgeKey(m.text)));
-      const dismissed = new Set(
-        [...dispositions.keys()]
-          .filter((k) => k.startsWith("srdraft:"))
-          .map((k) => k.slice("srdraft:".length)),
-      );
-      return [...agg.values()]
-        .filter((a) => a.n >= 5)
-        .sort((a, b) => b.n - a.n)
-        .slice(0, 3)
-        .map((a) => {
-          const text = `Support traffic keeps hitting "${a.label}": ${a.n} cases across ${a.accounts.size} account${a.accounts.size === 1 ? "" : "s"} this window. Say how Global sits beside it.`;
-          return {
-            key: knowledgeKey(text),
-            text,
-            accountId: a.bestId,
-            accountName: nameById.get(a.bestId) ?? "",
-          };
-        })
-        .filter((d) => !marketKeys.has(d.key) && !dismissed.has(d.key));
+      return secondRecordDrafts({
+        secondById: await fetchSecondRecords(),
+        nameById: new Map(peos.map((p) => [p.id, p.name])),
+        marketKeys: new Set(market.map((m) => knowledgeKey(m.text))),
+        dismissed: new Set(
+          [...dispositions.keys()]
+            .filter((k) => k.startsWith("srdraft:"))
+            .map((k) => k.slice("srdraft:".length)),
+        ),
+      });
     } catch {
       return [];
     }
