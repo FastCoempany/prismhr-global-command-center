@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import ts from "typescript";
 import { createElement } from "react";
 import { SearchParamsContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
 // The CSS-module hook registers on this import, before any face loads.
@@ -1244,6 +1245,109 @@ describe("the sheet's head after the retirements (A8.20 to A8.24)", () => {
     assert.match(
       html,
       /<div class="searchWrap"><span class="searchGlyph" aria-hidden="true">⌕<\/span><input class="searchDeep"/,
+    );
+  });
+});
+
+// ── Pass 10, the copy beside the rows: every operator string on the sheet,
+// the Salesforce checkpoint's tooltip, the THEIRS line's empty excerpt and
+// the bank's world tag, run through the canon lint. The strings are read out
+// of the source by the compiler's own parser (JSX text, string attributes,
+// string and template literals), so a new tooltip is linted the day it
+// lands. An empty cell's lone "—" is a glyph, not an aside.
+describe("the sheet's copy obeys the writing canon and the plain-speech law", () => {
+  const FILES = [
+    "src/app/accounts-client.tsx",
+    "src/components/sf.tsx",
+    "src/app/room/theirs-line.tsx",
+    "src/app/asks/page.tsx",
+  ];
+  // What is code, not copy: class lists, URLs, keys, ids and the like.
+  const SKIP_ATTR = new Set(["className", "href", "key", "id", "name", "type", "value"]);
+  const CODE = /^(use client|[\w.:/?&=%-]+|[\w-]+(\s[\w-]+)*\.(csv|eml))$/;
+  const copyOf = (file: string): { at: string; text: string }[] => {
+    const src = readFileSync(join(process.cwd(), file), "utf8");
+    const sf = ts.createSourceFile(
+      file,
+      src,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const out: { at: string; text: string }[] = [];
+    const push = (n: ts.Node, text: string) => {
+      const t = text.replace(/\s+/g, " ").trim();
+      if (!t || t === "—" || !/[a-z]{2}/i.test(t) || CODE.test(t)) return;
+      out.push({
+        at: `${file}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1}`,
+        text: t,
+      });
+    };
+    const visit = (n: ts.Node): void => {
+      if (ts.isImportDeclaration(n) || ts.isExportDeclaration(n)) return;
+      if (ts.isJsxAttribute(n) && SKIP_ATTR.has(n.name.getText())) return;
+      if (
+        ts.isCallExpression(n) &&
+        /\b(encodeURIComponent|fetch|getElementById|startsWith|split|replace|join|test|match)\b/.test(
+          n.expression.getText(),
+        )
+      )
+        return;
+      if (ts.isElementAccessExpression(n) || ts.isPropertyAccessExpression(n)) return;
+      if (ts.isJsxText(n)) push(n, n.text.replace(/&rsquo;/g, "\u2019"));
+      else if (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n))
+        push(n, n.text);
+      else if (ts.isTemplateExpression(n)) {
+        // The static words, with each slot read as a name.
+        push(
+          n,
+          [n.head.text, ...n.templateSpans.map((x) => `Simploy${x.literal.text}`)].join(
+            "",
+          ),
+        );
+        return;
+      }
+      ts.forEachChild(n, visit);
+    };
+    visit(sf);
+    return out;
+  };
+  const FORMAT_ONLY = /the cap is eight|a digit that is not a date/;
+  const sentencesOf = (t: string) =>
+    t
+      .split(/(?<=[.!?])\s+/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+  test("no string carries a dash aside, a parenthetical or a device", () => {
+    const found: string[] = [];
+    for (const file of FILES)
+      for (const { at, text } of copyOf(file)) {
+        if (/[—–]/.test(text.replace(/^—$/, ""))) found.push(`${at}: a dash · ${text}`);
+        if (/\(/.test(text)) found.push(`${at}: a parenthetical · ${text}`);
+        for (const line of sentencesOf(text))
+          for (const f of lintReason(line).faults.filter((x) => !FORMAT_ONLY.test(x)))
+            found.push(`${at}: ${f} · ${line}`);
+      }
+    assert.deepEqual(found, []);
+  });
+
+  test("the sweep reads real copy: the strings it fixed are in scope and the lint catches them", () => {
+    const texts = FILES.flatMap(copyOf).map((x) => x.text);
+    assert.ok(texts.includes("Open the gem with its citations and emails."));
+    assert.ok(
+      texts.some((t) => t.startsWith("Salesforce is the record")) ||
+        texts.includes("Salesforce is the record"),
+    );
+    assert.ok(texts.includes("· general knowledge"));
+    const faults = (t: string) => sentencesOf(t).flatMap((x) => lintReason(x).faults);
+    assert.ok(
+      faults("The app is your operating layer, not the truth.").includes("antithesis"),
+    );
+    assert.ok(
+      faults(
+        "When it's sent, drop the .eml in the Chute — that files the touch.",
+      ).includes("a dash hinge"),
     );
   });
 });

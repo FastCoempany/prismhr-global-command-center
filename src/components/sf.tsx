@@ -9,7 +9,7 @@ import styles from "./sf.module.css";
 const COPY: Record<string, { lead: string; text: string }> = {
   standing: {
     lead: "Salesforce discipline",
-    text: "Every account touch runs through Salesforce: check it before you act, update it after. Before you reach out about an account, its current state comes from Salesforce, not memory, not this app.",
+    text: "Every account touch runs through Salesforce: check it before you act, update it after. Before you reach out about an account, read its current state in Salesforce.",
   },
   "before-outreach": {
     lead: "Salesforce first",
@@ -25,7 +25,7 @@ const COPY: Record<string, { lead: string; text: string }> = {
   },
   account: {
     lead: "Salesforce is the record",
-    text: "Check Salesforce before you act on this account, and update its notes, activity, and fields after. The app is your operating layer; Salesforce is the truth.",
+    text: "Check Salesforce before you act on this account, and update its notes, activity, and fields after.",
   },
   triage: {
     lead: "Check Salesforce",
@@ -33,7 +33,7 @@ const COPY: Record<string, { lead: string; text: string }> = {
   },
   dashboard: {
     lead: "Keep Salesforce in sync",
-    text: "As this deal moves, update the account in Salesforce and log a note. The board is your view; Salesforce is the record.",
+    text: "As this deal moves, update the account in Salesforce and log a note.",
   },
 };
 
@@ -96,7 +96,7 @@ export function SfCheckpoint({
 }) {
   const c = COPY[when];
   return (
-    <span className={styles.mini} title={`${c.lead} — ${c.text}`}>
+    <span className={styles.mini} title={`${c.lead}. ${c.text}`}>
       <span className={styles.miniBadge}>⟳ SF</span>
       {id ? <SfLink id={id} name={name} /> : null}
     </span>

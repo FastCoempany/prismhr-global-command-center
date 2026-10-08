@@ -161,10 +161,7 @@ export default async function AsksPage() {
                 ) : e.world ? (
                   <div className={styles.a}>
                     {e.world}
-                    <span className={styles.worldTag}>
-                      {" "}
-                      — general knowledge, not the record
-                    </span>
+                    <span className={styles.worldTag}> · general knowledge</span>
                   </div>
                 ) : (
                   <div className={styles.nothing}>{e.nothing}</div>

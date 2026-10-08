@@ -147,7 +147,7 @@ function ValidateControls({
             min="0"
             max="100"
             required
-            placeholder="Demand 0–100"
+            placeholder="Demand, 0 to 100"
             aria-label="Adjusted demand"
           />
           <input
@@ -786,9 +786,9 @@ export function AccountsClient({
     const text = filtered
       .map(
         (r) =>
-          `${r.name} — fit ${r.score}${r.demand != null ? `, demand ${r.demand}` : ""}${
+          `${r.name} · fit ${r.score}${r.demand != null ? `, demand ${r.demand}` : ""}${
             r.play
-              ? `, ${r.play}${r.competitors.length ? ` (${r.competitors.join("/")})` : ""}`
+              ? `, ${r.play}${r.competitors.length ? ` of ${r.competitors.join("/")}` : ""}`
               : ""
           } · ${r.csm}`,
       )
@@ -924,7 +924,7 @@ export function AccountsClient({
             <option value="">Partners</option>
             {partners.map((c) => (
               <option key={c} value={c}>
-                {c} — {partnerRole(c)}
+                {c} · {partnerRole(c)}
               </option>
             ))}
           </select>
@@ -1123,7 +1123,7 @@ export function AccountsClient({
                             className={styles.srTerm}
                             onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
                             aria-expanded={srOpenId === a.id}
-                            title="A verified gem — opens the card, citations, and the email meat"
+                            title="Open the gem with its citations and emails."
                           >
                             {a.second.gems[0].term}
                             {a.second.gems.length > 1 && (
@@ -1139,7 +1139,7 @@ export function AccountsClient({
                             className={`${styles.srTerm} ${styles.srTermSupport}`}
                             onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
                             aria-expanded={srOpenId === a.id}
-                            title="Heavy support traffic — opens the case list and the meat"
+                            title="Heavy support traffic. Open the cases and their emails."
                           >
                             ▮ {a.second.supportTotal} CASES
                           </button>
@@ -1424,7 +1424,7 @@ export function AccountsClient({
                                     {a.contactName}, the relationship
                                     {a.contactEmail && (
                                       <>
-                                        {" — "}
+                                        {" · "}
                                         <a href={`mailto:${a.contactEmail}`}>
                                           {a.contactEmail}
                                         </a>
@@ -1587,7 +1587,7 @@ function DraftDialog({
 
   const mailto = `mailto:${encodeURIComponent(contact.email)}${
     cc.length ? `?cc=${encodeURIComponent(cc.join(","))}&` : "?"
-  }subject=${encodeURIComponent(subject || `${accountName} — PrismHR Global`)}&body=${encodeURIComponent(
+  }subject=${encodeURIComponent(subject || `PrismHR Global for ${accountName}`)}&body=${encodeURIComponent(
     body.slice(0, 1800),
   )}`;
 
@@ -1790,7 +1790,7 @@ function DraftDialog({
         </div>
         <p className={styles.draftFoot}>
           Outlook opens with the addresses and the draft on it. When it&rsquo;s sent, drop
-          the .eml in the Chute — that files the touch.
+          the .eml in the Chute. That files the touch.
         </p>
       </div>
     </div>
@@ -1837,7 +1837,7 @@ function ContactsPanel({
         className={`${styles.ctcToggle} ${styles.ctcLead}`}
         onClick={openUp}
       >
-        {open ? "▾" : "▸"} Contacts ({list ? list.length : count})
+        {open ? "▾" : "▸"} Contacts · {list ? list.length : count}
         {list?.some((c) => c.fromRecord) && (
           <span className={styles.ctcFromRec}>
             {list.filter((c) => c.fromRecord).length} from the record
@@ -1887,11 +1887,11 @@ function ContactsPanel({
                       {c.first} {c.last}
                     </b>
                   )}
-                  {c.title && <span className={styles.ctcTitle}> — {c.title}</span>}
+                  {c.title && <span className={styles.ctcTitle}> · {c.title}</span>}
                   {c.fromRecord && (
                     <span
                       className={styles.ctcFromRec}
-                      title={`Discovered in the account's own record${c.firstSeen ? ` · first seen ${c.firstSeen.slice(0, 10)}` : ""} — not in the SF export yet.`}
+                      title={`Found in the account's own record${c.firstSeen ? ` · first seen ${c.firstSeen.slice(0, 10)}` : ""}. The SF export doesn't have them yet.`}
                     >
                       from the record
                     </span>
@@ -1900,7 +1900,7 @@ function ContactsPanel({
                     <button
                       type="button"
                       className={styles.ctcDraft}
-                      title="Draft an email to them — the brain helps write it, Outlook sends it."
+                      title="Draft an email to them. The brain helps write it and Outlook sends it."
                       onClick={() => setDrafting(c)}
                     >
                       ✎ Draft

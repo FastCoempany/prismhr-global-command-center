@@ -1204,11 +1204,6 @@
   color: var(--green);
   border-color: #a7e0bd;
 }
-.prTag_stash {
-  background: #efe9fa;
-  color: #5b3aa8;
-  border-color: #d7c8f2;
-}
 .prBody {
   flex: 1;
   min-width: 0;
@@ -3867,8 +3862,15 @@ button.srVerdict:hover {
   color: rgba(10, 28, 64, 0.42);
   white-space: nowrap;
 }
+/* The stamp's mark: the brand's green by role, because the act is real work
+   done. The accent is the border and the tint; the words stay ink, as the
+   room's worked mark does (room.module.css .worked). */
 .actedStamp b {
-  color: #15803d;
+  border: 1px solid #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  color: #0a1c40;
+  border-radius: 5px;
+  padding: 0 6px;
 }
 .actedTb {
   border: 0;
