@@ -5,6 +5,7 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync as read } from "node:fs";
 import { createAccountNoteRow, type AccountNoteData } from "../../src/lib/notes/write";
 import { latestResearchAt } from "../../src/lib/intel/deep-research";
 import { readAccount, type RecordNote } from "../../src/lib/record/read";
@@ -247,5 +248,73 @@ describe("the touch log merges with the record by latest (CLAUDE.md:397-398)", (
     assert.equal(r?.at, "2026-08-14T12:00:00Z");
     assert.equal(r?.awaitingReply, true);
     assert.equal(r?.who, "Dana Ellis");
+  });
+});
+
+// ── pass 11 · A2.4, the whole scope: no private narrow source ───────────────
+// "Derived facts (who the relationship is, when we last touched, whether a
+// reply is owed, whether a deal is over, who said a thing) must read the
+// WIDEST live source the app holds, never a private narrow one." The account
+// read (src/lib/record/read.ts) is that source. Each function that derives
+// one of these facts is called only from the read, from its own module, or
+// from an adapter named here with the reason it is not a narrower read. A new
+// caller fails the build until it is reviewed and named; each adapter's
+// behavior is pinned in its own suite.
+describe("every derived fact comes from the account read or a named adapter (A2.4, whole scope)", () => {
+  const files = (readdirSync("src", { recursive: true }) as string[])
+    .filter((f) => /\.(ts|tsx)$/.test(f) && !f.startsWith("generated"))
+    .map((f) => `src/${f}`);
+  const callers = (fn: string) =>
+    files.filter((f) => new RegExp(`\\b${fn}\\(`).test(read(f, "utf8").replace(/^\s*(\/\/|\*).*$/gm, ""))).sort();
+
+  const GATE: Record<string, Record<string, string>> = {
+    // Who the relationship is.
+    relationshipFor: {
+      "src/lib/intel/relationship.ts": "its own module",
+      "src/lib/record/read.ts": "the account read",
+      "src/app/partners/recipients.ts": "the read's rule with the declared home side over the whole book (pass 8 call 7; tests/canon/act-lane.test.ts)",
+      "src/app/groundwork/page.tsx": "the seed alone, only when the account has no read (readById ?? relationshipFor([], …))",
+    },
+    // Who is in the deal.
+    peopleFor: {
+      "src/lib/intel/people.ts": "its own module",
+      "src/lib/intel/relationship.ts": "the relationship's own reader",
+      "src/lib/record/read.ts": "the account read",
+      "src/lib/pipeline/build.ts": "the report's contacts line, over the room's own notes, our side filtered out (tests/pipeline-build.test.ts)",
+    },
+    // Whose move it is, and whether a reply is owed.
+    whoseMoveFrom: {
+      "src/lib/record/whose-move.ts": "its own module",
+      "src/lib/groundwork/day.ts": "the read's verdict first (moveById), the rungs over the same facts only without a read",
+      "src/lib/room/engine.ts": "the read's verdict first (i.whoseMove), the rungs over the same facts only without a read",
+    },
+    owedByThem: {
+      "src/lib/room/owed.ts": "its own module",
+      "src/lib/record/whose-move.ts": "the move's rungs",
+      "src/lib/record/read.ts": "the account read",
+    },
+    owedToMe: {
+      "src/lib/room/owed.ts": "its own module",
+      "src/app/room/page.tsx": "the room's register, over every note the read holds (allNotes) and the sheet",
+    },
+    // When we last touched, on the Accounts sheet: both records by latest (C1).
+    lastHumanTouch: {
+      "src/lib/record/accounts.ts": "its own module",
+      "src/app/accounts/page.tsx": "the sheet's column, from the read's touch and the export's row (C1)",
+    },
+  };
+
+  for (const [fn, allowed] of Object.entries(GATE))
+    test(`${fn} is called only where the gate names`, () => {
+      assert.deepEqual(callers(fn), Object.keys(allowed).sort());
+    });
+
+  test("whether a deal is over reads the board card, the stamp's one store, everywhere", () => {
+    const calls = files.flatMap((f) =>
+      [...read(f, "utf8").matchAll(/\breadOutcome\(([^)]*)\)/g)].map((m) => `${f}: ${m[1]}`),
+    );
+    assert.ok(calls.length > 5);
+    for (const c of calls)
+      if (!c.startsWith("src/lib/dashboard/outcome.ts")) assert.match(c, /: \w+\.notes$/, c);
   });
 });

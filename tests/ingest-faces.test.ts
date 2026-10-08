@@ -2192,3 +2192,50 @@ describe("the Drop's held question survives a reload and the day line, and says 
     assert.ok(src.indexOf("saveDropHolds(localStorage") < src.indexOf("loadDropHolds(localStorage"));
   });
 });
+
+// ── pass 11: the six-word law on the ingest surfaces (A12.6) ────────────────
+// "Top-level action and reason lines: six words or fewer." On the ingest
+// surfaces the action lines are the held box's choices and the Chute's own
+// line; the held reason has its own nine-word cap (CLAUDE.md, The Chute),
+// pinned in tests/ingest-guard.test.ts. Each sentence of each line is held to
+// six words, for every claim length the box can name.
+
+describe("the ingest surfaces' action lines keep six words a sentence (pass 11, A12.6)", () => {
+  const words = (t: string) =>
+    t
+      .split(/(?<=[.?!])\s+/)
+      .map((x) => x.trim())
+      .filter(Boolean)
+      .map((x) => x.split(/\s+/).length);
+
+  test("every choice the held box offers, with a long and a short account name", async () => {
+    for (const claim of [SIMPLOY.name, "Regis HR Group of Northern Illinois"])
+      for (const open of [false, true]) {
+        const html = await heldBox({
+          verdict: TEXT_VERDICT,
+          claim,
+          claimId: SIMPLOY.id,
+          bound: REGIS,
+          candidates: [{ id: SIMPLOY.id, name: SIMPLOY.name, rung: "name" }],
+          defaultOpen: open,
+        });
+        const labels = [...html.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)]
+          .map((m) => textOf(m[1]))
+          .filter((t) => /[a-z]/i.test(t));
+        assert.ok(labels.length >= 2, labels.join(" | "));
+        for (const l of labels) {
+          // An account's own name is its name, not words of the line.
+          const line = l.replace(claim, "X").replace(REGIS.name, "X").replace(SIMPLOY.name, "X");
+          for (const n of words(line)) assert.ok(n <= 6, `"${l}" runs ${n} words`);
+        }
+      }
+  });
+
+  test("the Chute's own line, writable and read-only", () => {
+    const src = read("src/app/room/chute.tsx");
+    const lines = [...src.matchAll(/className=\{styles\.chuteLine\}>\s*([^<{]+?)\s*</g)].map((m) => m[1].trim());
+    assert.ok(lines.includes("Throw files here. They find their account."));
+    assert.ok(lines.includes("Read-only session"));
+    for (const l of lines) for (const n of words(l)) assert.ok(n <= 6, `"${l}" runs ${n} words`);
+  });
+});

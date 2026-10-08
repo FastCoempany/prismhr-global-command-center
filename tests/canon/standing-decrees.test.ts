@@ -626,13 +626,19 @@ describe("MULTI reads exactly MULTI, on the one ladder", () => {
       .filter((f) => /^\s*MULTI\s*$/m.test(readFileSync(f, "utf8")))
       .map((f) => relative(root, f))
       .sort();
+    // Groundwork's badge moved into its face in pass 11 (MultiBadge), where
+    // the browser suite renders it (tests/browser/prep.test.ts).
     assert.deepEqual(painters, [
-      "src/app/groundwork/page.tsx",
+      "src/app/groundwork/face.tsx",
       "src/app/room/room-client.tsx",
     ]);
     assert.match(
+      readFileSync(join(root, "src/app/groundwork/face.tsx"), "utf8"),
+      /\[\s*multiTone\(count\)\s*\]/,
+    );
+    assert.match(
       readFileSync(join(root, "src/app/groundwork/page.tsx"), "utf8"),
-      /\[multiTone\(file\.threadCount\)\]/,
+      /<MultiBadge count=\{file\.threadCount\} \/>/,
     );
     assert.match(
       readFileSync(join(root, "src/app/room/page.tsx"), "utf8"),
@@ -710,5 +716,37 @@ describe("the verify chain: five checks in the decreed order, joined by &&", () 
     walkTests(join(root, "tests"));
     assert.equal(new Set(listed).size, listed.length, "a file listed twice");
     assert.deepEqual([...listed].sort(), files.sort());
+  });
+});
+
+// ── pass 11 · A6.11: concepts never ship; winners do ─────────────────────────
+// What "ship" means in code is "served by the app". The judging documents
+// live in docs/mockups, which Next never serves (it serves src/app's routes
+// and public/). So: no route is a concept, a variant or a scratch surface; no
+// mockup sits in public/; nothing under src imports from docs/; and no
+// rewrite in the Next config reaches docs/. The winner's ship order is the
+// process half (A6.12).
+describe("concepts never ship: no concept is served (A6.11)", () => {
+  const routes = (readdirSync(join(root, "src/app"), { recursive: true }) as string[])
+    .filter((f) => /(^|\/)(page\.tsx|route\.ts)$/.test(f))
+    .map((f) => "/" + f.replace(/(^|\/)(page\.tsx|route\.ts)$/, ""));
+
+  test("no route is named for a concept, a variant, a mockup or a scratch surface", () => {
+    assert.ok(routes.length > 10);
+    const CONCEPT =
+      /(^|\/)(concepts?|variants?|mockups?|triptych|options?|draft|drafts|wip|sandbox|playground|dev|test|tmp|scratchpad-v\d|.*-(concept|variant|mockup|alt|b))(\/|$)/i;
+    assert.deepEqual(routes.filter((r) => CONCEPT.test(r)), []);
+  });
+
+  test("no judging document is served: none in public/, none imported, no rewrite to docs/", () => {
+    const mockups = new Set(readdirSync(join(root, "docs/mockups")));
+    const pub = readdirSync(join(root, "public"), { recursive: true }) as string[];
+    assert.deepEqual(pub.filter((f) => mockups.has(f.split("/").pop() ?? "")), []);
+    assert.deepEqual(pub.filter((f) => /mockup|concept|triptych/i.test(f)), []);
+    const src = (readdirSync(join(root, "src"), { recursive: true }) as string[]).filter((f) => /\.(ts|tsx)$/.test(f));
+    const reaching = src.filter((f) => /from\s+["'][^"']*docs\//.test(readFileSync(join(root, "src", f), "utf8")));
+    assert.deepEqual(reaching, []);
+    const config = readFileSync(join(root, "next.config.ts"), "utf8");
+    assert.ok(!/rewrites|redirects|docs\//.test(config), "the Next config reaches past the app");
   });
 });
