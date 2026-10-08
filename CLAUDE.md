@@ -539,6 +539,8 @@ state only ever advances the derived one (boardLift, loadCommand).
 
 **A seat follows its account (ruled 2026-09-25, C8):** when the account is excluded from the queue, the seat leaves Groundwork and reads on the HomeRoom as the account's own action until worked or taken back; it returns to the wing if the exclusion lifts first. An exclusion that rests only on a colleague's inbox gives the HomeRoom no row (C6, pass 8 call 1), so that seat stays on the wing (ruled 2026-10-07, pass 9, the founder's delegation).
 
+**Shipped by order (2026-10-08):** the founder's ship order covers the Act Lane as it went live in #260, whose own record left the ship word pending. **Every acted gem keeps its ↺ (ship order 2026-10-08, A8.5):** the ACT cell shows one gem, so THE SIGNAL's fold lists every acted gem about an account person at its foot, newest acted first, each with its act, term, acted day and ↺. With nothing live to lead, THE SIGNAL reads "✓ N ACTED" and opens the same fold.
+
 ## The Playbook face — The Sheet (triptych winner, ship order 2026-09-15)
 
 The products are the entry point, not the scenarios. Three panels, all in
@@ -623,3 +625,8 @@ founder-decreed 2026-09-15.
   retired once their actions move to the live surfaces. /intake stays as the
   bookmarklet shelf's door with a plain nav row; /partners, /archive and
   /asks stay, doored from live surfaces, with no nav row.
+- **The Pipeline pull tab** (the Ledger face, #309; ship order 2026-10-08):
+  a slim tab on the HomeRoom's right edge flies out every active account's
+  record in one fixed order, built from the room's own stores, every line
+  editable and strikable, the copy built from the record and the overlay.
+  It is the HomeRoom's, not the retired Pipeline page.

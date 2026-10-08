@@ -21,11 +21,11 @@ The number is fixed too: docs/architecture/pass-9-fixes.md said thirteen of the 
 | Verdict | Rows |
 |---|---|
 | holds | 64 |
-| broken, now fixed | 13 |
-| broken, open | 1 (A8.5) |
+| broken, now fixed | 14 (A8.5 by the ship order of 2026-10-08) |
+| broken, open | 0 |
 | process: no code can show it | 5 (A2.8, A4.31, A6.11, A6.12, A11.6) |
 
-"None broken" is now a checked statement with one exception, A8.5, below. The thirteen breaks were real, and each one was fixed with a test that fails on the old code:
+"None broken" is now a checked statement. A8.5, the one break that needed a ship order, shipped on the founder's order the same day (#391). The thirteen breaks were real, and each one was fixed with a test that fails on the old code:
 
 - **A2.4 and A4.1, the Ted doctrine and the second record.** Four surfaces read one record or no roster:
   - the draft desk's "Last touched" line read the export alone;
@@ -56,34 +56,29 @@ The fixes routed in from other slices' finds rode the same PRs:
 
 ## 2. What stays open
 
-1. **A8.5 (needs a ship order).** On the Accounts sheet, while a second gem leads the ACT cell, an earlier ✓ stamp and its ↺ render nowhere, so a mistaken ✓ can't be taken back until every gem is acted. There are two ways to place it:
-   - a stamp line under the chip, which grows the arrival cell;
-   - acted gems with ↺ inside THE SIGNAL's fold, one click down. This is the coordinator's recommendation.
+Nothing is broken. On 2026-10-08 the founder gave the three orders this section asked for ("ship the fold for A8.5, and ship #260 and #309"):
 
-   Either one is face work.
-2. **A6.12 (process).** Every face PR since the ship-order rule records its order except two:
-   - #260 (the Act Lane, Version C): its own body says "ship word pending";
-   - #309 (Pipeline, the Ledger face).
-
-   Only the founder can say whether an order was given in conversation.
-3. **The other process rows hold on the evidence there is:**
+1. **A8.5, shipped (#391).** THE SIGNAL's fold lists every acted gem about an account person at its foot, newest acted first, each with its ↺. With nothing live to lead, THE SIGNAL reads "✓ N ACTED" and opens the same fold.
+2. **#260 and #309, ratified (#391).** The Act Lane and the Pipeline pull tab now carry their ship order in CLAUDE.md, so every face PR since the ship-order rule has one.
+3. **The process rows hold on the evidence there is:**
    - A2.8 and A4.31: audits ran, but after ship;
    - A6.11: no concept route is served;
+   - A6.12: every face PR carries its order;
    - A11.6: the verify chain is pinned; the branch, PR, CI and squash steps are process.
 
 ## 3. The scoreboard after
 
 | | Before pass 10 | After |
 |---|---|---|
-| Honor-system decrees (111) | 82 honor · 1 text · 26 chain · 2 retired | 47 honor · 62 chain · 2 retired |
-| Of the honor rows, with partial pins | 20 | 41 |
+| Honor-system decrees (111) | 82 honor · 1 text · 26 chain · 2 retired | 46 honor · 63 chain · 2 retired |
+| Of the honor rows, with partial pins | 20 | 40 |
 
-36 rows moved to chain. The chain pins each one by behavior across its whole scope. The other 47 stay on the list:
+37 rows moved to chain, A8.5 with the fold (#391). The chain pins each one by behavior across its whole scope. The other 46 stay on the list:
 
-- **41 with partial pins.** What a test can call is pinned. The rest is CSS (a color, a side, a hover), a click a server render cannot make, or a scope wider than the suites reach.
+- **40 with partial pins.** What a test can call is pinned. The rest is CSS (a color, a side, a hover), a click a server render cannot make, or a scope wider than the suites reach.
 - **6 with no pin.** Four are process rows (A2.8, A4.31, A6.11, A6.12). A12.3, "the reason is the trigger", is a judgment about what a line says. A12.6, six words a line, has nothing in its scope to pin: the ingest surfaces carry no action or reason line.
 
-The founder's "23 logic rules" was an estimate made by kind. Every row a test can call now has one, and that came to 36.
+The founder's "23 logic rules" was an estimate made by kind. Every row a test can call now has one, and that came to 37.
 
 The chain runs 2246 tests after #389.
 
@@ -117,7 +112,7 @@ The chain runs 2246 tests after #389.
 | A6.6 | The Spring | holds | honor · partial | #387 | tests/canon/spring.test.ts › "each control is its glyph alone, tooltip-titled, wherever its register paints it" +3 |  |
 | A6.10 | The Spring | broken → fixed | chain | #387 | tests/canon/spring.test.ts › "a key the codec no longer reads and a line in its own order survive" +4. With the old logic dropped into the helper, this test fails. |  |
 | A6.11 | The Spring | process | honor | #387 | — |  |
-| A6.12 | The Spring | process | honor | #387 | — | Ship orders recorded for every face PR since the decree except #260 (the Act Lane: "ship word pending" in its own body) and #309 (Pipeline, the Ledger face). |
+| A6.12 | The Spring | process | honor | #387 | — | Ship orders recorded for every face PR since the decree. #260 (the Act Lane) and #309 (the Pipeline pull tab) had none on record; the founder ratified both on 2026-10-08 (#391). |
 | A7.1 | The Scratchpaper | holds | chain | #384 | tests/canon/scratchpaper.test.ts › "the floater's own modules do not resolve" +2 |  |
 | A7.3 | The Scratchpaper | holds | honor · partial | #384 | tests/canon/scratchpaper.test.ts › "first paint is the ✎ button alone, closed, with no second pad" |  |
 | A7.8 | The Scratchpaper | holds | chain | #384 | tests/canon/scratchpaper.test.ts › "a kept line is one row under the pad's namespace, by the hand door, figures kept" +5 |  |
@@ -125,7 +120,7 @@ The chain runs 2246 tests after #389.
 | A7.14 | The Scratchpaper | holds | chain | #384 | tests/canon/scratchpaper.test.ts › "cross out, then ↺: the line is back on the paper with its words and its moment" +2; existing › "the struck history pages from its own namespace" |  |
 | A8.1 | The Act Lane | holds | honor · partial | #384 | tests/canon/act-lane.test.ts › "a row with an act shows one chip: the act, then the source line inside it" +2 |  |
 | A8.2 | The Act Lane | holds | honor · partial | #384 | same test as A8.1 |  |
-| A8.5 | The Act Lane | broken → open | honor · partial | #384 | tests/canon/act-lane.test.ts › "the stamp renders with its ↺, which names the gem it takes back" +2 | An earlier ✓ stamp and its ↺ render nowhere while another gem leads the ACT cell. Placing it is face work and needs a ship order. |
+| A8.5 | The Act Lane | broken → fixed | chain | #384, #391 | tests/canon/act-lane.test.ts › "the stamp renders with its ↺, which names the gem it takes back" +2; › "the fold lists each acted gem with its ↺ while another gem leads the ACT cell" +2 | An earlier ✓ stamp and its ↺ rendered nowhere while another gem led the ACT cell. By the founder's ship order (2026-10-08) every acted gem now sits in THE SIGNAL's fold with its ↺. |
 | A8.6 | The Act Lane | holds | honor · partial | #384 | tests/canon/act-lane.test.ts › "the chip is the lane's door, and the lane it opens is the standing workbench" +1 |  |
 | A8.7 | The Act Lane | holds | honor · partial | #384 | tests/canon/act-lane.test.ts › "every citation is a door above the draft (A8.7, partial)" |  |
 | A8.8 | The Act Lane | holds | chain | #384 | tests/canon/act-lane.test.ts › "TO carries the relationship contact and SUBJECT the act; the body starts blank (A8.8)" +1 |  |

@@ -20,7 +20,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 
 | Ledger | At pass 3 (main 3726363) | Now |
 |---|---|---|
-| Honor-system decrees | 111 of 187 | 47 of 187 (47 honor, 41 of them with partial pins); 62 pinned by the chain, 2 retired |
+| Honor-system decrees | 111 of 187 | 46 of 187 (46 honor, 40 of them with partial pins); 63 pinned by the chain, 2 retired |
 | Ungoverned behaviors | 34 open | 0 open · 22 enforced · 12 encoded |
 | Conflicting pairs | 20 open | 0 open · 20 aligned |
 
@@ -34,7 +34,7 @@ The three audits said one thing from three angles: 111 of 187 decrees in scope a
 
 Violations are not tracked here; they live in the passes' own documents and close through bug passes.
 
-## 1. Honor-system decrees (111 rows: 47 honor · 62 chain · 2 retired)
+## 1. Honor-system decrees (111 rows: 46 honor · 63 chain · 2 retired)
 
 Status is one of: honor · text (a text pin exists, not behavior) · chain (pinned by behavior in the verify chain) · construction · retired (the decree itself was withdrawn).
 
@@ -75,7 +75,7 @@ Status is one of: honor · text (a text pin exists, not behavior) · chain (pinn
 | A6.8 | The Spring | "reading the LATEST of both stores — the on-demand deep pass (research: notes) AND the book-wide sweep." (348- … | no | chain | #335 | tests/canon/ted-doctrine.test.ts › "the sweep wins when it is newer" +2 |
 | A6.10 | The Spring | "Sheet lines are editable in place (✎ on hover): the visible text changes, tags and routing markers survive ve … | yes | chain | #387 | tests/canon/spring.test.ts › "a key the codec no longer reads and a line in its own order survive" +4. With the old logic dropped into the helper, this test fails. |
 | A6.11 | The Spring | "Concepts never ship; winners do." (353) | mostly | honor | — | — |
-| A6.12 | The Spring | "mockup work NEVER ships without an explicit ship order" (355-357) | not verifiable | honor | — | — |
+| A6.12 | The Spring | "mockup work NEVER ships without an explicit ship order" (355-357) | not verifiable | honor | — | — (process: every face PR now carries a recorded order; #260 and #309 ratified 2026-10-08) |
 | A7.1 | The Scratchpaper | "The stash floater is retired — component, actions, and lib deleted." (293) | mostly | chain | #384 | tests/canon/scratchpaper.test.ts › "the floater's own modules do not resolve" +2 |
 | A7.3 | The Scratchpaper | "A ✎ button bottom-right opens one running pad" (294-295) | yes | honor | — | partial · tests/canon/scratchpaper.test.ts › "first paint is the ✎ button alone, closed, with no second pad" |
 | A7.7 | The Scratchpaper | "outside every account view and the intranet mirror by construction" (297-298) | yes in effect | chain | #335 (ab281df) | tests/canon/chute.test.ts › "every namespace the app defines is excluded, and the predicate agrees" +1 |
@@ -89,7 +89,7 @@ Status is one of: honor · text (a text pin exists, not behavior) · chain (pinn
 | A8.2 | The Act Lane | "source line whispered beneath" (455) | yes | honor | — | partial · same test as A8.1 |
 | A8.3 | The Act Lane | "hover ✓ stamps acted (the gems store's own actedDay" (455-456) | yes | chain | #375 | tests/canon/act-lane.test.ts › "the stamp lands on the gems store's actedDay, clears the nag, and keeps its ↺" +1 |
 | A8.4 | The Act Lane | "the acted sweep can re-stamp from the record any time it truly speaks" (456-457) | partly | chain | #373 | tests/canon/second-record.test.ts › "a clocked Outlook send where the person is only a recipient stamps the gem" +2 |
-| A8.5 | The Act Lane | "every stamp carries ↺" (457) | yes | honor | — | partial · tests/canon/act-lane.test.ts › "the stamp renders with its ↺, which names the gem it takes back" +2 |
+| A8.5 | The Act Lane | "every stamp carries ↺" (457) | yes | chain | #391 | tests/canon/act-lane.test.ts › "the stamp renders with its ↺, which names the gem it takes back" +2; › "the fold lists each acted gem with its ↺ while another gem leads the ACT cell" +2 |
 | A8.6 | The Act Lane | "Clicking the chip opens the Act Lane — a sticky workbench beside the sheet" (457-458) | yes | honor | — | partial · tests/canon/act-lane.test.ts › "the chip is the lane's door, and the lane it opens is the standing workbench" +1 |
 | A8.7 | The Act Lane | "evidence up top (citations drill to cleaned excerpts by the meat law)" (458-459) | yes | honor | — | partial · tests/canon/act-lane.test.ts › "every citation is a door above the draft (A8.7, partial)" |
 | A8.8 | The Act Lane | "the editable draft mid (TO/SUBJECT/BODY seeded from the relationship contact and the act)" (459-460) | yes | chain | #384 | tests/canon/act-lane.test.ts › "TO carries the relationship contact and SUBJECT the act; the body starts blank (A8.8)" +1 |
@@ -237,3 +237,4 @@ Status is one of: open · ruled (which side, quoted) · encoded (CLAUDE.md amend
 - 2026-10-06 · pass 8, the re-walk at main d119c52 (pass 7 is #339 to #366). §1: 15 rows pinned by the chain (A1.11, A4.9, A6.4, A6.8, A7.7, A7.9, A7.11, A7.13, A8.13, A8.18, A9.11, A10.8, A10.15, A10.16, A10.23), A1.8 text-pinned, A4.6 and A4.18 retired; eleven rows with part-scope pins stay on the list marked partial. §2: 16 enforced, 3 violated (D17, D18, D19). §3: C1, C2, C4, C5, C8, C16 and C18 move to aligned; C6 and C19 violated; C13 encoded. Encoded-at cells re-cited to the current CLAUDE.md. The D3 row's model name is replaced by "the roster's model". Evidence: docs/architecture/pass-8-rewalk.md. 94 of 187 · 0 open, 16 enforced, 15 encoded, 3 violated · 0 open, 17 aligned, 1 encoded, 2 violated.
 - 2026-10-07 · pass 9, the fixes (#368 to #382), re-scored at main 9852088 by a fresh walk and then for the tail PRs at da6324e. §1: A3.9, A4.14, A4.21, A8.3, A8.4, A8.11, A8.12, A8.14, A8.19, A9.18 and A8.15 move to chain; thirteen honor rows gain partial pins. §2: D17, D18, D20 enforced (#373); D19, D27, D28 enforced (#380), D11 enforced (#381); D4 back to encoded once heavy text travels whole (#381); no row is violated. §3: C6, C13 and C19 aligned; all twenty pairs are aligned. Evidence: docs/architecture/pass-9-fixes.md. 83 of 187 · 0 open, 22 enforced, 12 encoded · 0 open, 20 aligned.
 - 2026-10-08 · pass 10, the verification (#384 to #389). Every one of the 83 rows on the list (82 honor, 1 text) was checked against the code at main, row by row: 64 hold, 13 were broken and are fixed, 1 is broken and open (A8.5, which needs a ship order), and 5 are process rules no code can show. 36 rows move to chain, A1.8 among them (text → chain). The other 47 stay on the list: 41 with partial pins (CSS, a click a server render cannot make, or a scope wider than the suites reach) and 6 with none (five process rules and A12.3, a judgment of what counts as a trigger). Evidence: docs/architecture/pass-10-verification.md. 47 of 187 · 0 open, 22 enforced, 12 encoded · 0 open, 20 aligned.
+- 2026-10-08 · the founder's ship orders after pass 10 (#391): the fold for A8.5, so every acted gem keeps its ↺ in THE SIGNAL's fold; A8.5 moves to chain. #260 (the Act Lane) and #309 (the Pipeline pull tab) are ratified, which closes A6.12's gap; the row stays a process row. 46 of 187 · 0 open, 22 enforced, 12 encoded · 0 open, 20 aligned.

@@ -220,6 +220,9 @@ export type AccountRow = {
   actedDay: string;
   /** That gem's term, for the stamp's take-back. */
   actedTerm: string;
+  /** Every acted gem about an account person, newest acted first: THE
+   *  SIGNAL's fold lists each with its ↺ (A8.5, ship order 2026-10-08). */
+  acted: { term: string; act: string; actedDay: string }[];
   /** A live deal on the board (by id, digest-matched): neither archived nor
    *  stamped Closed Won/Lost (pass 8 A4) — the fork's HomeRoom half. */
   onBoard: boolean;
@@ -1153,6 +1156,18 @@ export function AccountsClient({
                           >
                             {a.second.verdict}
                           </button>
+                        ) : a.second && a.acted.length > 0 ? (
+                          // Nothing live to lead with: the acted gems still
+                          // open, so every ↺ stays one click down (A8.5).
+                          <button
+                            type="button"
+                            className={styles.srTerm}
+                            onClick={() => setSrOpenId(srOpenId === a.id ? "" : a.id)}
+                            aria-expanded={srOpenId === a.id}
+                            title="Open the acted gems. Each can be taken back."
+                          >
+                            ✓ {a.acted.length} ACTED
+                          </button>
                         ) : (
                           <span className={styles.muted}>—</span>
                         )}
@@ -1214,7 +1229,14 @@ export function AccountsClient({
                     {srOpenId === a.id && a.second && (
                       <tr>
                         <td colSpan={6} className={styles.srFoldTd}>
-                          <SecondRecordPanel accountId={a.id} second={a.second} />
+                          <SecondRecordPanel
+                            accountId={a.id}
+                            second={a.second}
+                            acted={a.acted}
+                            onTakeBack={
+                              canWrite ? (term) => tickUnacted(a.id, term) : undefined
+                            }
+                          />
                         </td>
                       </tr>
                     )}

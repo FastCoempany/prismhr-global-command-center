@@ -235,6 +235,21 @@ export function actedStampOf(
   return best ?? { day: "", term: "" };
 }
 
+/** Every acted gem about an account person, newest acted first: what THE
+ *  SIGNAL's fold lists with its ↺ (A8.5, ship order 2026-10-08). The ACT
+ *  cell shows only the leading gem's chip or the newest stamp, so an earlier
+ *  ✓ would have no reachable take-back while another gem leads; the fold
+ *  keeps every one of them one click down. A colleague's gem has no seat on
+ *  the row (C16). */
+export function actedGemsOf(
+  gems: readonly Pick<Gem, "term" | "act" | "actedDay" | "whoKind">[],
+): { term: string; act: string; actedDay: string }[] {
+  return gems
+    .filter((g) => !!g.actedDay && g.whoKind !== "colleague")
+    .map((g) => ({ term: g.term, act: g.act, actedDay: g.actedDay }))
+    .sort((a, b) => (a.actedDay < b.actedDay ? 1 : a.actedDay > b.actedDay ? -1 : 0));
+}
+
 // ── the lane's seed (the Act Lane, A8.8) ─────────────────────────────────────
 // Clicking the chip opens the lane on the row's leading gem. The draft is
 // seeded from the relationship contact (TO) and the act (SUBJECT); a saved,

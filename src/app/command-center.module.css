@@ -3917,6 +3917,25 @@ button.srVerdict:hover {
   border-radius: 5px;
   padding: 0 6px;
 }
+/* The acted gems at the foot of THE SIGNAL's fold (A8.5): each line its act,
+   its term and day, and its ↺. Green by role for the tick: real health. */
+.srActed {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.srActedLine {
+  font-size: 13px;
+  margin-top: 4px;
+}
+.srActedTick {
+  color: var(--ink);
+  background: rgba(34, 197, 94, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.55);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 11px;
+}
 .actedTb {
   border: 0;
   background: none;
