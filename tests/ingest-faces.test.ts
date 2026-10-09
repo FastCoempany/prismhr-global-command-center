@@ -2317,3 +2317,72 @@ describe("the receipt's second line names the fact it stands on (A12.3, whole sc
     );
   });
 });
+
+// ── A12.1 · A12.10 · A12.12 · the read register (pass 15) ──────────────────
+// Imperative mood, no property-talk about history, no invented slang or
+// constructed phrasing: the lints above catch what a pattern can, and the
+// rest is a read. tests/ingest-copy-register.json lists every operator string
+// in scope that has been read against those rules. A string the code spells
+// that is not on the register fails here, so a new line cannot ship unread;
+// a registered string the code no longer spells fails too, so the register
+// cannot rot. The scope is INGEST_FILES without the three prompt modules a
+// model reads, plus the Drop's handlers; a string with no space or no word
+// in it (a key, a class, a head) is not copy.
+const REGISTER_PROMPTS = new Set([
+  "src/lib/activity/run.ts",
+  "src/app/intranet/runners.ts",
+  "src/lib/ingest/verdict-reason.ts",
+]);
+const copyLike = (s: string): boolean =>
+  /\s/.test(s.trim()) &&
+  /[a-z]{3}/.test(s) &&
+  !/^(src|@|\.)\//.test(s) &&
+  !/^X( X)*$/.test(s.trim());
+
+describe("every operator string on the ingest surfaces is on the read register (A12.1, A12.10, A12.12, whole scope)", () => {
+  const register = JSON.parse(read("tests/ingest-copy-register.json")) as {
+    about: string;
+    files: Record<string, string[]>;
+  };
+  const spoken = new Map<string, string[]>();
+  for (const f of INGEST_FILES) {
+    if (REGISTER_PROMPTS.has(f)) continue;
+    const ss = [...new Set(spelled(f).filter(copyLike))].sort();
+    if (ss.length) spoken.set(f, ss);
+  }
+  spoken.set(
+    "src/app/room/room-client.tsx",
+    [...new Set(dropSpelled().strings.filter(copyLike))].sort(),
+  );
+
+  test("the register covers the sweep's scope, file for file", () => {
+    assert.deepEqual([...spoken.keys()].sort(), Object.keys(register.files).sort());
+  });
+
+  test("every string the code spells is on the register, read; every registered string is still spelled", () => {
+    const unread: string[] = [];
+    const stale: string[] = [];
+    for (const [f, ss] of spoken) {
+      const have = new Set(register.files[f] ?? []);
+      for (const s of ss) if (!have.has(s)) unread.push(`${f}: ${JSON.stringify(s)}`);
+      for (const s of have) if (!ss.includes(s)) stale.push(`${f}: ${JSON.stringify(s)}`);
+    }
+    assert.deepEqual(
+      unread,
+      [],
+      "a new operator string: read it against the writing canon and the plain-speech law, then add it to tests/ingest-copy-register.json",
+    );
+    assert.deepEqual(
+      stale,
+      [],
+      "a registered string the code no longer spells: remove it",
+    );
+  });
+
+  test("the register is live: a string the code does not spell is caught", () => {
+    const have = new Set(register.files["src/app/room/ingest/held.tsx"]);
+    assert.ok(have.has("Pick the account"));
+    assert.ok(!have.has("Model delivery is pending."));
+    assert.ok(spoken.get("src/app/room/ingest/held.tsx")!.includes("Pick the account"));
+  });
+});

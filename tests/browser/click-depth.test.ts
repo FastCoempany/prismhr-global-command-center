@@ -51,6 +51,11 @@ const FACES: [string, string, MountOptions][] = [
   ["a Playbook draft", "tests/browser/fixtures/drafts.tsx", {}],
   ["the Scratchpaper", "tests/browser/fixtures/scratchpad.tsx", {}],
   ["the Playbook Sheet", "tests/browser/fixtures/playbook.tsx", {}],
+  ["the Intake shelf", "tests/browser/fixtures/intake.tsx", {}],
+  ["the payroll demo", "tests/browser/fixtures/payroll-demo.tsx", {}],
+  ["the demo sidekick", "tests/browser/fixtures/sidekick.tsx", {}],
+  ["the flow-first sidekick", "tests/browser/fixtures/sidekick-v3.tsx", {}],
+  ["the Pricing table", "tests/browser/fixtures/pricing.tsx", {}],
 ];
 
 /** The app's own abbreviations: each is a compression, so a short line that
@@ -70,6 +75,22 @@ const EXEMPT: [RegExp, string][] = [
   // A run's ordinal, not a count: the run's earlier touches are the lines
   // beneath it.
   [/sendbook__step/, "the run's ordinal"],
+  // The Pricing room (pass 15): a price is the figure itself, authored on
+  // this page (the third money carve-out), not a count of anything; the
+  // head's count is of the rows in view beneath it.
+  [/command_center__count/, "the rows in view beneath it"],
+  [/command_center__fit/, "a tier is the price's own label"],
+  [
+    /command_center__table/,
+    "the figure itself; a tier and the unit are the price's own labels",
+  ],
+  // The demo tabs (pass 15). A screen's ordinal in the flow, with the flow
+  // beside it; a source moment's id and the frame's file name and command,
+  // which are provenance; and the audience label, trade vocabulary (PEO,
+  // SMB) with nothing derived behind it.
+  [/payroll_demo__cardHead/, "the screen's ordinal in the flow"],
+  [/sidekick_v3__(chip|provenance)/, "a source moment's id, a frame's file name"],
+  [/sidekick__who/, "the audience label: trade vocabulary, nothing derived behind it"],
 ];
 
 let browser: Browser;
@@ -103,7 +124,15 @@ describe("A5.1 to A5.4 · every count on every mounted face is a door, and no fo
             const raw = n.textContent ?? "";
             const text = raw.replace(re, "");
             const abbrs = raw.match(abbrRe) ?? [];
-            const words = raw.trim().split(/\s+/).filter(Boolean).length;
+            // A sentence is read whole: a bold or linked fragment inside it
+            // is still prose, so the words are the nearest block's.
+            const block =
+              n.parentElement?.closest("p,li,td,th,h1,h2,h3,h4,dd,dt,blockquote,label") ??
+              n.parentElement;
+            const words = (block?.textContent ?? raw)
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean).length;
             // A count, or an abbreviation in a short line. Running prose is a
             // sentence, not a compression.
             const kind: "count" | "abbr" | null = /\d/.test(text)
@@ -132,8 +161,17 @@ describe("A5.1 to A5.4 · every count on every mounted face is a door, and no fo
                   if (wants.every((w) => w.test(d.textContent ?? ""))) return true;
               return false;
             })();
+            // The classes the line sits in, four levels up, so a table's
+            // cell is read as the table's.
+            const lineage: string[] = [];
+            for (
+              let up = 0, box: HTMLElement | null = el;
+              up < 4 && box;
+              up++, box = box.parentElement
+            )
+              lineage.push(box.className);
             out.push({
-              cls: el.className + " " + (el.parentElement?.className ?? ""),
+              cls: lineage.join(" "),
               text: raw.trim().slice(0, 80),
               kind,
               door: !!el.closest(DOOR),

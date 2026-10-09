@@ -178,7 +178,7 @@ export const TOOLS: Tool[] = [
     where: "accounts list",
     label: "▤ Grab Sales Nav intent",
     takes:
-      "The whole accounts list. It scrolls and pages through every row itself, 118 accounts in under a minute, collecting names, intent levels, activity counts, and alerts. It opens the HomeRoom. Paste it into any account's ⚡ box there. Each row files as a note on its own account, where the queue reads it, and a row that names no account files nothing.",
+      "The whole accounts list. It scrolls and pages through every row itself in under a minute, collecting names, intent levels, activity counts, and alerts. It opens the HomeRoom. Paste it into any account's ⚡ box there. Each row files as a note on its own account, where the queue reads it, and a row that names no account files nothing.",
     refuses:
       "Any page that isn't Sales Navigator. Keep the tab in front while it walks the list; a navy button hands you the copy when it finishes.",
     build: salesNavBookmarklet,
