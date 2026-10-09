@@ -92,12 +92,16 @@ const VERBS = new Set([
 
 // Hedges and framing the writing canon bans outright.
 const HEDGE_RE =
-  /\b(may be worth|might want|you might|consider|worth a|it may|could be worth|perhaps|possibly|appears to|seems to|maybe)\b/i;
+  /\b(may be worth|may be|might be|might want|you might|consider|worth a|it may|could be worth|perhaps|possibly|probably|appears to|seems to|maybe)\b/i;
 
 // A deadline never rides the action line — the action is today's; the date
 // lives in the reason (canon rule 2).
 const DEADLINE_RE =
   /\b(by|before|until)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|eod|eow|\d{1,2}\/\d{1,2})\b|\bdeadline\b/i;
+
+// Recency alone is never a reason (canon rule 3): a reason that leans on
+// "recently" or "a while" names no trigger.
+const RECENCY_RE = /\b(recently|lately|a while (ago|back)|it's been a while)\b/i;
 
 // Retired vocabulary (canon rules 8–10) and the word that never appears.
 // "steps" is the banned word; "step 1" survives by decree (the Sendbook's
@@ -258,6 +262,7 @@ export function lintReason(reason: string): LintVerdict {
   const words = wordCount(t.replace(/[.!]$/, ""));
   if (words > 8) faults.push(`${words} words — the cap is eight`);
   if (HEDGE_RE.test(t)) faults.push("hedging");
+  if (RECENCY_RE.test(t)) faults.push("recency as a reason");
   if (RETIRED_RE.test(t)) faults.push("retired vocabulary");
   faults.push(...deviceFaults(t));
   return { ok: faults.length === 0, faults };

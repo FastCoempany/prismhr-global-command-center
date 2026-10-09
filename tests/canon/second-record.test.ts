@@ -153,6 +153,16 @@ describe("gem lines are operator copy: the seven devices are linted, and a non-d
     assert.equal(lintReason("Their reply of 19 Aug asks for pricing.").ok, true);
   });
 
+  test("recency as a reason dies: 'They wrote recently.' (canon rule 3, pass 14)", () => {
+    assert.ok(lintReason("They wrote recently.").faults.includes("recency as a reason"));
+    assert.ok(
+      lintReason("It's been a while since the demo.").faults.includes(
+        "recency as a reason",
+      ),
+    );
+    assert.deepEqual(lintReason("Renewal meeting Monday.").faults, []);
+  });
+
   test("plain speech passes: 'Ask Greg Williams about the call.'", () => {
     assert.equal(lintAct("Ask Greg Williams about the call.").ok, true);
     assert.equal(lintAct("Reach Natalie and William today.").ok, true);

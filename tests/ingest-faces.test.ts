@@ -1918,9 +1918,6 @@ const FLOURISH_RE =
   /\b(and that's (fine|okay|ok)|no judg(e)?ment|shouldn't have to|don't worry|no worries|rest assured|read-back|when it's home|on the first pass|unlocks the full shape)\b/i;
 const NOUN_FORM_RE =
   /\b\w+ (delivery|follow-up|outreach|review) is (pending|due|outstanding)\b/i;
-// Recency alone is never a reason (canon rule 3, A12.3): a line that leans
-// on "recently" or "a while" states no trigger.
-const RECENCY_RE = /\b(recently|lately|a while (ago|back)|it's been a while)\b/i;
 
 /** What the canon finds in one operator string, or nothing. */
 function canonFaults(s: string): string[] {
@@ -1940,7 +1937,6 @@ function canonFaults(s: string): string[] {
   if (/\([^()]*[A-Za-z][^()]*\)/.test(t) && /\s/.test(t)) faults.push("a parenthetical");
   if (FLOURISH_RE.test(t)) faults.push("a flourish or invented slang");
   if (NOUN_FORM_RE.test(t)) faults.push("a noun-form instruction");
-  if (RECENCY_RE.test(t)) faults.push("recency as a reason");
   return faults;
 }
 
@@ -2277,5 +2273,47 @@ describe("the ingest surfaces' action lines keep six words a sentence (pass 11, 
     assert.ok(lines.includes("Read-only session"));
     for (const l of lines)
       for (const n of words(l)) assert.ok(n <= 6, `"${l}" runs ${n} words`);
+  });
+});
+
+// ── A12.3 · the receipt's second line names the thing that happened (pass 14)
+// The other reason line on the ingest surfaces: the amber second line speaks
+// only for a cut read, a skipped duplicate check or a reader that was down,
+// each a fact with its figure or its name, never a description. The held
+// box's reasons are pinned in tests/ingest-guard.test.ts.
+describe("the receipt's second line names the fact it stands on (A12.3, whole scope)", () => {
+  test("a cut read carries its counts, the skipped check and the reader down say so, and a clean filing says nothing", async () => {
+    const { receiptCaveats, READER_DOWN } =
+      await import("../src/app/room/ingest/receipt");
+    const lines = receiptCaveats(
+      filed({
+        windows: [{ what: "the paste", read: 60000, of: 212000 }],
+        dupeCheck: "skipped",
+        degraded: true,
+      }),
+    );
+    assert.deepEqual(lines, [
+      "Read 60,000 of 212,000 characters.",
+      "The duplicate check didn't run.",
+      READER_DOWN,
+    ]);
+    for (const l of lines) {
+      assert.ok(/\d|duplicate check|reader/.test(l), `names no fact: "${l}"`);
+      assert.deepEqual(
+        lintReason(l).faults.filter((f) => !/cap|digit/.test(f)),
+        [],
+        l,
+      );
+    }
+    assert.deepEqual(receiptCaveats(filed()), []);
+    // A filing that failed carries its backup's failure, a fact too.
+    assert.deepEqual(
+      receiptCaveats({
+        ...filed(),
+        state: "error",
+        vault: { text: "The backup broke off.", bad: true },
+      }),
+      ["The backup broke off."],
+    );
   });
 });
