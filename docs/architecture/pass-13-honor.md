@@ -36,7 +36,7 @@ Every operator string on the ingest surfaces was read again against the four rul
 
 ## 4. One canon text gap for the founder
 
-A11.6 reads "Ship pattern: branch `claude/prismhr-demo-guide-strategy-6h0oqg` → PR → Vercel CI green → squash merge = live production." Every PR since pass 7 has shipped from its own `claude/…` branch; the named branch has not carried a change in weeks. The practice is the decree's, the branch name is not. Nothing was changed. The ruling needed is whether the line reads "a `claude/` branch" or keeps the name.
+A11.6 reads "Ship pattern: branch `claude/prismhr-demo-guide-strategy-6h0oqg` → PR → Vercel CI green → squash merge = live production." Every PR since pass 7 has shipped from its own `claude/…` branch; the named branch has not carried a change in weeks. The practice is the decree's, the branch name is not. Nothing was changed in this pass. **Ruled 2026-10-09:** on the founder's order the line reads "a `claude/` branch → PR → Vercel CI green → squash merge = live production".
 
 ## 5. What stays, and why
 
