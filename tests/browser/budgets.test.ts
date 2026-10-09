@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { Browser, Locator } from "playwright-core";
 import { cls, mount, openBrowser, type MountOptions } from "../helpers/browser";
+import { renderPage, SERVER_PAGES } from "../helpers/page-render";
 
 const BUDGET = JSON.parse(readFileSync("tests/browser/budgets.json", "utf8")) as Record<
   string,
@@ -179,7 +180,25 @@ describe("A4.31 · arrival budgets never grow", () => {
       await page.close();
     });
 
+  // The pages the harness cannot mount, from their server render (pass 16):
+  // the whole page, wayfinder included.
+  for (const p of SERVER_PAGES)
+    test(`${p.route} arrives within its budget of ${BUDGET[p.route]} pieces`, async () => {
+      const html = await renderPage(p.route);
+      const page = await mount(browser, p.route, { html });
+      const pieces = await piecesOf(page.locator("#root"));
+      assert.ok(pieces > 0, `${p.route} shows nothing`);
+      assert.ok(
+        pieces <= BUDGET[p.route],
+        `${p.route} shows ${pieces} pieces on arrival; its budget is ${BUDGET[p.route]}`,
+      );
+      await page.close();
+    });
+
   test("the budget file holds a budget for every unit measured, and nothing else", () => {
-    assert.deepEqual(Object.keys(BUDGET).sort(), UNITS.map(([k]) => k).sort());
+    assert.deepEqual(
+      Object.keys(BUDGET).sort(),
+      [...UNITS.map(([k]) => k), ...SERVER_PAGES.map((p) => p.route)].sort(),
+    );
   });
 });
