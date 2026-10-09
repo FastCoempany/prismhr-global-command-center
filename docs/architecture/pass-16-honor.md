@@ -47,9 +47,11 @@ Two breaks, fixed:
 |---|---|---|
 | A11.6 | partial · the verify chain's order is pinned (tests/canon/standing-decrees.test.ts) | "A `claude/` branch → PR → Vercel CI green → squash merge" is process outside the code. No test in the repo can see a branch, a PR or a merge. |
 
+**Settled 2026-10-09.** The founder set GitHub ruleset 24814387 on `main`: a pull request before merging (0 approvals), the Vercel status check required, deletions and force pushes blocked, no bypass list. Read from the outside by `GET /repos/…/rules/branches/main`. A push to `main`, a merge without a PR or a merge on a red Vercel check is refused by GitHub itself, so the row is **construction**: the violation cannot be done, not merely forbidden. The repo cannot read its own settings, so it is checked by hand. No row is on honor.
+
 ## 6. The scoreboard after
 
 | | Before pass 16 | After |
 |---|---|---|
-| Honor-system decrees (111) | 5 honor · 104 chain · 2 retired | 1 honor · 108 chain · 2 retired |
+| Honor-system decrees (111) | 5 honor · 104 chain · 2 retired | 1 honor · 108 chain · 2 retired, then 0 honor · 108 chain · 1 construction · 2 retired once the ruleset was set |
 | Of the honor rows, with partial pins | 5 | 1 |
