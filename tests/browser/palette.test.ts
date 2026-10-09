@@ -61,6 +61,7 @@ const FACES: [string, string, MountOptions][] = [
   ["State of play", "tests/browser/fixtures/readout.tsx", {}],
   ["a Playbook draft", "tests/browser/fixtures/drafts.tsx", {}],
   ["the Scratchpaper", "tests/browser/fixtures/scratchpad.tsx", {}],
+  ["the Playbook Sheet", "tests/browser/fixtures/playbook.tsx", {}],
 ];
 
 let browser: Browser;

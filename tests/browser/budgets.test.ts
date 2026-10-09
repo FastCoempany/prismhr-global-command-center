@@ -64,6 +64,14 @@ const UNITS: [
         .locator("xpath=ancestor::*[contains(@class,'room__row')][1]"),
   ],
   [
+    // The Playbook's Sheet on arrival (pass 14): the five doors and the
+    // between-us foot.
+    "playbook-sheet",
+    "tests/browser/fixtures/playbook.tsx",
+    {},
+    (p) => p.locator(cls("product-sheet.module.css", "trio")),
+  ],
+  [
     "groundwork-stage",
     "tests/browser/fixtures/evidence.tsx",
     { now: "2026-07-30T15:00:00Z" },

@@ -128,7 +128,10 @@ function canonFaults(reason: string): string[] {
 }
 function assertCanon(reason: string, label: string) {
   assert.ok(reason.trim().length > 0, `${label}: empty`);
-  assert.ok(wordsOf(reason) <= REASON_WORDS, `${label}: ${wordsOf(reason)} words — "${reason}"`);
+  assert.ok(
+    wordsOf(reason) <= REASON_WORDS,
+    `${label}: ${wordsOf(reason)} words — "${reason}"`,
+  );
   assert.deepEqual(canonFaults(reason), [], `${label}: "${reason}"`);
   assert.ok(!/[—()]/.test(reason), `${label}: an aside or parenthetical — "${reason}"`);
   assert.match(reason, /[.!?]$/, `${label}: not a sentence — "${reason}"`);
@@ -147,9 +150,10 @@ const message = (text: string, stop: Anthropic.Message["stop_reason"] = "end_tur
     stop_sequence: null,
   }) as unknown as Anthropic.Message;
 
-function stub(
-  replies: (Anthropic.Message | Error | { status: number })[],
-): { client: VerdictClient; calls: Params[] } {
+function stub(replies: (Anthropic.Message | Error | { status: number })[]): {
+  client: VerdictClient;
+  calls: Params[];
+} {
   const calls: Params[] = [];
   const queue = [...replies];
   const client: VerdictClient = {
@@ -210,7 +214,10 @@ describe("the text rung, before the read", () => {
     }) as unknown as typeof fetch;
     try {
       assert.ok(guardPlan({ text: TAPE, claim: "", bound: REGIS, roster }).text);
-      assert.equal(guardPlan({ text: TAPE, claim: "", bound: SIMPLOY, roster }).text, null);
+      assert.equal(
+        guardPlan({ text: TAPE, claim: "", bound: SIMPLOY, roster }).text,
+        null,
+      );
     } finally {
       globalThis.fetch = real;
     }
@@ -218,8 +225,14 @@ describe("the text rung, before the read", () => {
     // the read sits behind.
     const refusedAt = roomPaste.indexOf("if (refused) return refused;");
     const readGateAt = roomPaste.indexOf("if (aiCleanAvailable()) {");
-    assert.ok(refusedAt > 0 && readGateAt > refusedAt, "the text rung refuses before the read");
-    assert.match(roomPaste, /const refused = refusal\(\s*guardPlan\(\{\s*text: rawText,\s*claim: "",/);
+    assert.ok(
+      refusedAt > 0 && readGateAt > refusedAt,
+      "the text rung refuses before the read",
+    );
+    assert.match(
+      roomPaste,
+      /const refused = refusal\(\s*guardPlan\(\{\s*text: rawText,\s*claim: "",/,
+    );
   });
 
   test("a keyless filing produces the text rung alone", () => {
@@ -239,7 +252,8 @@ describe("the text rung, before the read", () => {
 // ── the read rung ───────────────────────────────────────────────────────────
 
 describe("the read rung, after the read", () => {
-  const disputing = () => guardPlan({ text: BLAND, claim: "Advocate Pay", bound: REGIS, roster });
+  const disputing = () =>
+    guardPlan({ text: BLAND, claim: "Advocate Pay", bound: REGIS, roster });
 
   test("it disputes exactly where judgeFiling does, with the rule's reason to start", () => {
     const plan = disputing();
@@ -256,27 +270,43 @@ describe("the read rung, after the read", () => {
     assert.equal(j.ok, false);
     if (!j.ok) assert.equal(v.why, j.why);
     // An agreeing claim, and a row with evidence of its own, dispute nothing.
-    assert.equal(guardPlan({ text: BLAND, claim: "Regis HR Group", bound: REGIS, roster }).read, null);
     assert.equal(
-      guardPlan({ text: SIMPLOY_MAIL, claim: "Simple Everest", bound: SIMPLOY, roster }).read,
+      guardPlan({ text: BLAND, claim: "Regis HR Group", bound: REGIS, roster }).read,
+      null,
+    );
+    assert.equal(
+      guardPlan({ text: SIMPLOY_MAIL, claim: "Simple Everest", bound: SIMPLOY, roster })
+        .read,
       null,
     );
   });
 
   test("its reason is the stubbed model's, nine words or fewer", async () => {
-    const { client, calls } = stub([says(false, "Simploy and Regis HR Group are separate PEOs.")]);
-    const v = await readRungVerdict(disputing().read!, CAPTURE, REGIS, { client, pages: PAGES });
+    const { client, calls } = stub([
+      says(false, "Simploy and Regis HR Group are separate PEOs."),
+    ]);
+    const v = await readRungVerdict(disputing().read!, CAPTURE, REGIS, {
+      client,
+      pages: PAGES,
+    });
     assert.ok(v, "a different company keeps the dispute");
     assert.equal(v.reason, "Simploy and Regis HR Group are separate PEOs.");
     assertCanon(v.reason, "the read rung's model reason");
     assert.equal(v.rung, "read");
-    assert.equal(v.why, "the read names Advocate Pay", "the rule's why rides along for the doors");
+    assert.equal(
+      v.why,
+      "the read names Advocate Pay",
+      "the rule's why rides along for the doors",
+    );
     assert.equal(calls.length, 1);
   });
 
   test("a stubbed sameCompany: true withdraws the read rung", async () => {
     const { client } = stub([says(true, "Advocate Pay is Regis HR Group's trade name.")]);
-    const v = await readRungVerdict(disputing().read!, CAPTURE, REGIS, { client, pages: PAGES });
+    const v = await readRungVerdict(disputing().read!, CAPTURE, REGIS, {
+      client,
+      pages: PAGES,
+    });
     assert.equal(v, null, "the warning withdraws and the filing proceeds");
   });
 
@@ -346,28 +376,38 @@ describe("the verdict call", () => {
   const input = {
     head: "OUTLOOK THREAD — Re: Poland contractors",
     excerpt: "x".repeat(EXCERPT_CAP + 500),
-    bound: { name: "Regis HR Group", page: "Name: Regis HR Group\nSite: regishrgroup.com" },
+    bound: {
+      name: "Regis HR Group",
+      page: "Name: Regis HR Group\nSite: regishrgroup.com",
+    },
     claim: { name: "Simple Everest", page: "" },
   };
 
   test("reads its slot from the roster, searches the web, asks for structured output", async () => {
-    const { client, calls } = stub([says(false, "Simple Everest is a client, Regis is the PEO.")]);
+    const { client, calls } = stub([
+      says(false, "Simple Everest is a client, Regis is the PEO."),
+    ]);
     const a = await verdictReason(input, client);
     assert.ok(a && !a.sameCompany);
     const p = calls[0]!;
     assert.equal(p.model, MODEL_VERDICT);
     assert.equal(MODEL_VERDICT, MODEL_READ, "the verdict's slot is the read's tier");
     assert.ok(!/claude-/.test(verdictSrc), "no caller names a model");
-    const tool = (p.tools ?? [])[0] as { type?: string; name?: string; max_uses?: number };
+    const tool = (p.tools ?? [])[0] as {
+      type?: string;
+      name?: string;
+      max_uses?: number;
+    };
     assert.equal(tool.type, "web_search_20260209");
     assert.equal(tool.name, "web_search");
     assert.equal(tool.max_uses, 4);
-    const fmt = (p.output_config as { format?: { type?: string; schema?: unknown } }).format;
+    const fmt = (p.output_config as { format?: { type?: string; schema?: unknown } })
+      .format;
     assert.equal(fmt?.type, "json_schema");
-    assert.deepEqual(Object.keys((fmt?.schema as { properties: object }).properties).sort(), [
-      "reason",
-      "sameCompany",
-    ]);
+    assert.deepEqual(
+      Object.keys((fmt?.schema as { properties: object }).properties).sort(),
+      ["reason", "sameCompany"],
+    );
     const system = String(p.system);
     assert.match(system, /nine words or fewer/);
     assert.match(system, /parent|subsidiary/);
@@ -412,17 +452,46 @@ describe("the verdict call", () => {
   });
 
   test("the sanitizer: redacted, grammar-stripped, trimmed, nine words, canon-clean", () => {
-    assert.equal(cleanReason("  Simploy ⟦⟧ is a different PEO than Regis HR Group "), "Simploy is a different PEO than Regis HR Group.");
-    assert.equal(cleanReason("Simploy ⇢[x] is ↯ another PEO."), "Simploy x] is another PEO.", "the glyphs go, the words stay");
-    assert.equal(cleanReason('"Simploy and Regis are two PEOs."'), "Simploy and Regis are two PEOs.");
+    assert.equal(
+      cleanReason("  Simploy ⟦⟧ is a different PEO than Regis HR Group "),
+      "Simploy is a different PEO than Regis HR Group.",
+    );
+    assert.equal(
+      cleanReason("Simploy ⇢[x] is ↯ another PEO."),
+      "Simploy x] is another PEO.",
+      "the glyphs go, the words stay",
+    );
+    assert.equal(
+      cleanReason('"Simploy and Regis are two PEOs."'),
+      "Simploy and Regis are two PEOs.",
+    );
     assert.equal(cleanReason(""), null);
     assert.equal(cleanReason(42), null);
     assert.equal(cleanReason("One two three four five six seven eight nine ten."), null);
-    assert.equal(cleanReason("One two three four five six seven eight nine."), "One two three four five six seven eight nine.");
-    assert.equal(cleanReason("Simploy pays $40 PEPM and Regis does not."), null, "a figure dies");
-    assert.equal(cleanReason("Simploy may be worth a second look."), null, "a hedge dies");
-    assert.equal(cleanReason("Simploy is a PEO — Regis is not."), null, "a dash hinge dies");
-    assert.equal(cleanReason("Simploy has 3 offices and Regis has one."), null, "a count dies");
+    assert.equal(
+      cleanReason("One two three four five six seven eight nine."),
+      "One two three four five six seven eight nine.",
+    );
+    assert.equal(
+      cleanReason("Simploy pays $40 PEPM and Regis does not."),
+      null,
+      "a figure dies",
+    );
+    assert.equal(
+      cleanReason("Simploy may be worth a second look."),
+      null,
+      "a hedge dies",
+    );
+    assert.equal(
+      cleanReason("Simploy is a PEO — Regis is not."),
+      null,
+      "a dash hinge dies",
+    );
+    assert.equal(
+      cleanReason("Simploy has 3 offices and Regis has one."),
+      null,
+      "a count dies",
+    );
   });
 });
 
@@ -453,16 +522,28 @@ describe("reasonFromWhy over every why misfile.ts can produce", () => {
   test("the row's sentence rides when the nine words allow it, and says the truth", () => {
     // A one-word row leaves room; an absent row is said to be absent and a
     // row with evidence of its own is said to show up too, never absent.
-    const absent = reasonFromWhy("Chassie Smith is Simploy's contact", "Regis", "Simploy");
+    const absent = reasonFromWhy(
+      "Chassie Smith is Simploy's contact",
+      "Regis",
+      "Simploy",
+    );
     assert.equal(absent, "Chassie Smith is Simploy's contact. Nothing points to Regis.");
-    const present = reasonFromWhy("Chassie Smith is Simploy's contact", "Regis", "Simploy", "named in the text");
+    const present = reasonFromWhy(
+      "Chassie Smith is Simploy's contact",
+      "Regis",
+      "Simploy",
+      "named in the text",
+    );
     assert.equal(present, "Chassie Smith is Simploy's contact. Regis shows up too.");
     // A three-word row leaves none; the other company's sentence stands alone.
     assert.equal(
       reasonFromWhy("Chassie Smith is Simploy's contact", "Regis HR Group", "Simploy"),
       "Chassie Smith is Simploy's contact.",
     );
-    assert.equal(reasonFromWhy("the read names Advocate Pay", "Regis HR Group", "Advocate Pay"), "The read names Advocate Pay.");
+    assert.equal(
+      reasonFromWhy("the read names Advocate Pay", "Regis HR Group", "Advocate Pay"),
+      "The read names Advocate Pay.",
+    );
   });
 
   test("the fallback reports what the read names, never a hedge (pass 8 call 13)", () => {
@@ -479,7 +560,10 @@ describe("reasonFromWhy over every why misfile.ts can produce", () => {
       "The read names Simploy. Nothing points to Regis.",
     );
     const absurd = "One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve";
-    assert.equal(reasonFromWhy("named in the text", "Regis", absurd), "The read names One Two Three Four Five Six.");
+    assert.equal(
+      reasonFromWhy("named in the text", "Regis", absurd),
+      "The read names One Two Three Four Five Six.",
+    );
     for (const [why] of whys) {
       for (const claim of ["Simploy", absurd]) {
         const r = reasonFromWhy(why, "Regis HR Group", claim);
@@ -497,27 +581,63 @@ describe("reasonFromWhy over every why misfile.ts can produce", () => {
       assert.deepEqual(canonFaults(r), [], `"${r}"`);
     }
     const absurd = "One Two Three Four Five Six Seven Eight Nine Ten Eleven Twelve";
-    assert.ok(wordsOf(reasonFromWhy("named in the text", "Regis", absurd)) <= REASON_WORDS);
+    assert.ok(
+      wordsOf(reasonFromWhy("named in the text", "Regis", absurd)) <= REASON_WORDS,
+    );
   });
 
   test("shortName says the name as a person does", () => {
     assert.equal(shortName("Simploy, Inc."), "Simploy");
-    assert.equal(shortName("Pinnacle Employee Services, Inc."), "Pinnacle Employee Services");
-    assert.equal(shortName("Cornerstone Employer Solutions (dba SynchronyHR)"), "Cornerstone Employer Solutions");
-    assert.equal(shortName("United Benefits Consulting, Inc. d/b/a Zamp HR"), "United Benefits Consulting");
+    assert.equal(
+      shortName("Pinnacle Employee Services, Inc."),
+      "Pinnacle Employee Services",
+    );
+    assert.equal(
+      shortName("Cornerstone Employer Solutions (dba SynchronyHR)"),
+      "Cornerstone Employer Solutions",
+    );
+    assert.equal(
+      shortName("United Benefits Consulting, Inc. d/b/a Zamp HR"),
+      "United Benefits Consulting",
+    );
     assert.equal(shortName("Engage PEO - Cloud"), "Engage PEO");
     assert.equal(shortName("Regis HR Group"), "Regis HR Group");
   });
 
   test("the live verdicts on the misfile-guard fixtures read clean", () => {
-    const cases: { label: string; text: string; claim: string; bound: { id: string; name: string } }[] = [
+    const cases: {
+      label: string;
+      text: string;
+      claim: string;
+      bound: { id: string; name: string };
+    }[] = [
       { label: "the tape on Regis (person)", text: TAPE, claim: "", bound: REGIS },
-      { label: "the Simploy mail on Regis (email, head word)", text: SIMPLOY_MAIL, claim: "", bound: REGIS },
+      {
+        label: "the Simploy mail on Regis (email, head word)",
+        text: SIMPLOY_MAIL,
+        claim: "",
+        bound: REGIS,
+      },
       { label: "the tie on Regis (domain)", text: TIED, claim: "", bound: REGIS },
       { label: "the tie on Simploy (domain)", text: TIED, claim: "", bound: SIMPLOY },
-      { label: "a head word on Regis", text: "Pinnacle sent over the census.", claim: "", bound: REGIS },
-      { label: "the name on Regis", text: "Following up with Simploy on the paperwork.", claim: "", bound: REGIS },
-      { label: "a claim on a bare row", text: BLAND, claim: "Advocate Pay", bound: REGIS },
+      {
+        label: "a head word on Regis",
+        text: "Pinnacle sent over the census.",
+        claim: "",
+        bound: REGIS,
+      },
+      {
+        label: "the name on Regis",
+        text: "Following up with Simploy on the paperwork.",
+        claim: "",
+        bound: REGIS,
+      },
+      {
+        label: "a claim on a bare row",
+        text: BLAND,
+        claim: "Advocate Pay",
+        bound: REGIS,
+      },
     ];
     for (const c of cases) {
       const plan = guardPlan({ text: c.text, claim: c.claim, bound: c.bound, roster });
@@ -544,16 +664,29 @@ describe("the pick", () => {
     };
     const first = guardPlan({ text: BLAND, claim: theRead(), bound: REGIS, roster });
     assert.ok(first.read, "the first pass disputes on the claim");
-    const pick = guardPlan({ force: true, text: BLAND, claim: theRead(), bound: REGIS, roster });
+    const pick = guardPlan({
+      force: true,
+      text: BLAND,
+      claim: theRead(),
+      bound: REGIS,
+      roster,
+    });
     assert.equal(reads, 2, "the read ran again");
     assert.deepEqual(pick, { text: null, read: null }, "no rung runs on the pick");
-    assert.deepEqual(guardPlan({ force: true, text: TAPE, claim: "", bound: REGIS, roster }), {
-      text: null,
-      read: null,
-    });
+    assert.deepEqual(
+      guardPlan({ force: true, text: TAPE, claim: "", bound: REGIS, roster }),
+      {
+        text: null,
+        read: null,
+      },
+    );
     // In roomPaste the read sits outside every force gate: nothing between
     // the text rung's return and the read assignment reads the flag.
-    const between = slice(roomPaste, "if (refused) return refused;", "read = await aiCleanTimeline(");
+    const between = slice(
+      roomPaste,
+      "if (refused) return refused;",
+      "read = await aiCleanTimeline(",
+    );
     assert.ok(!/force/.test(between), "the read is not gated on force");
     // The options are required since pass 9 (the door is a required
     // argument), so force reads without the optional chain.
@@ -569,8 +702,15 @@ describe("the pick", () => {
     // runs in fileClaimed, so the check is the stretch up to that call.
     const dupeAt = roomPaste.indexOf("duplicate: true,");
     const forceAt = roomPaste.indexOf("opts.force");
-    assert.ok(dupeAt > 0 && dupeAt < forceAt, "the duplicate refusal precedes the first rung");
-    const dupe = slice(roomPaste, "const fingerprint = pasteFingerprint(rawText);", "return await fileClaimed(");
+    assert.ok(
+      dupeAt > 0 && dupeAt < forceAt,
+      "the duplicate refusal precedes the first rung",
+    );
+    const dupe = slice(
+      roomPaste,
+      "const fingerprint = pasteFingerprint(rawText);",
+      "return await fileClaimed(",
+    );
     assert.ok(dupe.includes("duplicate: true,"));
     assert.ok(!/force/.test(dupe), "the duplicate check never reads force");
   });
@@ -580,11 +720,21 @@ describe("the pick", () => {
 
 describe("the result and the doors", () => {
   test("a disputed result carries the rung and the reason beside the evidence", () => {
-    const refusal = slice(actions, "function refusal(", "export async function roomPaste(");
+    const refusal = slice(
+      actions,
+      "function refusal(",
+      "export async function roomPaste(",
+    );
     for (const key of ["claim:", "bound:", "why:", "boundWhy:", "rung:", "reason:"])
       assert.ok(refusal.includes(key), key);
-    assert.match(roomPaste, /mismatch\?: \{[\s\S]*?rung\?: "text" \| "read";[\s\S]*?reason\?: string;/);
-    assert.match(roomPaste, /if \(!verdict\.ok\) \{\s*return \{\s*ok: false,\s*filed: 0,\s*how,\s*mismatch: verdict\.mismatch,\s*reason: verdict\.reason,/);
+    assert.match(
+      roomPaste,
+      /mismatch\?: \{[\s\S]*?rung\?: "text" \| "read";[\s\S]*?reason\?: string;/,
+    );
+    assert.match(
+      roomPaste,
+      /if \(!verdict\.ok\) \{\s*return \{\s*ok: false,\s*filed: 0,\s*how,\s*mismatch: verdict\.mismatch,\s*reason: verdict\.reason,/,
+    );
   });
 
   test("each door shows the reason where the why was, in the one held box", () => {
@@ -596,11 +746,14 @@ describe("the result and the doors", () => {
     const held = read("src/app/room/ingest/held.tsx");
     assert.match(held, /\{verdict\.reason\}/, "the box says the rung's reason");
     assert.match(held, /groundsOf\(verdict,/, "and opens to the grounds behind it");
-    assert.match(chute, /<HeldBox[\s\S]*?verdict=\{it\.state === "mismatch" \? \(it\.verdict \?\? \{ reason: it\.reason \}\) : null\}/);
+    assert.match(
+      chute,
+      /<HeldBox[\s\S]*?verdict=\{it\.state === "mismatch" \? \(it\.verdict \?\? \{ reason: it\.reason \}\) : null\}/,
+    );
     // The held verdict is the shared hook's since slice 8 (use-verdict.ts);
     // the Drop holds it through useVerdict and hands the box the same fields.
     const verdict = read("src/app/room/ingest/use-verdict.ts");
-    assert.ok(verdict.includes("rung?: \"text\" | \"read\";"));
+    assert.ok(verdict.includes('rung?: "text" | "read";'));
     assert.match(client, /useVerdict<DropHold>\(\)/);
     assert.match(client, /<HeldBox[\s\S]*?verdict=\{mismatch\}/);
   });
@@ -625,7 +778,10 @@ describe("an account's page data", () => {
     assert.ok(page.page.startsWith("Name: Simploy"));
     assert.match(page.page, /Email domains: .*simploy\.com/);
     assert.match(page.page, /People: .*Chassie Smith/);
-    assert.ok(page.page.includes("Signals: posting a role in Poland"), "the note's head lines");
+    assert.ok(
+      page.page.includes("Signals: posting a role in Poland"),
+      "the note's head lines",
+    );
     assert.ok(!page.page.includes("secret tail"), "never the machine tail");
     assert.ok(!page.page.includes("Sources:"), "never the source list");
     assert.ok(!page.page.includes("$40"), "money never reaches the page");
@@ -634,7 +790,10 @@ describe("an account's page data", () => {
     // A store that answers nothing still gives the book's row.
     const bare = await accountPage(SIMPLOY.id, async () => null);
     assert.ok(bare.page.startsWith("Name: Simploy"));
-    assert.deepEqual(await accountPage("GHOST", async () => null), { name: "", page: "" });
+    assert.deepEqual(await accountPage("GHOST", async () => null), {
+      name: "",
+      page: "",
+    });
   });
 
   test("the claimed company's page is the book's when the book holds it, bare when not", async () => {
@@ -644,5 +803,81 @@ describe("an account's page data", () => {
     const client = await claimPage("Simple Everest", async () => null);
     assert.deepEqual(client, { name: "Simple Everest", page: "" });
     assert.deepEqual(await claimPage("", async () => null), { name: "", page: "" });
+  });
+});
+
+// ── A12.3 · the reason is the trigger, not a description (pass 14) ──────────
+// On the ingest surfaces a reason is the held box's: why the file looks like
+// a different company. The rule's reason is built from the rung's own why, so
+// it names the evidence it stands on; the model's reason passes the nine-word
+// cap and the canon's lint, which since pass 14 kills recency ("recently",
+// "a while"), or the rule's reason stands. The receipt's second line is pinned
+// beside it in tests/ingest-faces.test.ts.
+describe("every reason on the ingest surfaces names the fact it stands on (A12.3, whole scope)", () => {
+  test("the rule's reason carries its evidence: the address, the name, the quoted word, the initials or the read", () => {
+    const cases: [string, string, RegExp][] = [
+      [
+        "simploy.com address in the text",
+        "Simploy",
+        /A Simploy email address is in the text/,
+      ],
+      [
+        "csmith@simploy.com is Simploy's contact",
+        "Simploy",
+        /Simploy's contact address is in the text/,
+      ],
+      [
+        "Chassie Smith is Simploy's contact",
+        "Simploy",
+        /Chassie Smith is Simploy's contact/,
+      ],
+      ["named in the text", "Simploy", /^Simploy is named\./],
+      [
+        "“pinnacle” appears in the text",
+        PINNACLE.name,
+        /“pinnacle” in the text points to Pinnacle Employee Services/,
+      ],
+      [
+        "“ESC” matches the initials",
+        "Employer Services Corporation",
+        /“ESC” matches Employer Services's initials/,
+      ],
+      ["the read names Advocate Pay", "Advocate Pay", /^The read names Advocate Pay\./],
+      ["something the router never said", "Simploy", /^The read names Simploy\./],
+    ];
+    for (const [why, claim, evidence] of cases) {
+      const r = reasonFromWhy(why, "Regis HR Group", claim);
+      assert.match(r, evidence, `${why}: "${r}"`);
+      assert.deepEqual(
+        lintReason(r).faults.filter((f) => !/cap/.test(f)),
+        [],
+        r,
+      );
+    }
+  });
+
+  test("the model's reason that leans on recency, or hedges, is refused and the rule's reason stands", async () => {
+    const rule = guardPlan({
+      text: BLAND,
+      claim: "Advocate Pay",
+      bound: REGIS,
+      roster,
+    }).read!;
+    for (const bad of [
+      "Regis HR Group wrote recently, Advocate Pay did not.",
+      "It's been a while since Advocate Pay wrote Regis.",
+      "Advocate Pay may be a different company than Regis.",
+    ]) {
+      const { client } = stub([says(false, bad)]);
+      const v = await readRungVerdict(rule, CAPTURE, REGIS, { client, pages: PAGES });
+      assert.ok(v);
+      assert.equal(v.reason, rule.reason, `let through: "${bad}"`);
+    }
+    // A reason that names the fact passes.
+    const { client } = stub([
+      says(false, "Advocate Pay and Regis HR Group are separate PEOs."),
+    ]);
+    const v = await readRungVerdict(rule, CAPTURE, REGIS, { client, pages: PAGES });
+    assert.equal(v?.reason, "Advocate Pay and Regis HR Group are separate PEOs.");
   });
 });
