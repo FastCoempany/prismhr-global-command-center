@@ -610,8 +610,9 @@ founder-decreed 2026-09-15.
   source at read time, shown live wherever an ask is answered (the Intranet,
   the Asks page, the Scratchpaper's ask door), and the ask ledger banks only
   its money-redacted twin. Our money, everywhere else, still never renders.
-- Ship pattern: branch `claude/prismhr-demo-guide-strategy-6h0oqg` → PR →
-  Vercel CI green → squash merge = live production. Verify chain uses `&&`:
+- Ship pattern: a `claude/` branch → PR → Vercel CI green → squash merge =
+  live production (amended 2026-10-09; the line once named one branch, and
+  every PR since pass 7 has shipped from its own). Verify chain uses `&&`:
   prettier → tsc → eslint (0 warnings) → tsx tests → next build. Migrations
   run at deploy (ruled 2026-10-05): every migration is additive, lands under
   prisma/migrations with the slice that needs it, and is listed in
