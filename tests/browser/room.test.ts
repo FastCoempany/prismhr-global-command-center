@@ -31,7 +31,10 @@ after(async () => {
 });
 
 const css = (page: Page, sel: string, prop: string) =>
-  page.locator(sel).first().evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
+  page
+    .locator(sel)
+    .first()
+    .evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
 const box = async (page: Page, sel: string) => {
   const b = await page.locator(sel).first().boundingBox();
   assert.ok(b, `${sel} has no box`);
@@ -39,7 +42,11 @@ const box = async (page: Page, sel: string) => {
 };
 /** The first row's summary line for a register, by its kicker. */
 const sumline = (page: Page, kicker: string) =>
-  page.locator($("sumline"), { has: page.locator($("sumk"), { hasText: new RegExp(`^${kicker}$`) }) }).first();
+  page
+    .locator($("sumline"), {
+      has: page.locator($("sumk"), { hasText: new RegExp(`^${kicker}$`) }),
+    })
+    .first();
 
 describe("A6.1 · each register rests as one line: a mono kicker, a live count, the top entry trailing off, ⊕", () => {
   test("UNKNOWN, COMPARABLE and TODAY each take one line, and a long top entry trails off inside it", async () => {
@@ -48,10 +55,18 @@ describe("A6.1 · each register rests as one line: a mono kicker, a live count, 
       const line = sumline(page, k);
       const b = await line.boundingBox();
       assert.ok(b, `${k} has no line`);
-      const lh = await line.locator($("sumtx")).evaluate((el) => el.getBoundingClientRect().height);
+      const lh = await line
+        .locator($("sumtx"))
+        .evaluate((el) => el.getBoundingClientRect().height);
       assert.ok(b.height < lh * 2.2, `${k} wraps: ${b.height} against ${lh}`);
-      assert.match(await line.locator($("sumk")).evaluate((el) => getComputedStyle(el).fontFamily), /JetBrains Mono/);
-      assert.equal((await line.locator("button[title='Expand them out']").innerText()).trim(), "⊕");
+      assert.match(
+        await line.locator($("sumk")).evaluate((el) => getComputedStyle(el).fontFamily),
+        /JetBrains Mono/,
+      );
+      assert.equal(
+        (await line.locator("button[title='Expand them out']").innerText()).trim(),
+        "⊕",
+      );
     }
     const tx = sumline(page, "UNKNOWN").locator($("sumtx"));
     const m = await tx.evaluate((el) => ({
@@ -72,8 +87,15 @@ describe("A6.3 · filing or composing springs TODAY open; the mint springs UNKNO
     const page = await mount(browser, FIX, {
       returns: { roomCompose: { ok: true, kind: "action", todoId: "t9" } },
     });
-    assert.equal(await page.locator($("sumkOn"), { hasText: /^TODAY$/ }).count(), 0, "TODAY is open before the filing");
-    await page.locator(`button${$("doorAct")}`).first().click();
+    assert.equal(
+      await page.locator($("sumkOn"), { hasText: /^TODAY$/ }).count(),
+      0,
+      "TODAY is open before the filing",
+    );
+    await page
+      .locator(`button${$("doorAct")}`)
+      .first()
+      .click();
     const ta = page.locator(`textarea[aria-label="Log to Simploy"]`);
     await ta.fill("Call Chassie back about Mexico.");
     await ta.press("Enter");
@@ -81,17 +103,25 @@ describe("A6.3 · filing or composing springs TODAY open; the mint springs UNKNO
     const compose = (await callsOf(page)).find(([n]) => n === "roomCompose");
     assert.ok(compose, "the line never reached the server");
     assert.equal(compose[1][0], ROW_A);
-    assert.match(await page.locator($("splayed")).first().innerText(), /Call Chassie back about Mexico\./);
+    assert.match(
+      await page.locator($("splayed")).first().innerText(),
+      /Call Chassie back about Mexico\./,
+    );
     await page.close();
   });
 
   test("the mint springs UNKNOWN with its receipt above the asks, and TODAY stays shut", async () => {
-    const page = await mount(browser, FIX, { returns: { roomGapsRefill: { ok: true, added: 2 } } });
+    const page = await mount(browser, FIX, {
+      returns: { roomGapsRefill: { ok: true, added: 2 } },
+    });
     await page.locator("button[title='Mint sharper asks']").first().click();
     await page.waitForSelector(`${$("sumkOn")}:text-is("STILL UNKNOWN")`);
     const open = await page.locator($("splayed")).first().innerText();
     assert.match(open, /2 new asks minted from what the app knows\./);
-    assert.ok(open.indexOf("minted") < open.indexOf("Which of their clients"), "the receipt is not above the asks");
+    assert.ok(
+      open.indexOf("minted") < open.indexOf("Which of their clients"),
+      "the receipt is not above the asks",
+    );
     assert.equal(await page.locator($("sumkOn"), { hasText: /^TODAY$/ }).count(), 0);
     await page.close();
   });
@@ -128,9 +158,13 @@ describe("A4.20 · the THEIRS line: one blue mono line atop the register panel; 
     // one does.
     const seat = (name: string) =>
       page.evaluate((n) => {
-        const link = [...document.querySelectorAll("a")].find((a) => a.textContent === n)!;
+        const link = [...document.querySelectorAll("a")].find(
+          (a) => a.textContent === n,
+        )!;
         const rowEl = link.closest("section, article, li, [class*=row]") as HTMLElement;
-        const mv = [...rowEl.querySelectorAll("*")].find((e) => e.children.length === 0 && e.textContent === "Send the model.")!;
+        const mv = [...rowEl.querySelectorAll("*")].find(
+          (e) => e.children.length === 0 && e.textContent === "Send the model.",
+        )!;
         const r = mv.getBoundingClientRect();
         const n0 = link.getBoundingClientRect();
         return { dx: r.x - n0.x, dy: r.y - n0.y, right: r.right };
@@ -148,7 +182,9 @@ describe("A11.3 · MULTI wears the ladder: one thread red, two amber, three or m
     const page = await mount(browser, FIX);
     const badges = page.locator(`button${$("multi")}`);
     assert.equal(await badges.count(), 3);
-    const colors = await badges.evaluateAll((els) => els.map((e) => getComputedStyle(e).backgroundColor));
+    const colors = await badges.evaluateAll((els) =>
+      els.map((e) => getComputedStyle(e).backgroundColor),
+    );
     assert.deepEqual(colors, [RED, AMBER, GREEN]);
     for (const t of await badges.allInnerTexts()) assert.match(t, /^MULTI/);
     const card = badges.first().locator($("hovercard"));
@@ -174,14 +210,22 @@ describe("A11.4 · the edge tabs are thin and inconspicuous: quiet ink at rest, 
     assert.equal(await tab.evaluate((el) => getComputedStyle(el).color), QUIET);
     const count = tab.locator($("edgeCount"));
     const restBg = await count.evaluate((el) => getComputedStyle(el).backgroundColor);
-    assert.doesNotMatch(restBg, /245, 158, 11|239, 68, 68|34, 197, 94|37, 99, 235|230, 112, 30/);
+    assert.doesNotMatch(
+      restBg,
+      /245, 158, 11|239, 68, 68|34, 197, 94|37, 99, 235|230, 112, 30/,
+    );
     // Every edge tab rests in quiet ink.
-    for (const c of await page.locator($("edge")).evaluateAll((els) => els.map((e) => getComputedStyle(e).color)))
+    for (const c of await page
+      .locator($("edge"))
+      .evaluateAll((els) => els.map((e) => getComputedStyle(e).color)))
       assert.equal(c, QUIET);
     await tab.hover();
     await page.waitForTimeout(50);
     assert.equal(await tab.evaluate((el) => getComputedStyle(el).color), NAVY);
-    assert.equal(await count.evaluate((el) => getComputedStyle(el).backgroundColor), AMBER);
+    assert.equal(
+      await count.evaluate((el) => getComputedStyle(el).backgroundColor),
+      AMBER,
+    );
     await page.close();
   });
 });
@@ -213,7 +257,9 @@ describe("A12.7 · the Drop's held file comes back after a reload, saying since 
       .evaluate((el, sel) => el.closest(sel)?.textContent ?? "", $("held"));
     assert.match(held, /renewal\.eml/);
     // The line is kept again under today's day, with its first day.
-    const kept = await page.evaluate(() => JSON.parse(localStorage.getItem("prismhr.drop-held.v1") ?? "{}"));
+    const kept = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("prismhr.drop-held.v1") ?? "{}"),
+    );
     assert.equal(kept[ROW_A].items[0].heldSince, "10/7");
     await page.close();
   });
@@ -225,13 +271,23 @@ describe("A4.27 · the THEIRS line's citations drill to the cleaned excerpt", ()
       routes: {
         "/activity/evidence": (u: URL) =>
           u.searchParams.get("k") === "r1"
-            ? { ok: true, row: { excerpt: "Can we talk Mexico next week? We have two hires there." } }
+            ? {
+                ok: true,
+                row: {
+                  excerpt: "Can we talk Mexico next week? We have two hires there.",
+                },
+              }
             : { ok: false },
       },
     });
-    await page.locator(`${$("theirs")} button`).first().click();
+    await page
+      .locator(`${$("theirs")} button`)
+      .first()
+      .click();
     await page.locator($("theirsCite")).first().click();
-    await page.waitForSelector("text=Can we talk Mexico next week? We have two hires there.");
+    await page.waitForSelector(
+      "text=Can we talk Mexico next week? We have two hires there.",
+    );
     await page.close();
   });
 });
@@ -239,12 +295,19 @@ describe("A4.27 · the THEIRS line's citations drill to the cleaned excerpt", ()
 describe("A1.1 · the HomeRoom carries ONE intake at the top: the Chute", () => {
   test("the Chute is the frame's first child, above every row; each row's Drop is its own, and no other intake exists", async () => {
     const page = await mount(browser, FIX, { returns: { chuteBook: [] } });
-    const first = await page.locator(`main${$("room")}`).evaluate((m) => m.firstElementChild?.className ?? "");
+    const first = await page
+      .locator(`main${$("room")}`)
+      .evaluate((m) => m.firstElementChild?.className ?? "");
     assert.match(first, /room__chute\b/);
     assert.equal(await page.locator($("chute")).count(), 1);
     const chute = await box(page, $("chute"));
-    const rows = await page.locator("text=Shaping up to be EOR").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().y));
-    assert.ok(rows.every((y) => y > chute.y + chute.height - 1), "a row sits above the Chute");
+    const rows = await page
+      .locator("text=Shaping up to be EOR")
+      .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().y));
+    assert.ok(
+      rows.every((y) => y > chute.y + chute.height - 1),
+      "a row sits above the Chute",
+    );
     // Every file input on the page is the Chute's or a row's Drop: one each.
     const inputs = await page.locator("input[type=file]").count();
     assert.equal(inputs, 1 + 3, `${inputs} file inputs for one Chute and three Drops`);
@@ -252,6 +315,41 @@ describe("A1.1 · the HomeRoom carries ONE intake at the top: the Chute", () => 
     const src = (await import("node:fs")).readFileSync("src/app/room/page.tsx", "utf8");
     assert.match(src, /<RoomFace\b/);
     assert.ok(!/<Chute\b/.test(src), "the page mounts a Chute of its own");
+    await page.close();
+  });
+});
+
+// ── pass 13 · the shape chip is a door (the click-depth law, A5) ───────────
+describe("the shape chip opens to the record lines the read stands on (pass 13, A5)", () => {
+  test("shut on arrival; one click lists each product and country with its day and line; the chip says it is open", async () => {
+    const page = await mount(browser, FIX, { returns: { chuteBook: [] } });
+    const chip = page.locator($("chipDoor")).first();
+    assert.equal(await chip.textContent(), "Shaping up to be EOR");
+    assert.equal(await chip.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator($("identityFold")).count(), 0);
+    await chip.click();
+    assert.equal(await chip.getAttribute("aria-expanded"), "true");
+    const lines = await page.locator(`${$("identityFold")} li`).allTextContents();
+    assert.deepEqual(lines, [
+      "employer of record · 9/25 · ✉ Chassie asked for the invoices.",
+      "Peru · 9/25 · ✉ Chassie asked for the invoices.",
+    ]);
+    // The click opened the fold and nothing else: the row did not collapse.
+    assert.equal(await page.locator($("rowShut")).count(), 0);
+    await chip.click();
+    assert.equal(await page.locator($("identityFold")).count(), 0);
+    await page.close();
+  });
+
+  test("a row whose read holds no product says so: GP is the default, and the chip opens to that one line", async () => {
+    const page = await mount(browser, FIX, { returns: { chuteBook: [] } });
+    const second = page.locator($("row")).nth(1);
+    const chip = second.locator($("chipDoor"));
+    assert.equal(await chip.textContent(), "GP");
+    await chip.click();
+    assert.deepEqual(await second.locator(`${$("identityFold")} li`).allTextContents(), [
+      "GP · No product on file. GP is the default.",
+    ]);
     await page.close();
   });
 });

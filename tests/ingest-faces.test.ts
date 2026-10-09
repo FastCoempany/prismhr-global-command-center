@@ -1918,6 +1918,9 @@ const FLOURISH_RE =
   /\b(and that's (fine|okay|ok)|no judg(e)?ment|shouldn't have to|don't worry|no worries|rest assured|read-back|when it's home|on the first pass|unlocks the full shape)\b/i;
 const NOUN_FORM_RE =
   /\b\w+ (delivery|follow-up|outreach|review) is (pending|due|outstanding)\b/i;
+// Recency alone is never a reason (canon rule 3, A12.3): a line that leans
+// on "recently" or "a while" states no trigger.
+const RECENCY_RE = /\b(recently|lately|a while (ago|back)|it's been a while)\b/i;
 
 /** What the canon finds in one operator string, or nothing. */
 function canonFaults(s: string): string[] {
@@ -1937,6 +1940,7 @@ function canonFaults(s: string): string[] {
   if (/\([^()]*[A-Za-z][^()]*\)/.test(t) && /\s/.test(t)) faults.push("a parenthetical");
   if (FLOURISH_RE.test(t)) faults.push("a flourish or invented slang");
   if (NOUN_FORM_RE.test(t)) faults.push("a noun-form instruction");
+  if (RECENCY_RE.test(t)) faults.push("recency as a reason");
   return faults;
 }
 
@@ -1976,6 +1980,8 @@ describe("every operator string on the ingest surfaces obeys the writing canon a
       "Model delivery is pending.",
       "This drop looks EOR-shaped.",
       "Questions now are free, later they're change orders.",
+      "Chase Dana. They wrote recently.",
+      "Their book is domestic.",
     ])
       assert.ok(canonFaults(bad).length > 0, `the sweep let through: ${bad}`);
   });
@@ -2147,10 +2153,16 @@ describe("a held row left unpicked carries past the Chicago day and says since w
 describe("the Drop's held question survives a reload and the day line, and says since when (pass 10, A12.7)", () => {
   const DAY1 = new Date("2026-10-07T18:00:00Z");
   const DAY2 = new Date("2026-10-08T18:00:00Z");
-  const held = { ...TEXT_VERDICT, claim: SIMPLOY.name, bound: REGIS.name, text: "OUTLOOK THREAD — renewal.eml\nthe board meets" };
+  const held = {
+    ...TEXT_VERDICT,
+    claim: SIMPLOY.name,
+    bound: REGIS.name,
+    text: "OUTLOOK THREAD — renewal.eml\nthe board meets",
+  };
 
   test("the same day the line comes back whole; the next day it says Held since; a file's name rides, the file does not", async () => {
-    const { saveDropHolds, loadDropHolds } = await import("../src/app/room/ingest/drop-held");
+    const { saveDropHolds, loadDropHolds } =
+      await import("../src/app/room/ingest/drop-held");
     const storage = memory();
     const file = new File(["x"], "renewal.eml");
     saveDropHolds(storage, REGIS.id, [{ ...held, files: [file] }], DAY1);
@@ -2166,7 +2178,11 @@ describe("the Drop's held question survives a reload and the day line, and says 
     assert.equal(next.holds[0].heldSince, "10/7");
     // Kept again on the new day, it keeps the first day it was left.
     saveDropHolds(storage, REGIS.id, next.holds, DAY2);
-    assert.equal(loadDropHolds(storage, REGIS.id, new Date("2026-10-09T18:00:00Z")).holds[0].heldSince, "10/7");
+    assert.equal(
+      loadDropHolds(storage, REGIS.id, new Date("2026-10-09T18:00:00Z")).holds[0]
+        .heldSince,
+      "10/7",
+    );
     // Another account's line is its own; an empty line clears the account.
     assert.deepEqual(loadDropHolds(storage, SIMPLOY.id, DAY2), { holds: [], lost: [] });
     saveDropHolds(storage, REGIS.id, [], DAY2);
@@ -2174,11 +2190,26 @@ describe("the Drop's held question survives a reload and the day line, and says 
   });
 
   test("a hold whose text cannot be kept comes back as a re-drop, by its file's name", async () => {
-    const { saveDropHolds, loadDropHolds } = await import("../src/app/room/ingest/drop-held");
+    const { saveDropHolds, loadDropHolds } =
+      await import("../src/app/room/ingest/drop-held");
     const { LEDGER_TEXT_CAP } = await import("../src/app/room/chute-ledger");
     const storage = memory();
-    saveDropHolds(storage, REGIS.id, [{ ...held, text: "x".repeat(LEDGER_TEXT_CAP + 1), files: [new File(["x"], "big.pdf")] }], DAY1);
-    assert.deepEqual(loadDropHolds(storage, REGIS.id, DAY1), { holds: [], lost: ["big.pdf"] });
+    saveDropHolds(
+      storage,
+      REGIS.id,
+      [
+        {
+          ...held,
+          text: "x".repeat(LEDGER_TEXT_CAP + 1),
+          files: [new File(["x"], "big.pdf")],
+        },
+      ],
+      DAY1,
+    );
+    assert.deepEqual(loadDropHolds(storage, REGIS.id, DAY1), {
+      holds: [],
+      lost: ["big.pdf"],
+    });
   });
 
   test("the Drop keeps its line, loads it back, and the box says since when; a carried file's hold never dies with the paste pane", () => {
@@ -2189,7 +2220,10 @@ describe("the Drop's held question survives a reload and the day line, and says 
     assert.match(src, /since=\{mismatch\.heldSince\}/);
     assert.match(src, /!mismatch\.files\?\.length && !mismatch\.filename/);
     // The keeper is declared before the loader, so its first run writes nothing.
-    assert.ok(src.indexOf("saveDropHolds(localStorage") < src.indexOf("loadDropHolds(localStorage"));
+    assert.ok(
+      src.indexOf("saveDropHolds(localStorage") <
+        src.indexOf("loadDropHolds(localStorage"),
+    );
   });
 });
 
@@ -2225,7 +2259,10 @@ describe("the ingest surfaces' action lines keep six words a sentence (pass 11, 
         assert.ok(labels.length >= 2, labels.join(" | "));
         for (const l of labels) {
           // An account's own name is its name, not words of the line.
-          const line = l.replace(claim, "X").replace(REGIS.name, "X").replace(SIMPLOY.name, "X");
+          const line = l
+            .replace(claim, "X")
+            .replace(REGIS.name, "X")
+            .replace(SIMPLOY.name, "X");
           for (const n of words(line)) assert.ok(n <= 6, `"${l}" runs ${n} words`);
         }
       }
@@ -2233,9 +2270,12 @@ describe("the ingest surfaces' action lines keep six words a sentence (pass 11, 
 
   test("the Chute's own line, writable and read-only", () => {
     const src = read("src/app/room/chute.tsx");
-    const lines = [...src.matchAll(/className=\{styles\.chuteLine\}>\s*([^<{]+?)\s*</g)].map((m) => m[1].trim());
+    const lines = [
+      ...src.matchAll(/className=\{styles\.chuteLine\}>\s*([^<{]+?)\s*</g),
+    ].map((m) => m[1].trim());
     assert.ok(lines.includes("Throw files here. They find their account."));
     assert.ok(lines.includes("Read-only session"));
-    for (const l of lines) for (const n of words(l)) assert.ok(n <= 6, `"${l}" runs ${n} words`);
+    for (const l of lines)
+      for (const n of words(l)) assert.ok(n <= 6, `"${l}" runs ${n} words`);
   });
 });

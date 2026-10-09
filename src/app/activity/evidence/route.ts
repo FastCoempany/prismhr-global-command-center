@@ -25,6 +25,7 @@ import {
 import { rowPerson } from "@/lib/activity/classify";
 import { firstRecordReadFor } from "@/lib/activity/run";
 import { getPeo } from "@/lib/book";
+import { redactMoney } from "@/lib/intel/lexicon";
 import { chicagoDay } from "@/lib/tz";
 import type { StagedRow } from "@/lib/activity/types";
 
@@ -43,15 +44,17 @@ const noStore = { headers: { "cache-control": "no-store" } };
 const personOf = (r: StagedRow): string => rowPerson(r);
 
 /** The row as the drill renders it — subject cleaned, excerpt cleaned again
- *  defensively (slices staged before the ingest cleaner keep their meat). */
+ *  defensively (slices staged before the ingest cleaner keep their meat), and
+ *  both money-redacted again (a slice staged before pass 13 kept its subject
+ *  raw). */
 const rowOut = (r: StagedRow) => ({
   k: r.k,
   day: r.d,
   who: personOf(r),
   people: r.p ? r.p.split(";").filter(Boolean) : [],
-  subject: cleanSubject(r.s),
+  subject: redactMoney(cleanSubject(r.s)),
   lane: r.lane,
-  excerpt: r.c ? cleanExcerpt(r.c) : "",
+  excerpt: r.c ? redactMoney(cleanExcerpt(r.c)) : "",
 });
 
 export async function GET(req: Request) {

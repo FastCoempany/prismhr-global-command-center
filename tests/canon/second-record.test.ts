@@ -50,6 +50,12 @@ import {
 } from "../../src/lib/activity/stores";
 import type { AccountSlice, DropManifest } from "../../src/lib/activity/types";
 import { BOOK, csvLine, headerLine, row } from "../activity-fixtures";
+import { isMachineryName } from "../../src/lib/activity/classify";
+import { buildRollup, type Rollup } from "../../src/lib/activity/rollup";
+import type { SecondRecord } from "../../src/lib/activity/read";
+import { liveMotionIds } from "../../src/lib/groundwork/day";
+import { lastHumanTouch } from "../../src/lib/record/accounts";
+import { orgSignalsOf } from "../../src/lib/sendbook/read";
 
 describe("the record has moved on a gem when a row after its day carries the gem's person (D20)", () => {
   // A send as the acted sweep reads it: the head names no one, so each case
@@ -163,7 +169,9 @@ describe("gem lines are operator copy: the seven devices are linted, and a non-d
     assert.equal(v.ok, false);
     assert.ok(v.faults.includes("paradox"), v.faults.join("; "));
     // A stem and its negation in one clause, whoever the subject is.
-    assert.ok(lintReason("The quiet thread hasn't gone quiet.").faults.includes("paradox"));
+    assert.ok(
+      lintReason("The quiet thread hasn't gone quiet.").faults.includes("paradox"),
+    );
     // The line's own imperative verb is the app doing its job, not a paradox;
     // and two subjects across a comma are two clauses, not one.
     assert.equal(lintAct("Ask what they haven't asked yet.").ok, true);
@@ -176,7 +184,9 @@ describe("gem lines are operator copy: the seven devices are linted, and a non-d
     assert.equal(v.ok, false);
     assert.ok(v.faults.includes("a maxim"), v.faults.join("; "));
     assert.ok(lintReason("Speed over polish.").faults.includes("a maxim"));
-    assert.ok(lintReason("Nine cases. Controlled beats discovered.").faults.includes("a maxim"));
+    assert.ok(
+      lintReason("Nine cases. Controlled beats discovered.").faults.includes("a maxim"),
+    );
     // "over" inside an instruction is a preposition, not an aphorism.
     assert.equal(lintAct("Send the deck over email.").ok, true);
     assert.equal(lintAct("Call over Zoom.").ok, true);
@@ -188,7 +198,11 @@ describe("gem lines are operator copy: the seven devices are linted, and a non-d
     assert.equal(v.ok, false);
     assert.ok(v.faults.includes("a definitional flip"), v.faults.join("; "));
     // The "X is just Y" redefinition is the same device.
-    assert.ok(lintReason("Questions are just change orders.").faults.includes("a definitional flip"));
+    assert.ok(
+      lintReason("Questions are just change orders.").faults.includes(
+        "a definitional flip",
+      ),
+    );
     // "now" and "later" in an instruction are times, not a redefinition; and
     // a measured fact with "just" is a fact.
     assert.equal(lintAct("Send it now and follow later.").ok, true);
@@ -574,7 +588,11 @@ describe("an incomplete upload refuses to run (A4.11)", () => {
     assert.equal(last.ok, false);
     const pass = await runActivityPass({ db, deadlineMs: Date.now() + 5_000 });
     assert.equal(pass.ok, false);
-    assert.equal(pass.done, true, "a refused drop is finished: nothing runs later either");
+    assert.equal(
+      pass.done,
+      true,
+      "a refused drop is finished: nothing runs later either",
+    );
     assert.equal(pass.remaining, 0);
     assert.match(
       pass.reason ?? "",
@@ -943,7 +961,11 @@ describe("the acted sweep reads every first-record row carrying the gem's person
     ]);
     assert.equal(await actedSweep(db, { accountId: ACCT }), 1);
     assert.equal(gemsUnder(under(`${GEMS_NS}${ACCT}`))[0].actedDay, "2026-09-22");
-    assert.equal(gemsUnder(under(`${GEMS_NS}${OTHER}`))[0].actedDay, "", "another account waits");
+    assert.equal(
+      gemsUnder(under(`${GEMS_NS}${OTHER}`))[0].actedDay,
+      "",
+      "another account waits",
+    );
     // An account with no gems costs one read and stamps nothing; the run's
     // own sweep still reaches every account.
     assert.equal(await actedSweep(db, { accountId: "001TESTNOGEMS0000C" }), 0);
@@ -959,7 +981,10 @@ describe("the acted sweep reads every first-record row carrying the gem's person
       actions.indexOf("export async function roomPaste("),
       actions.indexOf("async function fileClaimed("),
     );
-    assert.match(paste, /return await fileClaimed\(\{[\s\S]*?\}\)\.then\(\(r\) => sweptAfter\(acct\.id, r\)\);/);
+    assert.match(
+      paste,
+      /return await fileClaimed\(\{[\s\S]*?\}\)\.then\(\(r\) => sweptAfter\(acct\.id, r\)\);/,
+    );
     const helper = actions.slice(
       actions.indexOf("function sweptAfter<"),
       actions.indexOf("export async function roomPaste("),
@@ -967,7 +992,10 @@ describe("the acted sweep reads every first-record row carrying the gem's person
     assert.ok(helper.length > 0, "the helper sits before roomPaste");
     // Only a filing that wrote rows, after it answered, on its own account.
     assert.match(helper, /if \(r\.ok && r\.filed > 0\)/);
-    assert.match(helper, /after\(async \(\) => \{\s*try \{\s*await actedSweep\(getPrisma\(\), \{ accountId \}\);\s*\} catch \{/);
+    assert.match(
+      helper,
+      /after\(async \(\) => \{\s*try \{\s*await actedSweep\(getPrisma\(\), \{ accountId \}\);\s*\} catch \{/,
+    );
     // Both the scheduling and the sweep fail open: neither can break or slow
     // the filing, whose result goes back as it came.
     assert.equal((helper.match(/\} catch \{/g) ?? []).length, 2);
@@ -1400,5 +1428,192 @@ describe("a new drop distills what changed; only the same file again costs nothi
   test("an account whose rollup this very drop wrote stays covered", async () => {
     const reply = await dropTwice(SHA_B);
     assert.deepEqual(reply.queued, { distill: 0, intentOnly: 0 });
+  });
+});
+
+// ── A4.1 · the second record inherits every law of the first (pass 13) ─────
+// The decree names four laws: the record outranks every seed, machinery is
+// never a person, money never renders, and derived facts read the widest
+// merge of both records by latest. Each is pinned here on the second
+// record's own path, so the row holds across the decree's whole scope.
+
+const rollupOf = (over: Partial<Rollup>): Rollup => ({
+  dropSha: "037742a0",
+  dropDay: "2026-09-20",
+  window: { from: "2026-07-01", to: "2026-09-20" },
+  lanes: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  emails: { human: 0, csm: 0, support: 0, intent: 0, machinery: 0 },
+  intent: { s: 0, o: 0, c: 0 },
+  receipts: 0,
+  lastHuman: null,
+  lastOrgInbound: "",
+  lastTheirs: null,
+  actors: [],
+  threads: [],
+  verdict: "",
+  ...over,
+});
+const srOf = (rollup: Partial<Rollup>): SecondRecord => ({
+  rollup: rollupOf(rollup),
+  gems: [],
+  support: null,
+  intent: null,
+});
+const readOf = (lastTouch: { at: string; who: string } | null) =>
+  ({
+    lastTouch: lastTouch ? { ...lastTouch, awaitingReply: false, source: "note" } : null,
+    relationship: { name: "Dana Whitfield" },
+  }) as unknown as Parameters<typeof lastHumanTouch>[0];
+const PAT = {
+  day: "2026-09-18",
+  how: "Email",
+  who: "Pat Lee",
+  kind: "account",
+  subject: "Re: x",
+};
+const NOW = new Date("2026-09-20T15:00:00Z");
+
+describe("the second record inherits every law of the first (A4.1, whole scope)", () => {
+  test("the record outranks every seed: the export's last human touch stands in only until the operator's record speaks", () => {
+    // Nothing on the first record: the export speaks, and says it is the export's.
+    assert.deepEqual(lastHumanTouch(readOf(null), srOf({ lastHuman: PAT })), {
+      who: "Pat Lee",
+      day: "2026-09-18",
+      kind: "account",
+      record: "salesforce",
+    });
+    // The record speaks later: it leads, as the operator's own hand.
+    const spoke = lastHumanTouch(
+      readOf({ at: "2026-09-20T14:00:00Z", who: "Antaeus Coe" }),
+      srOf({ lastHuman: PAT }),
+    );
+    assert.equal(spoke?.record, "record");
+    assert.equal(spoke?.day, "2026-09-20");
+    // A tie goes to the record.
+    assert.equal(
+      lastHumanTouch(
+        readOf({ at: "2026-09-18T14:00:00Z", who: "Antaeus Coe" }),
+        srOf({ lastHuman: PAT }),
+      )?.record,
+      "record",
+    );
+  });
+
+  test("machinery is never a person: a mechanism's row names nobody, and the bare datetime never speaks", async () => {
+    assert.equal(isMachineryName("Automated Process"), true);
+    const { slices } = await ingestOf([
+      row({
+        subject: "Re: payroll",
+        account: "Trend Personnel",
+        id18: "001TESTTRENDHR000A",
+        date: "9/18/2026",
+        assigned: "Automated Process",
+        taskSubtype: "Email",
+        comments: "To: someone@example.com\nBody:\nWe will have the model to you Friday.",
+      }),
+    ]);
+    const rollup = buildRollup({
+      slice: slices[0],
+      dropSha: "x",
+      dropDay: "2026-09-20",
+      window: { from: "2026-07-01", to: "2026-09-20" },
+      colleagues: new Set(),
+      accountPeople: new Set(),
+    });
+    assert.equal(rollup.lastTheirs, null);
+    assert.notEqual(rollup.lastHuman?.who, "Automated Process");
+    // The account-level Last Email Received is a datetime, never their voice:
+    // it warms nothing and excludes nothing.
+    const bare = srOf({ lastOrgInbound: "2026-09-19 10:00", lastTheirs: null });
+    assert.deepEqual(orgSignalsOf(bare), { theirsAt: "", theirs: null, mktgLive: false });
+    assert.deepEqual(
+      liveMotionIds(new Map(), new Map(), NOW, new Map([["A", bare]])),
+      new Set(),
+    );
+  });
+
+  test("money never renders: the staged subject and body, the rollup's subjects and the Sendbook's head carry no figure", async () => {
+    const { slices } = await ingestOf([
+      row({
+        subject: "Re: the $12,000 quote",
+        account: "Trend Personnel",
+        id18: "001TESTTRENDHR000A",
+        date: "9/18/2026",
+        assigned: "Dana Whitfield",
+        taskSubtype: "Email",
+        comments:
+          "To: someone@example.com\nBody:\nThe $12,000 quote works for us at 1,200 USD a head.\n\nBest regards,\nDana Whitfield\nE: dana.whitfield@trendpersonnel.com",
+      }),
+    ]);
+    const staged = slices[0].rows[0];
+    assert.ok(!/12,000|\$/.test(staged.s), staged.s);
+    assert.ok(!/12,000|1,200|\$/.test(staged.c ?? ""), staged.c);
+    const rollup = buildRollup({
+      slice: slices[0],
+      dropSha: "x",
+      dropDay: "2026-09-20",
+      window: { from: "2026-07-01", to: "2026-09-20" },
+      colleagues: new Set(),
+      accountPeople: new Set(["Dana Whitfield"]),
+    });
+    assert.ok(
+      !/12,000|\$/.test(rollup.lastHuman?.subject ?? ""),
+      rollup.lastHuman?.subject,
+    );
+    assert.ok(
+      !/12,000|\$/.test(rollup.lastTheirs?.subject ?? ""),
+      rollup.lastTheirs?.subject,
+    );
+    // A rollup written before the subject was redacted at staging still
+    // renders clean where it speaks.
+    const head = orgSignalsOf(
+      srOf({
+        lastTheirs: { day: "2026-09-18", who: "Dana", subject: "Re: the $12,000 quote" },
+      }),
+    ).theirs?.head;
+    assert.ok(head && !/12,000|\$/.test(head), head);
+    // And the evidence route redacts both fields again on the way out.
+    const route = readFileSync(join(cwd(), "src/app/activity/evidence/route.ts"), "utf8");
+    assert.match(route, /subject: redactMoney\(cleanSubject\(r\.s\)\)/);
+    assert.match(route, /excerpt: r\.c \? redactMoney\(cleanExcerpt\(r\.c\)\)/);
+  });
+
+  test("derived facts read the widest merge of both records by latest: the later record leads, and either record's inbound excludes", () => {
+    // The export's later day leads; the record's later moment leads.
+    assert.equal(
+      lastHumanTouch(
+        readOf({ at: "2026-09-10T14:00:00Z", who: "Antaeus Coe" }),
+        srOf({ lastHuman: PAT }),
+      )?.record,
+      "salesforce",
+    );
+    assert.equal(
+      lastHumanTouch(
+        readOf({ at: "2026-09-19T14:00:00Z", who: "Antaeus Coe" }),
+        srOf({ lastHuman: PAT }),
+      )?.record,
+      "record",
+    );
+    // Groundwork's exclusion: an inbound on either record within 21 days
+    // means the deal is being worked.
+    const theirs = (day: string) =>
+      srOf({ lastTheirs: { day, who: "Pat Lee", subject: "Re: x" } });
+    assert.deepEqual(
+      liveMotionIds(
+        new Map(),
+        new Map([["A", { lastInbound: "2026-09-15T12:00:00Z" }]]),
+        NOW,
+        new Map(),
+      ),
+      new Set(["A"]),
+    );
+    assert.deepEqual(
+      liveMotionIds(new Map(), new Map(), NOW, new Map([["B", theirs("2026-09-15")]])),
+      new Set(["B"]),
+    );
+    assert.deepEqual(
+      liveMotionIds(new Map(), new Map(), NOW, new Map([["C", theirs("2026-08-01")]])),
+      new Set(),
+    );
   });
 });
