@@ -33,7 +33,7 @@ The ship-order rule was decreed 2026-08-19. A face that first shipped before tha
 | /partners | the relationship map | pass 8, derived-fact-ledger.md §F1 (A12a, partners/page.tsx) | predates the rule (2026-06-17) |
 | /payroll-demo-sidekick | the payroll demo | pass 12: static demo data (src/lib/payroll-demo-sidekick); no record | predates the rule (#135, 2026-07-24) |
 | /playbook | the Sheet | pass 8; pass 12: the draft queue reads the second record's rollup only | the Sheet: ship order 2026-09-15; the draft queue: ship order 2026-08-20 |
-| /pricing | the EOR pricing room | pass 12: renders our price list, the one sanctioned money surface (the price desk, founder-decreed 2026-08-21); no account fact. The carve-out is not yet a CLAUDE.md line (pass-12-honor.md §3) | predates the rule (#11, 2026-07-02) |
+| /pricing | the EOR pricing room | pass 12: renders our price list, the third money carve-out with the price desk (founder-decreed 2026-08-21; CLAUDE.md since 2026-10-09); no account fact | predates the rule (#11, 2026-07-02) |
 | /room | the HomeRoom: the Spring, the THEIRS line | pass 8, derived-fact-ledger.md §F1 (A1 to A12); pass 9 | the Spring predates the rule (2026-08-13); THEIRS: ship order 2026-08-20; their promise on the move line: ship order 2026-10-06 |
 | /sendbook | the register | pass 8, derived-fact-ledger.md §F1 (A3, A12b, A12d) | the triptych winner and its ship, 2026-08-19 (#226); BOOKED: ship order 2026-10-06 |
 | /sidekick | the demo sidekick | pass 12: reads the demo tables (demoAccount, demoNote, demoPin, demoPlaybook, demoScreenOverride), never the record | predates the rule (2026-07-01) |

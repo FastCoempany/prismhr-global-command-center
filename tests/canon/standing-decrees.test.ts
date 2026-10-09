@@ -735,19 +735,35 @@ describe("concepts never ship: no concept is served (A6.11)", () => {
     assert.ok(routes.length > 10);
     const CONCEPT =
       /(^|\/)(concepts?|variants?|mockups?|triptych|options?|draft|drafts|wip|sandbox|playground|dev|test|tmp|scratchpad-v\d|.*-(concept|variant|mockup|alt|b))(\/|$)/i;
-    assert.deepEqual(routes.filter((r) => CONCEPT.test(r)), []);
+    assert.deepEqual(
+      routes.filter((r) => CONCEPT.test(r)),
+      [],
+    );
   });
 
   test("no judging document is served: none in public/, none imported, no rewrite to docs/", () => {
     const mockups = new Set(readdirSync(join(root, "docs/mockups")));
     const pub = readdirSync(join(root, "public"), { recursive: true }) as string[];
-    assert.deepEqual(pub.filter((f) => mockups.has(f.split("/").pop() ?? "")), []);
-    assert.deepEqual(pub.filter((f) => /mockup|concept|triptych/i.test(f)), []);
-    const src = (readdirSync(join(root, "src"), { recursive: true }) as string[]).filter((f) => /\.(ts|tsx)$/.test(f));
-    const reaching = src.filter((f) => /from\s+["'][^"']*docs\//.test(readFileSync(join(root, "src", f), "utf8")));
+    assert.deepEqual(
+      pub.filter((f) => mockups.has(f.split("/").pop() ?? "")),
+      [],
+    );
+    assert.deepEqual(
+      pub.filter((f) => /mockup|concept|triptych/i.test(f)),
+      [],
+    );
+    const src = (readdirSync(join(root, "src"), { recursive: true }) as string[]).filter(
+      (f) => /\.(ts|tsx)$/.test(f),
+    );
+    const reaching = src.filter((f) =>
+      /from\s+["'][^"']*docs\//.test(readFileSync(join(root, "src", f), "utf8")),
+    );
     assert.deepEqual(reaching, []);
     const config = readFileSync(join(root, "next.config.ts"), "utf8");
-    assert.ok(!/rewrites|redirects|docs\//.test(config), "the Next config reaches past the app");
+    assert.ok(
+      !/rewrites|redirects|docs\//.test(config),
+      "the Next config reaches past the app",
+    );
   });
 });
 
@@ -759,8 +775,27 @@ describe("concepts never ship: no concept is served (A6.11)", () => {
 // components write is one of those; every color variable a sheet reads
 // resolves to something.
 describe("the palette is the brand's, always (the design canon)", () => {
-  const BRAND_HEX = new Set(["0a1c40", "142949", "e6701e", "d4661b", "2563eb", "1d4ed8", "22c55e", "f59e0b", "ef4444", "ffffff", "f5f7fb", "fafbfd", "eff2f7", "fbfaf5"]);
-  const BRAND_RGB = new Set([...BRAND_HEX].map((h) => [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)).join(",")));
+  const BRAND_HEX = new Set([
+    "0a1c40",
+    "142949",
+    "e6701e",
+    "d4661b",
+    "2563eb",
+    "1d4ed8",
+    "22c55e",
+    "f59e0b",
+    "ef4444",
+    "ffffff",
+    "f5f7fb",
+    "fafbfd",
+    "eff2f7",
+    "fbfaf5",
+  ]);
+  const BRAND_RGB = new Set(
+    [...BRAND_HEX].map((h) =>
+      [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)).join(","),
+    ),
+  );
   const hex6 = (h: string) => {
     const x = h.replace("#", "").toLowerCase();
     return (x.length === 3 ? [...x].map((c) => c + c).join("") : x).slice(0, 6);
@@ -771,15 +806,34 @@ describe("the palette is the brand's, always (the design canon)", () => {
       .filter((f) => exts.test(f) && !f.startsWith("generated"))
       .map((f) => join("src", f));
   const offBrand = (text: string) => [
-    ...[...text.matchAll(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g)].map((m) => m[0]).filter((h) => !BRAND_HEX.has(hex6(h))),
-    ...[...text.matchAll(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g)].map((m) => m[0]).filter((m) => !BRAND_RGB.has(m.replace(/rgba?\(\s*/, "").split(/\s*,\s*/).slice(0, 3).join(","))),
-    ...[...text.matchAll(/:\s*(black|gray|grey|silver|purple|navy|teal|crimson|tomato|gold|yellow|pink|brown|orange|green|red|blue)\s*[;!]/g)].map((m) => m[1]),
+    ...[...text.matchAll(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g)]
+      .map((m) => m[0])
+      .filter((h) => !BRAND_HEX.has(hex6(h))),
+    ...[...text.matchAll(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g)]
+      .map((m) => m[0])
+      .filter(
+        (m) =>
+          !BRAND_RGB.has(
+            m
+              .replace(/rgba?\(\s*/, "")
+              .split(/\s*,\s*/)
+              .slice(0, 3)
+              .join(","),
+          ),
+      ),
+    ...[
+      ...text.matchAll(
+        /:\s*(black|gray|grey|silver|purple|navy|teal|crimson|tomato|gold|yellow|pink|brown|orange|green|red|blue)\s*[;!]/g,
+      ),
+    ].map((m) => m[1]),
   ];
 
   test("every color in every stylesheet under src is the brand's", () => {
     const css = files(/\.css$/);
     assert.ok(css.length > 10);
-    const found = css.flatMap((f) => offBrand(strip(readFileSync(join(root, f), "utf8"))).map((c) => `${f}: ${c}`));
+    const found = css.flatMap((f) =>
+      offBrand(strip(readFileSync(join(root, f), "utf8"))).map((c) => `${f}: ${c}`),
+    );
     assert.deepEqual(found, []);
   });
 
@@ -795,18 +849,69 @@ describe("the palette is the brand's, always (the design canon)", () => {
   });
 
   test("every color variable a stylesheet reads resolves", () => {
-    const tokens = ["config/design-tokens.css", "antaeus-brand-kit/css/tokens.css", "antaeus-brand-kit/css/motion.css", "src/app/globals.css"]
+    const tokens = [
+      "config/design-tokens.css",
+      "antaeus-brand-kit/css/tokens.css",
+      "antaeus-brand-kit/css/motion.css",
+      "src/app/globals.css",
+    ]
       .filter((f) => existsSync(join(root, f)))
-      .flatMap((f) => [...readFileSync(join(root, f), "utf8").matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
-    const global = new Set([...tokens, "--font-donor-serif", "--font-donor-sans", "--font-donor-mono"]);
+      .flatMap((f) =>
+        [...readFileSync(join(root, f), "utf8").matchAll(/(--[\w-]+)\s*:/g)].map(
+          (m) => m[1],
+        ),
+      );
+    const global = new Set([
+      ...tokens,
+      "--font-donor-serif",
+      "--font-donor-sans",
+      "--font-donor-mono",
+    ]);
     const dangling = files(/\.css$/).flatMap((f) => {
       const s = strip(readFileSync(join(root, f), "utf8"));
       const local = new Set([...s.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
       return [...s.matchAll(/([\w-]+)\s*:[^;{}]*?var\((--[\w-]+)\s*(,[^)]*)?\)/g)]
-        .filter((m) => /color|background|border|fill|stroke|shadow|outline|font/.test(m[1]))
+        .filter((m) =>
+          /color|background|border|fill|stroke|shadow|outline|font/.test(m[1]),
+        )
         .filter((m) => !m[3] && !global.has(m[2]) && !local.has(m[2]))
         .map((m) => `${f}: ${m[1]} reads ${m[2]}`);
     });
     assert.deepEqual([...new Set(dangling)], []);
+  });
+});
+
+// ── the third carve-out (CLAUDE.md, "Three carve-outs stand"; written
+// 2026-10-09): our money is authored on the Pricing page, and the price desk
+// quotes from that source at read time where an ask is answered. The source
+// reaches nothing else. tests/price-desk.test.ts pins the quote and the
+// ledger's redacted twin; this scan pins the reach ─────────────────────────
+describe("our money renders only from the Pricing page and the price desk", () => {
+  const READERS = [
+    "src/app/asks/page.tsx", // the Asks page: a banked price-desk answer, re-priced
+    "src/app/intranet/actions.ts", // the Intranet's ask: the live quote, banked redacted
+    "src/app/pricing-client.tsx", // the Pricing page
+    "src/app/pricing/page.tsx", // the Pricing page
+    "src/app/scratch/actions.ts", // the Scratchpaper's ask door
+  ];
+
+  test("only the carve-out's surfaces import the price source", () => {
+    const readers = walk(join(root, "src"))
+      .map((f) => relative(root, f).split("\\").join("/"))
+      // The price source and its desk read each other; the scan is of who reads them.
+      .filter((f) => !f.startsWith("src/lib/pricing/"))
+      .filter((f) =>
+        /from\s+["'](?:@\/lib\/pricing|(?:\.\.?\/)+(?:lib\/)?pricing)(?:\/[\w-]+)?["']/.test(
+          readFileSync(join(root, f), "utf8"),
+        ),
+      )
+      .sort();
+    assert.deepEqual(readers, READERS);
+  });
+
+  test("the Intranet banks the desk's answer redacted and serves it live", () => {
+    const src = readFileSync(join(root, "src/app/intranet/actions.ts"), "utf8");
+    assert.match(src, /answer: `\$\{redactMoney\(quote\.answer\)\}/);
+    assert.match(src, /answer: quote\.answer,/);
   });
 });
