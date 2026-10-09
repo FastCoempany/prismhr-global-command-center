@@ -602,9 +602,14 @@ founder-decreed 2026-09-15.
   color on hover only. Names stay "Roundups" and "Check-ins"; never "Cadence".
 - Money figures never appear in anything stored, rendered, or mocked
   (`redactMoney` doctrine).
-- Two carve-outs stand (ruled 2026-09-25, C10, C11): the Scratchpaper's lines,
-  because the pad routes nowhere, and the country wing's statutory facts. Our
-  money, everywhere else, still never renders.
+- Three carve-outs stand. Two were ruled 2026-09-25 (C10, C11): the
+  Scratchpaper's lines, because the pad routes nowhere, and the country wing's
+  statutory facts. The third is the Pricing page, where our money is authored,
+  and the price desk that answers from it (founder-decreed 2026-08-21, written
+  here 2026-10-09): a pricing question is quoted by arithmetic from the page's
+  source at read time, shown live wherever an ask is answered (the Intranet,
+  the Asks page, the Scratchpaper's ask door), and the ask ledger banks only
+  its money-redacted twin. Our money, everywhere else, still never renders.
 - Ship pattern: branch `claude/prismhr-demo-guide-strategy-6h0oqg` → PR →
   Vercel CI green → squash merge = live production. Verify chain uses `&&`:
   prettier → tsc → eslint (0 warnings) → tsx tests → next build. Migrations

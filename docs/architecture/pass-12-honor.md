@@ -10,7 +10,7 @@ related_docs:
 
 # Pass 12 — the last fourteen
 
-Pass 11 left fourteen rows on honor. Pass 12 walked each one, built what a pin needed where one was honestly possible, and moved three to chain. Eleven stay, each with its reason below. One canon gap goes to the founder (§3).
+Pass 11 left fourteen rows on honor. Pass 12 walked each one, built what a pin needed where one was honestly possible, and moved three to chain. Eleven stay, each with its reason below. One canon gap went to the founder (§3) and was ruled 2026-10-09.
 
 ## 1. What moved
 
@@ -49,6 +49,8 @@ Each of these had no recorded Ted-doctrine audit. None derives an account fact f
 The Pricing page renders our price list, and the price desk (founder-decreed 2026-08-21) answers pricing questions from it on the Asks page and through the Scratchpaper's ask door. The code calls this "the one sanctioned money surface" (src/lib/pricing/quote.ts; tests/price-desk.test.ts). CLAUDE.md does not say so. Its standing decrees list two carve-outs, the Scratchpaper and the country wing's statutory facts, and then: "Our money, everywhere else, still never renders."
 
 Nothing was changed. The ruling needed is whether the price desk and the Pricing page are written into CLAUDE.md as a third carve-out, or whether the page stops rendering figures.
+
+**Ruled 2026-10-09.** On the founder's order it is written in as the third carve-out (CLAUDE.md, "Three carve-outs stand"). The scoreboard carries it as P5, enforced by tests/price-desk.test.ts and a scan that only the Pricing page, the Intranet's ask, the Asks page and the Scratchpaper's ask door read the price source.
 
 ## 4. What stays, and why
 
