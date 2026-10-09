@@ -4,9 +4,12 @@
 // The sweep mounts every face the suite can mount, reads every number a
 // person can see on arrival, and holds each to the law: it is a door (a
 // link, a button, a summary), or it is one of the named exemptions below,
-// each with its reason. A count no rule covers fails the build. What the
-// sweep cannot read is a compression with no digit in it (an abbreviation),
-// and the faces it cannot mount.
+// each with its reason. A count no rule covers fails the build. Since pass
+// 13 it reads the app's own abbreviations too (ABBR below): a short line
+// carrying one is a door, or sits by a door that names it, or it fails. A
+// sentence is not a compression, so running prose (eight words or more) is
+// outside the rule. What the sweep still cannot read is a two-word term or
+// a theme with no digit and no abbreviation, and the faces it cannot mount.
 
 import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -46,7 +49,12 @@ const FACES: [string, string, MountOptions][] = [
   ],
   ["State of play", "tests/browser/fixtures/readout.tsx", {}],
   ["a Playbook draft", "tests/browser/fixtures/drafts.tsx", {}],
+  ["the Scratchpaper", "tests/browser/fixtures/scratchpad.tsx", {}],
 ];
+
+/** The app's own abbreviations: each is a compression, so a short line that
+ *  carries one is a door to what it stands for. */
+const ABBR = /\b(EOR|PEO|PEPM|CSM|HCM|PHR|VTT|API|EOD|EOW|COR|GP|CP|SF)\b/g;
 
 /** A number that names a moment in full (a clock, a day), not a count. */
 const MOMENT =
@@ -75,62 +83,83 @@ describe("A5.1 to A5.4 · every count on every mounted face is a door, and no fo
   for (const [name, fixture, opts] of FACES)
     test(`${name}: every number a person sees on arrival opens, or names a moment, or shares its line with its door`, async () => {
       const page = await mount(browser, fixture, opts);
-      const seen = await page.evaluate((moment) => {
-        const DOOR = "a,button,summary,label,input,select,textarea,[role=button]";
-        const re = new RegExp(moment, "g");
-        const out: {
-          cls: string;
-          text: string;
-          door: boolean;
-          lineDoor: boolean;
-          openFold: boolean;
-        }[] = [];
-        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-        let n: Node | null;
-        while ((n = walk.nextNode())) {
-          const raw = n.textContent ?? "";
-          const text = raw.replace(re, "");
-          if (!/\d/.test(text)) continue;
-          const el = n.parentElement!;
-          if (el.closest("script,style")) continue;
-          // What a person can see: a closed fold's contents keep a box but
-          // are not rendered.
-          if (!el.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
-            continue;
-          out.push({
-            cls: el.className + " " + (el.parentElement?.className ?? ""),
-            text: raw.trim().slice(0, 80),
-            door: !!el.closest(DOOR),
-            // The count's own line carries the door that opens it.
-            lineDoor:
-              !![el, el.parentElement].some((x) =>
-                x?.querySelector(":scope > button, :scope > a"),
-              ) ||
-              // A door within the count's card (three levels up) that names
-              // the same numbers: the card's own door to what it counts.
-              (() => {
-                const nums = text.match(/\d+/g) ?? [];
-                let box: HTMLElement | null = el;
-                for (let up = 0; up < 3 && box; up++, box = box.parentElement)
-                  for (const d of box.querySelectorAll<HTMLElement>(DOOR))
-                    if (
-                      nums.every((x) =>
-                        new RegExp(`\\b${x}\\b`).test(d.textContent ?? ""),
-                      )
-                    )
-                      return true;
-                return false;
-              })(),
-            openFold: !!el.closest("details[open]"),
-          });
-        }
-        return out;
-      }, MOMENT.source);
+      const seen = await page.evaluate(
+        ([moment, abbr]) => {
+          const DOOR = "a,button,summary,label,input,select,textarea,[role=button]";
+          const re = new RegExp(moment, "g");
+          const abbrRe = new RegExp(abbr, "g");
+          const out: {
+            cls: string;
+            text: string;
+            kind: "count" | "abbr";
+            door: boolean;
+            lineDoor: boolean;
+            openFold: boolean;
+          }[] = [];
+          const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          let n: Node | null;
+          while ((n = walk.nextNode())) {
+            const raw = n.textContent ?? "";
+            const text = raw.replace(re, "");
+            const abbrs = raw.match(abbrRe) ?? [];
+            const words = raw.trim().split(/\s+/).filter(Boolean).length;
+            // A count, or an abbreviation in a short line. Running prose is a
+            // sentence, not a compression.
+            const kind: "count" | "abbr" | null = /\d/.test(text)
+              ? "count"
+              : abbrs.length > 0 && words < 8
+                ? "abbr"
+                : null;
+            if (!kind) continue;
+            const el = n.parentElement!;
+            if (el.closest("script,style")) continue;
+            // What a person can see: a closed fold's contents keep a box but
+            // are not rendered.
+            if (!el.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
+              continue;
+            // A door within the line's card (three levels up) that names the
+            // same numbers, or the abbreviation: the card's own door to what
+            // the line compresses.
+            const named = (() => {
+              const wants =
+                kind === "count"
+                  ? (text.match(/\d+/g) ?? []).map((x) => new RegExp(`\\b${x}\\b`))
+                  : abbrs.map((x) => new RegExp(`\\b${x}\\b`));
+              let box: HTMLElement | null = el;
+              for (let up = 0; up < 3 && box; up++, box = box.parentElement)
+                for (const d of box.querySelectorAll<HTMLElement>(DOOR))
+                  if (wants.every((w) => w.test(d.textContent ?? ""))) return true;
+              return false;
+            })();
+            out.push({
+              cls: el.className + " " + (el.parentElement?.className ?? ""),
+              text: raw.trim().slice(0, 80),
+              kind,
+              door: !!el.closest(DOOR),
+              // A count's own line carries the door that opens it; an
+              // abbreviation needs the door to name it.
+              lineDoor:
+                named ||
+                (kind === "count" &&
+                  !![el, el.parentElement].some((x) =>
+                    x?.querySelector(":scope > button, :scope > a"),
+                  )),
+              openFold: !!el.closest("details[open], [aria-expanded=true] + *"),
+            });
+          }
+          return out;
+        },
+        [MOMENT.source, ABBR.source],
+      );
       const dead = seen.filter(
         (s) =>
           !s.door && !s.lineDoor && !s.openFold && !EXEMPT.some(([re]) => re.test(s.cls)),
       );
-      assert.deepEqual(dead, [], `${name} has a count that opens nothing`);
+      assert.deepEqual(
+        dead,
+        [],
+        `${name} has a count or an abbreviation that opens nothing`,
+      );
       // Nothing deep surfaces uninvited: no fold is open on arrival.
       assert.equal(
         await page.locator("details[open]").count(),

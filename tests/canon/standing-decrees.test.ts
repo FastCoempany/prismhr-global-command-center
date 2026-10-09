@@ -915,3 +915,45 @@ describe("our money renders only from the Pricing page and the price desk", () =
     assert.match(src, /answer: quote\.answer,/);
   });
 });
+
+// ── A6.12 · mockup work never ships without an explicit ship order (pass 13)
+// docs/architecture/mockups.md holds one row per document under
+// docs/mockups: what it judged and what became of it. A mockup with no row,
+// a row for a file that is gone, or a disposition outside the three fails
+// here, so a mockup's winner cannot reach production without its order on
+// file. The routes' own orders are docs/architecture/surfaces.md (A2.8). ──
+describe("every mockup carries its disposition, and a shipped one names its order (A6.12)", () => {
+  const files = readdirSync(join(root, "docs/mockups"))
+    .filter((f) => /\.html$/.test(f))
+    .sort();
+  const rows = new Map<string, string[]>();
+  for (const line of readFileSync(
+    join(root, "docs/architecture/mockups.md"),
+    "utf8",
+  ).split("\n")) {
+    const cells = line.split("|").map((c) => c.trim());
+    if (cells.length === 6 && /\.html$/.test(cells[1]))
+      rows.set(cells[1], cells.slice(2, 5));
+  }
+
+  test("the registry names every mockup on disk, and nothing that is gone", () => {
+    assert.ok(files.length >= 14, `only ${files.length} mockups`);
+    assert.deepEqual([...rows.keys()].sort(), files);
+  });
+
+  test("every row says what it judged and one of the three dispositions, with its cite", () => {
+    const DISPOSITION =
+      /^(shipped · ship order \d{4}-\d{2}-\d{2}|shipped · predates the rule|concept · never shipped|concept · predates the rule)$/;
+    for (const [file, [judged, disposition, cite]] of rows) {
+      assert.ok(judged, `${file}: no subject`);
+      assert.match(disposition, DISPOSITION, `${file}: "${disposition}"`);
+      assert.ok(cite, `${file}: no cite`);
+      if (disposition.startsWith("shipped · ship order"))
+        assert.match(
+          cite,
+          /#\d+/,
+          `${file}: a shipped mockup names the PR that shipped it`,
+        );
+    }
+  });
+});

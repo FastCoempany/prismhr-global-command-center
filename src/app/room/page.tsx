@@ -37,6 +37,25 @@ import { readAccount, secondRecordFor } from "@/lib/record/read";
 import { shortName } from "@/lib/ingest/guard";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
+
+/** The product a shape token stands for, in the read's own words. */
+const PRODUCT_WORD: Record<string, string> = {
+  eor: "employer of record",
+  contractor: "contractors",
+  contractor_plus: "contractor plus",
+  payroll: "global payroll",
+  wallet: "the wallet",
+};
+const mmddChicago = (iso: string): string => {
+  const t = Date.parse(iso);
+  return Number.isNaN(t)
+    ? ""
+    : new Date(t).toLocaleDateString("en-US", {
+        timeZone: "America/Chicago",
+        month: "numeric",
+        day: "numeric",
+      });
+};
 import { suggestChecks } from "@/lib/intel/evidence";
 import { daysBetween, meterRead, readDeal, type RoomRead } from "@/lib/room/engine";
 import { moveDoneKey } from "@/lib/room/bind";
@@ -242,6 +261,35 @@ export default async function RoomPage() {
       .join(" · ")
       .toUpperCase()
       .slice(0, 72);
+
+    // What the shape and the meta stand on (the click-depth law, pass 13):
+    // every product and country the read took, each with the day and the
+    // record line it came from, so the chip opens to its evidence. A fact
+    // the seed stood in for names the seed. The chair carries no source
+    // in the read, so it has no line here.
+    const identity = [
+      ...intel.products.map((f) => ({ label: PRODUCT_WORD[f.value] ?? f.value, f })),
+      ...intel.countries.map((f) => ({
+        label: COUNTRY_NAME[f.value] ?? f.value.toUpperCase(),
+        f,
+      })),
+    ].map(({ label, f }) => {
+      const doc = docs.find((d) => d.src === f.src && d.at === f.at);
+      const line =
+        doc?.text
+          .split("\n")
+          .map((l) => l.trim())
+          .find(Boolean) ?? f.src;
+      return { label, day: mmddChicago(f.at), line: line.slice(0, 90) };
+    });
+    // The shape reads GP when no product is on file: a default, and the chip
+    // says so rather than opening to nothing.
+    if (intel.products.length === 0)
+      identity.unshift({
+        label: "GP",
+        day: "",
+        line: "No product on file. GP is the default.",
+      });
 
     const people = acct.people.slice(0, 6);
     // MULTI reads the widest count the app holds: filed actors AND the
@@ -608,6 +656,7 @@ export default async function RoomPage() {
       name,
       meta,
       shape,
+      identity,
       multiTone,
       people: people.map((p) => ({
         name: p.name,

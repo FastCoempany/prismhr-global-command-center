@@ -296,7 +296,10 @@ export function createIngest(
     const staged: StagedRow = {
       k: key,
       d: day,
-      s: r.subject,
+      // The subject takes the redaction the body takes: the staged row is
+      // what every second-record face and the evidence route read, and our
+      // money never renders (A4.1, pass 13).
+      s: redactMoney(r.subject),
       a: r.assigned.trim(),
       lane: read.lane,
       sub: r.taskSubtype,

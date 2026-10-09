@@ -2922,3 +2922,29 @@ button.sdRadio:hover {
   color: rgba(10, 28, 64, 0.42);
   border-color: var(--hair);
 }
+
+/* The shape chip as a door (the click-depth law, pass 13): what the read
+   stands on opens beneath the title line, one click. */
+.chipDoor {
+  cursor: pointer;
+}
+.chipDoor[aria-expanded="true"] {
+  color: var(--ink);
+  border-color: var(--faint);
+}
+.identityFold {
+  list-style: none;
+  margin: 0 0 6px 28px;
+  padding: 0;
+  font-family: var(--f-mono), Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--soft);
+}
+.identityFold li {
+  line-height: 1.7;
+}
+.identityFold b {
+  font-weight: 700;
+  color: var(--ink);
+}

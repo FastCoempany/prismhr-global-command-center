@@ -106,6 +106,11 @@ export type RoomRow = {
   name: string;
   meta: string;
   shape: string;
+  /** What the shape and meta chips stand on: each product and country the
+   *  read took, with the day and the record line it came from. The chip
+   *  opens to it (the click-depth law, pass 13). Empty when the read holds
+   *  no fact behind them. */
+  identity?: { label: string; day: string; line: string }[];
   multiTone: "g" | "y" | "r";
   people: { name: string; line: string }[];
   briefed: boolean;
@@ -611,6 +616,7 @@ export function Row({
   );
   // Who's in the deal, opened by a click on MULTI (the click-depth law).
   const [multiOpen, setMultiOpen] = useState(false);
+  const [identityOpen, setIdentityOpen] = useState(false);
   const multiRef = useDismiss<HTMLButtonElement>(multiOpen, () => setMultiOpen(false));
   const [pending, start] = useTransition();
   // The move button owns its own spinner — a register-row op must never
@@ -1330,7 +1336,21 @@ export function Row({
             )}
           </span>
           <span className={styles.chips}>
-            <span className={styles.chip}>{row.shape}</span>
+            {/* The shape is a compression of the read, so it is a door to
+                the record lines it stands on (the click-depth law). */}
+            {row.identity?.length ? (
+              <button
+                type="button"
+                className={`${styles.chip} ${styles.chipDoor}`}
+                aria-expanded={identityOpen}
+                title="What the read stands on"
+                onClick={() => setIdentityOpen((v) => !v)}
+              >
+                {row.shape}
+              </button>
+            ) : (
+              <span className={styles.chip}>{row.shape}</span>
+            )}
             {row.meta && <span className={styles.metaIn}>{row.meta}</span>}
             {/* MULTI opens on a click as well as a hover (the click-depth
                 law): a touch screen has no hover, and the room is one click
@@ -1417,6 +1437,16 @@ export function Row({
             )}
           </span>
         </div>
+        {identityOpen && row.identity?.length ? (
+          <ul className={styles.identityFold}>
+            {row.identity.map((f, i) => (
+              <li key={i}>
+                <b>{f.label}</b>
+                {f.day ? ` · ${f.day}` : ""} · {f.line}
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
         {/* The move sits under the identity line, where the research control
             used to be: the row's one instruction, before the instruments that

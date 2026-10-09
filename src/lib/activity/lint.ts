@@ -102,7 +102,8 @@ const DEADLINE_RE =
 // Retired vocabulary (canon rules 8–10) and the word that never appears.
 // "steps" is the banned word; "step 1" survives by decree (the Sendbook's
 // own subtext says it).
-const RETIRED_RE = /\b(\w+[-\s]shaped|their own book|domestic-only|steps)\b/i;
+const RETIRED_RE =
+  /\b(\w+[-\s]shaped|their own book|their book is|domestic-only|steps)\b/i;
 
 // Gem lines are operator copy (ruled 2026-09-25, D21): the plain-speech law's
 // seven devices are linted here, and a digit that is not a date kills the
