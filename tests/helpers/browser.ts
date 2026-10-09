@@ -10,7 +10,7 @@
 
 import { build, type Plugin } from "esbuild";
 import { chromium, type Browser, type Page } from "playwright-core";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 
 const ROOT = process.cwd();
@@ -211,15 +211,36 @@ export type MountOptions = {
   /** Answers for the page's own GETs, by path: the evidence route, say. */
   routes?: Record<string, (url: URL) => unknown>;
   viewport?: { width: number; height: number };
+  /** A page's first-paint markup, rendered under node (tests/helpers/
+   *  page-render.ts), mounted as it stands with every CSS module's sheet
+   *  unscoped, as the server's class names are. The fixture is then only a
+   *  name (pass 16). */
+  html?: string;
 };
 
 /** A fresh page with the fixture mounted and its effects settled. */
+/** Every CSS module's sheet, raw: the class names a server render carries. */
+function rawModuleCss(): string {
+  const out: string[] = [];
+  const walk = (dir: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (/\.module\.css$/.test(e.name)) out.push(readFileSync(p, "utf8"));
+    }
+  };
+  walk(join(ROOT, "src"));
+  return out.join("\n");
+}
+
 export async function mount(
   browser: Browser,
   fixture: string,
   opts: MountOptions = {},
 ): Promise<Page> {
-  const { js, css } = await bundle(fixture);
+  const { js, css } = opts.html
+    ? { js: "", css: rawModuleCss() }
+    : await bundle(fixture);
   const page = await browser.newPage({
     viewport: opts.viewport ?? { width: 1400, height: 900 },
     reducedMotion: opts.reducedMotion ? "reduce" : "no-preference",
@@ -236,7 +257,7 @@ export async function mount(
   const boot = `(() => { const s = ${seed}; window.__search = s.search; window.__returns = s.returns; window.__calls = []; for (const [k, v] of Object.entries(s.storage)) localStorage.setItem(k, v); })();`;
   // A real origin, so localStorage works: the page is served from a routed
   // address that never leaves the browser.
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${GLOBAL_CSS()}\n${css}</style><script>${boot}</script></head><body><div id="root"></div><script>${js.replace(/<\/script/g, "<\\/script")}</script></body></html>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${GLOBAL_CSS()}\n${css}</style><script>${boot}</script></head><body><div id="root">${opts.html ?? ""}</div><script>${js.replace(/<\/script/g, "<\\/script")}</script></body></html>`;
   const asked: string[] = [];
   requests.set(page, asked);
   await page.route(`${ORIGIN}/**`, (r) => {

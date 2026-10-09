@@ -178,7 +178,7 @@ export default async function ArchivePage({
         {query && (
           <section className={styles.arcSection}>
             <h2 className={styles.h2}>
-              Matches for “{q}” ({hits.length})
+              Matches for “{q}” · {hits.length}
             </h2>
             {hits.length === 0 && (
               <p className={styles.muted}>
@@ -198,7 +198,7 @@ export default async function ArchivePage({
         )}
 
         <section className={styles.arcSection}>
-          <h2 className={styles.h2}>Done notes ({doneNotes.length})</h2>
+          <h2 className={styles.h2}>Done notes · {doneNotes.length}</h2>
           {doneNotes.length === 0 && (
             <p className={styles.muted}>Nothing checked off yet.</p>
           )}

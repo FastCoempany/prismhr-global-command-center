@@ -9,6 +9,7 @@ import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import type { Browser } from "playwright-core";
 import { mount, openBrowser, type MountOptions } from "../helpers/browser";
+import { renderPage, SERVER_PAGES } from "../helpers/page-render";
 
 const BRAND = [
   "0a1c40",
@@ -77,54 +78,69 @@ after(async () => {
   await browser?.close();
 });
 
+/** Every color one face or page paints, held to the brand's palette. */
+async function paletteOf(
+  page: import("playwright-core").Page,
+  name: string,
+): Promise<void> {
+  const used = await page.evaluate(() => {
+    const out: { where: string; prop: string; value: string }[] = [];
+    for (const el of [...document.querySelectorAll("#root *")] as HTMLElement[]) {
+      if (!el.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
+        continue;
+      const cs = getComputedStyle(el);
+      const props = ["color", "background-color"];
+      for (const side of ["top", "right", "bottom", "left"])
+        if (
+          parseFloat(cs.getPropertyValue(`border-${side}-width`)) > 0 &&
+          cs.getPropertyValue(`border-${side}-style`) !== "none"
+        )
+          props.push(`border-${side}-color`);
+      for (const p of props)
+        out.push({
+          where: `${el.tagName.toLowerCase()}.${String(el.className).split(" ")[0]}`,
+          prop: p,
+          value: cs.getPropertyValue(p),
+        });
+    }
+    return out;
+  });
+  assert.ok(used.length > 0, `${name} painted nothing`);
+  const parse = (v: string): { rgb: number[]; a: number } | null => {
+    let m = /^rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)$/.exec(v);
+    if (m) return { rgb: [+m[1], +m[2], +m[3]], a: m[4] === undefined ? 1 : +m[4] };
+    m = /^color\(srgb ([\d.e-]+) ([\d.e-]+) ([\d.e-]+)(?: \/ ([\d.]+))?\)$/.exec(v);
+    if (m)
+      return {
+        rgb: [+m[1], +m[2], +m[3]].map((x) => Math.round(x * 255)),
+        a: m[4] === undefined ? 1 : +m[4],
+      };
+    return null;
+  };
+  const off = used.filter(({ value }) => {
+    const c = parse(value);
+    if (!c) return true;
+    if (c.a === 0) return false;
+    return !BRAND.some((b) => b.every((x, i) => Math.abs(x - c.rgb[i]) <= 2));
+  });
+  assert.deepEqual([...new Set(off.map((o) => `${o.where} ${o.prop}: ${o.value}`))], []);
+}
+
 describe("every color a face paints is the brand's", () => {
   for (const [name, fixture, opts] of FACES)
     test(`${name}: words, fills and edges compute to the brand's palette`, async () => {
       const page = await mount(browser, fixture, opts);
-      const used = await page.evaluate(() => {
-        const out: { where: string; prop: string; value: string }[] = [];
-        for (const el of [...document.querySelectorAll("#root *")] as HTMLElement[]) {
-          if (!el.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
-            continue;
-          const cs = getComputedStyle(el);
-          const props = ["color", "background-color"];
-          for (const side of ["top", "right", "bottom", "left"])
-            if (
-              parseFloat(cs.getPropertyValue(`border-${side}-width`)) > 0 &&
-              cs.getPropertyValue(`border-${side}-style`) !== "none"
-            )
-              props.push(`border-${side}-color`);
-          for (const p of props)
-            out.push({
-              where: `${el.tagName.toLowerCase()}.${String(el.className).split(" ")[0]}`,
-              prop: p,
-              value: cs.getPropertyValue(p),
-            });
-        }
-        return out;
-      });
-      assert.ok(used.length > 0, `${name} painted nothing`);
-      const parse = (v: string): { rgb: number[]; a: number } | null => {
-        let m = /^rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)$/.exec(v);
-        if (m) return { rgb: [+m[1], +m[2], +m[3]], a: m[4] === undefined ? 1 : +m[4] };
-        m = /^color\(srgb ([\d.e-]+) ([\d.e-]+) ([\d.e-]+)(?: \/ ([\d.]+))?\)$/.exec(v);
-        if (m)
-          return {
-            rgb: [+m[1], +m[2], +m[3]].map((x) => Math.round(x * 255)),
-            a: m[4] === undefined ? 1 : +m[4],
-          };
-        return null;
-      };
-      const off = used.filter(({ value }) => {
-        const c = parse(value);
-        if (!c) return true;
-        if (c.a === 0) return false;
-        return !BRAND.some((b) => b.every((x, i) => Math.abs(x - c.rgb[i]) <= 2));
-      });
-      assert.deepEqual(
-        [...new Set(off.map((o) => `${o.where} ${o.prop}: ${o.value}`))],
-        [],
-      );
+      await paletteOf(page, name);
+      await page.close();
+    });
+});
+
+describe("every color a page paints is the brand's: the seven pages from their server render (pass 16)", () => {
+  for (const p of SERVER_PAGES)
+    test(`${p.route}: words, fills and edges compute to the brand's palette`, async () => {
+      const html = await renderPage(p.route);
+      const page = await mount(browser, p.route, { html });
+      await paletteOf(page, p.route);
       await page.close();
     });
 });
