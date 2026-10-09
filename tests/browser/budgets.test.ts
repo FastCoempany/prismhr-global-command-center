@@ -71,6 +71,37 @@ const UNITS: [
     {},
     (p) => p.locator(cls("product-sheet.module.css", "trio")),
   ],
+  // The faces pass 15 mounted, each whole on arrival.
+  [
+    "intake-shelf",
+    "tests/browser/fixtures/intake.tsx",
+    {},
+    (p) => p.locator("main").first(),
+  ],
+  [
+    "payroll-demo",
+    "tests/browser/fixtures/payroll-demo.tsx",
+    {},
+    (p) => p.locator("main").first(),
+  ],
+  [
+    "demo-sidekick",
+    "tests/browser/fixtures/sidekick.tsx",
+    {},
+    (p) => p.locator("main").first(),
+  ],
+  [
+    "flow-sidekick",
+    "tests/browser/fixtures/sidekick-v3.tsx",
+    {},
+    (p) => p.locator("main").first(),
+  ],
+  [
+    "pricing-table",
+    "tests/browser/fixtures/pricing.tsx",
+    {},
+    (p) => p.locator("main").first(),
+  ],
   [
     "groundwork-stage",
     "tests/browser/fixtures/evidence.tsx",

@@ -51,6 +51,9 @@ input,
 select,
 textarea {
   font: inherit;
+  /* The surrounding ink, never the browser's black (the design canon; the
+     palette sweep, pass 15). */
+  color: inherit;
 }
 
 .app-shell {

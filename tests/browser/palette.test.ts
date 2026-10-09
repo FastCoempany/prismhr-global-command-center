@@ -62,6 +62,11 @@ const FACES: [string, string, MountOptions][] = [
   ["a Playbook draft", "tests/browser/fixtures/drafts.tsx", {}],
   ["the Scratchpaper", "tests/browser/fixtures/scratchpad.tsx", {}],
   ["the Playbook Sheet", "tests/browser/fixtures/playbook.tsx", {}],
+  ["the Intake shelf", "tests/browser/fixtures/intake.tsx", {}],
+  ["the payroll demo", "tests/browser/fixtures/payroll-demo.tsx", {}],
+  ["the demo sidekick", "tests/browser/fixtures/sidekick.tsx", {}],
+  ["the flow-first sidekick", "tests/browser/fixtures/sidekick-v3.tsx", {}],
+  ["the Pricing table", "tests/browser/fixtures/pricing.tsx", {}],
 ];
 
 let browser: Browser;
