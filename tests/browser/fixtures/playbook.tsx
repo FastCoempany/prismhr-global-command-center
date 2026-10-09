@@ -10,10 +10,10 @@ export default function Fixture() {
     <main>
       <ProductSheet
         index={[
-          { name: "Mexico", alias: "mx", points: 16, verdict: "ok" },
-          { name: "Canada", alias: "ca", points: 12, verdict: "note" },
-          { name: "Philippines", alias: "ph", points: 4, verdict: "ask" },
-          { name: "Puerto Rico", alias: "pr", points: 0, verdict: "no" },
+          { name: "Mexico", alias: "mx", points: 16, priced: true, verdict: "ok" },
+          { name: "Canada", alias: "ca", points: 12, priced: true, verdict: "note" },
+          { name: "Philippines", alias: "ph", points: 4, priced: true, verdict: "ask" },
+          { name: "Puerto Rico", alias: "pr", points: 0, priced: false, verdict: "no" },
         ]}
         tally={{ priced: 16, written: 12 }}
       />
