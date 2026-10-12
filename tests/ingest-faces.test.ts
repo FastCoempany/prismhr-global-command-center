@@ -2386,3 +2386,50 @@ describe("every operator string on the ingest surfaces is on the read register (
     assert.ok(spoken.get("src/app/room/ingest/held.tsx")!.includes("Pick the account"));
   });
 });
+
+// ── D8 · backups are permanent: a backup line carries no ↺, and nothing takes
+// a file back out of git (founder, 2026-10-06; CLAUDE.md, The Chute) ────────
+describe("a backup line carries no ↺, and nothing takes a file back out of git (D8)", () => {
+  test("the vaulted and the unfiled receipts render no take-back", async () => {
+    const rows: LedgerRow[] = [
+      {
+        key: 9,
+        filename: "x.pdf",
+        state: "vaulted",
+        account: REGIS,
+        day: "10/6",
+        vault: { text: "accounts/Regis HR Group/x.pdf", url: "https://github.com/o/v" },
+      },
+      { key: 9, filename: "x.pdf", state: "unfiled", day: "10/6" },
+    ];
+    for (const row of rows) {
+      const html = await receiptLine(row);
+      assert.ok(!html.includes("↺"), `${row.state}: ${textOf(html)}`);
+      assert.ok(!/Take back/.test(html), `${row.state}: a take-back control`);
+    }
+  });
+
+  test("the archive library exports no delete, its only DELETEs are its own failed draft, and the take-back never reaches it", () => {
+    const archive = read("src/lib/github/archive.ts");
+    assert.ok(
+      !/export\s+(async\s+)?function\s+\w*(delete|remove|unarchive|takeBack)\w*/i.test(
+        archive,
+      ),
+      "the archive exports a delete",
+    );
+    const deletes = [...archive.matchAll(/fetch\(([^,]+),\s*\{\s*method:\s*"DELETE"/g)]
+      .map((m) => m[1].trim())
+      .sort();
+    assert.deepEqual(
+      deletes,
+      ["draftUrl", "rj.url"],
+      "a DELETE beyond the failed draft's own cleanup",
+    );
+    for (const f of [
+      "src/lib/ingest/filing.ts",
+      "src/app/room/ingest/use-undo.ts",
+      "src/app/room/ingest/use-receipts.ts",
+    ])
+      assert.ok(!read(f).includes("@/lib/github/archive"), `${f} reaches the archive`);
+  });
+});

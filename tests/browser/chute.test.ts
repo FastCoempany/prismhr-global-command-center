@@ -36,8 +36,12 @@ async function drop(page: Page, files: { name: string; type: string; body: strin
       const dt = new DataTransfer();
       for (const f of files) dt.items.add(new File([f.body], f.name, { type: f.type }));
       const el = document.querySelector(sel)!;
-      el.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: dt }));
-      el.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt }));
+      el.dispatchEvent(
+        new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: dt }),
+      );
+      el.dispatchEvent(
+        new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt }),
+      );
     },
     { files, sel: $("chute") },
   );
@@ -51,7 +55,9 @@ describe("A1.3 · files thrown at the Chute are read on the spot", () => {
     const t0 = Date.now();
     await drop(page, [{ name: "mexico.eml", type: "message/rfc822", body: EML }]);
     await page.waitForFunction(() =>
-      ((window as unknown as { __calls: [string][] }).__calls ?? []).some(([n]) => n === "routeText"),
+      ((window as unknown as { __calls: [string][] }).__calls ?? []).some(
+        ([n]) => n === "routeText",
+      ),
     );
     assert.ok(Date.now() - t0 < 3000, "the read waited");
     const route = (await callsOf(page)).find(([n]) => n === "routeText");
@@ -64,14 +70,107 @@ describe("A1.3 · files thrown at the Chute are read on the spot", () => {
 
   test("a dropped PDF goes to the transcriber at once, once", async () => {
     const page = await mount(browser, FIX, {
-      returns: { chuteReadPdf: { ok: false, reason: "The reader is down." }, chuteBook: [] },
+      returns: {
+        chuteReadPdf: { ok: false, reason: "The reader is down." },
+        chuteBook: [],
+      },
     });
-    await drop(page, [{ name: "deck.pdf", type: "application/pdf", body: "%PDF-1.4 a deck" }]);
+    await drop(page, [
+      { name: "deck.pdf", type: "application/pdf", body: "%PDF-1.4 a deck" },
+    ]);
     await page.waitForFunction(() =>
-      ((window as unknown as { __calls: [string][] }).__calls ?? []).some(([n]) => n === "chuteReadPdf"),
+      ((window as unknown as { __calls: [string][] }).__calls ?? []).some(
+        ([n]) => n === "chuteReadPdf",
+      ),
     );
     await page.waitForTimeout(200);
     assert.equal((await callsOf(page)).filter(([n]) => n === "chuteReadPdf").length, 1);
+    await page.close();
+  });
+});
+
+// ── D12 · the fold shows every waiting row plus the two newest settled, and
+// receipts clear per row and all at once (pass 17) ──────────────────────────
+describe("D12 · the fold shows every waiting row and the two newest settled; receipts clear per row and all at once", () => {
+  const REGIS = { id: "001F000000w38OHIAY", name: "Regis HR Group" };
+  const NOW = "2026-10-06T15:00:00Z";
+  /** A ledger saved on the same Chicago day: two picks waiting and four
+   *  settled filings, newest first. */
+  const ledger = async () => {
+    const { saveLedger } = await import("../../src/app/room/chute-ledger");
+    const m = new Map<string, string>();
+    const filed = (key: number, name: string) => ({
+      key,
+      filename: name,
+      state: "filed" as const,
+      account: REGIS,
+      // The count doubles as the row's name: a settled line never shows its
+      // filename (D12), so the count tells the rows apart.
+      filed: key,
+      day: "10/6",
+      rung: "email",
+    });
+    const pick = (key: number, name: string) => ({
+      key,
+      filename: name,
+      state: "pick" as const,
+      text: `CALL TRANSCRIPT\nA: ${name}`,
+      say: "No sure match. Pick the account.",
+      candidates: [{ id: REGIS.id, name: REGIS.name, rung: "domain" }],
+    });
+    saveLedger(
+      [
+        pick(6, "f.vtt"),
+        pick(5, "e.vtt"),
+        filed(4, "d.eml"),
+        filed(3, "c.eml"),
+        filed(2, "b.eml"),
+        filed(1, "a.eml"),
+      ],
+      { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) },
+      new Date(NOW),
+    );
+    return Object.fromEntries(m);
+  };
+  // A waiting pick is the held box; a settled filing is a receipt line. Both
+  // are items of the one list.
+  const items = (page: Page) => page.locator(`${$("chuteList")} > li`);
+
+  test("on arrival the two waiting picks and the two newest settled show, with the rest behind the meter", async () => {
+    const page = await mount(browser, FIX, {
+      returns: { chuteBook: [] },
+      storage: await ledger(),
+      now: NOW,
+    });
+    const rows = items(page);
+    assert.equal(await rows.count(), 4);
+    assert.equal(await page.locator($("rcptRow")).count(), 2, "two settled receipts");
+    const text = (await rows.allTextContents()).join(" | ");
+    for (const name of ["f.vtt", "e.vtt", "4 filed", "3 filed"])
+      assert.ok(text.includes(name), `${name} missing: ${text}`);
+    for (const name of ["2 filed", "1 filed"])
+      assert.ok(!text.includes(name), `${name} shown on arrival`);
+    await page.getByTitle("Show all 6").click();
+    assert.equal(await rows.count(), 6);
+    await page.close();
+  });
+
+  test("✕ clears one settled receipt; Clear all clears every settled one and leaves the waiting rows", async () => {
+    const page = await mount(browser, FIX, {
+      returns: { chuteBook: [] },
+      storage: await ledger(),
+      now: NOW,
+    });
+    await page.getByTitle("Show all 6").click();
+    const rows = items(page);
+    assert.equal(await rows.count(), 6);
+    await rows.filter({ hasText: "4 filed" }).getByTitle("Clear this receipt").click();
+    assert.equal(await rows.count(), 5);
+    assert.ok(!(await rows.allTextContents()).join(" ").includes("4 filed"));
+    await page.getByRole("button", { name: "Clear all" }).click();
+    assert.equal(await rows.count(), 2);
+    const left = (await rows.allTextContents()).join(" ");
+    assert.ok(left.includes("f.vtt") && left.includes("e.vtt"), left);
     await page.close();
   });
 });

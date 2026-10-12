@@ -33,7 +33,11 @@ import {
   type FilingData,
   type WroteClient,
 } from "../src/lib/ingest/filing";
-import { PLAYBOOK_LESSONS, PLAYBOOK_MARKET, playbookBody } from "../src/lib/playbook/store";
+import {
+  PLAYBOOK_LESSONS,
+  PLAYBOOK_MARKET,
+  playbookBody,
+} from "../src/lib/playbook/store";
 import { gapNs } from "../src/lib/room/gaps";
 import {
   DUPE_CHECK_SKIPPED,
@@ -66,7 +70,11 @@ import {
   textPieceBytes,
   textPieces,
 } from "../src/lib/ingest/carry";
-import { UNFILED, VAULT_PIECE_BYTES, type VaultChunkClient } from "../src/lib/ingest/vault";
+import {
+  UNFILED,
+  VAULT_PIECE_BYTES,
+  type VaultChunkClient,
+} from "../src/lib/ingest/vault";
 import { redactMoney } from "../src/lib/intel/lexicon";
 import { cleanSfPaste } from "../src/lib/sf-timeline";
 import {
@@ -151,7 +159,11 @@ function stub(opts: { table?: boolean } = {}) {
           return { id: prior.id };
         }
         const id = `f${++seq}`;
-        filings.set(id, { ...args.create, id, createdAt: new Date("2026-10-05T15:00:00Z") });
+        filings.set(id, {
+          ...args.create,
+          id,
+          createdAt: new Date("2026-10-05T15:00:00Z"),
+        });
         return { id };
       },
       async findUnique(args) {
@@ -241,7 +253,9 @@ const RAW_READ = {
   signals: ["Mexico first, Canada after"],
   actions: [{ text: "Send the model.", owner: "me", due: "2026-10-09", fallback: "" }],
   gaps: ["Do the Mexico workers need benefits parity?"],
-  competitorIntel: [{ fact: "Deel asks a deposit up front for Mexico.", who: "Dana Ellis" }],
+  competitorIntel: [
+    { fact: "Deel asks a deposit up front for Mexico.", who: "Dana Ellis" },
+  ],
   lessons: ["Lead with the entity question on a first call."],
   outcome: { status: "none", phrase: "" },
   accountName: "Acme PEO",
@@ -273,7 +287,10 @@ describe("a filing's read round-trips through the sanitizer unchanged", () => {
     const stored = filings.get(r.id);
     assert.ok(stored);
     // Stored as plain JSON — the same thing the sanitizer made, no undefined.
-    assert.deepEqual(JSON.parse(JSON.stringify(stored.read)), JSON.parse(JSON.stringify(sane)));
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(stored.read)),
+      JSON.parse(JSON.stringify(sane)),
+    );
     assert.deepEqual(sanitizeAiResult(stored.read), sane);
     const back = await findFiling("A1", "abc123", client);
     assert.ok(back);
@@ -314,7 +331,10 @@ describe("a filing's read round-trips through the sanitizer unchanged", () => {
   test("a re-drop after an undo replaces the row: upsert on (accountId, fingerprint)", async () => {
     const { client, filings } = stub();
     const first = await fileFiling({ ...FILING, read: null, how: "rules" }, client);
-    const again = await fileFiling({ ...FILING, read: sanitizeAiResult(RAW_READ) }, client);
+    const again = await fileFiling(
+      { ...FILING, read: sanitizeAiResult(RAW_READ) },
+      client,
+    );
     assert.ok(first && again);
     assert.equal(again.id, first.id);
     assert.equal(filings.size, 1);
@@ -372,9 +392,21 @@ describe("a keyless filing stores a null read and how rules", () => {
       "if (!verdict.ok)",
     ])
       assert.ok(roomPaste.indexOf(refusal) < firstWrite, refusal);
-    assert.ok(roomPaste.includes('await writeFiling("transcript");\n        const id = await archiveNote();'));
-    assert.ok(roomPaste.includes('await writeFiling("transcript");\n      const n = await createAccountNoteRow('));
-    assert.ok(roomPaste.includes('await writeFiling(how === "ai" ? "ai" : "rules");\n    let filed = 0;'));
+    assert.ok(
+      roomPaste.includes(
+        'await writeFiling("transcript");\n        const id = await archiveNote();',
+      ),
+    );
+    assert.ok(
+      roomPaste.includes(
+        'await writeFiling("transcript");\n      const n = await createAccountNoteRow(',
+      ),
+    );
+    assert.ok(
+      roomPaste.includes(
+        'await writeFiling(how === "ai" ? "ai" : "rules");\n    let filed = 0;',
+      ),
+    );
     for (const m of roomPaste.matchAll(/stampPasteMark\(pasteKey/g))
       assert.ok((m.index ?? 0) > firstWrite, "the marker lands after the row");
   });
@@ -423,7 +455,10 @@ describe("every row and todo the filing wrote carries its id (P3/P4)", () => {
     assert.equal(attempts[0].filingId, "f1");
     assert.ok(!("filingId" in attempts[1]));
     assert.equal(attempts[1].door, "drop");
-    assert.ok("recipients" in attempts[1], "the provenance survives; only the link is lost");
+    assert.ok(
+      "recipients" in attempts[1],
+      "the provenance survives; only the link is lost",
+    );
 
     const todoWrites: TodoData[] = [];
     const todoClient = {
@@ -436,7 +471,12 @@ describe("every row and todo the filing wrote carries its id (P3/P4)", () => {
       },
     };
     await createTodoRow(
-      { body: "Send the model.", tags: { kind: "action" }, accountId: "A1", filingId: "f1" },
+      {
+        body: "Send the model.",
+        tags: { kind: "action" },
+        accountId: "A1",
+        filingId: "f1",
+      },
       todoClient,
     );
     assert.equal(todoWrites[0].filingId, "f1");
@@ -448,16 +488,32 @@ describe("every row and todo the filing wrote carries its id (P3/P4)", () => {
   test("roomPaste and its fan-out pass the filing's id to every row and todo they write", () => {
     const sliceOf = `${roomPaste}${absorbRead}`;
     const calls: { name: string; args: string }[] = [];
-    for (const name of ["createAccountNoteRow", "createTodoRow", "fileGaps", "filePlaybook"]) {
+    for (const name of [
+      "createAccountNoteRow",
+      "createTodoRow",
+      "fileGaps",
+      "filePlaybook",
+    ]) {
       const re = new RegExp(`\\b${name}\\s*\\(`, "g");
       for (let m = re.exec(sliceOf); m; m = re.exec(sliceOf))
         calls.push({ name, args: callArgs(sliceOf, m.index + m[0].length - 1) });
     }
     assert.ok(calls.length >= 7, `only ${calls.length} writer calls found`);
     for (const c of calls)
-      assert.match(c.args, /(?:^|[\s,{])filingId\b/, `${c.name}(${c.args.slice(0, 60)}…)`);
-    assert.match(absorbRead, /filingId\?: string,\n\): Promise<\{/, "absorbRead takes the id");
-    assert.match(roomPaste, /await absorbRead\(read, \{ id: acct\.id, name: acct\.name \}, now, door, filingId\)/);
+      assert.match(
+        c.args,
+        /(?:^|[\s,{])filingId\b/,
+        `${c.name}(${c.args.slice(0, 60)}…)`,
+      );
+    assert.match(
+      absorbRead,
+      /filingId\?: string,\n\): Promise<\{/,
+      "absorbRead takes the id",
+    );
+    assert.match(
+      roomPaste,
+      /await absorbRead\(read, \{ id: acct\.id, name: acct\.name \}, now, door, filingId\)/,
+    );
     // The writers of the fan-out's namespaces carry the id through.
     for (const f of ["src/lib/room/gaps.ts", "src/lib/playbook/store.ts"]) {
       const src = read(f);
@@ -471,7 +527,11 @@ describe("every row and todo the filing wrote carries its id (P3/P4)", () => {
     assert.equal(returns.length, 3, "the archive, the no-entries line, the entries");
     for (const r of returns)
       for (const key of ["filingId", "windows", "dupeCheck"])
-        assert.match(r, new RegExp(`\\b${key},`), `${key} missing from ${r.slice(0, 80)}`);
+        assert.match(
+          r,
+          new RegExp(`\\b${key},`),
+          `${key} missing from ${r.slice(0, 80)}`,
+        );
   });
 
   test("undoFiling takes back every row and todo carrying the id, then the row, scoped to the account", async () => {
@@ -483,18 +543,36 @@ describe("every row and todo the filing wrote carries its id (P3/P4)", () => {
     notes.set("n3", { filingId: "other" });
     todos.set("t1", { filingId: r.id });
     // Another account's id reaches nothing.
-    assert.deepEqual(await undoFiling(r.id, "A2", client), { notes: 0, todos: 0, filing: 0 });
+    assert.deepEqual(await undoFiling(r.id, "A2", client), {
+      notes: 0,
+      todos: 0,
+      filing: 0,
+    });
     assert.equal(notes.size, 3);
-    assert.deepEqual(await undoFiling(r.id, "A1", client), { notes: 2, todos: 1, filing: 1 });
+    assert.deepEqual(await undoFiling(r.id, "A1", client), {
+      notes: 2,
+      todos: 1,
+      filing: 1,
+    });
     assert.deepEqual([...notes.keys()], ["n3"]);
     assert.equal(todos.size, 0);
     assert.equal(filings.size, 0);
-    assert.deepEqual(await undoFiling("gone", "A1", client), { notes: 0, todos: 0, filing: 0 });
+    assert.deepEqual(await undoFiling("gone", "A1", client), {
+      notes: 0,
+      todos: 0,
+      filing: 0,
+    });
   });
 
   test("roomPasteUndo keeps its id lists and takes the filing's id as well", () => {
-    assert.match(pasteUndo, /todoIds: string\[\] = \[\],\n[\s\S]*?filingId\?: string,\n\)/);
-    assert.ok(pasteUndo.includes("await undoFiling(filing, acct.id)"), "scoped to the bound row");
+    assert.match(
+      pasteUndo,
+      /todoIds: string\[\] = \[\],\n[\s\S]*?filingId\?: string,\n\)/,
+    );
+    assert.ok(
+      pasteUndo.includes("await undoFiling(filing, acct.id)"),
+      "scoped to the bound row",
+    );
     assert.ok(pasteUndo.includes("ids.length === 0 && todos.length === 0 && !filing"));
     // The marker still clears off the first note id (ingest-defects pins the key).
     assert.ok(pasteUndo.includes("startsWith: `pastehash:${acct.id}:`"));
@@ -505,7 +583,11 @@ describe("every row and todo the filing wrote carries its id (P3/P4)", () => {
     assert.equal(await fileFiling({ ...FILING, read: null, how: "rules" }, client), null);
     assert.equal(await findFiling("A1", "abc123", client), null);
     assert.equal(await readOfNote("n1", client), null);
-    assert.deepEqual(await undoFiling("f1", "A1", client), { notes: 0, todos: 0, filing: 0 });
+    assert.deepEqual(await undoFiling("f1", "A1", client), {
+      notes: 0,
+      todos: 0,
+      filing: 0,
+    });
   });
 });
 
@@ -539,7 +621,9 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
       // The ids trimmed to 40 characters elsewhere in actions.ts are not the
       // entry cap; the cap is the slice over `entries`.
       assert.ok(
-        !/\b(?:400000|60000|30000|150000|400_000|60_000|30_000)\b|8 \* 1024 \* 1024|entries\.slice\(0, 40\)|length < 20\b/.test(src),
+        !/\b(?:400000|60000|30000|150000|400_000|60_000|30_000)\b|8 \* 1024 \* 1024|entries\.slice\(0, 40\)|length < 20\b/.test(
+          src,
+        ),
         `${f} spells a cap inline`,
       );
     }
@@ -555,14 +639,20 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
     // hands on the text whole, and only what goes to a model is windowed).
     // The transcriber and the document reader used to cut before filing;
     // neither cuts now, and roomPaste's read window is the one cut.
-    assert.ok(!actions.includes('cut("the transcription"'), "the transcriber cuts nothing");
+    assert.ok(
+      !actions.includes('cut("the transcription"'),
+      "the transcriber cuts nothing",
+    );
     assert.ok(actions.includes("return { ok: true, text, window: null };"));
     // Rewritten in pass 9's tail (D4): the transport's cut retired too; a
     // heavy text travels in pieces the server assembles, so the reader hands
     // on every text whole and cuts nothing at all.
     const reader = read("src/app/room/read-file.ts");
     assert.ok(!/\bcut\(|transportCut|Cut\(/.test(reader), "the file reader cuts nothing");
-    assert.ok(reader.includes("`DOCUMENT — ${f.name}\\n\\n${raw}`"), "the document whole");
+    assert.ok(
+      reader.includes("`DOCUMENT — ${f.name}\\n\\n${raw}`"),
+      "the document whole",
+    );
     assert.ok(reader.includes("if (r.window) windows.push(r.window);"));
     assert.ok(reader.includes("return { ok: true, text, windows };"));
     assert.ok(roomPaste.includes("const windows: Window[] = [...(opts.windows ?? [])];"));
@@ -572,23 +662,41 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
   // before filing; the reader now hands the sheet on whole, every sheet and
   // every row, and only roomPaste's read of it is windowed.
   test("the sheet is handed on whole: every sheet, every row, no trim", () => {
-    const rows = Array.from({ length: 500 }, (_, i) => [`Account ${i}`, "Mexico", `${i}`]);
+    const rows = Array.from({ length: 500 }, (_, i) => [
+      `Account ${i}`,
+      "Mexico",
+      `${i}`,
+    ]);
     const big = sheetToPaste([{ name: "Accounts", rows }], "book.xlsx");
-    const whole = ["SPREADSHEET — book.xlsx", "\n== sheet: Accounts ==", ...rows.map((r) => r.join("\t"))].join("\n");
+    const whole = [
+      "SPREADSHEET — book.xlsx",
+      "\n== sheet: Accounts ==",
+      ...rows.map((r) => r.join("\t")),
+    ].join("\n");
     assert.equal(big.text, whole, "all five hundred rows");
     assert.ok(!big.text.includes("trimmed"));
     const wide = sheetToPaste(
       [{ name: "Notes", rows: Array.from({ length: 300 }, () => ["x".repeat(200)]) }],
       "notes.xlsx",
     );
-    assert.equal(wide.text.length, "SPREADSHEET — notes.xlsx\n\n== sheet: Notes ==\n".length + 300 * 201 - 1);
+    assert.equal(
+      wide.text.length,
+      "SPREADSHEET — notes.xlsx\n\n== sheet: Notes ==\n".length + 300 * 201 - 1,
+    );
     const many = sheetToPaste(
       Array.from({ length: 6 }, (_, i) => ({ name: `S${i}`, rows: [[`row ${i}`]] })),
       "six.xlsx",
     );
-    for (let i = 0; i < 6; i++) assert.ok(many.text.includes(`== sheet: S${i} ==\nrow ${i}`), `sheet ${i}`);
-    const small = sheetToPaste([{ name: "Accounts", rows: [["Simploy", "Mexico"]] }], "a.xlsx");
-    assert.equal(small.text, "SPREADSHEET — a.xlsx\n\n== sheet: Accounts ==\nSimploy\tMexico");
+    for (let i = 0; i < 6; i++)
+      assert.ok(many.text.includes(`== sheet: S${i} ==\nrow ${i}`), `sheet ${i}`);
+    const small = sheetToPaste(
+      [{ name: "Accounts", rows: [["Simploy", "Mexico"]] }],
+      "a.xlsx",
+    );
+    assert.equal(
+      small.text,
+      "SPREADSHEET — a.xlsx\n\n== sheet: Accounts ==\nSimploy\tMexico",
+    );
     const reader = read("src/app/room/read-file.ts");
     assert.ok(reader.includes("text = sheetToPaste(sheets, f.name).text;"));
   });
@@ -635,8 +743,22 @@ describe("the grown read round-trips and the sanitizer clamps it to the lexicon"
   test("countries and products come back as the lexicon spells them; the unknown is dropped", () => {
     const r = sanitizeAiResult(
       withEntry({
-        countries: ["Mexico", "uk", "Narnia", "Canadian", "mexico", "Czech Republic", "Dubai"],
-        products: ["EOR", "Global payroll", "widgets", "contractor plus on the platform", "Talent"],
+        countries: [
+          "Mexico",
+          "uk",
+          "Narnia",
+          "Canadian",
+          "mexico",
+          "Czech Republic",
+          "Dubai",
+        ],
+        products: [
+          "EOR",
+          "Global payroll",
+          "widgets",
+          "contractor plus on the platform",
+          "Talent",
+        ],
       }),
     );
     const e = r.entries[0]!;
@@ -666,17 +788,22 @@ describe("the grown read round-trips and the sanitizer clamps it to the lexicon"
     const e = sanitizeAiResult(
       withEntry({
         headcounts: [
-        { what: "workers in Mexico", count: 10 },
-        { what: "", count: 3 },
-        { what: "contractors", count: -2.6 },
-        { what: "seats at $5,000", count: 2.5 },
-        { what: "nope", count: "ten" },
+          { what: "workers in Mexico", count: 10 },
+          { what: "", count: 3 },
+          { what: "contractors", count: -2.6 },
+          { what: "seats at $5,000", count: 2.5 },
+          { what: "nope", count: "ten" },
         ],
         timing: "by January, budget $12,000",
         promises: [
           { what: "Send the model.", by: "me", hearer: "Ellis, Dana", day: "2026-10-09" },
           { what: "x", by: "them", hearer: "", day: "2026-10-09" },
-          { what: "Send the org chart.", by: "them", hearer: "Antaeus Coe", day: "Friday" },
+          {
+            what: "Send the org chart.",
+            by: "them",
+            hearer: "Antaeus Coe",
+            day: "Friday",
+          },
           { what: "Quote the $400 PEPM.", by: "them", hearer: "", day: "" },
         ],
       }),
@@ -700,8 +827,12 @@ describe("the grown read round-trips and the sanitizer clamps it to the lexicon"
     // The entry with no facts at all, as the rule parser would hand it over.
     const { countries, products, headcounts, timing, promises, ...bare } = CALL_ENTRY;
     assert.ok(countries && products && headcounts && timing && promises);
-    for (const junk of [{}, { countries: "Mexico", promises: 7, headcounts: null, timing: 4 }]) {
-      const e = sanitizeAiResult({ ...RAW_READ, entries: [{ ...bare, ...junk }] }).entries[0]!;
+    for (const junk of [
+      {},
+      { countries: "Mexico", promises: 7, headcounts: null, timing: 4 },
+    ]) {
+      const e = sanitizeAiResult({ ...RAW_READ, entries: [{ ...bare, ...junk }] })
+        .entries[0]!;
       assert.deepEqual(e.countries, []);
       assert.deepEqual(e.products, []);
       assert.deepEqual(e.headcounts, []);
@@ -753,7 +884,9 @@ describe("the receipt sentences read from the result (D4, D7)", () => {
       filingSentences({ windows: [{ what: "the paste", read: 60000, of: 212000 }] }),
       ["Read 60,000 of 212,000 characters."],
     );
-    assert.deepEqual(filingSentences({ dupeCheck: "skipped" }), ["The duplicate check didn't run."]);
+    assert.deepEqual(filingSentences({ dupeCheck: "skipped" }), [
+      "The duplicate check didn't run.",
+    ]);
     assert.equal(DUPE_CHECK_SKIPPED, "The duplicate check didn't run.");
     assert.deepEqual(
       filingSentences({
@@ -789,20 +922,35 @@ describe("the receipt sentences read from the result (D4, D7)", () => {
     const client = read("src/app/room/room-client.tsx");
     const receipt = read("src/app/room/ingest/receipt.tsx");
     assert.ok(receipt.includes("filingSentences(r)"));
-    for (const [name, face] of [["the Chute", chute], ["the Drop", client]] as const) {
+    for (const [name, face] of [
+      ["the Chute", chute],
+      ["the Drop", client],
+    ] as const) {
       assert.match(face, /import \{ ReceiptLine \} from "\.\/ingest\/receipt";/, name);
       assert.ok(face.includes("<ReceiptLine"), `${name} paints the one receipt`);
-      for (const key of ["filingId: r.filingId", "windows: r.windows", "dupeCheck: r.dupeCheck"])
+      for (const key of [
+        "filingId: r.filingId",
+        "windows: r.windows",
+        "dupeCheck: r.dupeCheck",
+      ])
         assert.ok(face.includes(key), `${name}: ${key}`);
     }
     const ledger = read("src/app/room/chute-ledger.ts");
-    for (const key of ["filingId: x.filingId", "windows: x.windows", "dupeCheck: x.dupeCheck"])
+    for (const key of [
+      "filingId: x.filingId",
+      "windows: x.windows",
+      "dupeCheck: x.dupeCheck",
+    ])
       assert.ok(ledger.includes(key), key);
     // The windows a reader cut ride the row to the pick's re-run on the
     // Chute (the held box's one pick, which replaced the batch-mate button
     // and the select), and the held question on the Drop.
     assert.equal((chute.match(/\bit\.windows,\n/g) ?? []).length, 1);
-    assert.ok(client.includes("filePaste(mismatch.text, true, mismatch.files, mismatch.windows, to)"));
+    assert.ok(
+      client.includes(
+        "filePaste(mismatch.text, true, mismatch.files, mismatch.windows, to)",
+      ),
+    );
     assert.ok(client.includes("filePaste(read.text, false, waiting, read.windows)"));
   });
 });
@@ -812,16 +960,63 @@ describe("the receipt's read takes every namespace the filing wrote to, by its i
   type NoteRow = { body: string; createdAt: Date; accountId: string; filingId: string };
   const at = new Date("2026-10-06T15:00:00Z");
   const notes: NoteRow[] = [
-    { body: "✉ OL 10/6 9:00 AM — Re: renewal · Lesha Cyphers", createdAt: at, accountId: "A1", filingId: "f1" },
-    { body: "? Which countries are first?", createdAt: at, accountId: gapNs("A1"), filingId: "f1" },
-    { body: playbookBody("market", "Remote asks for a deposit up front.", { a: "A1", n: "Acme", w: "Lesha" }), createdAt: at, accountId: PLAYBOOK_MARKET, filingId: "f1" },
-    { body: playbookBody("lesson", "Security review slowed the close.", { a: "A1", n: "Acme", w: "" }), createdAt: at, accountId: PLAYBOOK_LESSONS, filingId: "f1" },
+    {
+      body: "✉ OL 10/6 9:00 AM — Re: renewal · Lesha Cyphers",
+      createdAt: at,
+      accountId: "A1",
+      filingId: "f1",
+    },
+    {
+      body: "? Which countries are first?",
+      createdAt: at,
+      accountId: gapNs("A1"),
+      filingId: "f1",
+    },
+    {
+      body: playbookBody("market", "Remote asks for a deposit up front.", {
+        a: "A1",
+        n: "Acme",
+        w: "Lesha",
+      }),
+      createdAt: at,
+      accountId: PLAYBOOK_MARKET,
+      filingId: "f1",
+    },
+    {
+      body: playbookBody("lesson", "Security review slowed the close.", {
+        a: "A1",
+        n: "Acme",
+        w: "",
+      }),
+      createdAt: at,
+      accountId: PLAYBOOK_LESSONS,
+      filingId: "f1",
+    },
     // A playbook line under the same filing id that names another account:
     // the playbook is one namespace, so only the tail admits a line.
-    { body: playbookBody("lesson", "Someone else's lesson entirely.", { a: "B2", n: "Other", w: "" }), createdAt: at, accountId: PLAYBOOK_LESSONS, filingId: "f1" },
+    {
+      body: playbookBody("lesson", "Someone else's lesson entirely.", {
+        a: "B2",
+        n: "Other",
+        w: "",
+      }),
+      createdAt: at,
+      accountId: PLAYBOOK_LESSONS,
+      filingId: "f1",
+    },
     // Another account's rows and another filing's rows never come back.
-    { body: "✉ OL 10/6 — Not ours · Someone", createdAt: at, accountId: "B2", filingId: "f1" },
-    { body: "? Another filing's ask?", createdAt: at, accountId: gapNs("A1"), filingId: "f9" },
+    {
+      body: "✉ OL 10/6 — Not ours · Someone",
+      createdAt: at,
+      accountId: "B2",
+      filingId: "f1",
+    },
+    {
+      body: "? Another filing's ask?",
+      createdAt: at,
+      accountId: gapNs("A1"),
+      filingId: "f9",
+    },
   ];
   const asked: { notes?: unknown; todos?: unknown } = {};
   const client: WroteClient = {
@@ -829,7 +1024,11 @@ describe("the receipt's read takes every namespace the filing wrote to, by its i
       findMany: async (args) => {
         asked.notes = args.where;
         return notes
-          .filter((n) => n.filingId === args.where.filingId && args.where.accountId.in.includes(n.accountId))
+          .filter(
+            (n) =>
+              n.filingId === args.where.filingId &&
+              args.where.accountId.in.includes(n.accountId),
+          )
           .map(({ body, createdAt, accountId }) => ({ body, createdAt, accountId }));
       },
     },
@@ -837,7 +1036,10 @@ describe("the receipt's read takes every namespace the filing wrote to, by its i
       findMany: async (args) => {
         asked.todos = args.where;
         return args.where.filingId === "f1" && args.where.accountId === "A1"
-          ? [{ body: "Send the census.\n⚑[k:a]" }, { body: "Send the plan.\n⚑[o:them,b:Lesha Cyphers]" }]
+          ? [
+              { body: "Send the census.\n⚑[k:a]" },
+              { body: "Send the plan.\n⚑[o:them,b:Lesha Cyphers]" },
+            ]
           : [];
       },
     },
@@ -850,7 +1052,10 @@ describe("the receipt's read takes every namespace the filing wrote to, by its i
       todos: ["Send the census."],
       promises: ["Lesha Cyphers · Send the plan."],
       asks: ["Which countries are first?"],
-      learned: ["Remote asks for a deposit up front.", "Security review slowed the close."],
+      learned: [
+        "Remote asks for a deposit up front.",
+        "Security review slowed the close.",
+      ],
     });
     assert.deepEqual(asked.notes, {
       filingId: "f1",
@@ -862,7 +1067,10 @@ describe("the receipt's read takes every namespace the filing wrote to, by its i
   test("the server door reads through it, so the asks and the playbook lines open", () => {
     const door = read("src/app/room/filing-actions.ts");
     assert.ok(door.includes("return await wroteOfFiling(acct.id, id);"));
-    assert.ok(!door.includes("prisma.accountNote.findMany"), "no narrow read of the account's own id");
+    assert.ok(
+      !door.includes("prisma.accountNote.findMany"),
+      "no narrow read of the account's own id",
+    );
   });
 });
 
@@ -879,7 +1087,8 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
       accountDisposition: {
         create: async ({ data }) => {
           await tick();
-          if (rows.has(data.accountId)) throw Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+          if (rows.has(data.accountId))
+            throw Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
           rows.set(data.accountId, { status: data.status, reason: data.reason });
           return data;
         },
@@ -890,14 +1099,16 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
         updateMany: async ({ where, data }) => {
           await tick();
           const r = rows.get(where.accountId);
-          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          if (!r || r.status !== where.status || r.reason !== where.reason)
+            return { count: 0 };
           r.reason = data.reason;
           return { count: 1 };
         },
         deleteMany: async ({ where }) => {
           await tick();
           const r = rows.get(where.accountId);
-          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          if (!r || r.status !== where.status || r.reason !== where.reason)
+            return { count: 0 };
           rows.delete(where.accountId);
           return { count: 1 };
         },
@@ -910,7 +1121,10 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
 
   test("of two at once, one holds the capture and the other is refused as in flight", async () => {
     const { rows, client } = table();
-    const [a, b] = await Promise.all([claimCapture(KEY, NOW, client), claimCapture(KEY, NOW, client)]);
+    const [a, b] = await Promise.all([
+      claimCapture(KEY, NOW, client),
+      claimCapture(KEY, NOW, client),
+    ]);
     const kinds = [a.kind, b.kind].sort();
     assert.deepEqual(kinds, ["claimed", "inflight"]);
     assert.equal(rows.get(KEY)?.status, CLAIM_STATUS);
@@ -923,7 +1137,11 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
     // roomPaste's stampPasteMark turns the claim into the filed marker.
     rows.set(KEY, { status: "filed", reason: "2026-10-03T14:00:00.000Z·n1" });
     if (first.kind === "claimed") await releaseCapture(KEY, first.token, client);
-    assert.equal(rows.get(KEY)?.status, "filed", "the release leaves a filed marker alone");
+    assert.equal(
+      rows.get(KEY)?.status,
+      "filed",
+      "the release leaves a filed marker alone",
+    );
     const again = await claimCapture(KEY, NOW, client);
     assert.deepEqual(again, { kind: "filed", reason: "2026-10-03T14:00:00.000Z·n1" });
   });
@@ -937,15 +1155,26 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
     assert.ok(rows.has(KEY), "another token releases nothing");
     await releaseCapture(KEY, first.token, client);
     assert.ok(!rows.has(KEY));
-    assert.equal((await claimCapture(KEY, NOW, client)).kind, "claimed", "the re-drop files");
+    assert.equal(
+      (await claimCapture(KEY, NOW, client)).kind,
+      "claimed",
+      "the re-drop files",
+    );
   });
 
   test("a claim left by a filing that died is taken over once it is stale", async () => {
     const { rows, client } = table();
     const dead = new Date(NOW.getTime() - CLAIM_STALE_MS - 1000);
     rows.set(KEY, { status: CLAIM_STATUS, reason: `${dead.toISOString()}·claim:dead` });
-    const [a, b] = await Promise.all([claimCapture(KEY, NOW, client), claimCapture(KEY, NOW, client)]);
-    assert.deepEqual([a.kind, b.kind].sort(), ["claimed", "inflight"], "one takes it over, never both");
+    const [a, b] = await Promise.all([
+      claimCapture(KEY, NOW, client),
+      claimCapture(KEY, NOW, client),
+    ]);
+    assert.deepEqual(
+      [a.kind, b.kind].sort(),
+      ["claimed", "inflight"],
+      "one takes it over, never both",
+    );
     const fresh = new Date(NOW.getTime() - 60_000);
     rows.set(KEY, { status: CLAIM_STATUS, reason: `${fresh.toISOString()}·claim:live` });
     assert.equal((await claimCapture(KEY, NOW, client)).kind, "inflight");
@@ -966,11 +1195,26 @@ describe("two filings of one capture in flight cannot both pass the duplicate ch
   });
 
   test("roomPaste claims before any read, refuses a twin, and always lets an unfiled claim go", () => {
-    assert.match(roomPaste, /const claim = await claimCapture\(pasteKey, new Date\(\)\);/);
-    assert.match(roomPaste, /if \(claim\.kind === "inflight"\)\s*return \{ ok: false, filed: 0, how: "", duplicate: true, reason: ALREADY_FILING \};/);
-    assert.match(roomPaste, /\} finally \{[\s\S]*?if \(claim\.kind === "claimed"\) await releaseCapture\(pasteKey, claim\.token\);/);
-    assert.ok(roomPaste.indexOf("claimCapture(") < roomPaste.indexOf("aiCleanTimeline("), "the claim precedes the read");
-    assert.match(roomPaste, /const dupeCheck: DupeCheck = claim\.kind === "skipped" \? "skipped" : "ran";/);
+    assert.match(
+      roomPaste,
+      /const claim = await claimCapture\(pasteKey, new Date\(\)\);/,
+    );
+    assert.match(
+      roomPaste,
+      /if \(claim\.kind === "inflight"\)\s*return \{ ok: false, filed: 0, how: "", duplicate: true, reason: ALREADY_FILING \};/,
+    );
+    assert.match(
+      roomPaste,
+      /\} finally \{[\s\S]*?if \(claim\.kind === "claimed"\) await releaseCapture\(pasteKey, claim\.token\);/,
+    );
+    assert.ok(
+      roomPaste.indexOf("claimCapture(") < roomPaste.indexOf("aiCleanTimeline("),
+      "the claim precedes the read",
+    );
+    assert.match(
+      roomPaste,
+      /const dupeCheck: DupeCheck = claim\.kind === "skipped" \? "skipped" : "ran";/,
+    );
   });
 });
 
@@ -987,7 +1231,14 @@ describe("a text too heavy for one request travels in pieces and files whole", (
 
   /** An in-memory VaultChunk table, the client the server half is handed. */
   function chunkStore() {
-    type Row = { accountId: string; filename: string; index: number; total: number; bytes: Uint8Array; createdAt: Date };
+    type Row = {
+      accountId: string;
+      filename: string;
+      index: number;
+      total: number;
+      bytes: Uint8Array;
+      createdAt: Date;
+    };
     const rows: Row[] = [];
     const matches = (r: Row, w: Record<string, unknown>) =>
       (w.accountId === undefined || r.accountId === w.accountId) &&
@@ -999,7 +1250,8 @@ describe("a text too heavy for one request travels in pieces and files whole", (
       vaultChunk: {
         deleteMany: async ({ where }) => {
           const before = rows.length;
-          for (let i = rows.length - 1; i >= 0; i--) if (matches(rows[i], where)) rows.splice(i, 1);
+          for (let i = rows.length - 1; i >= 0; i--)
+            if (matches(rows[i], where)) rows.splice(i, 1);
           return { count: before - rows.length };
         },
         create: async ({ data }) => {
@@ -1028,23 +1280,39 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     assert.ok(kb > 0, "the server action body limit is set");
     assert.ok(TRANSPORT_BYTES < kb * 1024, "a whole text stays under the server's cap");
     assert.ok(kb * 1024 < 4.5 * 1024 * 1024, "and the cap under the platform's 4.5 MB");
-    assert.equal(VAULT_PIECE_BYTES, TRANSPORT_BYTES, "a piece weighs what a whole text may");
+    assert.equal(
+      VAULT_PIECE_BYTES,
+      TRANSPORT_BYTES,
+      "a piece weighs what a whole text may",
+    );
     // Nothing cuts on the way: no reader and no door keeps the transport's
     // old window.
-    for (const f of ["src/app/room/read-file.ts", "src/app/room/ingest/use-ingest.ts", "src/lib/ingest/windows.ts"])
+    for (const f of [
+      "src/app/room/read-file.ts",
+      "src/app/room/ingest/use-ingest.ts",
+      "src/lib/ingest/windows.ts",
+    ])
       assert.ok(!read(f).includes("transportCut"), `${f} still cuts for the transport`);
   });
 
   test("fitsTransport costs every character as it travels", () => {
     assert.equal(fitsTransport("short", 100), true);
-    assert.equal(fitsTransport("x".repeat(98), 100), true, "98 characters and two quotes fit 100 bytes");
+    assert.equal(
+      fitsTransport("x".repeat(98), 100),
+      true,
+      "98 characters and two quotes fit 100 bytes",
+    );
     assert.equal(fitsTransport("x".repeat(99), 100), false);
     // Escapes, UTF-8's widths, a pair, a control character's \u escape: the
     // answer is the encoded argument's own weight, at every length.
     for (const unit of ["—", "\n", '"', "é", "😀", "\u0001", "a\\b"])
       for (let n = 1; n <= 60; n++) {
         const text = unit.repeat(n);
-        assert.equal(fitsTransport(text, 101), encoded(text) <= 101, `${JSON.stringify(unit)} × ${n}`);
+        assert.equal(
+          fitsTransport(text, 101),
+          encoded(text) <= 101,
+          `${JSON.stringify(unit)} × ${n}`,
+        );
       }
   });
 
@@ -1056,7 +1324,10 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     const pieces = textPieces(text);
     assert.equal(pieces.length, 2);
     assert.ok(pieces.every((p) => p.length <= VAULT_PIECE_BYTES));
-    assert.throws(() => new TextDecoder("utf-8", { fatal: true }).decode(pieces[0]), "the cut falls inside a character");
+    assert.throws(
+      () => new TextDecoder("utf-8", { fatal: true }).decode(pieces[0]),
+      "the cut falls inside a character",
+    );
     const store = chunkStore();
     let got = "";
     const r = await carryText(
@@ -1064,10 +1335,15 @@ describe("a text too heavy for one request travels in pieces and files whole", (
       {
         whole: async () => assert.fail("too heavy to travel whole"),
         piece: async (key, i, n, form) =>
-          takeTextPiece(store.client, { key, index: i, total: n, bytes: await textPieceBytes(form) }, async (t) => {
-            got = t;
-            return "used";
-          }, "broken"),
+          takeTextPiece(
+            store.client,
+            { key, index: i, total: n, bytes: await textPieceBytes(form) },
+            async (t) => {
+              got = t;
+              return "used";
+            },
+            "broken",
+          ),
       },
       () => "broken",
     );
@@ -1076,7 +1352,11 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     assert.equal(store.rows.length, 0, "the pieces are gone once the text is whole");
     // A text that fits one request goes whole, through no store at all.
     assert.equal(
-      await carryText("The board meets Thursday.", { whole: async (t) => t, piece: async () => assert.fail("no pieces") }, () => ""),
+      await carryText(
+        "The board meets Thursday.",
+        { whole: async (t) => t, piece: async () => assert.fail("no pieces") },
+        () => "",
+      ),
       "The board meets Thursday.",
     );
   });
@@ -1096,13 +1376,18 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     const noPdf = async () => ({ ok: false, reason: "no reader in the suite" });
 
     // The reader hands it on whole, with no window of its own…
-    const r = await readFileToText(new File([heavy], "census.txt", { type: "text/plain" }), noPdf);
+    const r = await readFileToText(
+      new File([heavy], "census.txt", { type: "text/plain" }),
+      noPdf,
+    );
     assert.ok(r.ok);
     if (!r.ok) return;
     assert.equal(r.text, heavy);
     assert.deepEqual(r.windows, []);
     // …the filing request carries it untouched…
-    const request: Paste = filingRequest("chute", SIMPLOY_ID, r.text, { windows: r.windows });
+    const request: Paste = filingRequest("chute", SIMPLOY_ID, r.text, {
+      windows: r.windows,
+    });
     assert.equal(request[1], heavy);
     assert.deepEqual(request[2], { force: false, door: "chute", windows: [] });
 
@@ -1124,13 +1409,24 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     // What roomPaste does with a capture whose read finds no entries: its
     // own model read window, then the whole text as one note through the
     // one writer (the lines the pins above read from roomPaste).
-    const roomPasteFiles = async (accountId: string, rawText: string, opts: Paste[2]): Promise<Filed> => {
+    const roomPasteFiles = async (
+      accountId: string,
+      rawText: string,
+      opts: Paste[2],
+    ): Promise<Filed> => {
       const readCut = cut("the paste", rawText, READ_WINDOW);
       const windows = [...(opts.windows ?? [])];
       if (readCut.window) windows.push(readCut.window);
       const body = redactMoney(cleanSfPaste(rawText));
       const n = await createAccountNoteRow(
-        { accountId, kind: "account", body: `☰ transcript — filed from the room\n${body}`, door: opts.door, lane: "mine", source: "transcript" },
+        {
+          accountId,
+          kind: "account",
+          body: `☰ transcript — filed from the room\n${body}`,
+          door: opts.door,
+          lane: "mine",
+          source: "transcript",
+        },
         noteClient,
       );
       return { ok: true, filed: 1, how: "transcript", noteIds: [n.id], windows };
@@ -1150,12 +1446,18 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     assert.equal(pieces, 2);
     assert.equal(filed.ok, true);
     assert.equal(notes.length, 1);
-    assert.equal(notes[0].body, `☰ transcript — filed from the room\n${heavy}`, "the note body is the input, whole");
+    assert.equal(
+      notes[0].body,
+      `☰ transcript — filed from the room\n${heavy}`,
+      "the note body is the input, whole",
+    );
     assert.equal(notes[0].accountId, SIMPLOY_ID);
     assert.equal(notes[0].door, "chute");
     // The receipt: one window, the model's read, measured against the whole
     // text, and no transport line beside it.
-    assert.deepEqual(filed.windows, [{ what: "the paste", read: READ_WINDOW, of: heavy.length }]);
+    assert.deepEqual(filed.windows, [
+      { what: "the paste", read: READ_WINDOW, of: heavy.length },
+    ]);
     assert.deepEqual(filingSentences({ windows: filed.windows }), [
       `Read 60,000 of ${heavy.length.toLocaleString("en-US")} characters.`,
     ]);
@@ -1179,19 +1481,49 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     // The server half refuses a key it never made and a missing piece.
     const store = chunkStore();
     const use = async () => "used";
-    assert.equal(await takeTextPiece(store.client, { key: "../x", index: 0, total: 2, bytes: new Uint8Array([1]) }, use, "broken"), "broken");
-    assert.equal(await takeTextPiece(store.client, { key: "abcdefgh-1", index: 0, total: 2, bytes: null }, use, "broken"), "broken");
+    assert.equal(
+      await takeTextPiece(
+        store.client,
+        { key: "../x", index: 0, total: 2, bytes: new Uint8Array([1]) },
+        use,
+        "broken",
+      ),
+      "broken",
+    );
+    assert.equal(
+      await takeTextPiece(
+        store.client,
+        { key: "abcdefgh-1", index: 0, total: 2, bytes: null },
+        use,
+        "broken",
+      ),
+      "broken",
+    );
     // A text's pieces stage under their own namespace, apart from any file's.
-    await takeTextPiece(store.client, { key: "abcdefgh-1", index: 0, total: 2, bytes: new Uint8Array([104]) }, use, "broken");
-    assert.deepEqual(store.rows.map((x) => [x.accountId, x.filename]), [[TEXT_SET, "abcdefgh-1"]]);
+    await takeTextPiece(
+      store.client,
+      { key: "abcdefgh-1", index: 0, total: 2, bytes: new Uint8Array([104]) },
+      use,
+      "broken",
+    );
+    assert.deepEqual(
+      store.rows.map((x) => [x.accountId, x.filename]),
+      [[TEXT_SET, "abcdefgh-1"]],
+    );
     assert.notEqual(TEXT_SET, UNFILED);
   });
 
   test("every door carries the text: the filing, the route and the grab's split, each assembled on the server", () => {
     const door = read("src/app/room/ingest/use-ingest.ts");
-    assert.match(door, /const r = await carryFiling\(filingRequest\(door, accountId, text, opts\)\);/);
+    assert.match(
+      door,
+      /const r = await carryFiling\(filingRequest\(door, accountId, text, opts\)\);/,
+    );
     assert.match(door, /carryText\(text, \{ whole: routeText, piece: routeTextPiece \}/);
-    assert.match(door, /whole: \(t\) => roomGrab\(t, sent\),\s*piece: \(key, i, n, form\) => roomGrabPiece\(key, i, n, form, sent\),/);
+    assert.match(
+      door,
+      /whole: \(t\) => roomGrab\(t, sent\),\s*piece: \(key, i, n, form\) => roomGrabPiece\(key, i, n, form, sent\),/,
+    );
     const carry = read("src/app/room/carry-actions.ts");
     assert.match(carry, /^"use server";/);
     // Each door takes the session gate before anything stages, and the
@@ -1199,12 +1531,70 @@ describe("a text too heavy for one request travels in pieces and files whole", (
     for (const fn of ["roomPastePiece", "roomGrabPiece", "routeTextPiece"]) {
       const body = carry.slice(carry.indexOf(`export async function ${fn}(`));
       const gate = body.indexOf("if (!(await canStage()))");
-      assert.ok(gate > 0 && gate < body.indexOf("takeTextPiece("), `${fn} gates before it stages`);
+      assert.ok(
+        gate > 0 && gate < body.indexOf("takeTextPiece("),
+        `${fn} gates before it stages`,
+      );
     }
     assert.match(carry, /const acct = bindAccountId\(accountId, peos\);\s*if \(!acct\)/);
     assert.match(carry, /\(text\) => roomPaste\(acct\.id, text, opts\),/);
     assert.match(carry, /\(text\) => roomGrab\(text, opts\),/);
     assert.match(carry, /\(text\) => routeText\(text\),/);
-    assert.match(carry, /canStage\(\): Promise<boolean> \{\s*if \(!hasDatabaseEnv\(\)\) return false;\s*const access = await getAppAccess\(\);\s*return access\.status === "active" && access\.canWrite;/);
+    assert.match(
+      carry,
+      /canStage\(\): Promise<boolean> \{\s*if \(!hasDatabaseEnv\(\)\) return false;\s*const access = await getAppAccess\(\);\s*return access\.status === "active" && access\.canWrite;/,
+    );
+  });
+});
+
+// ── D4 · every reader hands on the text whole; only the model read is
+// windowed (pass 17) ────────────────────────────────────────────────────────
+describe("every reader hands on the text whole; only the model read is windowed (D4)", () => {
+  test("the text reader returns every character of a file far past the model window", async () => {
+    const text = Array.from({ length: 120_000 }, (_, i) => `w${i}`).join(" ");
+    assert.ok(text.length > 6 * READ_WINDOW);
+    const r = await readFileToText(
+      new File([text], "big.txt", { type: "text/plain" }),
+      async () => ({ ok: false, reason: "no pdf here" }),
+    );
+    assert.equal(r.ok, true, JSON.stringify(r).slice(0, 200));
+    if (r.ok) {
+      assert.ok(r.text.length >= text.length, `${r.text.length} of ${text.length}`);
+      assert.ok(r.text.includes("w119999"), "the tail is gone");
+    }
+  });
+
+  test("no reader cuts: the file reader and the paste library carry no numeric cap on the text they hand on, and the windows live in one module", () => {
+    for (const f of ["src/app/room/read-file.ts", "src/lib/paste-files.ts"]) {
+      const t = readFileSync(join(cwd(), f), "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
+      // A cap on text runs to thousands of characters; a head read of a few
+      // hundred (the transcript's Recorded: line) hands nothing on.
+      assert.doesNotMatch(t, /\.slice\(\s*0\s*,\s*\d{4,}/, `${f} caps the text`);
+      assert.doesNotMatch(t, /\b(60_?000|400_?000|30_?000)\b/, `${f} carries a window`);
+      assert.doesNotMatch(t, /READ_WINDOW/, `${f} reads the window`);
+    }
+    assert.equal(READ_WINDOW, 60000);
+    assert.equal(READ_WINDOW_TAPE, 400000);
+  });
+});
+
+// ── D10 · the read's signals file on the note (pass 17) ─────────────────────
+describe("the read's signals file on the note (D10)", () => {
+  test("readOfNote hands back the read's signals through the note's filing link, money-redacted", async () => {
+    const { client, notes } = stub();
+    const sane = sanitizeAiResult({
+      ...RAW_READ,
+      signals: ["Mexico first, Canada after", "Budget is $12,000 a head"],
+    });
+    const r = await fileFiling({ ...FILING, read: sane }, client);
+    assert.ok(r);
+    notes.set("n1", { filingId: r.id });
+    const read = await readOfNote("n1", client);
+    assert.ok(read);
+    assert.deepEqual(read.signals, sane.signals);
+    assert.ok(read.signals.includes("Mexico first, Canada after"));
+    assert.ok(!read.signals.some((s) => /12,000|\$/.test(s)), read.signals.join(" | "));
   });
 });

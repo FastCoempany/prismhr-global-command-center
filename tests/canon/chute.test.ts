@@ -304,7 +304,14 @@ describe("the Chute reads at most three files at once; the rest wait in drop ord
     const first = ["a", "b", "c", "d"].map((n) => run(task(n)));
     await tick(); // the second drop lands while the first is reading
     const second = ["e", "f"].map((n) => run(task(n)));
-    assert.deepEqual(await Promise.all([...first, ...second]), ["a", "b", "c", "d", "e", "f"]);
+    assert.deepEqual(await Promise.all([...first, ...second]), [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+    ]);
     assert.equal(peak, 3, "never more than three across both drops");
     assert.deepEqual(started, ["a", "b", "c", "d", "e", "f"]);
   });
@@ -333,23 +340,47 @@ describe("the Chute reads at most three files at once; the rest wait in drop ord
 
   test("the Chute seats a drop waiting and marks a file reading only when its turn comes", () => {
     const hook = readSrc("src/app/room/ingest/use-receipts.ts");
-    const seat = hook.slice(hook.indexOf("const seat = ("), hook.indexOf("const start = ("));
+    const seat = hook.slice(
+      hook.indexOf("const seat = ("),
+      hook.indexOf("const start = ("),
+    );
     assert.match(seat, /state: "queued" as const,/);
     assert.ok(!seat.includes('"reading"'), "nothing is reading at the seat");
-    assert.match(hook, /x\.key === key && x\.state === "queued" \? \{ \.\.\.x, state: "reading" \} : x/);
+    assert.match(
+      hook,
+      /x\.key === key && x\.state === "queued" \? \{ \.\.\.x, state: "reading" \} : x/,
+    );
     const chute = readSrc("src/app/room/chute.tsx");
-    assert.match(chute, /seated\.map\(\(\{ f, key \}\) => \(\) => \{\s*receipts\.start\(key\);\s*return swallow\(f, key, vaultOnly\.has\(f\)\);/);
-    assert.match(chute, /ahead=\{isQueued\(it\) \? waitAhead\(items, it\.key\) : undefined\}/);
+    assert.match(
+      chute,
+      /seated\.map\(\(\{ f, key \}\) => \(\) => \{\s*receipts\.start\(key\);\s*return swallow\(f, key, vaultOnly\.has\(f\)\);/,
+    );
+    assert.match(
+      chute,
+      /ahead=\{isQueued\(it\) \? waitAhead\(items, it\.key\) : undefined\}/,
+    );
     // One line per door: the hook keeps one queue for every drop it takes.
     const door = readSrc("src/app/room/ingest/use-ingest.ts");
-    assert.match(door, /const \[queue\] = useState\(\(\) => readQueue\(CHUTE_PARALLEL\)\);/);
+    assert.match(
+      door,
+      /const \[queue\] = useState\(\(\) => readQueue\(CHUTE_PARALLEL\)\);/,
+    );
     assert.match(door, /return Promise\.all\(tasks\.map\(\(task\) => queue\(task\)\)\);/);
     // The row's Drop rides the same line and says so too: a file it has not
     // reached waits under its own line, never under "Reading".
     const client = readSrc("src/app/room/room-client.tsx");
-    assert.match(client, /setQueued\(\(xs\) => \[\.\.\.xs, \.\.\.plan\.read\.map\(\(f\) => f\.name\)\]\);\s*void ingest\.limited\(/);
-    assert.match(client, /const readDroppedFile = async \(f: File, waiting\?: File\[\]\) => \{\s*queuedDrop\(f\.name\);\s*readingAdd\(f\.name\);/);
-    assert.match(client, /<p className=\{styles\.sniff\}>Waiting: \{queued\.join\(", "\)\}\.<\/p>/);
+    assert.match(
+      client,
+      /setQueued\(\(xs\) => \[\.\.\.xs, \.\.\.plan\.read\.map\(\(f\) => f\.name\)\]\);\s*void ingest\.limited\(/,
+    );
+    assert.match(
+      client,
+      /const readDroppedFile = async \(f: File, waiting\?: File\[\]\) => \{\s*queuedDrop\(f\.name\);\s*readingAdd\(f\.name\);/,
+    );
+    assert.match(
+      client,
+      /<p className=\{styles\.sniff\}>Waiting: \{queued\.join\(", "\)\}\.<\/p>/,
+    );
   });
 });
 
@@ -417,7 +448,10 @@ describe("the same capture is the same normalized body, head line skipped", () =
     assert.notEqual(
       pasteFingerprint(emlToPaste(eml, "thread.eml")),
       pasteFingerprint(
-        msgToPaste({ ...msg, messageDeliveryTime: "Wed, 03 Sep 2026 14:44:00 GMT" }, "b.msg"),
+        msgToPaste(
+          { ...msg, messageDeliveryTime: "Wed, 03 Sep 2026 14:44:00 GMT" },
+          "b.msg",
+        ),
       ),
     );
     // Two recipients: the .eml header joins them with a comma, msgreader's list
@@ -428,7 +462,10 @@ describe("the same capture is the same normalized body, head line skipped", () =
     );
     const msg2 = {
       ...msg,
-      recipients: [...msg.recipients, { name: "Greg Williams", email: "greg@prismhr.com" }],
+      recipients: [
+        ...msg.recipients,
+        { name: "Greg Williams", email: "greg@prismhr.com" },
+      ],
     };
     assert.equal(
       pasteFingerprint(emlToPaste(eml2, "thread.eml")),
@@ -642,7 +679,14 @@ describe("there is no revalidation list: every page derives on request (D15)", (
       assert.ok(pages.includes(page), `${page} is gone; take it off the list`);
     // The HomeRoom, Groundwork, Accounts, the Sendbook, the Playbook and the
     // Intranet are each on the walk, never exempt.
-    for (const tab of ["room", "groundwork", "accounts", "sendbook", "playbook", "intranet"])
+    for (const tab of [
+      "room",
+      "groundwork",
+      "accounts",
+      "sendbook",
+      "playbook",
+      "intranet",
+    ])
       assert.ok(pages.includes(`src/app/${tab}/page.tsx`), tab);
   });
 
@@ -658,5 +702,63 @@ describe("there is no revalidation list: every page derives on request (D15)", (
       assert.match(src, /import \{ useRouter \} from "next\/navigation"/, f);
       assert.ok(src.includes("router.refresh()"), `${f} never asks for the fresh read`);
     }
+  });
+});
+
+// ── D2 · the two doors take the export into the one activity pipeline ────────
+// "The weekly export enters by the Chute or the Intranet dock, both into the
+// one activity pipeline" (CLAUDE.md, The Chute). The Drop's refusal and the
+// pickers are pinned above and in tests/vault.test.ts; this pins the two
+// doors: each probes the file and uploads it through the activity library,
+// posting its slices to the one staging action, and no third door exists.
+describe("the two doors take the export into the one activity pipeline (D2)", () => {
+  test("the Chute and the dock both probe and upload through the activity library, posting to activityStage, and nothing else does", async () => {
+    const { readFileSync, readdirSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const read = (f: string) => readFileSync(join(process.cwd(), f), "utf8");
+    for (const f of ["src/app/room/chute.tsx", "src/app/activity/dock.tsx"]) {
+      const t = read(f);
+      assert.match(
+        t,
+        /from "@\/lib\/activity\/upload"/,
+        `${f} reads the activity library`,
+      );
+      assert.match(t, /probeActivityReport\(/, `${f} probes the file`);
+      assert.match(
+        t,
+        /uploadActivityReport\(\{[\s\S]*?post: activityStage/,
+        `${f} uploads to the one staging action`,
+      );
+    }
+    const walk = (dir: string): string[] =>
+      readdirSync(dir).flatMap((n) => {
+        const p = join(dir, n);
+        return statSync(p).isDirectory() ? walk(p) : /\.tsx?$/.test(n) ? [p] : [];
+      });
+    const callers = walk(join(process.cwd(), "src"))
+      .filter((f) => /uploadActivityReport\(/.test(readFileSync(f, "utf8")))
+      .map((f) => f.slice(process.cwd().length + 1))
+      .filter((f) => f !== "src/lib/activity/upload.ts")
+      .sort();
+    assert.deepEqual(callers, ["src/app/activity/dock.tsx", "src/app/room/chute.tsx"]);
+  });
+
+  test("the probe answers the export's own header and nothing else", async () => {
+    const { probeActivityReport } = await import("../../src/lib/activity/upload");
+    const { headerLine } = await import("../activity-fixtures");
+    assert.equal(
+      await probeActivityReport(
+        new File([`${headerLine()}\n`], "report.csv", { type: "text/csv" }),
+      ),
+      true,
+    );
+    assert.equal(
+      await probeActivityReport(
+        new File(["name,email\nDana,dana@example.com\n"], "list.csv", {
+          type: "text/csv",
+        }),
+      ),
+      false,
+    );
   });
 });

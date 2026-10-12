@@ -957,3 +957,43 @@ describe("every mockup carries its disposition, and a shipped one names its orde
     }
   });
 });
+
+// ── D15 · no action revalidates another surface (whole scope, pass 17) ──────
+// "An action may refresh the page it was called from, and no action
+// revalidates another surface" (CLAUDE.md, The Chute; ruled 2026-10-07, pass
+// 8 call 2). tests/canon/chute.test.ts pins the room, which refreshes through
+// the router; this reads every file under src: each revalidatePath names the
+// route of the directory its action lives in, the one non-literal is the
+// board's return page from its own allowlist, and nothing revalidates a tag.
+describe("every revalidatePath names the action's own route, and nothing revalidates a tag (D15, whole scope)", () => {
+  const files = walk(join(root, "src"))
+    .map((f) => relative(root, f).split("\\").join("/"))
+    .filter((f) => /revalidate(Path|Tag)\s*\(/.test(readFileSync(join(root, f), "utf8")));
+
+  test("the files that revalidate are actions under src/app, each naming its own route", () => {
+    assert.ok(files.length >= 5, `only ${files.length} files revalidate`);
+    for (const f of files) {
+      const text = readFileSync(join(root, f), "utf8");
+      assert.doesNotMatch(text, /revalidateTag\s*\(/, `${f} revalidates a tag`);
+      const m = /^src\/app\/([\w-]+)\/[\w-]*actions[\w-]*\.ts$/.exec(f);
+      assert.ok(m, `${f} revalidates but is not a page's own actions module`);
+      const own = `/${m![1]}`;
+      for (const call of text.matchAll(/revalidatePath\(\s*([^)]*)\)/g)) {
+        const arg = call[1].trim();
+        if (/^["']/.test(arg))
+          assert.equal(arg.slice(1, -1), own, `${f} revalidates ${arg}`);
+        else {
+          // The board's actions return to the page that posted the form, and
+          // only to one of two: the return page is the caller's own.
+          assert.equal(
+            f,
+            "src/app/accounts/board-actions.ts",
+            `${f} revalidates a computed path`,
+          );
+          assert.equal(arg, "to");
+          assert.match(text, /raw === "\/accounts" \|\| raw === "\/room" \? raw : "\/"/);
+        }
+      }
+    }
+  });
+});
