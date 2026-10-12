@@ -19,6 +19,10 @@ import {
   type Cite,
 } from "../src/lib/playbook/products";
 import { COUNTRY_TALLY, countryCard, countryIndex } from "../src/lib/playbook/countries";
+import sheet from "../src/lib/playbook/countries.json";
+import { playbookBody, readPlaybook } from "../src/lib/playbook/store";
+import { HEDGE_RE } from "../src/lib/activity/lint";
+import type { AccountNote } from "../src/lib/today/overlay";
 import { peos } from "../src/lib/book";
 import { knownPeople } from "../src/lib/book/contacts";
 import { redactMoney } from "../src/lib/intel/lexicon";
@@ -124,7 +128,10 @@ describe("the Sheet · the scans", () => {
   test("every block in the middle cites its rung", () => {
     for (const p of PRODUCTS)
       for (const block of ["how", "split", "time", "ask"] as const)
-        assert.ok(p.cites[block].length > 0, `${p.id}'s ${block} block stands on nothing`);
+        assert.ok(
+          p.cites[block].length > 0,
+          `${p.id}'s ${block} block stands on nothing`,
+        );
   });
 
   // Rule 14: "Cite labels name their rung — ON TAPE / FILED THREAD / CALL
@@ -152,9 +159,14 @@ describe("the Sheet · the scans", () => {
   // chip says FILED. The tiers' inline cite in the face counts too.
   test("a flyer cites the document rung, and a filed thread carries its day", () => {
     for (const [text, rung, src] of allCites()) {
-      if (src === "flyer") assert.equal(rung, "doc", `"${text}" cites the flyer as ${rung}`);
+      if (src === "flyer")
+        assert.equal(rung, "doc", `"${text}" cites the flyer as ${rung}`);
       if (rung === "filed")
-        assert.match(src ?? "", /\b\d{1,2}\/\d{1,2}\b/, `"${text}" is a filed thread with no day`);
+        assert.match(
+          src ?? "",
+          /\b\d{1,2}\/\d{1,2}\b/,
+          `"${text}" is a filed thread with no day`,
+        );
     }
     const face = readFileSync(join(cwd(), "src/app/playbook/product-sheet.tsx"), "utf8");
     assert.ok(!face.includes('"filed", "flyer"'), "the face cites the flyer as a thread");
@@ -172,6 +184,21 @@ describe("the Sheet · the scans", () => {
   test("no line on the sheet is balanced on an antithesis", () => {
     for (const line of spokenLines())
       assert.doesNotMatch(line, /^[^.]{1,40}, not (?:a |an |the )?\w+\.$/i, line);
+  });
+
+  // C17 · the writing canon's no-hedging rule governs the seller's lines; the
+  // prospect's simulated speech in the answer rows is governed by realism,
+  // because real people hedge (CLAUDE.md, the plain-speech law). The cue is
+  // the one field that carries their words; everything else is ours.
+  test("the seller's lines never hedge; the prospect's answer rows may (C17)", () => {
+    const theirs = new Set(CUES.map((c) => c.cue));
+    for (const line of spokenLines())
+      if (!theirs.has(line))
+        assert.doesNotMatch(line, HEDGE_RE, `a seller line hedges: ${line}`);
+    assert.ok(
+      CUES.some((c) => HEDGE_RE.test(c.cue)),
+      "no answer row hedges; the carve-out has nothing to carry",
+    );
   });
 
   test("no account name and no person name reaches the surface", () => {
@@ -233,12 +260,124 @@ describe("the Sheet · the country wing", () => {
     assert.equal(card.verdictLine.length > 0, true);
   });
 
+  // C11 · "No redactions on the country wing": a statutory fact renders exactly
+  // as authored, and the money doctrine stops at the product copy (the scan
+  // above). The card is the sheet's own value, and nothing on the wing's path
+  // imports the redaction.
+  test("statutory facts render as authored; nothing on the wing redacts (C11)", () => {
+    const rows = (sheet as { rows: { n: string; points: string[][] }[] }).rows;
+    let figures = 0;
+    for (const r of rows) {
+      const card = countryCard(r.n);
+      assert.ok(card, `${r.n} has no card`);
+      const authored = r.points.map((p) => p[1]);
+      assert.deepEqual(
+        card.sixteen.map((s) => s.value),
+        authored,
+        `${r.n}'s card differs from the sheet`,
+      );
+      for (const v of authored) if (redactMoney(v) !== v) figures++;
+    }
+    assert.ok(
+      figures > 0,
+      "no statutory value carries a figure; the carve-out has nothing to carry",
+    );
+    for (const p of [
+      "src/lib/playbook/countries.ts",
+      "src/app/playbook/country/route.ts",
+      "src/app/playbook/product-sheet.tsx",
+    ])
+      assert.doesNotMatch(
+        readFileSync(join(cwd(), p), "utf8"),
+        /redactMoney/,
+        `${p} redacts the wing`,
+      );
+  });
+
   test("the countries we never promise blind carry their own line", () => {
     for (const name of ["Ukraine", "Puerto Rico", "Israel"]) {
       const card = countryCard(name);
       assert.ok(card, `${name} is not on the sheet`);
       assert.notEqual(card.verdict, "ok", `${name} reads as a plain yes`);
     }
+  });
+});
+
+// C12 · the universal-tool rule governs the authored surfaces only (the name
+// scan above); the learned register keeps its names, because a lesson's
+// account and a market fact's speaker are its cite on the evidence ladder.
+describe("the Sheet · the learned register", () => {
+  const note = (id: string, body: string): AccountNote => ({
+    id,
+    body,
+    accountId: "playbook",
+    partner: "",
+    kind: "account",
+    lane: "background",
+    actors: "",
+    source: "",
+    recipients: "",
+    createdAt: "2026-09-25T12:00:00.000Z",
+  });
+
+  test("a lesson keeps its account and a market fact its speaker, as cites (C12)", () => {
+    const map = new Map<string, AccountNote[]>([
+      [
+        "playbook:market",
+        [
+          note(
+            "m1",
+            playbookBody("market", "Competitors ask for a deposit.", {
+              a: "001x",
+              n: "Advocate Pay",
+              w: "Shane Smith",
+            }),
+          ),
+        ],
+      ],
+      [
+        "playbook:lessons",
+        [
+          note(
+            "l1",
+            playbookBody("lesson", "Silence after pricing meant a competing bid.", {
+              a: "001y",
+              n: "Simploy",
+              w: "",
+            }),
+          ),
+        ],
+      ],
+    ]);
+    const { market, lessons } = readPlaybook(map);
+    assert.equal(market[0].who, "Shane Smith");
+    assert.equal(market[0].accountName, "Advocate Pay");
+    assert.equal(lessons[0].accountName, "Simploy");
+    // The page hands both names to the face, and the face renders them beside
+    // the line as its cite.
+    const page = readFileSync(join(cwd(), "src/app/playbook/page.tsx"), "utf8");
+    assert.match(page, /who: m\.who/, "the page drops the market fact's speaker");
+    assert.match(page, /\?\? l\.accountName/, "the page drops the lesson's account");
+    assert.match(page, /\?\? m\.accountName/, "the page drops the market fact's account");
+    const face = readFileSync(
+      join(cwd(), "src/app/playbook/playbook-client.tsx"),
+      "utf8",
+    );
+    assert.match(face, /\{l\.from \|\| /, "the face renders no account on a lesson");
+    assert.match(
+      face,
+      /m\.who \? `\$\{m\.who\} · `/,
+      "the face renders no speaker on a market fact",
+    );
+    assert.match(face, /\{m\.from \|\| /, "the face renders no account on a market fact");
+    // The authored sheet is static and never reads the register, so the
+    // register's names cannot reach it.
+    const authored = readFileSync(join(cwd(), "src/lib/playbook/products.ts"), "utf8");
+    assert.doesNotMatch(
+      authored,
+      /playbook\/store/,
+      "the authored sheet reads the register",
+    );
   });
 });
 
