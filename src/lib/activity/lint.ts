@@ -91,7 +91,7 @@ const VERBS = new Set([
 ]);
 
 // Hedges and framing the writing canon bans outright.
-const HEDGE_RE =
+export const HEDGE_RE =
   /\b(may be worth|may be|might be|might want|you might|consider|worth a|it may|could be worth|perhaps|possibly|probably|appears to|seems to|maybe)\b/i;
 
 // A deadline never rides the action line — the action is today's; the date
