@@ -353,3 +353,91 @@ describe("the shape chip opens to the record lines the read stands on (pass 13, 
     await page.close();
   });
 });
+
+// ── D14 · a typed note is a paste (pass 17) ─────────────────────────────────
+// "A rich note typed in the Drop's ▢ composer, one that takes the full read,
+// files under the TYPED NOTE head with the typed source, and its chip says
+// 'Reads as a typed note.' before Enter; a jot stays an instant note, and a
+// thread pasted there keeps its own dialect. The ⚡ pane stamps nothing."
+describe("D14 · a typed note is a paste: the chip says so before Enter, a jot stays a note, a thread keeps its dialect, the ⚡ pane stamps nothing", () => {
+  const RICH =
+    "Met Chassie about Mexico.\nThey want two hires by March.\nSend the model Friday.";
+  const THREAD =
+    "From: Chassie Smith\nSent: Monday, October 6, 2026 9:00 AM\nTo: Antaeus Coe\nSubject: Mexico\n\nCan we start someone next month?";
+  const pasted = (calls: [string, unknown[]][]) =>
+    calls
+      .filter(([n]) => n === "roomPaste")
+      .map(
+        ([, args]) =>
+          args.find((a) => typeof a === "string" && a.includes("\n")) as string,
+      );
+
+  test("a jot files as an instant note through roomCompose, with no chip", async () => {
+    const page = await mount(browser, FIX, {
+      returns: { chuteBook: [], roomCompose: { ok: true, kind: "note", todoId: "t1" } },
+    });
+    await page.getByTitle("Note. A line for the record on Simploy.").first().click();
+    const ta = page.locator('textarea[aria-label="Log to Simploy"]');
+    await ta.fill("Call Chassie tomorrow.");
+    assert.equal(await page.locator($("sniff")).count(), 0, "a jot shows no chip");
+    await ta.press("Enter");
+    await page.waitForTimeout(50);
+    const calls = await callsOf(page);
+    assert.ok(
+      calls.some(([n]) => n === "roomCompose"),
+      "the jot went to roomCompose",
+    );
+    assert.ok(!calls.some(([n]) => n === "roomPaste"), "a jot is not a paste");
+    await page.close();
+  });
+
+  test("a rich note says it reads as a typed note, and files under the TYPED NOTE head", async () => {
+    const { TYPED_NOTE_HEAD } = await import("../../src/lib/paste-files");
+    const page = await mount(browser, FIX, { returns: { chuteBook: [] } });
+    await page.getByTitle("Note. A line for the record on Simploy.").first().click();
+    const ta = page.locator('textarea[aria-label="Log to Simploy"]');
+    await ta.fill(RICH);
+    assert.equal(
+      await page.locator($("sniff")).first().textContent(),
+      "Reads as a typed note. Enter runs the full read.",
+    );
+    await ta.press("Enter");
+    await page.waitForTimeout(50);
+    const texts = pasted(await callsOf(page));
+    assert.equal(texts.length, 1, "one paste");
+    assert.ok(texts[0].startsWith(`${TYPED_NOTE_HEAD}\n`), texts[0].slice(0, 60));
+    assert.ok(texts[0].endsWith(RICH));
+    await page.close();
+  });
+
+  test("a thread pasted into the composer keeps its own dialect: no typed head", async () => {
+    const { TYPED_NOTE_HEAD } = await import("../../src/lib/paste-files");
+    const page = await mount(browser, FIX, { returns: { chuteBook: [] } });
+    await page.getByTitle("Note. A line for the record on Simploy.").first().click();
+    const ta = page.locator('textarea[aria-label="Log to Simploy"]');
+    await ta.fill(THREAD);
+    const chip = await page.locator($("sniff")).first().textContent();
+    assert.ok(chip && !chip.includes("a typed note"), chip ?? "no chip");
+    await ta.press("Enter");
+    await page.waitForTimeout(50);
+    const texts = pasted(await callsOf(page));
+    assert.equal(texts.length, 1);
+    assert.ok(!texts[0].includes(TYPED_NOTE_HEAD), "the thread took a typed head");
+    assert.equal(texts[0], THREAD);
+    await page.close();
+  });
+
+  test("the ⚡ pane stamps nothing: the same rich text files without the typed head", async () => {
+    const { TYPED_NOTE_HEAD } = await import("../../src/lib/paste-files");
+    const page = await mount(browser, FIX, { returns: { chuteBook: [] } });
+    await page.locator($("zap")).first().click();
+    await page.locator(`${$("pastepane")} textarea`).fill(RICH);
+    await page.getByRole("button", { name: "✨ Read & file" }).click();
+    await page.waitForTimeout(50);
+    const texts = pasted(await callsOf(page));
+    assert.equal(texts.length, 1);
+    assert.ok(!texts[0].includes(TYPED_NOTE_HEAD), "the ⚡ pane stamped the paste");
+    assert.equal(texts[0], RICH);
+    await page.close();
+  });
+});
