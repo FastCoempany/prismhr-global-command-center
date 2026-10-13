@@ -493,13 +493,16 @@ export function accountMatches(claim: string, bound: string): boolean {
   return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
 }
 
-// The read's clock. The page that files a paste runs for 300 seconds
-// (src/app/room/page.tsx, maxDuration), and after the read a disputed filing
-// still spends up to 90 seconds on the read rung's verdict
-// (src/lib/ingest/verdict-reason.ts) before its rows are written. So the
-// read keeps 170 seconds for every attempt together, and a long thread gets
-// the time it needs instead of a 55-second cut that called itself "down".
-export const READ_BUDGET_MS = 170_000;
+// The filing's clock. The page that files a paste runs for 300 seconds
+// (src/app/room/page.tsx, maxDuration). A filing keeps 270 of them for the
+// read and the read rung's verdict together, and the last 30 for its writes.
+export const FILING_BUDGET_MS = 270_000;
+// The read's share. A 33-message Outlook thread measured 179 seconds live on
+// 2026-10-13: about 100 of thinking and 80 of writing 30 entries. The read
+// gets 240, and the verdict, which runs only on a disputed filing, takes
+// what is left; with too little left it skips and the rule's reason stands
+// (D9: "when it has no answer, the rule's reason stands").
+export const READ_BUDGET_MS = 240_000;
 // The reader's model thinks by default, and thinking shares the output
 // ceiling with the answer, so the ceiling leaves room for both. Streaming
 // carries a ceiling this size without the SDK's non-streaming limits.

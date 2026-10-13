@@ -43,9 +43,16 @@ export type AccountPage = { name: string; page: string };
  *  the way the Filing module takes its client (src/lib/ingest/filing.ts). */
 export type VerdictClient = {
   messages: {
-    create(params: Anthropic.MessageCreateParamsNonStreaming): Promise<Anthropic.Message>;
+    create(
+      params: Anthropic.MessageCreateParamsNonStreaming,
+      options?: { signal?: AbortSignal },
+    ): Promise<Anthropic.Message>;
   };
 };
+
+/** The least time a verdict call is sent with. Under it the call would only
+ *  spend the filing's clock, so it skips and the rule's reason stands. */
+export const VERDICT_FLOOR_MS = 20_000;
 
 export type VerdictAnswer = {
   /** The same business under another name: the warning withdraws. */
@@ -177,23 +184,36 @@ function parseAnswer(content: Anthropic.Message["content"]): VerdictAnswer | nul
 export async function verdictReason(
   inp: { head: string; excerpt: string; bound: AccountPage; claim: AccountPage },
   client?: VerdictClient,
+  deadline?: number,
 ): Promise<VerdictAnswer | null> {
+  // The filing's clock, when the caller has one: every call aborts at it, and
+  // no call is sent with less than the floor left (src/lib/intel/ai-clean.ts,
+  // FILING_BUDGET_MS).
+  const left = () => (deadline === undefined ? Infinity : deadline - Date.now());
+  if (left() < VERDICT_FLOOR_MS) return null;
   const c =
     client ??
     (claudeAvailable() ? claudeClient({ timeout: 90_000, maxRetries: 0 }) : null);
   if (!c) return null;
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: userPrompt(inp) }];
-  const ask = (structured: boolean) =>
-    c.messages.create({
-      model: MODEL_VERDICT,
-      max_tokens: 4096,
-      system: SYSTEM,
-      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: SEARCHES }],
-      messages,
-      ...(structured
-        ? { output_config: { format: { type: "json_schema", schema: SCHEMA } } }
-        : {}),
-    });
+  const ask = (structured: boolean) => {
+    if (left() < VERDICT_FLOOR_MS) throw new Error("the filing's clock ran out");
+    return c.messages.create(
+      {
+        model: MODEL_VERDICT,
+        max_tokens: 4096,
+        system: SYSTEM,
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: SEARCHES }],
+        messages,
+        ...(structured
+          ? { output_config: { format: { type: "json_schema", schema: SCHEMA } } }
+          : {}),
+      },
+      deadline === undefined
+        ? undefined
+        : { signal: AbortSignal.timeout(Math.max(1, left())) },
+    );
+  };
   try {
     // Structured output first. Should the API refuse the format beside the
     // search tool, the same ask runs once more as plain text and the answer
@@ -342,6 +362,8 @@ export async function readRungVerdict(
   bound: { id: string; name: string },
   deps: {
     client?: VerdictClient;
+    /** The filing's clock (Date.now() milliseconds); see verdictReason. */
+    deadline?: number;
     pages?: (
       bound: { id: string; name: string },
       claim: string,
@@ -359,6 +381,7 @@ export async function readRungVerdict(
         claim: pages.claim,
       },
       deps.client,
+      deps.deadline,
     );
   } catch {
     answer = null;

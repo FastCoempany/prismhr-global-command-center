@@ -38,6 +38,7 @@ import {
   cleanReason,
   readRungVerdict,
   verdictReason,
+  VERDICT_FLOOR_MS,
   type VerdictClient,
 } from "../src/lib/ingest/verdict-reason";
 import { judgeFiling } from "../src/lib/intel/misfile";
@@ -335,6 +336,43 @@ describe("the read rung, after the read", () => {
       assert.ok(v);
       assert.equal(v.reason, rule.reason, `rejected: "${bad}"`);
     }
+  });
+
+  // The filing's clock (2026-10-13): the read keeps most of it, so the
+  // verdict runs on what is left and never past it.
+  test("the verdict skips when the filing's clock is nearly spent, and the rule's reason stands", async () => {
+    const rule = disputing().read!;
+    const { client, calls } = stub([
+      says(false, "Simploy and Regis HR Group are separate PEOs."),
+    ]);
+    const v = await readRungVerdict(rule, CAPTURE, REGIS, {
+      client,
+      pages: PAGES,
+      deadline: Date.now() + VERDICT_FLOOR_MS - 1_000,
+    });
+    assert.deepEqual(v, rule, "the rule's verdict, reason and all, stands");
+    assert.equal(calls.length, 0, "no call is sent under the floor");
+  });
+
+  test("with time left, the verdict call carries the filing's deadline", async () => {
+    const signals: (AbortSignal | undefined)[] = [];
+    const client: VerdictClient = {
+      messages: {
+        async create(_params, options) {
+          signals.push(options?.signal);
+          return says(false, "Simploy and Regis HR Group are separate PEOs.");
+        },
+      },
+    };
+    const v = await readRungVerdict(disputing().read!, CAPTURE, REGIS, {
+      client,
+      pages: PAGES,
+      deadline: Date.now() + 60_000,
+    });
+    assert.equal(v?.reason, "Simploy and Regis HR Group are separate PEOs.");
+    assert.equal(signals.length, 1);
+    assert.ok(signals[0], "the call aborts at the filing's deadline");
+    assert.equal(signals[0].aborted, false);
   });
 
   test("the verdict call runs only when the read rung disputes", async () => {

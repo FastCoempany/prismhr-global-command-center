@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 import Anthropic from "@anthropic-ai/sdk";
 import {
+  FILING_BUDGET_MS,
   READER_CONTRACT,
   READ_BUDGET_MS,
   READ_MAX_TOKENS,
@@ -215,17 +216,25 @@ describe("the reader's clock", () => {
     assert.equal(calls[0].signal.aborted, false, "the deadline rides the call");
   });
 
-  test("the budget fits the page's 300 seconds with the verdict's 90 behind it", () => {
+  test("one filing clock fits the page's maxDuration, and the read fits the thread that failed", () => {
     const page = readFileSync(join(cwd(), "src/app/room/page.tsx"), "utf8");
     const maxDuration = Number(/export const maxDuration = (\d+)/.exec(page)?.[1]);
-    const verdict = readFileSync(join(cwd(), "src/lib/ingest/verdict-reason.ts"), "utf8");
-    const verdictMs = Number(/timeout: ([\d_]+)/.exec(verdict)?.[1].replace(/_/g, ""));
-    assert.ok(maxDuration > 0 && verdictMs > 0);
-    assert.ok(READ_BUDGET_MS > 55_000, "the read keeps more than the old cut");
+    assert.ok(maxDuration > 0);
     assert.ok(
-      READ_BUDGET_MS + verdictMs <= maxDuration * 1000 - 30_000,
-      "the read and the verdict leave the filing time to write",
+      FILING_BUDGET_MS <= maxDuration * 1000 - 30_000,
+      "the read and the verdict leave the writes their last 30 seconds",
     );
+    assert.ok(READ_BUDGET_MS < FILING_BUDGET_MS, "the read leaves the verdict a share");
+    // The 33-message Infiniti HR thread read live in 179 seconds on 10/13.
+    assert.ok(READ_BUDGET_MS >= 179_000 + 45_000, "the measured read fits with room");
+    // The paste action runs both calls on the one clock.
+    const src = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+    assert.match(src, /const filingDeadline = Date\.now\(\) \+ FILING_BUDGET_MS;/);
+    assert.match(
+      src,
+      /budgetMs: Math\.min\(READ_BUDGET_MS, filingDeadline - Date\.now\(\)\)/,
+    );
+    assert.match(src, /\{ deadline: filingDeadline \}/);
   });
 
   test("a read past its deadline aborts and is not sent again", async () => {
