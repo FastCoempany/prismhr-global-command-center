@@ -67,6 +67,8 @@ import {
   aiCleanTimeline,
   describeReadError,
   dropNoiseEntries,
+  FILING_BUDGET_MS,
+  READ_BUDGET_MS,
 } from "@/lib/intel/ai-clean";
 import {
   PLAYBOOK_LESSONS,
@@ -515,6 +517,9 @@ async function fileClaimed({
   pasteKey: string;
   dupeCheck: DupeCheck;
 }): Promise<Awaited<ReturnType<typeof roomPaste>>> {
+  // One clock for the read and the verdict, so the writes always get their
+  // last seconds inside the page's maxDuration (FILING_BUDGET_MS).
+  const filingDeadline = Date.now() + FILING_BUDGET_MS;
   // The misfile guard's FIRST rung runs before the read spends a cent. The
   // evidence in the text — a known address, a company domain, a person the
   // book binds to one account — needs no model at all, so a capture dropped
@@ -558,7 +563,9 @@ async function fileClaimed({
   if (aiCleanAvailable()) {
     const startedAt = Date.now();
     try {
-      read = await aiCleanTimeline(text, now);
+      read = await aiCleanTimeline(text, now, {
+        budgetMs: Math.min(READ_BUDGET_MS, filingDeadline - Date.now()),
+      });
       entries = read.entries;
       how = "ai";
     } catch (e) {
@@ -625,6 +632,7 @@ async function fileClaimed({
         plan.read,
         { head: rawText.split("\n")[0] ?? "", excerpt: rawText.slice(0, EXCERPT_CAP) },
         { id: acct.id, name: acct.name },
+        { deadline: filingDeadline },
       )
     : null;
   const verdict = refusal(disputed, how) ?? ({ ok: true } as const);
