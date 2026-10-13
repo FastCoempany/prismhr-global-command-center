@@ -7,6 +7,7 @@
 // step, never the storage or render path. When ANTHROPIC_API_KEY is absent
 // the app falls back to the rule-based parser and nothing here runs.
 
+import Anthropic from "@anthropic-ai/sdk";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { sniffHead } from "@/lib/ingest/dialect";
 import { ENTRY_CAP } from "@/lib/ingest/windows";
@@ -492,14 +493,98 @@ export function accountMatches(claim: string, bound: string): boolean {
   return !!ct && !!bt && (ct === bt || b.includes(ct) || c.includes(bt));
 }
 
+// The read's clock. The page that files a paste runs for 300 seconds
+// (src/app/room/page.tsx, maxDuration), and after the read a disputed filing
+// still spends up to 90 seconds on the read rung's verdict
+// (src/lib/ingest/verdict-reason.ts) before its rows are written. So the
+// read keeps 170 seconds for every attempt together, and a long thread gets
+// the time it needs instead of a 55-second cut that called itself "down".
+export const READ_BUDGET_MS = 170_000;
+// The reader's model thinks by default, and thinking shares the output
+// ceiling with the answer, so the ceiling leaves room for both. Streaming
+// carries a ceiling this size without the SDK's non-streaming limits.
+export const READ_MAX_TOKENS = 64_000;
+// A second attempt is sent only when at least this much of the budget is
+// left: a long read needs most of a minute, so a retry with less would only
+// spend the call and fail on the deadline.
+const RETRY_FLOOR_MS = 45_000;
+
+/** Whether a failed attempt is worth one more: a rate limit, an overload or a
+ *  dropped connection fails fast and may pass on a second try. A timeout or
+ *  the deadline's abort has already spent the budget, and anything else (a
+ *  400, a dead key) fails the same way twice. */
+export function retryableRead(e: unknown): boolean {
+  if (e instanceof Anthropic.APIConnectionTimeoutError) return false;
+  if (e instanceof Anthropic.APIUserAbortError) return false;
+  if (e instanceof Anthropic.RateLimitError) return true;
+  if (e instanceof Anthropic.InternalServerError) return true;
+  return e instanceof Anthropic.APIConnectionError;
+}
+
+/** One line for the server log when a read fails: the error's kind, its HTTP
+ *  status and request id when the API sent them, and its message. Never the
+ *  paste: the message is the SDK's or the API's own words. */
+export function describeReadError(e: unknown): string {
+  const err = e as {
+    name?: string;
+    status?: number;
+    requestID?: string | null;
+    message?: string;
+  };
+  // Labels by class, because a production build may minify class names.
+  const kind =
+    e instanceof Anthropic.APIUserAbortError
+      ? "the read ran out of its budget"
+      : e instanceof Anthropic.APIConnectionTimeoutError
+        ? "the request timed out"
+        : e instanceof Anthropic.APIConnectionError
+          ? "the connection failed"
+          : e instanceof Anthropic.AuthenticationError ||
+              e instanceof Anthropic.PermissionDeniedError
+            ? "the key was refused"
+            : e instanceof Anthropic.RateLimitError
+              ? "rate limited"
+              : e instanceof Anthropic.InternalServerError
+                ? "the API failed or was overloaded"
+                : e instanceof Anthropic.APIError
+                  ? "the API refused the request"
+                  : "Error";
+  const parts = [kind];
+  if (typeof err?.status === "number") parts.push(`status ${err.status}`);
+  if (err?.requestID) parts.push(`request ${err.requestID}`);
+  const msg = String(err?.message ?? e ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (msg) parts.push(msg.slice(0, 300));
+  return parts.join(" · ");
+}
+
+/** What a read needs from a client: the streaming call and its final message.
+ *  The SDK client satisfies it; a test hands in its own. */
+export type ReadClient = {
+  messages: {
+    stream: (
+      body: Anthropic.MessageCreateParamsNonStreaming,
+      options: { signal: AbortSignal },
+    ) => { finalMessage: () => Promise<Anthropic.Message> };
+  };
+};
+
 // One call, one paste. Throws on API failure — the caller degrades to the
-// rule-based parser. `now` is passed in so date resolution is testable.
-// The client gets an explicit timeout sized to serverless hosting (the SDK
-// default is ten minutes — the platform kills the function long before that),
-// and a truncated generation is surfaced as a REAL error instead of the
-// invalid-JSON parse failure it used to masquerade as.
-export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanResult> {
-  const client = claudeClient({ timeout: 55_000, maxRetries: 1 });
+// rule-based parser and logs why. `now` is passed in so date resolution is
+// testable. The call streams, so the output ceiling can cover the model's
+// thinking and the answer together, and one deadline bounds every attempt:
+// the SDK's own timeout stops counting once the response headers arrive,
+// which on a stream is at once, so the deadline is an abort signal instead.
+// A truncated generation and a refusal are surfaced as REAL errors instead
+// of an empty read.
+export async function aiCleanTimeline(
+  raw: string,
+  now: Date,
+  opts: { client?: ReadClient; budgetMs?: number } = {},
+): Promise<AiCleanResult> {
+  const client: ReadClient = opts.client ?? claudeClient({ maxRetries: 0 });
+  const deadline = Date.now() + (opts.budgetMs ?? READ_BUDGET_MS);
   const todayIso = now.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
   // Opus or better, always — founder-decreed 2026-07-31. One roster, one slot.
   const model = MODEL_READ;
@@ -511,28 +596,31 @@ export async function aiCleanTimeline(raw: string, now: Date): Promise<AiCleanRe
     sniffHead(raw).dialect === "CT"
       ? `\n\nThis is a complete call transcript. Hunt every commitment made on the call: "I'll send", "we'll get you", "let me pull together", "I'll check with", a recap or follow-up owed, a question someone promises to answer later. Each is an action with its owner. A demo or discovery call routinely leaves three to six commitments; finding only one usually means some were missed — sweep the closing minutes especially, where owed items concentrate. Mine the whole call for gaps, competitor intel, and lessons too.`
       : "";
-  const request = (maxTokens: number) =>
-    client.messages.create({
-      model,
-      max_tokens: maxTokens,
-      system: READER_CONTRACT,
-      messages: [
+  const attempt = () =>
+    client.messages
+      .stream(
         {
-          role: "user",
-          content: `Today's date is ${todayIso} (America/Chicago).${ctHunt}\n\nRaw paste:\n\n${raw}`,
+          model,
+          max_tokens: READ_MAX_TOKENS,
+          system: READER_CONTRACT,
+          messages: [
+            {
+              role: "user",
+              content: `Today's date is ${todayIso} (America/Chicago).${ctHunt}\n\nRaw paste:\n\n${raw}`,
+            },
+          ],
+          output_config: { format: { type: "json_schema", schema: SCHEMA } },
         },
-      ],
-      output_config: { format: { type: "json_schema", schema: SCHEMA } },
-    });
-  // 40 dense entries can run past 8k output tokens; ask high, fall back if
-  // the model tier rejects the ceiling.
-  const msg = await request(16384).catch((e: unknown) => {
-    const status = (e as { status?: number })?.status;
-    if (status === 400) return request(8192);
-    throw e;
+        { signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())) },
+      )
+      .finalMessage();
+  const msg = await attempt().catch((e: unknown) => {
+    if (!retryableRead(e) || deadline - Date.now() < RETRY_FLOOR_MS) throw e;
+    return attempt();
   });
   if (msg.stop_reason === "max_tokens")
     throw new Error("paste too large for one clean — split it and try again");
+  if (msg.stop_reason === "refusal") throw new Error("the reader declined this capture");
   const text = msg.content.find((b) => b.type === "text");
   return sanitizeAiResult(JSON.parse(text?.type === "text" ? text.text : "{}"));
 }

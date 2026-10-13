@@ -1,6 +1,19 @@
-import { test } from "node:test";
+import { after, describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { READER_CONTRACT, sanitizeAiResult } from "@/lib/intel/ai-clean";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
+import Anthropic from "@anthropic-ai/sdk";
+import {
+  READER_CONTRACT,
+  READ_BUDGET_MS,
+  READ_MAX_TOKENS,
+  aiCleanTimeline,
+  describeReadError,
+  sanitizeAiResult,
+  type ReadClient,
+} from "@/lib/intel/ai-clean";
+import { claudeDownReason, markClaudeDown, markClaudeUp } from "@/lib/claude/health";
 
 test("sanitize: coerces a well-formed reply through intact", () => {
   const r = sanitizeAiResult({
@@ -124,4 +137,220 @@ test("the reader's contract carries the fulfillment rule", () => {
   // musing.
   assert.ok(contract.includes("EXPLICIT commitments only"));
   assert.ok(contract.includes("NEVER invent an action from a musing"));
+});
+
+// The read's clock and its failures (2026-10-13). A 33-message thread timed
+// out against a 55-second, non-streaming call and the receipt said "The
+// reader was down." The read now streams with room for the model's thinking,
+// one deadline bounds every attempt, a retry is spent only on a fast
+// transient failure, and the paste action logs why a read failed.
+describe("the reader's clock", () => {
+  type Body = Anthropic.MessageCreateParamsNonStreaming;
+  const reply = (over: Partial<Anthropic.Message> = {}): Anthropic.Message =>
+    ({
+      id: "msg_1",
+      type: "message",
+      role: "assistant",
+      model: "m",
+      stop_reason: "end_turn",
+      stop_sequence: null,
+      usage: { input_tokens: 1, output_tokens: 1 },
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            entries: [
+              { kind: "email", subject: "Re: docs", from: "Javier", body: "Sent." },
+            ],
+            signals: [],
+          }),
+          citations: null,
+        },
+      ],
+      ...over,
+    }) as unknown as Anthropic.Message;
+
+  /** A client whose attempts answer in turn: a message, an error to throw,
+   *  or "hang" to wait on the abort signal like a slow stream. */
+  function fake(...answers: (Anthropic.Message | Error | "hang")[]) {
+    const calls: { body: Body; signal: AbortSignal }[] = [];
+    const client: ReadClient = {
+      messages: {
+        stream: (body, { signal }) => {
+          calls.push({ body, signal });
+          const a = answers[calls.length - 1];
+          return {
+            finalMessage: () =>
+              a === "hang"
+                ? new Promise<Anthropic.Message>((_, reject) =>
+                    signal.addEventListener("abort", () =>
+                      reject(new Anthropic.APIUserAbortError()),
+                    ),
+                  )
+                : a instanceof Error
+                  ? Promise.reject(a)
+                  : Promise.resolve(a),
+          };
+        },
+      },
+    };
+    return { client, calls };
+  }
+  const now = new Date("2026-10-13T15:00:00Z");
+  const overloaded = () =>
+    new Anthropic.InternalServerError(
+      529,
+      { type: "overloaded_error" },
+      "Overloaded",
+      new Headers(),
+    );
+
+  test("the read streams with room for thinking and the answer, under a deadline", async () => {
+    const { client, calls } = fake(reply());
+    const r = await aiCleanTimeline("From: Javier\nSent.", now, { client });
+    assert.equal(r.entries.length, 1);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].body.max_tokens, READ_MAX_TOKENS);
+    assert.ok(READ_MAX_TOKENS >= 32_000, "the ceiling leaves room for thinking");
+    assert.equal(calls[0].signal.aborted, false, "the deadline rides the call");
+  });
+
+  test("the budget fits the page's 300 seconds with the verdict's 90 behind it", () => {
+    const page = readFileSync(join(cwd(), "src/app/room/page.tsx"), "utf8");
+    const maxDuration = Number(/export const maxDuration = (\d+)/.exec(page)?.[1]);
+    const verdict = readFileSync(join(cwd(), "src/lib/ingest/verdict-reason.ts"), "utf8");
+    const verdictMs = Number(/timeout: ([\d_]+)/.exec(verdict)?.[1].replace(/_/g, ""));
+    assert.ok(maxDuration > 0 && verdictMs > 0);
+    assert.ok(READ_BUDGET_MS > 55_000, "the read keeps more than the old cut");
+    assert.ok(
+      READ_BUDGET_MS + verdictMs <= maxDuration * 1000 - 30_000,
+      "the read and the verdict leave the filing time to write",
+    );
+  });
+
+  test("a read past its deadline aborts and is not sent again", async () => {
+    const { client, calls } = fake("hang", reply());
+    // AbortSignal.timeout's timer does not hold the event loop open; a server
+    // always has the stream's socket open, so this test holds it instead.
+    const hold = setInterval(() => {}, 5);
+    after(() => clearInterval(hold));
+    await assert.rejects(
+      aiCleanTimeline("From: Javier\nSent.", now, { client, budgetMs: 40 }),
+      (e: unknown) => e instanceof Anthropic.APIUserAbortError,
+    );
+    assert.equal(calls.length, 1, "a spent budget buys no second attempt");
+    assert.equal(calls[0].signal.aborted, true);
+  });
+
+  test("an overload is tried once more; a bad request and a timeout are not", async () => {
+    const once = fake(overloaded(), reply());
+    const r = await aiCleanTimeline("From: Javier\nSent.", now, { client: once.client });
+    assert.equal(once.calls.length, 2);
+    assert.equal(r.entries.length, 1);
+
+    const bad = fake(
+      new Anthropic.BadRequestError(
+        400,
+        { type: "invalid_request_error" },
+        "bad",
+        new Headers(),
+      ),
+      reply(),
+    );
+    await assert.rejects(aiCleanTimeline("x".repeat(40), now, { client: bad.client }));
+    assert.equal(bad.calls.length, 1);
+
+    const slow = fake(new Anthropic.APIConnectionTimeoutError(), reply());
+    await assert.rejects(aiCleanTimeline("x".repeat(40), now, { client: slow.client }));
+    assert.equal(slow.calls.length, 1);
+  });
+
+  test("no second attempt when too little of the budget is left", async () => {
+    const { client, calls } = fake(overloaded(), reply());
+    await assert.rejects(
+      aiCleanTimeline("x".repeat(40), now, { client, budgetMs: 10_000 }),
+    );
+    assert.equal(calls.length, 1);
+  });
+
+  test("a truncated answer and a refusal fail the read instead of filing it empty", async () => {
+    const cut = fake(reply({ stop_reason: "max_tokens" }));
+    await assert.rejects(
+      aiCleanTimeline("x".repeat(40), now, { client: cut.client }),
+      /too large/,
+    );
+    const no = fake(reply({ stop_reason: "refusal", content: [] }));
+    await assert.rejects(
+      aiCleanTimeline("x".repeat(40), now, { client: no.client }),
+      /declined/,
+    );
+  });
+
+  test("the log line names the failure and never carries the paste", () => {
+    assert.match(
+      describeReadError(new Anthropic.APIUserAbortError()),
+      /^the read ran out of its budget/,
+    );
+    assert.match(
+      describeReadError(new Anthropic.APIConnectionTimeoutError()),
+      /^the request timed out/,
+    );
+    const e = new Anthropic.InternalServerError(
+      529,
+      { type: "overloaded_error" },
+      "Overloaded",
+      new Headers({ "request-id": "req_42" }),
+    );
+    const line = describeReadError(e);
+    assert.match(line, /^the API failed or was overloaded/);
+    assert.match(line, /status 529/);
+    assert.match(line, /request req_42/);
+    assert.match(line, /overloaded_error/);
+    const key = new Anthropic.AuthenticationError(
+      401,
+      { type: "authentication_error" },
+      "invalid x-api-key",
+      new Headers(),
+    );
+    assert.match(describeReadError(key), /^the key was refused · status 401/);
+    assert.equal(describeReadError(new Error("a\n\nb")), "Error · a b");
+  });
+
+  test("a closed gate says whether the key is missing or latched dead", () => {
+    const had = process.env.ANTHROPIC_API_KEY;
+    try {
+      delete process.env.ANTHROPIC_API_KEY;
+      assert.equal(claudeDownReason(), "no API key is configured");
+      process.env.ANTHROPIC_API_KEY = "sk-test";
+      markClaudeUp();
+      assert.equal(claudeDownReason(), "");
+      markClaudeDown();
+      assert.match(claudeDownReason(), /failed on the key itself/);
+    } finally {
+      markClaudeUp();
+      if (had === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = had;
+    }
+  });
+
+  test("the paste action logs why on both paths, never the paste itself", () => {
+    const src = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+    const at = src.indexOf("let readFailed = false;");
+    const block = src.slice(at, src.indexOf("if (entries.length === 0) {", at));
+    assert.match(
+      block,
+      /console\.error\(`\[reader\] skipped for \$\{acct\.name\}: \$\{claudeDownReason\(\)\}`\)/,
+    );
+    assert.match(block, /console\.error\([\s\S]*\$\{describeReadError\(e\)\}/);
+    assert.match(
+      block,
+      /\$\{text\.length\} characters/,
+      "the size is logged, not the text",
+    );
+    assert.doesNotMatch(
+      block,
+      /console\.error\([^)]*\$\{(?:text|rawText)\}/,
+      "the paste never reaches the log",
+    );
+  });
 });
