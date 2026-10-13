@@ -144,16 +144,26 @@ export function ReceiptLine({
 
   const ctl = (
     <span className={styles.rcptCtl}>
-      {canWrite && onTakeBack && row.state === "filed" && (
-        <button
-          type="button"
-          title="Take back everything this filing wrote"
-          aria-label="Take back everything this filing wrote"
-          onClick={onTakeBack}
-        >
-          ↺
-        </button>
-      )}
+      {canWrite &&
+        onTakeBack &&
+        (row.state === "filed" || (row.state === "dupe" && !!row.prior?.filingId)) && (
+          <button
+            type="button"
+            title={
+              row.state === "dupe"
+                ? "Take back the earlier filing so this one can file"
+                : "Take back everything this filing wrote"
+            }
+            aria-label={
+              row.state === "dupe"
+                ? "Take back the earlier filing so this one can file"
+                : "Take back everything this filing wrote"
+            }
+            onClick={onTakeBack}
+          >
+            ↺
+          </button>
+        )}
       {onClear && (
         <button
           type="button"

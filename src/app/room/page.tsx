@@ -35,6 +35,7 @@ import { splitAsk } from "@/lib/today/ledger";
 import { DASH_NODES } from "@/lib/dashboard/stages";
 import { readAccount, secondRecordFor } from "@/lib/record/read";
 import { shortName } from "@/lib/ingest/guard";
+import { todayFilings } from "@/lib/ingest/today-filings";
 import { digestFor, digestForCardName } from "@/lib/intel/digest";
 import { COUNTRY_NAME } from "@/lib/intel/lexicon";
 
@@ -757,6 +758,14 @@ export default async function RoomPage() {
       a.name.localeCompare(b.name),
   );
   rows.forEach((r, i) => (r.rank = i));
+  // Today's filings, one read for every row (decreed 2026-10-13: TODAY always
+  // shows what happened today). Each row's TODAY shows their receipts and
+  // their ↺ whatever door filed them and whether or not the page reloaded.
+  const filedToday = await todayFilings(
+    rows.map((r) => r.accountId),
+    now,
+  );
+  for (const r of rows) r.todayFilings = filedToday.get(r.accountId) ?? [];
 
   // ── The pull-tab drawers' data ────────────────────────────────────────────
   // Roundups: the whole engine, distilled — per partner: cadence state, the

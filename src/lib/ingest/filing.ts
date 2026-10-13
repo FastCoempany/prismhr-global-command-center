@@ -324,6 +324,13 @@ export async function wroteOfFiling(
 // No schema change: the claim is the marker row with its own status, which
 // the disposition loader drops like every namespaced marker's.
 
+/** The duplicate guard's marker key for one capture on one account. The
+ *  filing claims it, and a take-back clears it by the fingerprint the Filing
+ *  row keeps, so a capture taken back can always be filed again. */
+export function pasteKeyOf(accountId: string, fingerprint: string): string {
+  return `pastehash:${accountId}:${fingerprint}`.slice(0, 191);
+}
+
 /** The marker's status while a filing holds the capture. */
 export const CLAIM_STATUS = "filing";
 

@@ -138,6 +138,9 @@ export type LedgerRow = {
    *  wrote (pass 8, C2). Ids and a day, never text, so a settled row keeps
    *  it (D12). */
   prior?: { day?: string; filingId?: string };
+  /** A receipt a HomeRoom row rebuilt from the record's filings of today
+   *  (ingest/today-receipts.ts), not one this tab filed. */
+  fromRecord?: boolean;
   /** What a take-back took, as its lines, so "N removed." opens to them
    *  (pass 8, C5). Volatile: the lines are body text, which a settled row
    *  never keeps (D12), so storedRow drops them and a reloaded row opens to

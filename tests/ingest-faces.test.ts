@@ -29,7 +29,7 @@ import {
   type LedgerStorage,
 } from "../src/app/room/chute-ledger";
 import { DROP_CSV_RECEIPT, filingRequest } from "../src/app/room/ingest/use-ingest";
-import { grabUndoRequest } from "../src/app/room/ingest/use-undo";
+import { grabUndoRequest, takeBackTarget } from "../src/app/room/ingest/use-undo";
 import { dismissHeld } from "../src/app/room/ingest/use-verdict";
 import { UNFILED_FOLDER, archiveFileToGitHub } from "../src/lib/github/archive";
 import { claimAccountId } from "../src/lib/ingest/guard";
@@ -1124,6 +1124,25 @@ describe("a duplicate opens to the earlier filing (pass 8, C2)", () => {
     ...over,
   });
 
+  // Decreed 2026-10-13: a capture whose first filing went wrong (the reader
+  // was down) is taken back from its own duplicate and filed again.
+  test("↺ takes back the earlier filing when it has a row, and only then", async () => {
+    const withRow = await receiptLine(dupe(), { onTakeBack: () => {} });
+    assert.match(
+      withRow,
+      /title="Take back the earlier filing so this one can file"[^>]*>↺<\/button>/,
+    );
+    assert.deepEqual(takeBackTarget(dupe()), { filingId: "f0" });
+    const noRow = dupe({ prior: { day: "10/3" } });
+    assert.doesNotMatch(await receiptLine(noRow, { onTakeBack: () => {} }), />↺</);
+    assert.equal(takeBackTarget(noRow), null);
+    // A read-only session sees no ↺ (D29).
+    assert.doesNotMatch(
+      await receiptLine(dupe(), { onTakeBack: () => {}, canWrite: false }),
+      />↺</,
+    );
+  });
+
   test("the decree's line verbatim, the account it is on file under, and the day that opens", async () => {
     assert.equal(ALREADY_ON_FILE, "Already on file. Nothing filed twice.");
     const html = await receiptLine(dupe(), { onTakeBack: undefined });
@@ -1392,9 +1411,10 @@ describe("the Drop backs up, opens the duplicate and the take-back like the Chut
       day: "10/7",
     });
     const html = await receiptLine({ key: 2, ...file! });
+    // The earlier filing has a row, so its ↺ takes it back (2026-10-13).
     assert.equal(
       textOf(html),
-      "simploy-renewal.eml · Already on file. Nothing filed twice. · Simploy · Filed 10/3 ✕",
+      "simploy-renewal.eml · Already on file. Nothing filed twice. · Simploy · Filed 10/3 ↺ ✕",
     );
     assert.match(
       html,
@@ -1625,10 +1645,13 @@ describe("a Sales Nav grab's receipt counts every row and opens to the accounts 
       fileText,
       /state: "filed",[\s\S]*?grab: r\.grab,[\s\S]*?day: receiptDay\(\),/,
     );
+    // The ↺ shows where the one take-back rule finds something to take, and
+    // a grab's receipt takes back the whole grab (use-undo.ts).
     assert.match(
       src,
-      /rc\.state === "filed" &&\s*\(rc\.noteIds\?\.length \|\| rc\.filingId \|\| rc\.grab\?\.accounts\.length\)/,
+      /onTakeBack=\{takeBackTarget\(rc\) \? \(\) => takeBack\(rc\) : undefined\}/,
     );
+    assert.deepEqual(takeBackTarget(row)?.grab, row.grab);
     const takeBack = src.slice(
       src.indexOf("  const takeBack = (rc: LedgerRow)"),
       src.indexOf("  const clearReceipt = "),
@@ -1641,7 +1664,8 @@ describe("a Sales Nav grab's receipt counts every row and opens to the accounts 
       takeBack,
       /reason: `Taken back\$\{from\}\. \$\{r\.removed \+ r\.retired\} removed\.`,/,
     );
-    assert.match(takeBack, /await undo\(acct\.id, rc\)/);
+    assert.match(takeBack, /const target = takeBackTarget\(rc\);/);
+    assert.match(takeBack, /await undo\(acct\.id, target\)/);
     // The Drop's receipt keeps the row as its account; the line still names
     // the grab and links no one account until it opens.
     const dropRow: LedgerRow = { ...row, account: REGIS };
