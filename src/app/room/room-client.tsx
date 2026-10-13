@@ -58,6 +58,7 @@ import {
   roomUnlog,
 } from "./actions";
 import type { Window } from "@/lib/ingest/windows";
+import type { TodayFiling } from "@/lib/ingest/today-filings";
 import { shortName } from "@/lib/ingest/short-name";
 import { ALREADY_ON_FILE, monthDay } from "@/lib/ingest/wrote";
 import type { VaultReceipt } from "@/lib/ingest/vault";
@@ -68,7 +69,14 @@ import { HeldBox, type HeldAccount, type HeldChoice } from "./ingest/held";
 import { ReceiptLine } from "./ingest/receipt";
 import { DROP_CSV_RECEIPT, useIngest, type Filed } from "./ingest/use-ingest";
 import { dismissHeld, holdVerdict, useVerdict, type Held } from "./ingest/use-verdict";
-import { useUndo } from "./ingest/use-undo";
+import { takeBackTarget, useUndo } from "./ingest/use-undo";
+import {
+  loadCleared,
+  mergeToday,
+  saveCleared,
+  type TodayEntry,
+} from "./ingest/today-receipts";
+import { chicagoDay } from "@/lib/tz";
 import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
 import type { PipelineRecord } from "@/lib/pipeline/build";
@@ -111,6 +119,10 @@ export type RoomRow = {
    *  opens to it (the click-depth law, pass 13). Empty when the read holds
    *  no fact behind them. */
   identity?: { label: string; day: string; line: string }[];
+  /** Every filing on the account from today, from the record (decreed
+   *  2026-10-13): TODAY shows each one's receipt and its ↺ after a reload,
+   *  in any tab, from any door (src/lib/ingest/today-filings.ts). */
+  todayFilings?: TodayFiling[];
   multiTone: "g" | "y" | "r";
   people: { name: string; line: string }[];
   briefed: boolean;
@@ -347,7 +359,7 @@ type DropHold = Held<{
 // (a close, a retire, an ask minted), or a filing's receipt, which the Drop
 // paints with the Chute's own receipt line (slice 18a; the face approved
 // 2026-10-06). A Drop receipt is never stored: the register is this row's.
-type FreshEntry = { text: string; receipt?: undefined } | { receipt: LedgerRow };
+type FreshEntry = TodayEntry;
 
 /** Today, M/D in Chicago: the day a receipt shows. */
 const receiptDay = (): string => monthDay(new Date());
@@ -472,7 +484,18 @@ export function Row({
   const [workedNow, setWorkedNow] = useState(false);
   const worked = row.workedToday || workedNow;
   const [freshCaps, setFreshCaps] = useState<FreshCap[]>([]);
-  const [freshInfo, setFreshInfo] = useState<FreshEntry[]>([]);
+  // TODAY opens on today's filings from the record (decreed 2026-10-13), so
+  // a reload, another tab or another door never loses a receipt or its ↺
+  // (today-receipts.ts).
+  const [freshInfo, setFreshInfo] = useState<FreshEntry[]>(() => {
+    let k = 0;
+    return mergeToday(
+      [],
+      row.todayFilings ?? [],
+      { id: row.accountId, name: row.name },
+      { cleared: new Set(), nextKey: () => --k },
+    );
+  });
   // The Spring (triptych winner, 2026-08-13): each register rests as one
   // summary line; ⊕ springs it out in place, one register out at a time.
   const [spring, setSpring] = useState<"unknown" | "peers" | "today" | null>(
@@ -497,6 +520,29 @@ export function Row({
     setFreshInfo((f) =>
       f.map((x) => (x.receipt?.key === key ? { receipt: { ...x.receipt, ...up } } : x)),
     );
+  // Each fresh read of the page brings today's filings again: a filing from
+  // another door joins TODAY, one taken back elsewhere leaves, and a receipt
+  // cleared today stays cleared. Deferred, as the held line's loader is, so
+  // hydration completes against the server's own list first.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      let cleared = new Set<string>();
+      try {
+        cleared = loadCleared(localStorage, chicagoDay(new Date()));
+      } catch {
+        // Storage refused: nothing was remembered as cleared.
+      }
+      setFreshInfo((f) =>
+        mergeToday(
+          f,
+          row.todayFilings ?? [],
+          { id: row.accountId, name: row.name },
+          { cleared, nextKey: () => ++receiptSeq.current },
+        ),
+      );
+    }, 0);
+    return () => clearTimeout(t);
+  }, [row.todayFilings, row.accountId, row.name]);
   // The held verdict the banner shows; a second dispute waits its turn
   // behind it (use-verdict.ts).
   const { mismatch, setMismatch, queue: heldLine, restore } = useVerdict<DropHold>();
@@ -1161,12 +1207,13 @@ export function Row({
   // went and opens to it.
   const takeBack = (rc: LedgerRow) => {
     const acct = rc.account;
-    if (!acct || pending) return;
+    const target = takeBackTarget(rc);
+    if (!acct || !target || pending) return;
     // A grab's take-back reaches every account it filed to (use-undo.ts), so
     // its receipt names no one account (seam S-25).
     const from = rc.grab ? "" : ` from ${shortName(acct.name)}`;
     start(async () => {
-      const r = await undo(acct.id, rc);
+      const r = await undo(acct.id, target);
       // The line opens to what was taken back (pass 8, C5): the server reads
       // the filing's lines before they go, and the row holds them while the
       // tab lives, as the Chute's does.
@@ -1179,8 +1226,19 @@ export function Row({
       else setNote(r.reason ?? "The take-back didn't go through.");
     });
   };
-  const clearReceipt = (key: number) =>
+  // A cleared receipt stays cleared for the day: its filing would otherwise
+  // come back from the record on the next read of the page.
+  const clearReceipt = (key: number) => {
+    const filingId = freshInfo.find((x) => x.receipt?.key === key)?.receipt?.filingId;
+    if (filingId) {
+      try {
+        saveCleared(localStorage, chicagoDay(new Date()), filingId);
+      } catch {
+        // Storage refused: the receipt is cleared for this page only.
+      }
+    }
     setFreshInfo((f) => f.filter((x) => x.receipt?.key !== key));
+  };
   // Done means two things at once, and the row needs both. A staged item closes
   // where it always closed — that's the record's version of the truth. The
   // day's mark rides alongside it so EVERY row can answer the read, including
@@ -2103,12 +2161,7 @@ export function Row({
                   <ReceiptLine
                     row={rc}
                     canWrite={row.canWrite}
-                    onTakeBack={
-                      rc.state === "filed" &&
-                      (rc.noteIds?.length || rc.filingId || rc.grab?.accounts.length)
-                        ? () => takeBack(rc)
-                        : undefined
-                    }
+                    onTakeBack={takeBackTarget(rc) ? () => takeBack(rc) : undefined}
                     onClear={() => clearReceipt(rc.key)}
                   />
                 </div>

@@ -38,6 +38,7 @@ import {
   claimCapture,
   fileFiling,
   findFiling,
+  pasteKeyOf,
   releaseCapture,
   undoFiling,
   wroteOfFiling,
@@ -439,7 +440,7 @@ export async function roomPaste(
   // nothing. A guard that errors never blocks a filing — it fails open, and
   // the Filing row and the receipt say so (ruled 2026-09-25, D7).
   const fingerprint = pasteFingerprint(rawText);
-  const pasteKey = `pastehash:${acct.id}:${fingerprint}`.slice(0, 191);
+  const pasteKey = pasteKeyOf(acct.id, fingerprint);
   const claim = await claimCapture(pasteKey, new Date());
   if (claim.kind === "inflight")
     return { ok: false, filed: 0, how: "", duplicate: true, reason: ALREADY_FILING };
@@ -1085,6 +1086,20 @@ export async function roomPasteUndo(
     const took = filing
       ? await wroteOfFiling(acct.id, filing).catch(() => undefined)
       : undefined;
+    // The filing's own duplicate marker, found by the fingerprint its row
+    // keeps. A take-back by the filing's id alone (a receipt rebuilt from the
+    // record, or "Already on file." taking back the earlier filing) carries
+    // no note id for the marker's reason, and the capture must be fileable
+    // again either way.
+    const fingerprint = filing
+      ? await prisma.filing
+          .findUnique({
+            where: { id: filing },
+            select: { accountId: true, fingerprint: true },
+          })
+          .then((f) => (f && f.accountId === acct.id ? f.fingerprint : ""))
+          .catch(() => "")
+      : "";
     // The account's own rows and its asks.
     const r = ids.length
       ? await prisma.accountNote.deleteMany({
@@ -1130,6 +1145,10 @@ export async function roomPasteUndo(
     const byFiling = filing
       ? await undoFiling(filing, acct.id)
       : { notes: 0, todos: 0, filing: 0 };
+    if (fingerprint && byFiling.filing > 0)
+      await prisma.accountDisposition
+        .deleteMany({ where: { accountId: pasteKeyOf(acct.id, fingerprint) } })
+        .catch(() => undefined);
     // A completion line filed when the operator closed an opened todo before
     // undoing goes with its todo (the defects doc's open item).
     const completions = await undoCompletions(acct.id, [...todos, ...filingTodos]);

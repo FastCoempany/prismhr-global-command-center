@@ -68,6 +68,9 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
   ...over,
 });
 
+/** The row builder, for the fixtures that need one row of their own. */
+export { row as roomRow };
+
 const ROWS: RoomRow[] = [
   row({
     multiTone: "r",

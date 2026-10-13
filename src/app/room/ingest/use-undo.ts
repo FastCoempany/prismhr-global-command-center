@@ -41,6 +41,33 @@ export function grabUndoRequest(
   ];
 }
 
+/** What a receipt's ↺ takes back, or null when it has nothing to take. A
+ *  filed receipt takes its own filing. "Already on file." takes the earlier
+ *  filing it names, so a capture whose first filing went wrong (a reader
+ *  that was down) can be taken back and filed again with a fresh read
+ *  (decreed 2026-10-13). Pure, so both doors and the suite read one rule. */
+export function takeBackTarget(row: {
+  state: string;
+  noteIds?: string[];
+  todoIds?: string[];
+  filingId?: string;
+  grab?: Pick<GrabSummary, "accounts">;
+  prior?: { filingId?: string };
+}): Undoable | null {
+  if (row.state === "filed")
+    return row.noteIds?.length || row.filingId || row.grab?.accounts.length
+      ? {
+          noteIds: row.noteIds,
+          todoIds: row.todoIds,
+          filingId: row.filingId,
+          grab: row.grab,
+        }
+      : null;
+  if (row.state === "dupe" && row.prior?.filingId)
+    return { filingId: row.prior.filingId };
+  return null;
+}
+
 /** What the undo asks of the server: the account, every note id and todo id
  *  the receipt kept, and the Filing id when the filing wrote one. Pure, so
  *  the suite can read what each door hands over. */

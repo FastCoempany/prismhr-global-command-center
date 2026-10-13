@@ -441,3 +441,75 @@ describe("D14 · a typed note is a paste: the chip says so before Enter, a jot s
     await page.close();
   });
 });
+
+// Decreed 2026-10-13: TODAY always shows what happened today. A row's TODAY
+// is rebuilt from the record's filings of today, so a receipt and its ↺ are
+// there after a reload, and a receipt cleared today stays cleared.
+describe("TODAY shows today's filings from the record, with their ↺, after a reload", () => {
+  const TODAY_FIX = "tests/browser/fixtures/room-today.tsx";
+  const NOW = "2026-10-13T16:00:00.000Z";
+  const openToday = async (page: Page) => {
+    await sumline(page, "TODAY").locator("button[title='Expand them out']").click();
+    await page.waitForSelector(`${$("sumkOn")}:text-is("TODAY")`);
+  };
+
+  test("the filing's receipt is in TODAY on arrival, says the reader was down, and its ↺ takes it back", async () => {
+    const page = await mount(browser, TODAY_FIX, {
+      now: NOW,
+      returns: { roomPasteUndo: { ok: true, removed: 33, retired: 0 } },
+    });
+    await openToday(page);
+    const item = page.locator($("rcptItem")).first();
+    assert.match(await item.innerText(), /Simploy · 33 filed · 10\/13/);
+    assert.match(await item.innerText(), /The reader was down\. Only the text filed\./);
+    await item.hover();
+    const back = item.getByTitle("Take back everything this filing wrote");
+    assert.equal((await back.innerText()).trim(), "↺");
+    await back.click();
+    await page.waitForFunction(() =>
+      document.body.innerText.includes("Taken back from Simploy. 33 removed."),
+    );
+    const undo = (await callsOf(page)).find(([n]) => n === "roomPasteUndo");
+    assert.ok(undo, "the take-back never reached the server");
+    assert.deepEqual(undo[1], [ROW_A, [], [], "f-today-1"]);
+    await page.close();
+  });
+
+  test("a receipt cleared today stays cleared on the next load", async () => {
+    const page = await mount(browser, TODAY_FIX, { now: NOW });
+    await openToday(page);
+    const item = page.locator($("rcptItem")).first();
+    await item.hover();
+    await item.getByTitle("Clear this receipt").click();
+    assert.equal(await page.locator($("rcptItem")).count(), 0);
+    const kept = await page.evaluate(() => localStorage.getItem("room-cleared-v1"));
+    assert.ok(kept, "the clear was not remembered");
+    assert.deepEqual(JSON.parse(kept), { day: "2026-10-13", ids: ["f-today-1"] });
+    await page.close();
+
+    const again = await mount(browser, TODAY_FIX, {
+      now: NOW,
+      storage: { "room-cleared-v1": kept },
+    });
+    await openToday(again);
+    await again.waitForTimeout(50);
+    assert.equal(
+      await again.locator($("rcptItem")).count(),
+      0,
+      "the cleared receipt came back",
+    );
+    await again.close();
+
+    // Another day's clear is forgotten: the receipt shows.
+    const tomorrow = await mount(browser, TODAY_FIX, {
+      now: NOW,
+      storage: {
+        "room-cleared-v1": JSON.stringify({ day: "2026-10-12", ids: ["f-today-1"] }),
+      },
+    });
+    await openToday(tomorrow);
+    await tomorrow.waitForTimeout(50);
+    assert.equal(await tomorrow.locator($("rcptItem")).count(), 1);
+    await tomorrow.close();
+  });
+});

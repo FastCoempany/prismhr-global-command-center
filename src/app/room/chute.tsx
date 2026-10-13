@@ -47,7 +47,7 @@ import { ReceiptLine } from "./ingest/receipt";
 import { useIngest, type FilingDoor } from "./ingest/use-ingest";
 import { dismissHeld, holdVerdict, type Verdict } from "./ingest/use-verdict";
 import { useReceipts, type Receipt } from "./ingest/use-receipts";
-import { useUndo } from "./ingest/use-undo";
+import { takeBackTarget, useUndo } from "./ingest/use-undo";
 import styles from "./room.module.css";
 
 /** Today, M/D in Chicago: the day a settled receipt keeps (D12). */
@@ -360,11 +360,12 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   // the tab lives.
   const takeBack = (it: Receipt) => {
     const acct = it.account;
+    const target = takeBackTarget(it);
     // A grab files on many accounts and names none: its take-back reaches
     // every account it filed to (use-undo.ts, seam S-25).
-    if (!acct && !it.grab) return;
+    if ((!acct && !it.grab) || !target) return;
     const from = acct && !it.grab ? ` from ${shortName(acct.name)}` : "";
-    void undo(acct?.id ?? "", it).then((r) => {
+    void undo(acct?.id ?? "", target).then((r) => {
       if (r.ok)
         patch(it.key, {
           state: "undone",
@@ -634,12 +635,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         <ReceiptLine
           row={it}
           canWrite={canWrite}
-          onTakeBack={
-            it.state === "filed" &&
-            (it.noteIds?.length || it.filingId || it.grab?.accounts.length)
-              ? () => takeBack(it)
-              : undefined
-          }
+          onTakeBack={takeBackTarget(it) ? () => takeBack(it) : undefined}
           onClear={receipts.settled(it) ? () => receipts.dismiss(it.key) : undefined}
           ahead={isQueued(it) ? waitAhead(items, it.key) : undefined}
         />

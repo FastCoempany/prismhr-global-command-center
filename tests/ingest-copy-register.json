@@ -202,10 +202,7 @@
       "use client",
       "✕ close"
     ],
-    "src/app/intranet/page.tsx": [
-      "Sign in",
-      "Sign in to continue. X."
-    ],
+    "src/app/intranet/page.tsx": ["Sign in", "Sign in to continue. X."],
     "src/app/intranet/pastes/page.tsx": [
       "Back to the room",
       "Every paste, verbatim",
@@ -269,13 +266,8 @@
       "↩ take it back",
       "⇪ Files"
     ],
-    "src/app/room/filing-actions.ts": [
-      "use server"
-    ],
-    "src/app/room/ingest/hand-off.ts": [
-      "Send-it paste",
-      "use client"
-    ],
+    "src/app/room/filing-actions.ts": ["use server"],
+    "src/app/room/ingest/hand-off.ts": ["Send-it paste", "use client"],
     "src/app/room/ingest/held.tsx": [
       "A X address is in the text.",
       "A file the reader can't open. Pick its account for the vault.",
@@ -324,6 +316,7 @@
       "Show what this grab filed",
       "Show what was taken back",
       "Take back everything this filing wrote",
+      "Take back the earlier filing so this one can file",
       "The reader was down. Only the text filed.",
       "Their promise",
       "Their promises",
@@ -346,15 +339,9 @@
       "Not filed here. Backed up. Drop the export in the Chute.",
       "use client"
     ],
-    "src/app/room/ingest/use-receipts.ts": [
-      "use client"
-    ],
-    "src/app/room/ingest/use-undo.ts": [
-      "use client"
-    ],
-    "src/app/room/ingest/use-verdict.ts": [
-      "use client"
-    ],
+    "src/app/room/ingest/use-receipts.ts": ["use client"],
+    "src/app/room/ingest/use-undo.ts": ["use client"],
+    "src/app/room/ingest/use-verdict.ts": ["use client"],
     "src/app/room/pipeline-actions.ts": [
       "Antaeus Coe",
       "no second record",
@@ -393,10 +380,7 @@
       "the file again for X",
       "✨ Read & file"
     ],
-    "src/app/room/route-actions.ts": [
-      "Read-only session.",
-      "use server"
-    ],
+    "src/app/room/route-actions.ts": ["Read-only session.", "use server"],
     "src/app/room/vault-actions.ts": [
       "No file arrived. Drop it again.",
       "Read-only session.",
@@ -412,14 +396,8 @@
       "The file held no readable rows.",
       "Uploading slice batch X of X…"
     ],
-    "src/lib/ingest/carry.ts": [
-      "The text didn't arrive whole. Try again."
-    ],
-    "src/lib/ingest/fanout.ts": [
-      "completion filed",
-      "from X paste",
-      "✓ XX Done X."
-    ],
+    "src/lib/ingest/carry.ts": ["The text didn't arrive whole. Try again."],
+    "src/lib/ingest/fanout.ts": ["completion filed", "from X paste", "✓ XX Done X."],
     "src/lib/ingest/grab.ts": [
       "Filing failed partway. Check the account page.X",
       "Nothing recognizable to file.",
@@ -447,6 +425,7 @@
       "“X” matches X's initials.",
       "“X” points to X."
     ],
+    "src/lib/ingest/today-filings.ts": ["☰ Call transcript"],
     "src/lib/ingest/vault.ts": [
       "The backup didn't finish. Drop it again.",
       "The upload broke off. Drop it again."
@@ -521,10 +500,6 @@
       "The scroll stopped at its safety ceiling. Run it again from further up and I'll take the rest.",
       "X already in the brain, so I skipped those."
     ],
-    "src/lib/intranet/store.ts": [
-      " from X",
-      "Got it. X messagesX.",
-      "Sent to the brain."
-    ]
+    "src/lib/intranet/store.ts": [" from X", "Got it. X messagesX.", "Sent to the brain."]
   }
 }
