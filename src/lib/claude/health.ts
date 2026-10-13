@@ -31,6 +31,16 @@ export function claudeAvailable(): boolean {
   return claudeConfigured() && !claudeDead();
 }
 
+/** Why a gate reads closed, in words for the server log: no key at all, or a
+ *  key a recent call proved dead (invalid, out of credits, a missing
+ *  workspace id), latched off for ten minutes. "" while the gate is open. */
+export function claudeDownReason(): string {
+  if (!claudeConfigured()) return "no API key is configured";
+  if (claudeDead())
+    return "a call in the last ten minutes failed on the key itself (invalid, out of credits, or a missing workspace id), so every model call is off until the latch expires";
+  return "";
+}
+
 export function markClaudeDown(): void {
   downAt = Date.now();
 }

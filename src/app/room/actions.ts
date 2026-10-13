@@ -16,7 +16,7 @@
 import { after } from "next/server";
 import { actedSweep } from "@/lib/activity/run";
 import { rulesRead } from "@/lib/intel/rules-read";
-import { claudeClient, claudeAvailable } from "@/lib/claude/health";
+import { claudeClient, claudeAvailable, claudeDownReason } from "@/lib/claude/health";
 import { MODEL_TRANSCRIBE } from "@/lib/intranet/doctrine";
 import { getAppAccess } from "@/lib/auth";
 import { hasDatabaseEnv } from "@/lib/db";
@@ -65,6 +65,7 @@ import { digestForCardName } from "@/lib/intel/digest";
 import {
   aiCleanAvailable,
   aiCleanTimeline,
+  describeReadError,
   dropNoiseEntries,
 } from "@/lib/intel/ai-clean";
 import {
@@ -546,17 +547,28 @@ async function fileClaimed({
   // A read that fails degrades to the rule parser rather than losing the
   // operator's text — but it says so, because a paste filed WITHOUT the read is
   // a paste that opened no actions and asked no questions.
+  // Either way the server log says why, so "the reader was down" on a
+  // receipt can be traced to its cause: no key, a key latched dead, a
+  // timeout, an overload, a refusal, a truncated answer.
   let readFailed = false;
-  if (!aiCleanAvailable()) readFailed = true;
+  if (!aiCleanAvailable()) {
+    readFailed = true;
+    console.error(`[reader] skipped for ${acct.name}: ${claudeDownReason()}`);
+  }
   if (aiCleanAvailable()) {
+    const startedAt = Date.now();
     try {
       read = await aiCleanTimeline(text, now);
       entries = read.entries;
       how = "ai";
-    } catch {
+    } catch (e) {
       read = null;
       entries = [];
       readFailed = true;
+      const secs = Math.round((Date.now() - startedAt) / 1000);
+      console.error(
+        `[reader] failed for ${acct.name} after ${secs}s on ${text.length} characters: ${describeReadError(e)}`,
+      );
     }
   }
   if (entries.length === 0) {
