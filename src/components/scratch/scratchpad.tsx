@@ -28,6 +28,7 @@ import {
 import {
   dayLabelFor,
   editOutcome,
+  padKey,
   timeLabelFor,
   type EditEvent,
   type ScratchCursor,
@@ -72,6 +73,12 @@ const readFeed = async (): Promise<Awaited<ReturnType<typeof padAskFeed>>> => {
   }
 };
 
+/** A box grows with its lines, so a Shift+Enter line shows as it is typed. */
+function fit(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 /** Where the next page starts: the last line of the page just read. */
 const cursorOf = (page: ScratchLine[]): ScratchCursor | null => {
   const last = page[page.length - 1];
@@ -88,8 +95,8 @@ export function Scratchpad() {
   const [askNote, setAskNote] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [pulse, setPulse] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const askRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const askRef = useRef<HTMLTextAreaElement | null>(null);
   const fetched = useRef(false);
   // Paging (pass 8 X8: nothing on the paper ever dies). The pad reads a page
   // at a time; EARLIER at the foot reads the next. The cursor is the last
@@ -198,7 +205,10 @@ export function Scratchpad() {
     setBusy(false);
     if (r.ok && r.line) {
       setLines((xs) => [r.line!, ...(xs ?? [])]);
-      if (inputRef.current) inputRef.current.value = "";
+      if (inputRef.current) {
+        inputRef.current.value = "";
+        fit(inputRef.current);
+      }
     } else setNote(r.reason ?? "The line didn't keep.");
   };
 
@@ -226,9 +236,11 @@ export function Scratchpad() {
   // writes what it says to keep. The timestamp and the seat never move — only
   // the words.
   const [editId, setEditId] = useState("");
-  const editRef = useRef<HTMLInputElement | null>(null);
+  const editRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
-    if (editId) editRef.current?.focus();
+    if (!editId || !editRef.current) return;
+    fit(editRef.current);
+    editRef.current.focus();
   }, [editId]);
 
   const settleEdit = async (id: string, event: EditEvent) => {
@@ -307,7 +319,10 @@ export function Scratchpad() {
     const p: Pending = { q, at: Date.now() };
     setPending(p);
     writePending(p);
-    if (askRef.current) askRef.current.value = "";
+    if (askRef.current) {
+      askRef.current.value = "";
+      fit(askRef.current);
+    }
     void padAsk(q)
       .then((r) => {
         setPending(null);
@@ -395,12 +410,16 @@ export function Scratchpad() {
           {reg === "paper" ? (
             <>
               <div className={styles.in}>
-                <input
+                <textarea
                   ref={inputRef}
+                  rows={1}
                   placeholder="Write it. Enter keeps it."
                   maxLength={500}
+                  onInput={(e) => fit(e.currentTarget)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") void keep();
+                    if (padKey(e.nativeEvent) !== "keep") return;
+                    e.preventDefault();
+                    void keep();
                   }}
                 />
               </div>
@@ -416,14 +435,19 @@ export function Scratchpad() {
                     <div className={styles.row}>
                       <span className={styles.tm}>{timeLabelFor(l.at)}</span>
                       {editId === l.id ? (
-                        <input
+                        <textarea
                           ref={editRef}
+                          rows={1}
                           className={styles.editIn}
                           defaultValue={l.body}
                           maxLength={500}
                           aria-label="Edit the line"
+                          onInput={(e) => fit(e.currentTarget)}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") void settleEdit(l.id, "enter");
+                            if (padKey(e.nativeEvent) === "keep") {
+                              e.preventDefault();
+                              void settleEdit(l.id, "enter");
+                            }
                             if (e.key === "Escape") {
                               e.stopPropagation();
                               void settleEdit(l.id, "escape");
@@ -512,13 +536,17 @@ export function Scratchpad() {
           ) : (
             <>
               <div className={styles.in}>
-                <input
+                <textarea
                   ref={askRef}
+                  rows={1}
                   placeholder="Ask the app. Enter sends it."
                   maxLength={300}
                   disabled={!!pending}
+                  onInput={(e) => fit(e.currentTarget)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") ask();
+                    if (padKey(e.nativeEvent) !== "keep") return;
+                    e.preventDefault();
+                    ask();
                   }}
                 />
               </div>
