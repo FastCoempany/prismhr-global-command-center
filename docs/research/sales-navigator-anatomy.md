@@ -133,7 +133,15 @@ operator-gated lanes:
    Setting book of business (D0) is what turns this lane on for the
    whole 118-list. The closest thing to automatic that stays inside
    LinkedIn's terms and the app's doctrine.
-3. **Nothing else.** No API, no scraping, no headless browser.
+3. **Two on-screen grabs (2026-10-14).** "▤ Grab Sales Nav alerts" copies
+   the Home tab's alerts already on screen, and "▤ Grab Sales Nav people"
+   copies one account's Relationship explorer cards already on screen.
+   Neither scrolls, pages or clicks. They file under SALESNAV ALERTS and
+   SALESNAV PEOPLE heads, which the intent read never takes; a lead's post
+   or job move becomes a Groundwork move
+   (docs/plans/salesnav-people-signals-2026-10-14.md).
+4. **Nothing else.** No API, no scraping, no headless browser, nothing on a
+   schedule.
 
 Stored form: a dated signal on the account — source `salesnav` — which
 is what the queue ranking reads. **Readings decay:** after ~7 days

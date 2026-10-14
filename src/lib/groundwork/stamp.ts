@@ -35,6 +35,9 @@ type StampContext = {
   gemWho?: string;
   /** The support cases behind engaged-never-introduced, null when none. */
   supportCases?: number | null;
+  /** post-trigger and new-in-seat: the person Sales Navigator named, whole,
+   *  "" when none reads. */
+  personName?: string;
 };
 
 const clip = (s: string, n: number) =>
@@ -76,6 +79,20 @@ export function stampSubtext(ruleId: QueueRuleId | string, ctx: StampContext): s
       return h
         ? `SENT THE NEWS NOTE · ${clip(h.toUpperCase(), 46)}`
         : "SENT A NOTE ABOUT THEIR NEWS";
+    }
+    case "post-trigger": {
+      // The move said "Comment on {name}'s post." over "Posted {day}."
+      const n = (ctx.personName ?? "").trim();
+      return n
+        ? `WROTE TO ${clip(n.toUpperCase(), 40)} ABOUT THE POST`
+        : "WROTE TO THEM ABOUT THE POST";
+    }
+    case "new-in-seat": {
+      // The move said "Meet {name}." over "New in seat {day}."
+      const n = (ctx.personName ?? "").trim();
+      return n
+        ? `WROTE TO ${clip(n.toUpperCase(), 40)} · NEW IN SEAT`
+        : "WROTE TO THE NEW PERSON IN SEAT";
     }
     case "intent-warm": {
       // Plain words (pass 9; the plain-speech law bans coined phrasing): the

@@ -24,7 +24,14 @@ import type { AccountRead } from "@/lib/record/read";
 import { whoseMoveFrom, type WhoseMove } from "@/lib/record/whose-move";
 import { researchGeneratedAt } from "@/lib/book/research";
 import { proximityRank } from "./proximity";
-import { intentFor, ridingLaneDate, type IntentSignal } from "./signals";
+import {
+  intentFor,
+  intentRise,
+  peopleSignalsFor,
+  ridingLaneDate,
+  type IntentSignal,
+  type PersonSignal,
+} from "./signals";
 import {
   engagedNeverIntroduced,
   intentWarm,
@@ -40,6 +47,8 @@ export { BAND_TABLE, bandAt, chicagoMinutes, currentBand, type Band } from "./ba
 export type QueueRuleId =
   | "seated"
   | "wire-trigger"
+  | "post-trigger"
+  | "new-in-seat"
   | "intent-warm"
   | "riding-lane"
   | "silence-bump"
@@ -62,6 +71,9 @@ export type QueueItem = {
   owed: string; // the mono column — the composed thing's readiness label
   carried: boolean; // surfaced yesterday, left unworked
   intent: IntentSignal | null;
+  /** The person a people rule names (post-trigger, new-in-seat): Sales
+   *  Navigator's own reading of who posted or who is new in seat. */
+  person?: PersonSignal;
 };
 
 export const QUEUE_CAP = 6;
@@ -267,6 +279,23 @@ export const RULE_SLOT_CAP = 2;
 
 const DAY = 86_400_000;
 
+// Whether the operator stamped this move worked on any day since `sinceIso`
+// (the done keys, groundwork:<day>:<account>:<rule>). A people move rides a
+// person signal that stays true for days; once worked, it stays worked
+// until the signal itself changes (2026-10-14).
+const workedSince = (inp: QueueInput, mk: string, sinceIso: string): boolean => {
+  const since = userDayKey(sinceIso);
+  for (const k of inp.doneKeys ?? []) {
+    const m = /^groundwork:(\d{4}-\d{2}-\d{2}):(.+)$/.exec(k);
+    if (m && m[2] === mk && m[1]! >= since) return true;
+  }
+  return false;
+};
+
+/** Words in a line, as the writing canon counts them. */
+const wordCount = (line: string): number =>
+  line.trim().split(/\s+/).filter(Boolean).length;
+
 // A date in prose, day-only or full ISO — month name spelled out.
 const monthDay = (iso: string) => {
   const dayOnly = iso.length === 10;
@@ -282,6 +311,8 @@ const monthDay = (iso: string) => {
 const BAND_OF: Record<QueueRuleId, Band> = {
   seated: "now",
   "wire-trigger": "now",
+  "post-trigger": "now",
+  "new-in-seat": "eleven",
   "second-record-gem": "now",
   "engaged-never-introduced": "eleven",
   "silence-bump": "now",
@@ -304,6 +335,8 @@ export const QUEUE_RULE_IDS = Object.keys(BAND_OF) as QueueRuleId[];
 const HEAT_OF: Record<QueueRuleId, 1 | 2 | 3> = {
   seated: 3,
   "wire-trigger": 3,
+  "post-trigger": 3,
+  "new-in-seat": 3,
   "second-record-gem": 3,
   "engaged-never-introduced": 2,
   "intent-warm": 3,
@@ -411,25 +444,80 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
       }
     }
 
+    // post-trigger (87) and new-in-seat (86): a person at the account, by
+    // Sales Navigator's own reading (2026-10-14). A lead who posted inside
+    // POST_FRESH_DAYS is a door to answer today, in the send band. A lead
+    // new in seat, by the accounts list's "Recently hired" badge or a job
+    // alert, is a person to meet, in the people band. One of each per
+    // account, the newest; the name is used as given.
+    const people = peopleSignalsFor(notes, now, p.name);
+    const post = people.find((s) => s.kind === "posted");
+    if (post && !workedSince(inp, `${p.id}:post-trigger`, post.at)) {
+      // The name as given, always; a name too long for the six-word line
+      // rides the reason instead of being cut (names are never shortened).
+      const named = `Message ${post.name}.`;
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "post-trigger",
+        weight: 87,
+        band: BAND_OF["post-trigger"],
+        action: wordCount(named) <= 6 ? named : "Message the person who posted.",
+        reason: `Posted ${monthDay(post.at)}.`,
+        owed: "note ready",
+        carried: false,
+        intent,
+        person: post,
+      });
+    }
+    const seat = people.find((s) => s.kind === "new-in-seat");
+    if (seat && !workedSince(inp, `${p.id}:new-in-seat`, seat.at)) {
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "new-in-seat",
+        weight: 86,
+        band: BAND_OF["new-in-seat"],
+        action: `Meet ${seat.name}.`,
+        // A badge carries no hire date: the day is the first grab that
+        // showed it, and the line says so.
+        reason: seat.seen
+          ? `New in seat, seen ${monthDay(seat.at)}.`
+          : `New in seat ${monthDay(seat.at)}.`,
+        owed: "note ready",
+        carried: false,
+        intent,
+        person: seat,
+      });
+    }
+
     // intent-warm (84): warm on EITHER store, merged by latest and never
     // double-counted — the weekly export's open/click tallies (3·clicks +
     // 1·opens, 10-day half-life, threshold 6) or a fresh High reading from
-    // the pasted SN grab. One candidate either way.
+    // the pasted SN grab. One candidate either way. A reading that ROSE
+    // since an earlier day's grab (Moderate to High, none to Moderate, or
+    // RISE_ACTIVITIES more activities) fires too, at 85, and its reason is
+    // the rise (2026-10-14): a move outranks a standing High.
     const sr = inp.secondById?.get(p.id);
     const warm = intentWarm(sr, now);
-    if (warm || intent?.level === "high") {
+    const rise = intentRise(notes, now);
+    if (warm || intent?.level === "high" || rise) {
       candidates.push({
         accountId: p.id,
         name: p.name,
         ruleId: "intent-warm",
-        weight: 84,
+        weight: rise ? 85 : 84,
         band: BAND_OF["intent-warm"],
         action: "Send them a note.",
-        reason: warm
-          ? warm.opens30 > 0
-            ? `They opened ${warm.opens30} of ours.`
-            : `They clicked ${warm.clicks30} of ours.`
-          : "Their people are reading us.",
+        reason: rise
+          ? rise.from !== rise.to
+            ? `Intent rose to ${rise.to === "high" ? "High" : "Moderate"} ${monthDay(rise.at)}.`
+            : `Sales Nav activity rose to ${rise.toActivities}.`
+          : warm
+            ? warm.opens30 > 0
+              ? `They opened ${warm.opens30} of ours.`
+              : `They clicked ${warm.clicks30} of ours.`
+            : "Their people are reading us.",
         owed: "note ready",
         carried: false,
         intent,

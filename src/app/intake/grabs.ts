@@ -123,8 +123,35 @@ function salesNavBookmarklet(origin: string): string {
   return `javascript:${js}`;
 }
 
+// Grabs the Sales Navigator Home tab's alerts feed: the alerts already on
+// screen, nothing more (2026-10-14). It never scrolls, never pages and never
+// clicks; it reads the list the operator has open, the way reading the
+// screen would. Each alert is one row under the SALESNAV ALERTS head, so the
+// pipeline's grab split (src/lib/ingest/grab.ts) files each one on the
+// account its company line names, and an alert that names no book account
+// files nothing. A lead who posted or moved jobs then reads as a person
+// signal on the account (src/lib/groundwork/signals.ts, peopleSignalsFor).
+// An alert is an element holding a relative time ("2 days") and no smaller
+// such element; the action buttons' words are dropped.
+function salesNavAlertsBookmarklet(origin: string): string {
+  const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the Sales Navigator Home tab first. Its alerts feed is what gets captured.');return}const REL=/^\\d{1,3}\\s*(m|min|mins|minutes?|h|hrs?|hours?|d|days?|w|wks?|weeks?|mo|months?)(\\s+ago)?$/i;const DROP=/^(view|view growth insights|view insights|bookmark|dismiss|more|save)$/i;const root=document.querySelector('main')||document.body;const cands=[...root.querySelectorAll('li,article')].filter((el)=>{const t=(el.innerText||'').trim();return t&&t.length<1500&&t.split('\\n').some((l)=>REL.test(l.trim()))});const items=cands.filter((el)=>!cands.some((o)=>o!==el&&el.contains(o)));const seen=new Set();const out=[];for(const el of items){const x=el.innerText.split('\\n').map((l)=>l.trim()).filter((l)=>l&&!DROP.test(l)).join('\\n');if(x&&!seen.has(x)){seen.add(x);out.push(x)}}if(!out.length){alert('No alerts on screen. Open Home, then All alerts.');return}const t='SALESNAV ALERTS - captured '+new Date().toLocaleString()+' - '+out.length+' alerts\\n\\n'+out.join('\\n\\n----\\n\\n');try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C:',t.slice(0,4000))}window.open('${origin}/room','_blank')})()`;
+  return `javascript:${js}`;
+}
+
+// Grabs one account's Relationship explorer: the people cards on screen,
+// nothing more (2026-10-14). No scrolling, no paging, no clicks. Every card
+// is one row that starts with the account's own name from the page heading,
+// so the pipeline's grab split files every card on that account and nothing
+// else; the head is SALESNAV PEOPLE, which the intent read never takes. A
+// card is the smallest element holding a connection degree and a Save
+// button's word; the buttons' words are dropped.
+function salesNavPeopleBookmarklet(origin: string): string {
+  const js = `(async()=>{if(location.hostname.indexOf('linkedin.com')<0||location.pathname.indexOf('/sales')<0){alert('Open the account in Sales Navigator, then its Relationship explorer.');return}const name=((document.querySelector('h1')||{}).innerText||'').trim().split('\\n')[0];if(!name){alert('Open the account page first. Its name is what the cards file under.');return}let sec=[...document.querySelectorAll('h1,h2,h3')].find((h)=>/relationship explorer/i.test(h.innerText||''));for(let i=0;i<8&&sec&&(sec.innerText||'').length<300;i++)sec=sec.parentElement;sec=sec||document.querySelector('main')||document.body;const DEG=/(1st|2nd|3rd)(?![a-z])/;const DROP=/^(save|saved|message|more|\\.\\.\\.|…)$/i;const cands=[...sec.querySelectorAll('li,div,article')].filter((el)=>{const t=(el.innerText||'').trim();return t.length>10&&t.length<700&&DEG.test(t)&&/\\bsave/i.test(t)});const cards=cands.filter((el)=>!cands.some((o)=>o!==el&&el.contains(o)));const seen=new Set();const out=[];for(const el of cards){const x=el.innerText.split('\\n').map((l)=>l.trim()).map((l)=>l.replace(/^Save(?=[A-Z])/,'').replace(/(?<=[a-z])Save$/,'').trim()).filter((l)=>l&&!DROP.test(l)).join('\\n');if(x&&!seen.has(x)){seen.add(x);out.push('Account: '+name+'\\n'+x)}}if(!out.length){alert('No people cards on screen. Open the Relationship explorer section.');return}const t='SALESNAV PEOPLE - captured '+new Date().toLocaleString()+' - '+name+' - '+out.length+' people\\n\\n'+out.join('\\n\\n----\\n\\n');try{await navigator.clipboard.writeText(t)}catch(e){window.prompt('Auto-copy was blocked. Press Ctrl+C:',t.slice(0,4000))}window.open('${origin}/room','_blank')})()`;
+  return `javascript:${js}`;
+}
+
 export type Tool = {
-  key: "outlook" | "sf" | "teams" | "salesnav";
+  key: "outlook" | "sf" | "teams" | "salesnav" | "salesnav-alerts" | "salesnav-people";
   glyph: string;
   name: string;
   where: string;
@@ -132,6 +159,10 @@ export type Tool = {
   takes: string;
   refuses: string;
   build: (origin: string) => string;
+  /** The Sales Nav grabs share one card on the shelf (2026-10-14): three
+   *  drag links, and what each takes and refuses one click down, so the
+   *  shelf's arrival budget holds (the click-depth law). */
+  group?: "salesnav";
 };
 
 export const TOOLS: Tool[] = [
@@ -182,5 +213,32 @@ export const TOOLS: Tool[] = [
     refuses:
       "Any page that isn't Sales Navigator. Keep the tab in front while it walks the list; a navy button hands you the copy when it finishes.",
     build: salesNavBookmarklet,
+    group: "salesnav",
+  },
+  {
+    key: "salesnav-alerts",
+    glyph: "▤",
+    name: "Sales Nav alerts",
+    where: "home tab",
+    label: "▤ Grab Sales Nav alerts",
+    takes:
+      "The alerts already on screen in the Home tab's feed. It never scrolls or clicks. It opens the HomeRoom. Paste it into any account's ⚡ box there. Each alert files on the account its company line names, where a post or a job move becomes a move on Groundwork.",
+    refuses:
+      "Any page that isn't Sales Navigator, and alerts you haven't scrolled to. Scroll the feed as far back as you want first; what is on screen is what it takes.",
+    build: salesNavAlertsBookmarklet,
+    group: "salesnav",
+  },
+  {
+    key: "salesnav-people",
+    glyph: "▤",
+    name: "Sales Nav people",
+    where: "account page",
+    label: "▤ Grab Sales Nav people",
+    takes:
+      "The people cards on screen in one account's Relationship explorer, with titles, CRM flags and warm marks. It never scrolls or clicks. It opens the HomeRoom. Paste it into any account's ⚡ box there. Every card files on the account the page names.",
+    refuses:
+      "Any page that isn't a Sales Navigator account page, and cards past the section's first screen. Set the explorer's filters first; what is on screen is what it takes.",
+    build: salesNavPeopleBookmarklet,
+    group: "salesnav",
   },
 ];

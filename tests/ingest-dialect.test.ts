@@ -113,6 +113,8 @@ describe("the head alphabet — every producer head sniffs to its dialect", () =
     assert.ok(by("outlook").includes(`${HEADS.outlook} - captured `));
     assert.ok(by("teams").includes(`${HEADS.teams} - `));
     assert.ok(by("salesnav").includes(`${HEADS.salesnav} ACCOUNTS - captured `));
+    assert.ok(by("salesnav-alerts").includes(`${HEADS.salesnav} ALERTS - captured `));
+    assert.ok(by("salesnav-people").includes(`${HEADS.salesnav} PEOPLE - captured `));
     assert.deepEqual(
       sniffHead("OUTLOOK THREAD - captured 9/25/2026, 10:00:00 AM\n\nhi"),
       {
@@ -202,16 +204,9 @@ describe("the head alphabet — every producer head sniffs to its dialect", () =
  *  paste bases with the model's suffix, and the empty column. */
 const ALL_LITERALS: string[] = [
   ...Object.values(SOURCES),
-  ...[
-    "sf",
-    "outlook",
-    "teams",
-    "call",
-    "salesnav",
-    "spreadsheet",
-    "doc",
-    "typed",
-  ].map((s) => `${s}-ai`),
+  ...["sf", "outlook", "teams", "call", "salesnav", "spreadsheet", "doc", "typed"].map(
+    (s) => `${s}-ai`,
+  ),
   "",
 ];
 

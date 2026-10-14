@@ -520,7 +520,7 @@ describe("no rule stamps with an empty label (D27)", () => {
 
   test("no stamp is a bare noun: each opens on what the operator did", () => {
     const VERB =
-      /^(SENT|NUDGED|REVIVED|BRIEFED|REFRESHED|RAN|DUG|ASKED|WORKED|ACTED|OPENED)\b/;
+      /^(SENT|NUDGED|REVIVED|BRIEFED|REFRESHED|RAN|DUG|ASKED|WORKED|ACTED|OPENED|WROTE)\b/;
     for (const id of QUEUE_RULE_IDS) {
       const sub = stampSubtext(id, {});
       assert.match(sub, VERB, `${id} stamps ${sub}`);
@@ -590,7 +590,7 @@ describe("Groundwork is outbound only: no rule stages a reactive move (A9.10)", 
   // The verbs the rules' own lines open on: each starts motion the operator
   // initiates. A seat's line is the operator's own act from the sheet, and a
   // gem's line is the verified act the harness filed; both pass through.
-  const OUTBOUND = /^(Send|Open|Ask|Revive|Refresh|Run|Find|Brief)\b/;
+  const OUTBOUND = /^(Send|Open|Ask|Revive|Refresh|Run|Find|Brief|Message|Meet)\b/;
   const ids = {
     seat: "R0000000000000001",
     wire: "R0000000000000002",
@@ -603,6 +603,8 @@ describe("Groundwork is outbound only: no rule stages a reactive move (A9.10)", 
     eni: "R0000000000000009",
     fresh: "R0000000000000010",
     roster: "R0000000000000011",
+    post: "R0000000000000012",
+    hire: "R0000000000000013",
   };
   const AT = STALE_BOOK; // 2026-10-15, a quarter past the book sweep
   const day = (d: string) => `${d}T12:00:00Z`;
@@ -668,6 +670,26 @@ describe("Groundwork is outbound only: no rule stages a reactive move (A9.10)", 
           {
             body: "Amplify: ClearCo 10/20/2026",
             source: "salesnav-ai",
+            createdAt: day("2026-10-14"),
+          },
+        ],
+      ],
+      [
+        ids.post,
+        [
+          {
+            body: "SALESNAV ALERTS - captured 10/14/2026 - 1 alerts\n\nLead: Allie Menz shared a post\nRule 12 · Head of Client Operations\n1 day\nClients keep asking about hiring in Mexico",
+            source: "salesnav",
+            createdAt: day("2026-10-14"),
+          },
+        ],
+      ],
+      [
+        ids.hire,
+        [
+          {
+            body: "SALESNAV ACCOUNTS - captured 10/14/2026 - 1 rows collected\n\nRule 13\nNeutral\n0 activities\nDeborah Dhuy\n· 3rd\n! CRM\nDirector of Project Services\nRecently hired",
+            source: "salesnav",
             createdAt: day("2026-10-14"),
           },
         ],

@@ -551,20 +551,22 @@ describe("the Capture page is the shelf the grabs live on", () => {
       "Grab SF activity",
       "Grab Teams thread",
       "Grab Sales Nav intent",
+      "Grab Sales Nav alerts",
+      "Grab Sales Nav people",
     ]) {
       assert.ok(text.includes(g), `${g} left the shelf`);
     }
-    // One value per tool — four grabs since Sales Nav — and every grab prints
-    // both on the shelf.
-    assert.equal(TOOLS.length, 4);
+    // One value per tool — six grabs since the Sales Nav alerts and people
+    // grabs (2026-10-14) — and every grab prints both on the shelf.
+    assert.equal(TOOLS.length, 6);
     for (const t of TOOLS) {
       assert.ok(t.takes.length > 20, `${t.key} hides what it takes`);
       assert.ok(t.refuses.length > 20, `${t.key} hides its refusal`);
       assert.ok(text.includes(t.takes), `${t.key}'s takes is not on the shelf`);
       assert.ok(text.includes(t.refuses), `${t.key}'s refusal is not on the shelf`);
     }
-    assert.equal((html.match(/<b>takes<\/b>/g) ?? []).length, 4);
-    assert.equal((html.match(/<b>refuses<\/b>/g) ?? []).length, 4);
+    assert.equal((html.match(/<b>takes<\/b>/g) ?? []).length, 6);
+    assert.equal((html.match(/<b>refuses<\/b>/g) ?? []).length, 6);
   });
   test("the paste workflow is gone — filing happens at the account", async () => {
     // The old client and its tabs are no longer modules anyone can load.

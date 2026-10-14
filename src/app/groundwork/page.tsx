@@ -75,6 +75,7 @@ import { isWire } from "@/lib/ingest/dialect";
 import {
   intentFor,
   intentReadDue,
+  peopleSignalsFor,
   ridingLaneDate,
   type IntentSignal,
 } from "@/lib/groundwork/signals";
@@ -529,6 +530,21 @@ export default async function GroundworkPage({
       .slice(0, 4)
       .map((l) => l.slice(0, 160));
   };
+  // The person a people rule named (post-trigger, new-in-seat), read the way
+  // the queue read them, so the stamp names who the move named.
+  const personFor = (id: string, ruleKey: string) => {
+    const kind =
+      ruleKey === "post-trigger"
+        ? "posted"
+        : ruleKey === "new-in-seat"
+          ? "new-in-seat"
+          : "";
+    return kind
+      ? (peopleSignalsFor(accountNotes.get(id), now, getPeo(id)?.name ?? "").find(
+          (s) => s.kind === kind,
+        ) ?? null)
+      : null;
+  };
   const doneToday: DoneStamp[] = [];
   // The day's stamps, oldest first (todaysStamps): yesterday's never reach
   // today's wing.
@@ -536,7 +552,8 @@ export default async function GroundworkPage({
     const name = getPeo(st.accountId)?.name;
     if (!name) continue;
     const touch = sendToday.get(st.accountId);
-    const facts = ruleFacts(st.accountId);
+    const person = personFor(st.accountId, st.ruleKey);
+    const facts = { ...ruleFacts(st.accountId), personName: person?.name ?? "" };
     doneToday.push({
       name,
       at: clockShort(st.at),
@@ -560,7 +577,17 @@ export default async function GroundworkPage({
             }
           : st.ruleKey === "intent-warm" && facts.intentActivities
             ? { lines: grabLines(st.accountId) }
-            : null,
+            : person
+              ? {
+                  // The name the stamp carries opens to Sales Navigator's
+                  // own reading of them (the click-depth law).
+                  lines: [
+                    [person.name, person.title].filter(Boolean).join(", "),
+                    person.company,
+                    person.snippet ? `“${person.snippet}”` : "",
+                  ].filter(Boolean),
+                }
+              : null,
     });
   }
 

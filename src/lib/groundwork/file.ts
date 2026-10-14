@@ -172,6 +172,11 @@ export function buildFile(
   }
   if (p.csm && p.csm !== "Unassigned")
     people.push({ name: p.csm, title: "partner manager", flag: "csm" });
+  // A people rule's person leads the head: the move is about them, and the
+  // composed note is addressed to them (2026-10-14).
+  const person = queueItem.person;
+  if (person && !people.some((x) => x.name === person.name))
+    people.unshift({ name: person.name, title: person.title, flag: "contact" });
 
   // History — the stores' own dated lines, oldest → newest, capped (spec F7).
   const hist: FileHistoryLine[] = [];
@@ -197,6 +202,7 @@ export function buildFile(
     wireHeadline: wireMatches[0]?.headline ?? null,
     supportCases: deps.second?.supportCases,
     gem: deps.second?.gem ?? null,
+    person: queueItem.person ?? null,
   });
   // The collision guard speaks on the stage first (the chips) and rides the
   // composed thing here — the same quiet-flag pattern the CSM-thread flag
@@ -237,8 +243,14 @@ export function buildFile(
     // The relationship's email or NOTHING — the book's seed must never ride
     // under a letter greeting the record's person (Ted doctrine). No address
     // beats the wrong address; the draft button simply doesn't render.
+    // A people rule's note goes to the person Sales Navigator named, so the
+    // relationship's address is the wrong one unless it is the same person.
     contactEmail:
-      rel.source === "record" ? rel.email : rel.email || (p.contactEmail ?? ""),
+      person && person.name !== rel.name
+        ? ""
+        : rel.source === "record"
+          ? rel.email
+          : rel.email || (p.contactEmail ?? ""),
     russ: paragraphFor(p, { intel, intent, queueItem, lastOutbound: deps.lastOutbound }),
     history: hist.slice(-HISTORY_CAP),
   };
