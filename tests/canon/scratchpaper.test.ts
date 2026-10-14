@@ -16,6 +16,7 @@ import {
   SCRATCH_NS,
   SCRATCH_PAGE,
   editOutcome,
+  padKey,
   padQuestion,
   restoreLine,
   restoreMove,
@@ -123,11 +124,17 @@ describe("the in-place edit: Enter keeps, Escape puts it back, click-away keeps 
   });
 
   test("Escape reverts to the original, whatever the draft held", () => {
-    assert.deepEqual(editOutcome("escape", "call Dana about the Canada quote", original), {
+    assert.deepEqual(
+      editOutcome("escape", "call Dana about the Canada quote", original),
+      {
+        action: "revert",
+        text: original,
+      },
+    );
+    assert.deepEqual(editOutcome("escape", "", original), {
       action: "revert",
       text: original,
     });
-    assert.deepEqual(editOutcome("escape", "", original), { action: "revert", text: original });
   });
 
   test("blur keeps the draft: a click-away never eats your words", () => {
@@ -156,8 +163,14 @@ describe("the in-place edit: Enter keeps, Escape puts it back, click-away keeps 
   });
 
   test("a blanked draft puts the line back: the paper keeps no empty line", () => {
-    assert.deepEqual(editOutcome("enter", "   ", original), { action: "revert", text: original });
-    assert.deepEqual(editOutcome("blur", "", original), { action: "revert", text: original });
+    assert.deepEqual(editOutcome("enter", "   ", original), {
+      action: "revert",
+      text: original,
+    });
+    assert.deepEqual(editOutcome("blur", "", original), {
+      action: "revert",
+      text: original,
+    });
   });
 });
 
@@ -497,5 +510,41 @@ describe("a struck line is restorable by ↺ (A7.14)", () => {
     ];
     assert.equal(await restoreLine(clientOver(rows), "line-1"), 0);
     assert.equal(rows[0].accountId, SCRATCH_NS);
+  });
+});
+
+// 2026-10-14: Enter keeps a line, Shift+Enter starts a new line inside it,
+// and the pad keeps the break (it trims only a line's ends).
+describe("Shift+Enter starts a new line; Enter keeps", () => {
+  test("the one key rule the write, edit and ask boxes read", () => {
+    assert.equal(padKey({ key: "Enter", shiftKey: false }), "keep");
+    assert.equal(padKey({ key: "Enter", shiftKey: true }), "newline");
+    assert.equal(padKey({ key: "a", shiftKey: false }), null);
+    // Enter that only finishes an input-method composition files nothing.
+    assert.equal(padKey({ key: "Enter", shiftKey: false, isComposing: true }), null);
+  });
+
+  test("a line keeps its breaks through the row and the edit", () => {
+    const row = scratchRow("  Call Pat.\nThen the Ontario run.  ", new Date());
+    assert.equal(row?.body, "Call Pat.\nThen the Ontario run.");
+    assert.deepEqual(editOutcome("enter", "One.\nTwo.", "One."), {
+      action: "keep",
+      text: "One.\nTwo.",
+    });
+  });
+
+  test("all three boxes are text areas that read the rule", () => {
+    const src = readFileSync(
+      join(process.cwd(), "src/components/scratch/scratchpad.tsx"),
+      "utf8",
+    );
+    assert.equal((src.match(/<textarea/g) ?? []).length, 3);
+    assert.equal((src.match(/<input\b/g) ?? []).length, 0);
+    assert.equal((src.match(/padKey\(e\.nativeEvent\)/g) ?? []).length, 3);
+    const css = readFileSync(
+      join(process.cwd(), "src/components/scratch/scratchpad.module.css"),
+      "utf8",
+    );
+    assert.match(css, /\.body \{[^}]*white-space: pre-wrap;/);
   });
 });

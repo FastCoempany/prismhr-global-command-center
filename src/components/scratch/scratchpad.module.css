@@ -133,7 +133,8 @@
   padding: 10px 14px;
   border-bottom: 1px solid rgba(10, 28, 64, 0.12);
 }
-.in input {
+.in input,
+.in textarea {
   flex: 1;
   border: 1px solid rgba(10, 28, 64, 0.22);
   border-radius: 7px;
@@ -143,9 +144,19 @@
   color: #0a1c40;
   background: #fff;
 }
-.in input:focus-visible {
+.in input:focus-visible,
+.in textarea:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 1px;
+}
+
+/* The boxes are text areas so Shift+Enter starts a new line; they grow with
+   their lines (fit, scratchpad.tsx) instead of scrolling or being dragged. */
+.in textarea,
+.editIn {
+  resize: none;
+  overflow: hidden;
+  line-height: 1.4;
 }
 
 .note {
@@ -190,6 +201,8 @@
   flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
+  /* A Shift+Enter line keeps its breaks on the paper. */
+  white-space: pre-wrap;
 }
 .del {
   flex: none;

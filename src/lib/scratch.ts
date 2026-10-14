@@ -157,6 +157,19 @@ export async function scratchPage(
 // paper keeps no empty line.
 export type EditEvent = "enter" | "escape" | "blur";
 
+/** What a key does in the pad's boxes (2026-10-14): Enter keeps the line,
+ *  Shift+Enter starts a new line inside it, and a key that finishes an IME
+ *  composition only finishes it. The box keeps the newline; the line keeps
+ *  it too, because the pad trims only its ends. */
+export function padKey(e: {
+  key: string;
+  shiftKey: boolean;
+  isComposing?: boolean;
+}): "keep" | "newline" | null {
+  if (e.key !== "Enter" || e.isComposing) return null;
+  return e.shiftKey ? "newline" : "keep";
+}
+
 export function editOutcome(
   event: EditEvent,
   draft: string,
