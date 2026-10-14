@@ -1832,6 +1832,20 @@
   text-transform: uppercase;
   color: rgba(245, 158, 11, 0.62);
 }
+.toolFold summary {
+  cursor: pointer;
+  font-family: var(--f-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(10, 28, 64, 0.66);
+}
+.toolFold[open] summary {
+  margin-bottom: 9px;
+}
+.toolFold .toolBody + .toolBody {
+  margin-top: 12px;
+}
 .toolBody {
   display: flex;
   flex-direction: column;

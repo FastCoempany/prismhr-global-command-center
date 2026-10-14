@@ -1,6 +1,6 @@
 "use client";
 
-// Capture, the shelf. Three grabs sit side by side, equal weight, each one
+// Capture, the shelf. The grabs sit side by side, equal weight, each one
 // stating what it takes and what it refuses — a capture that quietly grabs the
 // wrong region is worse than one that declines, so the refusal is printed where
 // the operator reads it, not buried in a comment.
@@ -30,10 +30,37 @@ export function CaptureShelf({ accounts }: { accounts: Acct[] }) {
     }
   }, []);
 
+  const salesnav = TOOLS.filter((t) => t.group === "salesnav");
+  const dragOf = (t: (typeof TOOLS)[number]) => (
+    <a
+      key={t.key}
+      ref={(el) => {
+        refs.current[t.key] = el;
+      }}
+      className={styles.toolDrag}
+      title="Drag me to the bookmarks bar. Don't click here."
+    >
+      {t.label}
+      <span className={styles.toolDragRail}>drag</span>
+    </a>
+  );
+  const saysOf = (t: (typeof TOOLS)[number]) => (
+    <>
+      <span className={styles.toolTakes}>
+        <b>takes</b>
+        {t.takes}
+      </span>
+      <span className={styles.toolRefuses}>
+        <b>refuses</b>
+        {t.refuses}
+      </span>
+    </>
+  );
+
   return (
     <>
       <div className={styles.shelf}>
-        {TOOLS.map((t) => (
+        {TOOLS.filter((t) => !t.group).map((t) => (
           <article key={t.key} className={styles.tool}>
             <div className={styles.toolTop}>
               <span
@@ -46,28 +73,32 @@ export function CaptureShelf({ accounts }: { accounts: Acct[] }) {
               <span className={styles.toolName}>{t.name}</span>
               <span className={styles.toolWhere}>{t.where}</span>
             </div>
-            <a
-              ref={(el) => {
-                refs.current[t.key] = el;
-              }}
-              className={styles.toolDrag}
-              title="Drag me to the bookmarks bar. Don't click here."
-            >
-              {t.label}
-              <span className={styles.toolDragRail}>drag</span>
-            </a>
-            <div className={styles.toolBody}>
-              <span className={styles.toolTakes}>
-                <b>takes</b>
-                {t.takes}
-              </span>
-              <span className={styles.toolRefuses}>
-                <b>refuses</b>
-                {t.refuses}
-              </span>
-            </div>
+            {dragOf(t)}
+            <div className={styles.toolBody}>{saysOf(t)}</div>
           </article>
         ))}
+        {/* The Sales Nav grabs, one card (2026-10-14): the accounts list, the
+            Home tab's alerts and an account's people. What each takes and
+            refuses opens one click down, so the shelf arrives inside its
+            budget (the click-depth law). */}
+        <article className={styles.tool}>
+          <div className={styles.toolTop}>
+            <span className={styles.toolGlyph} aria-hidden="true">
+              ▤
+            </span>
+            <span className={styles.toolName}>Sales Nav</span>
+          </div>
+          {salesnav.map((t) => dragOf(t))}
+          <details className={styles.toolFold}>
+            <summary>What each takes and refuses</summary>
+            {salesnav.map((t) => (
+              <div key={t.key} className={styles.toolBody}>
+                <span className={styles.toolName}>{t.name}</span>
+                {saysOf(t)}
+              </div>
+            ))}
+          </details>
+        </article>
       </div>
 
       <div className={styles.shelfFoot}>

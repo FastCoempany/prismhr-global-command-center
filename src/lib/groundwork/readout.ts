@@ -98,7 +98,16 @@ export function paragraphFor(
   const dateIso = args.intel?.timing?.value.dateIso;
   const rule = args.queueItem?.ruleId;
 
-  if (rule === "wire-trigger") {
+  const person = args.queueItem?.person;
+  if (rule === "post-trigger" && person) {
+    bits.push(
+      `${identityClause(p)} — ${person.name}${person.title ? `, ${person.title},` : ""} posted on LinkedIn ${monthDay(person.at)}; the note answering the post is composed, addressed to them by name.`,
+    );
+  } else if (rule === "new-in-seat" && person) {
+    bits.push(
+      `${identityClause(p)} — ${person.name} is new in seat there${person.title ? ` as ${person.title}` : ""}, by Sales Navigator's own reading; the note introducing us is composed.`,
+    );
+  } else if (rule === "wire-trigger") {
     bits.push(
       `${identityClause(p)} — made the wire; the note that turns the news into a conversation is composed, addressed to them directly.`,
     );
@@ -144,15 +153,15 @@ export function paragraphFor(
     );
   } else if (args.intent) {
     bits.push(
-      `${identityClause(p)} — their people have been reading our Global material this week${args.intent.activities ? `, ${args.intent.activities} separate engagements,` : ","} unprompted${rule === "intent-warm" ? "; the note to them is composed and ready to send" : ""}.`,
+      `${identityClause(p)} — their people have been engaging with PrismHR on LinkedIn this week${args.intent.activities ? `, ${args.intent.activities} activities in Sales Navigator,` : ","} unprompted${rule === "intent-warm" ? "; the note to them is composed and ready to send" : ""}.`,
     );
   } else {
     bits.push(`${identityClause(p)} — in the book, no open conversation yet.`);
   }
 
-  if (rule === "intent-warm" && !bits[0].includes("reading our Global material")) {
+  if (rule === "intent-warm" && !bits[0].includes("engaging with PrismHR on LinkedIn")) {
     bits.push(
-      `Their people have also been reading our Global material this week, unprompted.`,
+      `Their people have also been engaging with PrismHR on LinkedIn this week, unprompted.`,
     );
   }
   if (args.intel?.incumbent?.value && dateIso) {

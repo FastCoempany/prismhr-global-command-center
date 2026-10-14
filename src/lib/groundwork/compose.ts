@@ -11,7 +11,7 @@ import type { Peo } from "@/lib/book";
 import type { DealIntel } from "@/lib/intel/types";
 import { COUNTRY_NAME, redactMoney } from "@/lib/intel/lexicon";
 import { DISCOVERY } from "@/lib/intel/discovery";
-import type { IntentSignal } from "./signals";
+import type { IntentSignal, PersonSignal } from "./signals";
 import type { QueueRuleId } from "./day";
 
 export type Composed = {
@@ -45,6 +45,18 @@ const firstName = (full: string): string => {
   return name.split(/\s+/)[0];
 };
 
+// A post's opening words for a quote: at most twelve words, cut at a word,
+// with an ellipsis when the post goes on.
+const openingWords = (snippet: string): string => {
+  const words = (snippet ?? "")
+    .replace(/(?:…|\.\.\.)$/, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length) return "";
+  return words.length > 12 ? `${words.slice(0, 12).join(" ")}…` : words.join(" ");
+};
+
 // The partner manager, named — or the plain fallback when the book has no
 // assignment (§3.5: addressed to a named person, or say who plainly).
 const pmName = (csm: string): string => {
@@ -64,6 +76,8 @@ export function composeFor(args: {
   wireHeadline?: string | null; // wire-trigger: the matched item's headline
   supportCases?: number; // engaged-never-introduced: the pulse as ammunition
   gem?: { act: string; reason: string; term: string; who: string[] } | null;
+  /** post-trigger and new-in-seat: the person Sales Navigator named. */
+  person?: PersonSignal | null;
 }): Composed {
   const {
     ruleId,
@@ -75,6 +89,7 @@ export function composeFor(args: {
     wireHeadline,
     supportCases,
     gem,
+    person,
   } = args;
   const first = firstName(contactName);
   const toContact = first
@@ -114,15 +129,56 @@ export function composeFor(args: {
           `To: ${toContact}\nSubject: Saw the news\n\n${greet} saw the news${wireHeadline ? `: ${wireHeadline}` : ` about ${account.name}`}. A move like that usually puts people and payroll questions on the table across borders, and that is the seam Global exists for. One question while plans are still forming: ${relayLine("fp-where").toLowerCase()} If a walkthrough is faster than email, name a slot and I'll bring answers. On ${where}: the setup is a capability you switch on, not a project you buy.`,
         ),
       };
+    case "post-trigger": {
+      // The lead posted; the note is a direct message about the post, to the
+      // person who wrote it, by name. It quotes only the post's opening
+      // words, cut at a word, and claims nothing else about it.
+      const who = person?.name ?? "";
+      const pFirst = firstName(who);
+      const snippet = openingWords(person?.snippet ?? "");
+      return {
+        kind: "send-draft",
+        label: pFirst ? `Copy the message — to ${pFirst}` : "Copy the message",
+        to: who
+          ? `${who}${person?.title ? `, ${person.title}` : ""}. A LinkedIn message.`
+          : "the person who posted. A LinkedIn message.",
+        payload: redactMoney(
+          `To: ${who || "the person who posted"}\n\n${pFirst ? `Hi ${pFirst} —` : "Hi —"} saw your post${snippet ? ` about "${snippet}"` : ""}. I work on the Global side at PrismHR, so we employ and pay people outside the US for PEO clients. Honestly, if any of your clients have people abroad or ask about it, I'd be glad to compare notes sometime.`,
+        ),
+      };
+    }
+    case "new-in-seat": {
+      // Someone new in seat at the account, by Sales Navigator's own badge
+      // or job alert. The note welcomes them by name and offers the short
+      // version; it never says how we know.
+      const who = person?.name ?? "";
+      const pFirst = firstName(who);
+      const title = (person?.title ?? "").trim();
+      return {
+        kind: "send-draft",
+        label: pFirst ? `Copy the note — to ${pFirst}` : "Copy the note",
+        to: who
+          ? `${who}${title ? `, ${title}` : ""}. A LinkedIn message.`
+          : "the new person in seat. Add the name before sending.",
+        payload: redactMoney(
+          `To: ${who || "the new person in seat"}\nSubject: Congrats on the new role\n\n${pFirst ? `Hi ${pFirst} —` : "Hi —"} congrats on the new role${title ? ` as ${title}` : ""} at ${account.name}. I work on PrismHR Global, which employs and pays people outside the US for PEO clients. Once you've settled in, I'd be glad to walk you through it, kind of a fifteen-minute version. If any of your clients have people abroad today, I can start there.`,
+        ),
+      };
+    }
     case "intent-warm":
-      // Direct doctrine: the note to the people reading us goes to the
-      // account's own person, not through the partner manager.
+      // Direct doctrine: the note goes to the account's own person, not
+      // through the partner manager. The intent reading decides WHO gets a
+      // note today; it never rides inside the note. Sales Nav's buyer intent
+      // counts engagement with PrismHR's LinkedIn presence as a whole, so a
+      // claim about "our Global material" overstates the evidence, and
+      // quoting someone's engagement back to them tells them they were
+      // watched (evidence or nothing; 2026-10-14).
       return {
         kind: "send-draft",
         label: `Copy the note${labelTo}`,
         to: toContact,
         payload: redactMoney(
-          `To: ${toContact}\nSubject: The question forming on your side\n\n${greet} a few people on your side have been reading our Global material this week${intent?.activities ? ` (${intent.activities} separate engagements)` : ""}, so a question is already taking shape. Here it is, asked straight: ${relayLine("fp-where").toLowerCase()} If a walkthrough is faster than email, name a slot and I'll bring answers.`,
+          `To: ${toContact}\nSubject: One question about your clients\n\n${greet} I work on PrismHR Global, which employs and pays people outside the US for your clients. One question to see whether it's worth a conversation: ${relayLine("fp-where").toLowerCase()} If a walkthrough is faster than email, name a slot and I'll bring answers.`,
         ),
       };
     case "riding-lane":
@@ -131,7 +187,7 @@ export function composeFor(args: {
         label: "Copy the ask — to the coworker named on the opportunity",
         to: "the coworker named on the Salesforce opportunity. The name is printed on it. The link below opens it.",
         payload: redactMoney(
-          `To: [the coworker named on the opportunity. Open the account in Salesforce. The owner's name is printed on it.]\n\nQuick one on ${account.name}. I see your opportunity there closing ${laneDate ? monthDay(laneDate) : "this month"}. ${intent ? "Their people have been reading our Global material this week. " : ""}Would you carry one Global sentence into that conversation, or would you rather I join? Either way it stays your room.`,
+          `To: [the coworker named on the opportunity. Open the account in Salesforce. The owner's name is printed on it.]\n\nQuick one on ${account.name}. I see your opportunity there closing ${laneDate ? monthDay(laneDate) : "this month"}. ${intent ? "Their people have been engaging with PrismHR on LinkedIn this week. " : ""}Would you carry one Global sentence into that conversation, or would you rather I join? Either way it stays your room.`,
         ),
       };
     case "silence-bump":
@@ -176,7 +232,7 @@ export function composeFor(args: {
         label: "Copy the people recipe",
         to: "your research session",
         payload: redactMoney(
-          `Sales Navigator · Relationship explorer on ${account.name} — Persona: Recommended buyer persona · Function: HR, Operations, Finance · Seniority: Director, VP, CXO → harvest every "! Update CRM" card and any "Follows your company" mark → bring back 3–5 names with titles. They file as candidates; you confirm before anything sticks.`,
+          `Sales Navigator · Relationship explorer on ${account.name} — Persona: Recommended buyer persona · Function: HR, Operations, Finance · Seniority: Director, VP, CXO → click ▤ Grab Sales Nav people and paste it into the account's ⚡ box. The cards file on the account's record with their titles, "! Update CRM" flags and "Follows your company" marks. Nobody joins the contact roster until you add them.`,
         ),
       };
     case "engaged-never-introduced":
