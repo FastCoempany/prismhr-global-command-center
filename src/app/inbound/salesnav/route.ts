@@ -16,7 +16,9 @@
 // Power Automate flow can send), form posts (SendGrid's text/html, Mailgun's
 // body-plain), or the raw message as text. Anything that is not a Sales
 // Navigator alert email files nothing and says so. The answer carries
-// counts only, never a name or a line of the email.
+// counts only, never a name or a line of the email. A post that is not an
+// alert answers 200 with nothing filed, so an inbound service's own check
+// (Postmark's Check button sends a sample email) reads the route as healthy.
 
 import { NextResponse, type NextRequest } from "next/server";
 import { emailText, secretOk, type Fields } from "@/lib/ingest/inbound-email";
@@ -90,10 +92,11 @@ export async function POST(req: NextRequest) {
   // LinkedIn From line inside the forwarded block counts.
   const grabs = grabsFromSalesNavEmail(text, new Date(), { forwarded: true });
   if (!grabs.length)
-    return NextResponse.json(
-      { ok: true, filed: 0, reason: "Not a Sales Navigator alert email. Nothing filed." },
-      { status: 202 },
-    );
+    return NextResponse.json({
+      ok: true,
+      filed: 0,
+      reason: "Not a Sales Navigator alert email. Nothing filed.",
+    });
   try {
     const r = await fileGrabTexts(grabs, "inbound", []);
     const g = "grab" in r ? r.grab : undefined;
