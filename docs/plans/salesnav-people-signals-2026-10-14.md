@@ -58,3 +58,14 @@
   - LinkedIn's alert email layout. The reader is a line reader held to alert sentences, tested on a synthetic email. The first real one should be dropped in the Chute and its receipt checked.
   - The job-move wording.
 - **Not built:** the HomeRoom does not yet react when its relationship contact leaves; only Groundwork does, on off-board accounts. A board account's departed contact is the HomeRoom's next job.
+
+## Checked against the operator's real Sales Navigator emails (2026-10-14)
+
+- **The "shared a post" digest reads correctly.** It's from messages-noreply@linkedin.com and says "Sales Navigator". Five changes came out of reading it:
+  - **Title before company:** the digest writes the line under a name as "Title · Company", the reverse of the feed. Whichever side opens with a job title is read as the title.
+  - **Account alerts now recognized:** "New post from X", "Employees at X are active" and "Leadership at X has been active" are read as account alerts, and each files on its account.
+  - **Notices end a block:** the "Your Account IQ summary for X is ready" notice and the footer line now end the alert before them, so they can't glue a second account onto it.
+  - **Furniture stripped:** links, buttons and LinkedIn's coaching lines ("Engaging with their content…") are dropped.
+  - **Sent time fixed:** a Sent line that closes on a zone comment, "+0000 (UTC)", now reads at its real offset. It was reading as Chicago time.
+- **The "94 new lead suggestions" digest files nothing, by design.** It never says "Sales Navigator", and its people carry no company, so none of them could be placed on an account. Its "New executives hired at saved Accounts" section would have been a new-in-seat signal if it named the account.
+- **Both emails go to the work mailbox and pass through Proofpoint URL Defense** (urldefense.com links).

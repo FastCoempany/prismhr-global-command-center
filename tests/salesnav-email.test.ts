@@ -452,3 +452,112 @@ describe("a forwarded alert at the inbound route", () => {
     assert.deepEqual(grabsFrom(fwd, NOW), []);
   });
 });
+
+// The operator's own Sales Navigator digest (received 2026-10-13, dropped
+// 2026-10-14), as the app's .eml reader turns it into text (emlToPaste).
+// Tracking links are replaced with <link>; every other line is verbatim.
+const REAL_DIGEST = [
+  "OUTLOOK THREAD — dropped file Naomi_Walsh_shared_a_post.eml",
+  "From: LinkedIn Sales Navigator <messages-noreply@linkedin.com>",
+  "To: Antaeus Coe <antaeus.coe@prismhr.com>",
+  "Sent: Tue, 13 Oct 2026 15:10:31 +0000 (UTC)",
+  "Subject: Naomi Walsh shared a post",
+  "",
+  "Stay on top with Sales Navigator notifications",
+  "",
+  "Naomi Walsh shared a post",
+  "Associate Director · Strive - GTM Talent Partner",
+  "Engaging with their content is a natural way to stay visible.",
+  "View post: https://urldefense.com/<link>",
+  "Message: https://urldefense.com/<link>",
+  "",
+  "Naomi Walsh shared a post",
+  "Associate Director · Strive - GTM Talent Partner",
+  "Engaging with their content helps them remember you.",
+  "View post: https://urldefense.com/<link>",
+  "",
+  "New post from Base.com",
+  "See what your saved account is talking about.",
+  "View post: https://urldefense.com/<link>",
+  "",
+  "Employees at Nextep are active",
+  "Find out who’s active and reach out to the right person.",
+  "View employees: https://urldefense.com/<link>",
+  "",
+  "Your Account IQ summary for AlphaStaffHCM is ready",
+  "Get AI insights to prepare for your next conversation.",
+  "View Account IQ: https://urldefense.com/<link>",
+  "",
+  "Leadership at Engage PEO has been active",
+  "Senior activity at your account can signal shifts in priorities.",
+  "View leadership activity: https://urldefense.com/<link>",
+  "",
+  "View more on Sales Navigator: https://urldefense.com/<link>",
+  "",
+  "----------------------------------------",
+  "",
+  "This email was intended for Antaeus Coe (Complex Ai Enterprise Sales | Strategic Enterprise SaaS Consultant)",
+  "Learn why we included this: https://urldefense.com/<link>",
+  "You are receiving LinkedIn notification emails.",
+  "",
+  "Unsubscribe: https://urldefense.com/<link>   ·  Help: https://urldefense.com/<link>",
+  "",
+  "© 2026 LinkedIn Corporation, 1000 West Maude Avenue, Sunnyvale, CA 94085.",
+].join("\n");
+
+describe("the operator's real Sales Navigator digest", () => {
+  const roster = [
+    { id: "N1", name: "Nextep", emails: [], domains: [] },
+    { id: "E1", name: "Engage PEO", emails: [], domains: [] },
+    { id: "A1", name: "AlphaStaffHCM", emails: [], domains: [] },
+  ];
+
+  test("it reads as an alert email, sent 10:10 AM Chicago, every alert a block, no links or coaching kept", () => {
+    assert.equal(isSalesNavEmail(REAL_DIGEST), true);
+    assert.equal(sentStamp(REAL_DIGEST), "10/13/2026, 10:10:31 AM");
+    const blocks = alertBlocks(REAL_DIGEST);
+    assert.deepEqual(
+      blocks.map((b) => [b.kind, b.lines[0]]),
+      [
+        ["person", "Naomi Walsh shared a post"],
+        ["person", "Naomi Walsh shared a post"],
+        ["account", "New post from Base.com"],
+        ["account", "Employees at Nextep are active"],
+        ["account", "Leadership at Engage PEO has been active"],
+      ],
+      "the Account IQ notice is not an alert",
+    );
+    for (const b of blocks)
+      assert.ok(
+        !b.lines.some((l) =>
+          /https?:|^engaging with|^see what|^find out|^senior activity/i.test(l),
+        ),
+        b.lines.join(" | "),
+      );
+  });
+
+  test("book accounts get their alerts; everyone else files nothing", () => {
+    const [alerts] = grabsFromSalesNavEmail(REAL_DIGEST, NOW);
+    const plan = planGrab(alerts!, roster, NOW);
+    assert.deepEqual(plan.filings.map((f) => f.account.name).sort(), [
+      "Engage PEO",
+      "Nextep",
+    ]);
+    assert.equal(
+      plan.missed.length,
+      3,
+      "Naomi Walsh twice and Base.com name no book account",
+    );
+  });
+
+  test("the digest's 'Title · Company' line reads the right way round", () => {
+    const [alerts] = grabsFromSalesNavEmail(REAL_DIGEST, NOW);
+    const [post] = peopleSignalsFor(
+      [{ body: alerts!, source: "salesnav", createdAt: NOW.toISOString() }],
+      NOW,
+    );
+    assert.equal(post?.name, "Naomi Walsh");
+    assert.equal(post?.title, "Associate Director");
+    assert.equal(post?.company, "Strive - GTM Talent Partner");
+  });
+});

@@ -79,8 +79,12 @@ const PERSON_START = new RegExp(
 );
 const INTENT_START =
   /^(?:increase in buyer intent\s*[:·-]?\s*)?(.+?)\s+is now expressing\s+(high|moderate)\s+buyer intent\b/i;
+// The account alerts, as the feed and the real digest email write them
+// (2026-10-14, the operator's own "Naomi Walsh shared a post" digest):
+// "New post from Base.com", "Employees at Nextep are active", "Leadership
+// at Engage PEO has been active", and the feed's growth and photo lines.
 const ACCOUNT_START =
-  /^(?:(?:suggested\s+)?account\s*:\s*)?(.+?)\s+(?:is preparing for growth|posted a new\b|was mentioned in the news|is hiring)\b/i;
+  /^(?:(?:suggested\s+)?account\s*:\s*)?(?:new post from\s+.+|employees at\s+.+?\s+are active\b|leadership at\s+.+?\s+(?:has been|is) active\b|.+?\s+(?:is preparing for growth|posted a new\b|was mentioned in the news|is hiring)\b)/i;
 
 type Start = { kind: "person" | "intent" | "account" };
 
@@ -95,9 +99,11 @@ function alertStart(line: string): Start | null {
 // The footer and the furniture: where an alert's lines stop, and lines that
 // never belong to one.
 const STOP =
-  /^(?:unsubscribe|manage (?:your )?(?:alert|email|notification)|view (?:all|more)\b|see all\b|you are receiving|this email was (?:intended|sent)|©|linkedin corporation|help center|privacy policy|learn why we included this|increase in buyer intent\b)/i;
+  /^(?:unsubscribe|manage (?:your )?(?:alert|email|notification)|view (?:all|more)\b|see all\b|you are receiving|this email was (?:intended|sent)|©|linkedin corporation|help center|privacy policy|learn why we included this|increase in buyer intent\b|your account iq summary\b|view more on sales navigator\b)/i;
+// The buttons, the links and LinkedIn's own coaching lines ("Engaging with
+// their content…", "See what your saved account is talking about.").
 const FURNITURE =
-  /^(?:view|view post|view profile|view insights|view growth insights|save|message|bookmark|dismiss|more|open|see more|·|\||-+|https?:\/\/\S+)$/i;
+  /^(?:view|view post|view profile|view insights|view growth insights|save|message|bookmark|dismiss|more|open|see more|·|\||-+)$|^(?:view[\w\s]*|message)\s*:|https?:\/\/|^engaging with their content\b|^see what your saved account\b|^find out who.s active\b|^senior activity at your account\b|^get ai insights\b/i;
 
 /** The email's sent moment as the grab's "captured …" stamp (en-US, the
  *  Chicago clock), from its Date: or Sent: header; null when it carries
@@ -107,7 +113,11 @@ export function sentStamp(text: string): string | null {
   for (const l of head) {
     const m = /^(?:date|sent)\s*:\s*(.+)$/i.exec(l);
     if (!m) continue;
-    const raw = m[1]!.replace(/\s+at\s+/i, " ").trim();
+    // RFC 2822 may close on a zone comment, "+0000 (UTC)"; the offset rules.
+    const raw = m[1]!
+      .replace(/\s+at\s+/i, " ")
+      .replace(/\s*\([^)]*\)\s*$/, "")
+      .trim();
     // A stamp with its own zone (RFC 2822's -0500, ISO's Z) reads as given.
     // Outlook's "Tuesday, October 13, 2026 12:30 AM" carries none: it is the
     // operator's clock, Chicago, whatever zone the server runs in.

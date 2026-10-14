@@ -364,6 +364,19 @@ export function relativeDays(line: string): number | null {
   return null;
 }
 
+// A role, as a title reads: the feed writes "Company · Title" ("Humans
+// Doing · Senior Recruitment Consultant") and the digest email writes
+// "Title · Company" ("Associate Director · Strive - GTM Talent Partner"),
+// so the side that opens on a role word is the title.
+const ROLE_RE =
+  /^(?:senior\s+|sr\.?\s+|associate\s+|assistant\s+|executive\s+|global\s+|regional\s+)?(?:vice president|vp\b|svp\b|evp\b|director|head\b|chief|ceo\b|cfo\b|coo\b|cto\b|chro\b|cro\b|president|founder|co-founder|owner|partner|principal|manager|lead\b|officer|consultant|specialist|coordinator|administrator|analyst|recruiter|representative|account executive|business development)/i;
+
+/** The two sides of an alert's "·" line as [company, title]. */
+export function companyAndTitle(sub: string): [string, string] {
+  const [a = "", b = ""] = sub.split("·").map((x) => x.trim());
+  return ROLE_RE.test(a) && !ROLE_RE.test(b) ? [b, a] : [a, b];
+}
+
 /** A post line: "Alex Patel shared a post". A job line: "Alex Patel
  *  started a new position", "has a new position", "changed jobs". The job
  *  phrasings are LinkedIn's alert wording as far as it is known; one that
@@ -401,7 +414,7 @@ export function parseAlerts(body: string, filedAt: string): PersonSignal[] {
     // The feed writes "Company · Title"; an email writes "Title at Company".
     const hasAt = !sub.includes("·") && / at /i.test(sub);
     const [company = "", title = ""] = sub.includes("·")
-      ? sub.split("·").map((x) => x.trim())
+      ? companyAndTitle(sub)
       : hasAt
         ? (() => {
             const i = sub.toLowerCase().lastIndexOf(" at ");
