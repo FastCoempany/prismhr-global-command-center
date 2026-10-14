@@ -94,6 +94,14 @@ export function stampSubtext(ruleId: QueueRuleId | string, ctx: StampContext): s
         ? `WROTE TO ${clip(n.toUpperCase(), 40)} · NEW IN SEAT`
         : "WROTE TO THE NEW PERSON IN SEAT";
     }
+    case "contact-left": {
+      // The move said "Ask who replaces {name}." over "Left for {company}
+      // {day}."
+      const n = (ctx.personName ?? "").trim();
+      return n
+        ? `ASKED ${clip(n.toUpperCase(), 40)} WHO TAKES OVER`
+        : "ASKED WHO TAKES OVER FROM THEIR CONTACT";
+    }
     case "intent-warm": {
       // Plain words (pass 9; the plain-speech law bans coined phrasing): the
       // move said "Send them a note." because their people are reading us.

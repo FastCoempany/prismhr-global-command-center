@@ -49,6 +49,7 @@ export type QueueRuleId =
   | "wire-trigger"
   | "post-trigger"
   | "new-in-seat"
+  | "contact-left"
   | "intent-warm"
   | "riding-lane"
   | "silence-bump"
@@ -313,6 +314,7 @@ const BAND_OF: Record<QueueRuleId, Band> = {
   "wire-trigger": "now",
   "post-trigger": "now",
   "new-in-seat": "eleven",
+  "contact-left": "eleven",
   "second-record-gem": "now",
   "engaged-never-introduced": "eleven",
   "silence-bump": "now",
@@ -337,6 +339,7 @@ const HEAT_OF: Record<QueueRuleId, 1 | 2 | 3> = {
   "wire-trigger": 3,
   "post-trigger": 3,
   "new-in-seat": 3,
+  "contact-left": 3,
   "second-record-gem": 3,
   "engaged-never-introduced": 2,
   "intent-warm": 3,
@@ -488,6 +491,30 @@ function rankAll(inp: QueueInput, now: Date): QueueItem[] {
         carried: false,
         intent,
         person: seat,
+      });
+    }
+
+    // contact-left (83): someone at the account took a job elsewhere, by a
+    // Sales Navigator job alert filed on both companies (2026-10-14). The
+    // move asks the person who left who picks up their work; their old
+    // address is dead, so the note goes on LinkedIn. One per account, the
+    // newest.
+    const gone = people.find((s) => s.kind === "left");
+    if (gone && !workedSince(inp, `${p.id}:contact-left`, gone.at)) {
+      const named = `Ask who replaces ${gone.name}.`;
+      const where = `Left for ${gone.company} ${monthDay(gone.at)}.`;
+      candidates.push({
+        accountId: p.id,
+        name: p.name,
+        ruleId: "contact-left",
+        weight: 83,
+        band: BAND_OF["contact-left"],
+        action: wordCount(named) <= 6 ? named : "Ask who replaces them.",
+        reason: wordCount(where) <= 6 ? where : `Left ${monthDay(gone.at)}.`,
+        owed: "note ready",
+        carried: false,
+        intent,
+        person: gone,
       });
     }
 

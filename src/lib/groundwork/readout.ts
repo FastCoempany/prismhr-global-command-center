@@ -107,6 +107,10 @@ export function paragraphFor(
     bits.push(
       `${identityClause(p)} — ${person.name} is new in seat there${person.title ? ` as ${person.title}` : ""}, by Sales Navigator's own reading; the note introducing us is composed.`,
     );
+  } else if (rule === "contact-left" && person) {
+    bits.push(
+      `${identityClause(p)} — ${person.name} left${person.company ? ` for ${person.company}` : ""}, by a Sales Navigator job alert; the note asking who picks up their work is composed.`,
+    );
   } else if (rule === "wire-trigger") {
     bits.push(
       `${identityClause(p)} — made the wire; the note that turns the news into a conversation is composed, addressed to them directly.`,

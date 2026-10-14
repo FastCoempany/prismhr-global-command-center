@@ -10,7 +10,7 @@
 // dead, not dormant.
 
 import { HEADS, isSalesNav as isSalesNavSource } from "@/lib/ingest/dialect";
-import { USER_TZ, userDayKey } from "@/lib/tz";
+import { USER_TZ, parseChicagoStamp, userDayKey } from "@/lib/tz";
 
 const DECAY_DAYS = 7;
 
@@ -33,17 +33,46 @@ const isSalesNav = (n: NoteLike) => isSalesNavSource(n.source);
 // people note never reads as one, and never kills one by being newer
 // (2026-10-14). A salesnav note with no head is an accounts read: the reads
 // filed before the heads split were all accounts grabs.
-export type GrabKind = "accounts" | "alerts" | "people";
+export type GrabKind = "accounts" | "intent" | "alerts" | "people";
+// SALESNAV INTENT (2026-10-14) is an intent reading that arrived in a Sales
+// Navigator alert email ("My HR Pros is now expressing High buyer intent").
+// It reads as intent like the accounts list, but it is not the daily grab:
+// it never quiets the nudge, and it carries no lead badge or deal date.
+const INTENT_HEAD_RE = new RegExp(`^${HEADS.salesnav} INTENT\\b`, "i");
 const ALERTS_HEAD_RE = new RegExp(`^${HEADS.salesnav} ALERTS\\b`, "i");
 const PEOPLE_HEAD_RE = new RegExp(`^${HEADS.salesnav} PEOPLE\\b`, "i");
 export function grabKind(body: string): GrabKind {
   const t = (body ?? "").trimStart();
   if (ALERTS_HEAD_RE.test(t)) return "alerts";
   if (PEOPLE_HEAD_RE.test(t)) return "people";
+  if (INTENT_HEAD_RE.test(t)) return "intent";
   return "accounts";
 }
 const isAccountsRead = (n: NoteLike) => isSalesNav(n) && grabKind(n.body) === "accounts";
 const isAlertsRead = (n: NoteLike) => isSalesNav(n) && grabKind(n.body) === "alerts";
+/** The moment a grab's head says it was captured ("captured 10/14/2026,
+ *  9:05:00 AM", the operator's Chicago clock, or an alert email's sent
+ *  time), read from the head line only; NaN when the head has none. */
+export function capturedOf(body: string): number {
+  const head = (body ?? "").trimStart().split("\n")[0] ?? "";
+  const m = /\bcaptured\s+(.+)$/i.exec(head);
+  return m ? parseChicagoStamp(m[1]!) : NaN;
+}
+
+/** When a reading was observed: its capture moment, else its filing. An
+ *  intent email dropped three days late reads as three days old, so a fresher
+ *  grab outranks it (2026-10-14). */
+export const observedIso = (n: NoteLike): string => {
+  const t = capturedOf(n.body);
+  return Number.isNaN(t) ? n.createdAt : new Date(t).toISOString();
+};
+
+/** An intent reading of either kind: the daily grab or an alert email. */
+const isIntentRead = (n: NoteLike) => {
+  if (!isSalesNav(n)) return false;
+  const k = grabKind(n.body);
+  return k === "accounts" || k === "intent";
+};
 
 // The grab's own head line — "SALESNAV ACCOUNTS - captured <date> - N rows
 // collected" — carries the copy moment, never a deal date.
@@ -82,16 +111,32 @@ export function parseIntent(body: string): Omit<IntentSignal, "at"> | null {
   };
 }
 
+/** Every intent reading on an account, newest observed first, none from
+ *  after `now`. */
+function intentReadsByObserved(
+  notes: NoteLike[] | undefined,
+  now: Date,
+): { n: NoteLike; at: string }[] {
+  return (notes ?? [])
+    .filter(isIntentRead)
+    .map((n) => ({ n, at: observedIso(n) }))
+    .filter((r) => Date.parse(r.at) <= now.getTime() + 60_000)
+    .sort((a, b) => b.at.localeCompare(a.at));
+}
+
 // The newest salesnav reading on one account decides — and only if it is
 // fresh. A newer grab with no intent kills an older High (superseded, not
 // dormant); a reading past DECAY_DAYS ranks as nothing.
 export function intentFor(notes: NoteLike[] | undefined, now: Date): IntentSignal | null {
-  const newest = (notes ?? []).find(isAccountsRead);
+  // The newest OBSERVED reading decides: by its capture moment, not the
+  // moment it was filed. Nothing observed after `now` reads yet.
+  const reads = intentReadsByObserved(notes, now);
+  const newest = reads[0];
   if (!newest) return null;
-  const ageDays = (now.getTime() - Date.parse(newest.createdAt)) / 86_400_000;
+  const ageDays = (now.getTime() - Date.parse(newest.at)) / 86_400_000;
   if (!(ageDays <= DECAY_DAYS)) return null;
-  const parsed = parseIntent(newest.body);
-  return parsed ? { ...parsed, at: newest.createdAt } : null;
+  const parsed = parseIntent(newest.n.body);
+  return parsed ? { ...parsed, at: newest.at } : null;
 }
 
 // The newest salesnav-sourced note anywhere in the book — the fact the nudge
@@ -197,13 +242,13 @@ export type IntentRise = {
 export function intentRise(notes: NoteLike[] | undefined, now: Date): IntentRise | null {
   const cur = intentFor(notes, now);
   if (!cur) return null;
-  const reads = (notes ?? []).filter(isAccountsRead);
+  const reads = intentReadsByObserved(notes, now);
   const curDay = userDayKey(cur.at);
-  const prevNote = reads.find((n) => userDayKey(n.createdAt) !== curDay);
-  if (!prevNote) return null;
-  const gap = (Date.parse(cur.at) - Date.parse(prevNote.createdAt)) / DAY_MS;
+  const prevRead = reads.find((r) => userDayKey(r.at) !== curDay);
+  if (!prevRead) return null;
+  const gap = (Date.parse(cur.at) - Date.parse(prevRead.at)) / DAY_MS;
   if (!(gap > 0 && gap <= RISE_WINDOW_DAYS)) return null;
-  const prev = parseIntent(prevNote.body);
+  const prev = parseIntent(prevRead.n.body);
   const out = {
     from: prev?.level ?? null,
     to: cur.level,
@@ -233,7 +278,9 @@ export function intentRise(notes: NoteLike[] | undefined, now: Date): IntentRise
 // Sales Navigator's own words read back; nothing is inferred about anyone.
 
 export type PersonSignal = {
-  kind: "new-in-seat" | "posted";
+  /** new-in-seat: they started at this account. left: they were at this
+   *  account and a job alert names a new company. posted: they posted. */
+  kind: "new-in-seat" | "left" | "posted";
   name: string;
   title: string;
   company: string;
@@ -317,6 +364,19 @@ export function relativeDays(line: string): number | null {
   return null;
 }
 
+// A role, as a title reads: the feed writes "Company · Title" ("Humans
+// Doing · Senior Recruitment Consultant") and the digest email writes
+// "Title · Company" ("Associate Director · Strive - GTM Talent Partner"),
+// so the side that opens on a role word is the title.
+const ROLE_RE =
+  /^(?:senior\s+|sr\.?\s+|associate\s+|assistant\s+|executive\s+|global\s+|regional\s+)?(?:vice president|vp\b|svp\b|evp\b|director|head\b|chief|ceo\b|cfo\b|coo\b|cto\b|chro\b|cro\b|president|founder|co-founder|owner|partner|principal|manager|lead\b|officer|consultant|specialist|coordinator|administrator|analyst|recruiter|representative|account executive|business development)/i;
+
+/** The two sides of an alert's "·" line as [company, title]. */
+export function companyAndTitle(sub: string): [string, string] {
+  const [a = "", b = ""] = sub.split("·").map((x) => x.trim());
+  return ROLE_RE.test(a) && !ROLE_RE.test(b) ? [b, a] : [a, b];
+}
+
 /** A post line: "Alex Patel shared a post". A job line: "Alex Patel
  *  started a new position", "has a new position", "changed jobs". The job
  *  phrasings are LinkedIn's alert wording as far as it is known; one that
@@ -332,7 +392,13 @@ const ROW_SEP_RE = /^[ \t]*-{4,}[ \t]*$/m;
  *  Company alerts ("posted a new photo", growth reads) name no person and
  *  return nothing: their subject line reads "… employees on LinkedIn". */
 export function parseAlerts(body: string, filedAt: string): PersonSignal[] {
-  const filed = Date.parse(filedAt);
+  // The alerts' clock is the capture's own moment, the head's "captured …"
+  // (the feed grab's copy, or the alert email's sent date), and only then
+  // the filing moment: an email dropped three days late still dates its
+  // alerts from the day it was sent.
+  // The head line only: a date inside a post's words is the post's.
+  const capturedAt = capturedOf(body);
+  const filed = Number.isNaN(capturedAt) ? Date.parse(filedAt) : capturedAt;
   const out: PersonSignal[] = [];
   const items = (body ?? "").split(ROW_SEP_RE);
   for (const item of items) {
@@ -345,7 +411,16 @@ export function parseAlerts(body: string, filedAt: string): PersonSignal[] {
     const head = lines[0]!.replace(ALERT_PREFIX_RE, "");
     const sub = lines[1] ?? "";
     if (/employees on linkedin/i.test(sub)) continue;
-    const [company = "", title = ""] = sub.split("·").map((x) => x.trim());
+    // The feed writes "Company · Title"; an email writes "Title at Company".
+    const hasAt = !sub.includes("·") && / at /i.test(sub);
+    const [company = "", title = ""] = sub.includes("·")
+      ? companyAndTitle(sub)
+      : hasAt
+        ? (() => {
+            const i = sub.toLowerCase().lastIndexOf(" at ");
+            return [sub.slice(i + 4).trim(), sub.slice(0, i).trim()];
+          })()
+        : ["", ""];
     const relIdx = lines.findIndex((l) => relativeDays(l) != null);
     const ago = relIdx >= 0 ? relativeDays(lines[relIdx]!)! : 0;
     const at = Number.isNaN(filed)
@@ -452,8 +527,13 @@ export function peopleSignalsFor(
   for (const n of upToNow) {
     if (!isAlertsRead(n)) continue;
     for (const s of parseAlerts(n.body, n.createdAt)) {
-      if (s.kind === "new-in-seat" && s.company && !sameCompany(s.company, accountName))
+      // A job alert filed here whose new company is another one means the
+      // person LEFT this account (the pipeline files a job move on both its
+      // companies; src/lib/ingest/grab.ts).
+      if (s.kind === "new-in-seat" && s.company && !sameCompany(s.company, accountName)) {
+        push({ ...s, kind: "left" });
         continue;
+      }
       push(s);
     }
   }

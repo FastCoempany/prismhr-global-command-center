@@ -246,7 +246,7 @@ export function buildFile(
     // A people rule's note goes to the person Sales Navigator named, so the
     // relationship's address is the wrong one unless it is the same person.
     contactEmail:
-      person && person.name !== rel.name
+      person && (person.name !== rel.name || person.kind === "left")
         ? ""
         : rel.source === "record"
           ? rel.email

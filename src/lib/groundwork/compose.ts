@@ -165,6 +165,25 @@ export function composeFor(args: {
         ),
       };
     }
+    case "contact-left": {
+      // Someone at the account took a job elsewhere. The note goes to them,
+      // on LinkedIn (their old address is dead): congratulations, and who
+      // picks up their work at the account. It leaves them holding nothing
+      // they owe us, and keeps the door open where they landed.
+      const who = person?.name ?? "";
+      const pFirst = firstName(who);
+      const where = (person?.company ?? "").trim();
+      return {
+        kind: "send-draft",
+        label: pFirst ? `Copy the message — to ${pFirst}` : "Copy the message",
+        to: who
+          ? `${who}, now${where ? ` at ${where}` : " elsewhere"}. A LinkedIn message; their old address is gone.`
+          : "the person who left. A LinkedIn message.",
+        payload: redactMoney(
+          `To: ${who || "the person who left"}\n\n${pFirst ? `Hi ${pFirst} —` : "Hi —"} congrats on the move${where ? ` to ${where}` : ""}. Quick one: who's picking up your work at ${account.name}? I'd like to keep them in the loop on the Global side. And once you've settled in, I'd be glad to walk you through it there too, if it's useful.`,
+        ),
+      };
+    }
     case "intent-warm":
       // Direct doctrine: the note goes to the account's own person, not
       // through the partner manager. The intent reading decides WHO gets a

@@ -29,7 +29,7 @@ import { DOCK_ANCHOR } from "../activity/dock";
 import { intranetKeep } from "../intranet/capture-actions";
 import { chuteBook, type BookName } from "./route-actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
-import { isGrab } from "@/lib/ingest/grab";
+import { grabsFrom } from "@/lib/ingest/salesnav-email";
 import type { Window } from "@/lib/ingest/windows";
 import { shortName } from "@/lib/ingest/short-name";
 import { ALREADY_ON_FILE, monthDay } from "@/lib/ingest/wrote";
@@ -460,7 +460,9 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         return r;
       };
       const read = vaultOnly ? null : await ingest.read(f);
-      if (read?.ok && isGrab(read.text)) {
+      // A grab, or a Sales Navigator alert email dropped as .eml or .msg,
+      // which files as the alerts grab it carries (2026-10-14).
+      if (read?.ok && grabsFrom(read.text).length) {
         await fileGrabRow(key, read.text, f, read.windows);
         return;
       }

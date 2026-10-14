@@ -416,7 +416,7 @@ they ship.
 
 **One roster for the relationship (ruled 2026-10-07, pass 8 call 7, the founder's delegation):** the account read hands its declared home side to the relationship and people reads, so a colleague is never the relationship.
 
-**Provenance is columns (ruled 2026-09-25, P3, P4):** every note carries its door (chute, drop, act-lane, intranet, activity, seed, hand) in its own column beside source, which names the dialect, and its lane, actors and recipients. A second-record row carries them like a first-record row; a bare row is a defect.
+**Provenance is columns (ruled 2026-09-25, P3, P4):** every note carries its door (chute, drop, act-lane, intranet, activity, seed, hand, and since 2026-10-14 inbound, the Sales Navigator alert emails a mail rule forwards) in its own column beside source, which names the dialect, and its lane, actors and recipients. A second-record row carries them like a first-record row; a bare row is a defect.
 
 ## The closer rule (founder-decreed 2026-08-22)
 

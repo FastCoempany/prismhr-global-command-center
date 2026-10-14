@@ -25,15 +25,9 @@ import { joinedRoster } from "@/lib/ingest/route";
 import { guardPlan, type GuardVerdict } from "@/lib/ingest/guard";
 import { EXCERPT_CAP, readRungVerdict } from "@/lib/ingest/verdict-reason";
 import { HEADS, SOURCE_OF, sniffHead } from "@/lib/ingest/dialect";
-import {
-  GRAB_PARALLEL,
-  fileGrab,
-  grabResult,
-  isGrab,
-  planGrab,
-  runLimited,
-  type GrabSummary,
-} from "@/lib/ingest/grab";
+import { grabsFrom } from "@/lib/ingest/salesnav-email";
+import { fileGrabTexts, stampPasteMark } from "@/lib/ingest/grab-server";
+import { GRAB_PARALLEL, runLimited, type GrabSummary } from "@/lib/ingest/grab";
 import {
   claimCapture,
   fileFiling,
@@ -163,31 +157,6 @@ async function roomLog(
 // account can reach it. Two-tier autonomy: an explicit commitment the operator
 // owes is opened without asking, and everything that changes the deal's
 // standing is only ever PROPOSED.
-// The filed-capture marker: key carries the fingerprint, reason carries the
-// filing moment and the first note id (so an undo can find and clear it).
-async function stampPasteMark(pasteKey: string, firstNoteId: string) {
-  const reason = `${new Date().toISOString()}·${firstNoteId}`;
-  // Verify after write: a marker that silently fails to land lets the same
-  // capture file twice (it happened — 2026-08-13). Two attempts, each read
-  // back; still fail-open after that, because the marker is a guard, never
-  // a gate — the filing already succeeded.
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      await getPrisma().accountDisposition.upsert({
-        where: { accountId: pasteKey },
-        create: { accountId: pasteKey, status: "filed", reason },
-        update: { status: "filed", reason },
-      });
-      const check = await getPrisma().accountDisposition.findUnique({
-        where: { accountId: pasteKey },
-        select: { status: true },
-      });
-      if (check?.status === "filed") return;
-    } catch {
-      // retry once, then let it go
-    }
-  }
-}
 
 // The Sales Navigator grab, split (pass 8 call 12 and D30; seam S-25). The
 // grab is a list of about a hundred accounts, never one account's capture:
@@ -203,34 +172,11 @@ async function fileGrabCapture(
   door: Door,
   windows: Window[],
 ): Promise<Awaited<ReturnType<typeof roomPaste>>> {
-  const now = new Date();
-  const plan = planGrab(rawText, await joinedRoster(), now);
+  // A Sales Navigator alert email files as its alerts and its intent
+  // readings (src/lib/ingest/salesnav-email.ts); a grab files as itself.
+  const texts = grabsFrom(rawText);
   try {
-    const grab = await fileGrab(
-      plan,
-      {
-        claim: (key) => claimCapture(key, now),
-        release: (key, token) => releaseCapture(key, token),
-        stamp: (key, noteId) => stampPasteMark(key, noteId),
-        filing: async (accountId, fingerprint, dupeCheck) =>
-          (
-            await fileFiling({
-              accountId,
-              fingerprint,
-              door,
-              dialect: "SN",
-              how: "rules",
-              read: null,
-              windows,
-              dupeCheck,
-              filedAt: now,
-            })
-          )?.id,
-        note: async (n) => (await createAccountNoteRow({ ...n, door: n.door })).id,
-      },
-      door,
-    );
-    return grabResult(grab, windows);
+    return await fileGrabTexts(texts.length ? texts : [rawText], door, windows);
   } catch {
     return {
       ok: false,
@@ -250,7 +196,7 @@ export async function roomGrab(
   opts: { door: Door; windows?: Window[] },
 ): Promise<Awaited<ReturnType<typeof roomPaste>>> {
   const rawText = typeof raw === "string" ? raw.trim() : "";
-  if (!isGrab(rawText))
+  if (!grabsFrom(rawText).length)
     return { ok: false, filed: 0, how: "", reason: "That isn't a Sales Nav grab." };
   if (!(await requireWrite()))
     return { ok: false, filed: 0, how: "", reason: "Read-only session." };
@@ -429,6 +375,11 @@ export async function roomPaste(
   // row the paste landed on decides nothing. Whole, the list's read is not
   // windowed: no model reads it.
   if (dialect === "SN") return await fileGrabCapture(rawText, door, opts.windows ?? []);
+  // A Sales Navigator alert email names a dozen accounts and is from
+  // LinkedIn, never this row's capture: it files as the alerts grab it
+  // carries, each alert on the account it names (2026-10-14).
+  if (grabsFrom(rawText).length)
+    return await fileGrabCapture(rawText, door, opts.windows ?? []);
 
   // The duplicate guard — app-wide, since every door (row paste, the Drop,
   // the Chute) files through here. The same capture filed to the same account

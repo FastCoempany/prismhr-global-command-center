@@ -85,7 +85,8 @@ function rosterStub(rows: RosterRow[]) {
       findMany: async (args) => {
         asked.push(args);
         return rows.filter(
-          (r) => args.where.accountId.in.includes(r.accountId) && (r.actors || r.recipients),
+          (r) =>
+            args.where.accountId.in.includes(r.accountId) && (r.actors || r.recipients),
         );
       },
     },
@@ -108,7 +109,11 @@ describe("the roster the rungs read is the book's joined with the record's", () 
     const address = "dana.record@northwind-record-only.example";
     assert.ok(!book.some((a) => a.emails.includes(address)), "the book lacks it");
     const rows: RosterRow[] = [
-      { accountId: taught.id, actors: `Dana Record <${address}> → Antaeus Coe`, recipients: "" },
+      {
+        accountId: taught.id,
+        actors: `Dana Record <${address}> → Antaeus Coe`,
+        recipients: "",
+      },
     ];
     const roster = joinRosters(book, rows);
     const text = `OUTLOOK THREAD — x.eml\nFrom: Dana Record <${address}>\n\nhello`;
@@ -129,7 +134,11 @@ describe("the roster the rungs read is the book's joined with the record's", () 
   test("a person the record names routes by the people rung", async () => {
     assert.ok(!book.some((a) => (a.people ?? []).includes("priya ledger")));
     const rows: RosterRow[] = [
-      { accountId: taught.id, actors: "Priya Ledger → Antaeus Coe", recipients: "Antaeus Coe" },
+      {
+        accountId: taught.id,
+        actors: "Priya Ledger → Antaeus Coe",
+        recipients: "Antaeus Coe",
+      },
     ];
     const roster = joinRosters(book, rows);
     const text =
@@ -161,7 +170,11 @@ describe("the roster the rungs read is the book's joined with the record's", () 
     // The 2026-09-03 shape: a Simploy person on a thread filed to Regis must
     // not make Regis routable by that person.
     const rows: RosterRow[] = [
-      { accountId: other.id, actors: `${titled(boundPerson)} → Antaeus Coe`, recipients: "" },
+      {
+        accountId: other.id,
+        actors: `${titled(boundPerson)} → Antaeus Coe`,
+        recipients: "",
+      },
     ];
     const roster = joinRosters(book, rows);
     assert.ok(!roster.find((a) => a.id === other.id)!.people!.includes(boundPerson));
@@ -171,7 +184,11 @@ describe("the roster the rungs read is the book's joined with the record's", () 
   test("a signal the record holds under two accounts identifies neither", () => {
     const address = "shared@vendor-on-both-records.example";
     const rows: RosterRow[] = [
-      { accountId: taught.id, actors: `Sam Shared <${address}> → Antaeus Coe`, recipients: "" },
+      {
+        accountId: taught.id,
+        actors: `Sam Shared <${address}> → Antaeus Coe`,
+        recipients: "",
+      },
       { accountId: other.id, actors: "", recipients: `Sam Shared <${address}>` },
     ];
     const roster = joinRosters(book, rows);
@@ -199,7 +216,11 @@ describe("the roster the rungs read is the book's joined with the record's", () 
     }
     // A row for an account the book does not hold teaches nothing anywhere.
     const stray = joinRosters(book, [
-      { accountId: "not-in-the-book", actors: "Stray Person → Antaeus Coe", recipients: "" },
+      {
+        accountId: "not-in-the-book",
+        actors: "Stray Person → Antaeus Coe",
+        recipients: "",
+      },
     ]);
     assert.ok(!stray.some((a) => a.people!.includes("stray person")));
   });
@@ -209,7 +230,12 @@ describe("the roster the rungs read is the book's joined with the record's", () 
     const stub = rosterStub([
       // A row whose body carries an address its columns do not: the body is
       // not a column and the roster must not see it.
-      { accountId: taught.id, actors: "Someone Named → Antaeus Coe", recipients: "", body: address } as RosterRow,
+      {
+        accountId: taught.id,
+        actors: "Someone Named → Antaeus Coe",
+        recipients: "",
+        body: address,
+      } as RosterRow,
     ]);
     const roster = await readJoinedRoster(stub.client);
     assert.equal(stub.asked.length, 1);
@@ -218,8 +244,14 @@ describe("the roster the rungs read is the book's joined with the record's", () 
     assert.ok(!("body" in args.select), "no body is selected");
     assert.deepEqual(args.distinct, ["accountId", "actors", "recipients"]);
     // The where names only book accounts and only rows naming anyone.
-    assert.deepEqual(args.where.accountId.in, book.map((a) => a.id));
-    assert.deepEqual(args.where.OR, [{ actors: { not: "" } }, { recipients: { not: "" } }]);
+    assert.deepEqual(
+      args.where.accountId.in,
+      book.map((a) => a.id),
+    );
+    assert.deepEqual(args.where.OR, [
+      { actors: { not: "" } },
+      { recipients: { not: "" } },
+    ]);
     // The query the module builds is the one it sends.
     assert.deepEqual(args, rosterQuery(book.map((a) => a.id)));
     const r = await routeText(`From: ${address}\n\nhello`, roster);
@@ -234,7 +266,11 @@ describe("the roster the rungs read is the book's joined with the record's", () 
     // (src/lib/ingest/filing.ts, pinned in tests/ingest-filing.test.ts).
     const address = "taught.then.undone@undone-filing.example";
     const stub = rosterStub([
-      { accountId: taught.id, actors: `Someone Undone <${address}> → Antaeus Coe`, recipients: "" },
+      {
+        accountId: taught.id,
+        actors: `Someone Undone <${address}> → Antaeus Coe`,
+        recipients: "",
+      },
     ]);
     const text = `OUTLOOK THREAD — x.eml\nFrom: Someone Undone <${address}>\n\nhello`;
     const before = await routeText(text, await readJoinedRoster(stub.client));
@@ -272,17 +308,29 @@ function sources(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-const isClientModule = (src: string) => /^\s*(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/\s*)*["']use client["']/.test(src);
+const isClientModule = (src: string) =>
+  /^\s*(?:\/\/[^\n]*\n|\/\*[\s\S]*?\*\/\s*)*["']use client["']/.test(src);
 
 describe("routing runs on the server; the roster never ships to the browser", () => {
   test("no client module imports the book's roster or the server router", () => {
-    const clientModules = sources(join(root, "src")).filter((p) => isClientModule(read(p.slice(root.length + 1))));
+    const clientModules = sources(join(root, "src")).filter((p) =>
+      isClientModule(read(p.slice(root.length + 1))),
+    );
     assert.ok(clientModules.length > 0, "the scan found client modules");
     for (const p of clientModules) {
       const src = read(p.slice(root.length + 1));
-      assert.ok(!/from\s+["'][^"']*book\/roster["']/.test(src), `${p} imports the roster`);
-      assert.ok(!/from\s+["'][^"']*ingest\/route["']/.test(src), `${p} imports the server router`);
-      assert.ok(!/from\s+["'][^"']*book\/contacts["']/.test(src), `${p} imports contacts.json`);
+      assert.ok(
+        !/from\s+["'][^"']*book\/roster["']/.test(src),
+        `${p} imports the roster`,
+      );
+      assert.ok(
+        !/from\s+["'][^"']*ingest\/route["']/.test(src),
+        `${p} imports the server router`,
+      );
+      assert.ok(
+        !/from\s+["'][^"']*book\/contacts["']/.test(src),
+        `${p} imports contacts.json`,
+      );
     }
   });
 
@@ -295,9 +343,15 @@ describe("routing runs on the server; the roster never ships to the browser", ()
     assert.ok(isClientModule(door));
     assert.match(door, /import \{[^}]*\brouteText\b[^}]*\} from "\.\.\/route-actions"/);
     assert.match(chute, /useIngest\(\{\s*door:\s*"chute"/);
-    for (const [name, src] of [["the Chute", chute], ["the shared door", door]] as const) {
+    for (const [name, src] of [
+      ["the Chute", chute],
+      ["the shared door", door],
+    ] as const) {
       assert.ok(!/routeCapture\(/.test(src), `${name} routes in the browser`);
-      assert.ok(!/roster/.test(src.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "")), `no roster in ${name}'s code`);
+      assert.ok(
+        !/roster/.test(src.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "")),
+        `no roster in ${name}'s code`,
+      );
     }
     for (const page of ["src/app/room/page.tsx", "src/app/intranet/page.tsx"]) {
       const src = read(page);
@@ -311,7 +365,10 @@ describe("routing runs on the server; the roster never ships to the browser", ()
     const reply = /export type RouteReply = \{([\s\S]*?)\};/.exec(action)![1];
     for (const word of ["emails", "domains", "people", "roster", "token"])
       assert.ok(!reply.includes(word), `RouteReply carries ${word}`);
-    assert.match(action, /export async function routeText\(text: string\): Promise<RouteReply>/);
+    assert.match(
+      action,
+      /export async function routeText\(text: string\): Promise<RouteReply>/,
+    );
   });
 
   test("roomPaste's two rungs read the joined roster, read once", () => {
@@ -319,9 +376,16 @@ describe("routing runs on the server; the roster never ships to the browser", ()
     const a = actions.indexOf("export async function roomPaste(");
     const b = actions.indexOf("export async function roomMoveDone(", a);
     const roomPaste = actions.slice(a, b);
-    assert.ok(!actions.includes("routingRoster("), "actions.ts no longer builds the book's roster alone");
+    assert.ok(
+      !actions.includes("routingRoster("),
+      "actions.ts no longer builds the book's roster alone",
+    );
     assert.equal((roomPaste.match(/await joinedRoster\(\)/g) ?? []).length, 1);
-    assert.equal((roomPaste.match(/roster,\n/g) ?? []).length, 2, "both guardPlan calls take it");
+    assert.equal(
+      (roomPaste.match(/roster,\n/g) ?? []).length,
+      2,
+      "both guardPlan calls take it",
+    );
   });
 });
 
@@ -331,7 +395,10 @@ describe("no server action returns a token", () => {
   test("the grant action is gone and nothing imports it", () => {
     assert.ok(!existsSync(join(root, "src/app/room/archive-actions.ts")));
     for (const p of sources(join(root, "src")))
-      assert.ok(!/from\s+["'][^"']*archive-actions["']/.test(read(p.slice(root.length + 1))), p);
+      assert.ok(
+        !/from\s+["'][^"']*archive-actions["']/.test(read(p.slice(root.length + 1))),
+        p,
+      );
     const archive = read("src/lib/github/archive.ts");
     assert.ok(!archive.includes("ArchiveGrant"), "the grant type is gone");
     assert.ok(!archive.includes("process.env"), "the lib never reads env");
@@ -340,7 +407,9 @@ describe("no server action returns a token", () => {
   test("the vault's doors answer a receipt whose type cannot carry a credential", () => {
     const doors = read("src/app/room/vault-actions.ts");
     assert.match(doors, /^"use server";/);
-    const exported = [...doors.matchAll(/export async function (\w+)\(([\s\S]*?)\): Promise<(\w+)>/g)];
+    const exported = [
+      ...doors.matchAll(/export async function (\w+)\(([\s\S]*?)\): Promise<(\w+)>/g),
+    ];
     assert.deepEqual(
       exported.map((m) => [m[1], m[3]]),
       [
@@ -356,7 +425,11 @@ describe("no server action returns a token", () => {
     }
     assert.ok(!lib.includes("process.env"), "the carriage never reads env");
     // The env is read in the doors alone, and only into the GitHub call.
-    assert.equal((doors.match(/GITHUB_ARCHIVE_TOKEN/g) ?? []).length, 2, "named once to read, once in the message");
+    assert.equal(
+      (doors.match(/GITHUB_ARCHIVE_TOKEN/g) ?? []).length,
+      2,
+      "named once to read, once in the message",
+    );
     for (const client of [
       "src/app/room/chute.tsx",
       "src/app/room/room-client.tsx",
@@ -373,7 +446,11 @@ describe("no server action returns a token", () => {
     assert.match(door, /import \{ vaultChunk, vaultFile \} from "\.\.\/vault-actions"/);
     assert.match(door, /sendToVault\(/);
     for (const face of ["src/app/room/chute.tsx", "src/app/room/room-client.tsx"]) {
-      assert.match(read(face), /ingest\.vault\(/, `${face} vaults through the shared door`);
+      assert.match(
+        read(face),
+        /ingest\.vault\(/,
+        `${face} vaults through the shared door`,
+      );
     }
   });
 });
@@ -397,7 +474,8 @@ function stagingStub() {
     vaultChunk: {
       deleteMany: async ({ where }) => {
         const before = rows.length;
-        for (let i = rows.length - 1; i >= 0; i--) if (matches(rows[i], where)) rows.splice(i, 1);
+        for (let i = rows.length - 1; i >= 0; i--)
+          if (matches(rows[i], where)) rows.splice(i, 1);
         return { count: before - rows.length };
       },
       create: async ({ data }) => {
@@ -444,7 +522,8 @@ function doorsOver(
   land: (file: File) => Promise<VaultReceipt>,
   account = { id: "A1", name: "Simploy" },
 ) {
-  const whole = async (_accountId: string, form: FormData) => land(form.get("file") as File);
+  const whole = async (_accountId: string, form: FormData) =>
+    land(form.get("file") as File);
   const piece = async (
     accountId: string,
     filename: string,
@@ -456,7 +535,14 @@ function doorsOver(
     assert.equal(accountId, account.id);
     return stagePiece(
       store.client,
-      { accountId, filename, index, total, bytes: new Uint8Array(await f.arrayBuffer()), type: f.type },
+      {
+        accountId,
+        filename,
+        index,
+        total,
+        bytes: new Uint8Array(await f.arrayBuffer()),
+        type: f.type,
+      },
       land,
     );
   };
@@ -490,7 +576,10 @@ describe("a file above the request cap arrives in pieces and lands once", () => 
     globalThis.fetch = scriptFetch(
       [
         { status: 404 }, // name probe: free
-        { status: 201, body: { content: { html_url: "https://github.com/o/vault/blob/x" } } },
+        {
+          status: 201,
+          body: { content: { html_url: "https://github.com/o/vault/blob/x" } },
+        },
       ],
       calls,
     );
@@ -558,10 +647,18 @@ describe("a file above the request cap arrives in pieces and lands once", () => 
         return doors.piece(a, f, i, t, form);
       },
     };
-    const r = await sendToVault("A1", new File([new Uint8Array(10 * MB)], "big.mp4"), broken);
+    const r = await sendToVault(
+      "A1",
+      new File([new Uint8Array(10 * MB)], "big.mp4"),
+      broken,
+    );
     assert.deepEqual(r, { ok: false, reason: UNFINISHED });
     assert.equal(landings, 0);
-    assert.equal(store.rows.length, 1, "the first piece waits; the next drop replaces it");
+    assert.equal(
+      store.rows.length,
+      1,
+      "the first piece waits; the next drop replaces it",
+    );
 
     // The server half: the last piece arrives with one missing. Nothing is
     // assembled, nothing lands, the pieces wait for a re-drop.
@@ -634,23 +731,22 @@ describe("a file above the request cap arrives in pieces and lands once", () => 
       piece(0, { bytes: new Uint8Array(0) }),
       piece(0, { bytes: new Uint8Array(VAULT_PIECE_BYTES + 1) }),
     ]) {
-      assert.deepEqual(await stagePiece(store.client, bad, land), { ok: false, reason: UNFINISHED });
+      assert.deepEqual(await stagePiece(store.client, bad, land), {
+        ok: false,
+        reason: UNFINISHED,
+      });
     }
     assert.equal(store.rows.length, 0);
     assert.equal(landings, 1);
     // A whole call that breaks off is a receipt, never a thrown promise.
-    const r2 = await sendToVault(
-      "A1",
-      new File(["WEBVTT"], "call.vtt"),
-      {
-        whole: async () => {
-          throw new TypeError("fetch failed");
-        },
-        piece: async () => {
-          throw new Error("unreached");
-        },
+    const r2 = await sendToVault("A1", new File(["WEBVTT"], "call.vtt"), {
+      whole: async () => {
+        throw new TypeError("fetch failed");
       },
-    );
+      piece: async () => {
+        throw new Error("unreached");
+      },
+    });
     assert.equal(r2.ok, false);
     if (!r2.ok) assert.match(r2.reason, /Drop it again\.$/);
   });
@@ -660,7 +756,10 @@ describe("a file above the request cap arrives in pieces and lands once", () => 
     const m = /bodySizeLimit:\s*"(\d+)kb"/.exec(config);
     assert.ok(m, "next.config.ts sets experimental.serverActions.bodySizeLimit in kb");
     const limit = Number(m![1]) * 1024;
-    assert.ok(limit > VAULT_PIECE_BYTES + 64 * 1024, "a piece plus the form's overhead fits");
+    assert.ok(
+      limit > VAULT_PIECE_BYTES + 64 * 1024,
+      "a piece plus the form's overhead fits",
+    );
     assert.ok(limit < 4.5 * MB, "under Vercel's 4.5 MB request cap");
   });
 
@@ -712,13 +811,15 @@ describe("the Sales Nav grab files each row on its own account", () => {
         findUnique: async ({ where }) => marks.get(where.accountId) ?? null,
         updateMany: async ({ where, data }) => {
           const r = marks.get(where.accountId);
-          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          if (!r || r.status !== where.status || r.reason !== where.reason)
+            return { count: 0 };
           r.reason = data.reason;
           return { count: 1 };
         },
         deleteMany: async ({ where }) => {
           const r = marks.get(where.accountId);
-          if (!r || r.status !== where.status || r.reason !== where.reason) return { count: 0 };
+          if (!r || r.status !== where.status || r.reason !== where.reason)
+            return { count: 0 };
           marks.delete(where.accountId);
           return { count: 1 };
         },
@@ -770,17 +871,20 @@ describe("the Sales Nav grab files each row on its own account", () => {
     const g = await fileGrab(plan, store, "drop");
     assert.equal(notes.length, 2, "one note per surely matched account");
     // The accounts file a few at a time; the summary keeps the grab's order.
-    assert.deepEqual(
-      notes.map((n) => n.accountId).sort(),
-      ["A0000000000000001", "B0000000000000002"],
-    );
+    assert.deepEqual(notes.map((n) => n.accountId).sort(), [
+      "A0000000000000001",
+      "B0000000000000002",
+    ]);
     assert.deepEqual(
       g.accounts.map((a) => a.id),
       ["A0000000000000001", "B0000000000000002"],
     );
     for (const n of notes) {
       // Under the grab's own head, with the source the intent read takes.
-      assert.ok(n.body.startsWith(`${HEAD}\n\n`), "the note keeps the SALESNAV ACCOUNTS head");
+      assert.ok(
+        n.body.startsWith(`${HEAD}\n\n`),
+        "the note keeps the SALESNAV ACCOUNTS head",
+      );
       assert.equal(n.source, "salesnav");
       assert.equal(n.door, "drop");
       assert.equal(n.lane, "background");
@@ -807,16 +911,29 @@ describe("the Sales Nav grab files each row on its own account", () => {
     // where a take-back bound to one account would read them as the whole.
     assert.ok(!("noteIds" in r));
     for (const a of g.accounts) {
-      assert.ok(notes.some((n) => n.id === a.noteId && n.accountId === a.id), `${a.id}'s note`);
-      assert.ok(filings.some((f) => f.id === a.filingId && f.accountId === a.id), `${a.id}'s filing`);
+      assert.ok(
+        notes.some((n) => n.id === a.noteId && n.accountId === a.id),
+        `${a.id}'s note`,
+      );
+      assert.ok(
+        filings.some((f) => f.id === a.filingId && f.accountId === a.id),
+        `${a.id}'s filing`,
+      );
     }
     assert.deepEqual(grabCounts(g), ["2 accounts", "1 row matched no account"]);
     assert.equal(unmatchedLine(1), "1 row matched no account.");
 
     // The queue's intent read now reads each account's own row.
     const at = NOW.toISOString();
-    assert.equal(intentFor([{ body: acme.body, source: acme.source, createdAt: at }], NOW)?.level, "high");
-    assert.equal(intentFor([{ body: beacon.body, source: beacon.source, createdAt: at }], NOW)?.level, "moderate");
+    assert.equal(
+      intentFor([{ body: acme.body, source: acme.source, createdAt: at }], NOW)?.level,
+      "high",
+    );
+    assert.equal(
+      intentFor([{ body: beacon.body, source: beacon.source, createdAt: at }], NOW)
+        ?.level,
+      "moderate",
+    );
   });
 
   test("the duplicate guard holds per account: a re-paste files nothing twice", async () => {
@@ -838,8 +955,14 @@ describe("the Sales Nav grab files each row on its own account", () => {
     // A changed row on one account files that account alone.
     const moved = again.replace("Moderate buyer intent", "High buyer intent");
     const g2 = await fileGrab(planGrab(moved, ROSTER), m.store, "drop");
-    assert.deepEqual(g2.accounts.map((a) => a.id), ["B0000000000000002"]);
-    assert.deepEqual(g2.duplicates.map((d) => d.id), ["A0000000000000001"]);
+    assert.deepEqual(
+      g2.accounts.map((a) => a.id),
+      ["B0000000000000002"],
+    );
+    assert.deepEqual(
+      g2.duplicates.map((d) => d.id),
+      ["A0000000000000001"],
+    );
   });
 
   // A grab is an observation of the day it was taken (pass 9 seam ruling,
@@ -865,26 +988,52 @@ describe("the Sales Nav grab files each row on its own account", () => {
     assert.equal(m.notes.length, 4);
     // The fingerprint is the capture's own with the day beside it.
     const body = planGrab(GRAB, ROSTER, NOW).filings[0].body;
-    assert.equal(grabFingerprint(body, "2026-10-07"), grabFingerprint(body, "2026-10-07"));
-    assert.notEqual(grabFingerprint(body, "2026-10-07"), grabFingerprint(body, "2026-10-08"));
+    assert.equal(
+      grabFingerprint(body, "2026-10-07"),
+      grabFingerprint(body, "2026-10-07"),
+    );
+    assert.notEqual(
+      grabFingerprint(body, "2026-10-07"),
+      grabFingerprint(body, "2026-10-08"),
+    );
   });
 
   test("the grab's day is the head's captured date, else the Chicago filing day", async () => {
     assert.equal(grabDay(HEAD), "2026-10-07");
-    assert.equal(grabDay("SALESNAV ACCOUNTS - captured 3/9/2027, 7:00:00 PM - 2 rows collected"), "2027-03-09");
-    assert.equal(grabDay("SALESNAV ACCOUNTS - captured 2026-10-06T14:00 - 2 rows"), "2026-10-06");
+    assert.equal(
+      grabDay("SALESNAV ACCOUNTS - captured 3/9/2027, 7:00:00 PM - 2 rows collected"),
+      "2027-03-09",
+    );
+    assert.equal(
+      grabDay("SALESNAV ACCOUNTS - captured 2026-10-06T14:00 - 2 rows"),
+      "2026-10-06",
+    );
     // No full date in the head: the filing day, in Chicago. 03:00 UTC on
     // 10/8 is still the evening of 10/7 there.
     const late = new Date("2026-10-08T03:00:00.000Z");
-    assert.equal(grabDay("SALESNAV ACCOUNTS - captured Jul 30 - 118 rows", late), "2026-10-07");
+    assert.equal(
+      grabDay("SALESNAV ACCOUNTS - captured Jul 30 - 118 rows", late),
+      "2026-10-07",
+    );
     assert.equal(grabDay("SALESNAV", late), "2026-10-07");
     // A dateless grab dedupes within its filing day and files fresh the next.
-    const dateless = GRAB.replace(HEAD, "SALESNAV ACCOUNTS - captured Jul 30 - 3 rows collected");
+    const dateless = GRAB.replace(
+      HEAD,
+      "SALESNAV ACCOUNTS - captured Jul 30 - 3 rows collected",
+    );
     const m = memory();
     await fileGrab(planGrab(dateless, ROSTER, late), m.store, "drop");
-    const again = await fileGrab(planGrab(dateless, ROSTER, new Date("2026-10-08T04:30:00.000Z")), m.store, "drop");
+    const again = await fileGrab(
+      planGrab(dateless, ROSTER, new Date("2026-10-08T04:30:00.000Z")),
+      m.store,
+      "drop",
+    );
     assert.equal(again.accounts.length, 0, "the same Chicago day");
-    const next = await fileGrab(planGrab(dateless, ROSTER, new Date("2026-10-08T15:00:00.000Z")), m.store, "drop");
+    const next = await fileGrab(
+      planGrab(dateless, ROSTER, new Date("2026-10-08T15:00:00.000Z")),
+      m.store,
+      "drop",
+    );
     assert.equal(next.accounts.length, 2, "the next Chicago day");
   });
 
@@ -913,28 +1062,63 @@ describe("the Sales Nav grab files each row on its own account", () => {
   test("roomPaste splits a grab before the duplicate claim and the read, and the Chute's door files it", () => {
     const actions = read("src/app/room/actions.ts");
     const a = actions.indexOf("export async function roomPaste(");
-    const roomPaste = actions.slice(a, actions.indexOf("export async function roomMoveDone(", a));
-    const branch = roomPaste.indexOf('if (dialect === "SN") return await fileGrabCapture(rawText, door, opts.windows ?? []);');
+    const roomPaste = actions.slice(
+      a,
+      actions.indexOf("export async function roomMoveDone(", a),
+    );
+    const branch = roomPaste.indexOf(
+      'if (dialect === "SN") return await fileGrabCapture(rawText, door, opts.windows ?? []);',
+    );
     assert.ok(branch > 0, "roomPaste hands a grab to the split");
-    assert.ok(branch < roomPaste.indexOf("claimCapture(pasteKey"), "before the whole-capture claim");
+    assert.ok(
+      branch < roomPaste.indexOf("claimCapture(pasteKey"),
+      "before the whole-capture claim",
+    );
     assert.ok(branch < roomPaste.indexOf("aiCleanTimeline("), "before the read");
     assert.ok(roomPaste.indexOf("requireWrite()") < branch, "after the session check");
     // The split reads the joined roster and files through the pipeline's own
-    // writers, with the door the capture came through.
-    const grab = actions.slice(actions.indexOf("async function fileGrabCapture("), actions.indexOf("function refusal("));
-    assert.match(grab, /planGrab\(rawText, await joinedRoster\(\), now\)/);
-    for (const writer of ["claimCapture(", "releaseCapture(", "stampPasteMark(", "fileFiling(", "createAccountNoteRow("])
-      assert.ok(grab.includes(writer), writer);
-    assert.match(grab, /fileGrab\(\s*plan,\s*\{[\s\S]*?\},\s*door,?\s*\)/);
+    // writers, with the door the capture came through. Since 2026-10-14 the
+    // filing lives in one plain server module every door shares (the room's
+    // actions and the inbound route), never a "use server" file, so nothing
+    // outside a checked door can call it.
+    const grab = actions.slice(
+      actions.indexOf("async function fileGrabCapture("),
+      actions.indexOf("function refusal("),
+    );
+    assert.match(grab, /grabsFrom\(rawText\)/);
+    assert.match(grab, /fileGrabTexts\(/);
+    const server = read("src/lib/ingest/grab-server.ts");
+    assert.doesNotMatch(server, /^["']use server["']/m);
+    assert.match(server, /planGrab\(text, roster, now\)/);
+    assert.match(server, /const roster = await joinedRoster\(\)/);
+    for (const writer of [
+      "claimCapture(",
+      "releaseCapture(",
+      "stampPasteMark(",
+      "fileFiling(",
+      "createAccountNoteRow(",
+    ])
+      assert.ok(server.includes(writer), writer);
+    assert.match(server, /fileGrab\(\s*plan,\s*\{[\s\S]*?\},\s*door,?\s*\)/);
     assert.match(actions, /export async function roomGrab\(/);
-    // The Chute tells a grab before it routes and hands it to the split.
+    // The Chute tells a grab, or an alert email that files as one, before it
+    // routes and hands it to the split.
     const chute = read("src/app/room/chute.tsx");
-    const swallow = chute.slice(chute.indexOf("const swallow = async"), chute.indexOf("const batchSeq"));
-    assert.ok(swallow.indexOf("isGrab(read.text)") > 0, "the Chute tells a grab");
-    assert.ok(swallow.indexOf("isGrab(read.text)") < swallow.indexOf("routed(read.text)"), "before the route");
+    const swallow = chute.slice(
+      chute.indexOf("const swallow = async"),
+      chute.indexOf("const batchSeq"),
+    );
+    assert.ok(swallow.indexOf("grabsFrom(read.text)") > 0, "the Chute tells a grab");
+    assert.ok(
+      swallow.indexOf("grabsFrom(read.text)") < swallow.indexOf("routed(read.text)"),
+      "before the route",
+    );
     // Rewritten in pass 9's tail: the grab travels through the carriage,
     // whole or in pieces the server assembles, and lands in roomGrab either
     // way (D4).
-    assert.match(read("src/app/room/ingest/use-ingest.ts"), /whole: \(t\) => roomGrab\(t, sent\),/);
+    assert.match(
+      read("src/app/room/ingest/use-ingest.ts"),
+      /whole: \(t\) => roomGrab\(t, sent\),/,
+    );
   });
 });

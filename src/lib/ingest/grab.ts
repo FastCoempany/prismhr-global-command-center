@@ -135,6 +135,40 @@ export function grabFingerprint(body: string, day: string): string {
 const firstLine = (row: string): string =>
   redactMoney((row.split("\n").find((l) => l.trim()) ?? "").trim().slice(0, 120));
 
+// A job move names two companies, the one they left and the one they
+// joined, and both accounts need to hear it (2026-10-14): the account they
+// joined gets someone new in seat, the account they left lost a contact. So
+// an alerts row that reads as a job move "… at {company}" routes twice: the
+// new company on its own, and the rest of the row with the new company taken
+// out, where the person's name (the router's people rung) or the old
+// company's name speaks. It files on each sure match; every other row routes
+// once, whole.
+const JOB_MOVE_RE =
+  /^(?:(?:suggested\s+)?lead\s*:\s*)?.+?\s(?:started a new position|has a new position|has a new role|changed jobs|was recently hired|is in a new role)\b(?:\s+as\s+.+?)?\s+at\s+(.+?)\.?$/i;
+
+type Best = NonNullable<ReturnType<typeof routeCapture>["best"]>;
+
+function routesFor(row: string, head: string, roster: readonly RouteAccount[]): Best[] {
+  const alerts = /^SALESNAV ALERTS\b/i.test(head);
+  // An alert is identified by its headline and the company line beneath it;
+  // a post's quoted words can name any company, so they never route it.
+  const lines = row.split("\n").filter((l) => l.trim());
+  const ident = alerts ? lines.slice(0, 2).join("\n") : row;
+  // Only the alert's own first line says who moved; a job sentence inside a
+  // post's quoted words is the post's, never a move.
+  const job = alerts ? JOB_MOVE_RE.exec((lines[0] ?? "").trim()) : null;
+  const company = job?.[1]?.trim() ?? "";
+  if (!company) {
+    const { best } = routeCapture(ident, [...roster]);
+    return best ? [best] : [];
+  }
+  const joined = routeCapture(company, [...roster]).best;
+  const left = routeCapture(ident.split(company).join(" "), [...roster]).best;
+  const out: Best[] = [];
+  for (const b of [joined, left]) if (b && !out.some((o) => o.id === b.id)) out.push(b);
+  return out;
+}
+
 /** Split the grab and route every row by the router's rungs over the roster
  *  the pipeline reads (the joined roster, C2). A row files only on the
  *  router's sure match: the top hit clears the bar and no rival comes close.
@@ -151,18 +185,20 @@ export function planGrab(
   >();
   const missed: string[] = [];
   for (const row of rows) {
-    const { best } = routeCapture(row, [...roster]);
-    if (!best) {
+    const targets = routesFor(row, head, roster);
+    if (!targets.length) {
       missed.push(firstLine(row));
       continue;
     }
-    const f = by.get(best.id) ?? {
-      account: { id: best.id, name: best.name },
-      rung: best.rung,
-      rows: [],
-    };
-    f.rows.push(row);
-    by.set(best.id, f);
+    for (const best of targets) {
+      const f = by.get(best.id) ?? {
+        account: { id: best.id, name: best.name },
+        rung: best.rung,
+        rows: [],
+      };
+      f.rows.push(row);
+      by.set(best.id, f);
+    }
   }
   return {
     filings: [...by.values()].map((f) => ({
