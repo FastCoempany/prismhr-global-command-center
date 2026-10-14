@@ -322,7 +322,10 @@ describe("the people grab", () => {
 describe("people signals: freshness", () => {
   test("a post past five days and a stale accounts read speak no more", () => {
     const old = peopleSignalsFor(
-      [note(ALERTS, day("2026-10-07")), note(ARMHR_ROW, day("2026-10-05"))],
+      [
+        note(ALERTS.replace("10/14/2026", "10/7/2026"), day("2026-10-07")),
+        note(ARMHR_ROW, day("2026-10-05")),
+      ],
       NOW,
     );
     assert.deepEqual(old, []);
@@ -550,12 +553,12 @@ describe("the review's cases (2026-10-14)", () => {
     assert.equal(seat?.action, "Meet Maria de la Cruz.");
   });
 
-  test("a job alert naming another company speaks nothing on this account", () => {
+  test("a job alert naming another company reads as left on this account, joined on that one", () => {
     const moved =
       "SALESNAV ALERTS - x\n\nJordan Ellis started a new position as VP of Operations at Nextep\n2 days";
-    assert.deepEqual(
-      peopleSignalsFor([note(moved, day("2026-10-14"))], NOW, "Armhr"),
-      [],
+    assert.equal(
+      peopleSignalsFor([note(moved, day("2026-10-14"))], NOW, "Armhr")[0]?.kind,
+      "left",
     );
     assert.equal(
       peopleSignalsFor([note(moved, day("2026-10-14"))], NOW, "Nextep, Inc.")[0]?.kind,

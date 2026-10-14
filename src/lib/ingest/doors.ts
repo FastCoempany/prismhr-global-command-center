@@ -11,6 +11,9 @@
 //   activity  the second record's writer (the weekly Salesforce export)
 //   seed      a static store standing in until the record speaks
 //   hand      the operator's own keystroke: a typed line, a click, a chip
+//   inbound   a mail rule's forward to the inbound route, behind its shared
+//             secret: Sales Navigator's alert emails as they arrive
+//             (src/app/inbound/salesnav/route.ts; 2026-10-14)
 
 export const DOORS = [
   "chute",
@@ -20,6 +23,7 @@ export const DOORS = [
   "activity",
   "seed",
   "hand",
+  "inbound",
 ] as const;
 
 export type Door = (typeof DOORS)[number];

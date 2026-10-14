@@ -75,6 +75,7 @@ import { isWire } from "@/lib/ingest/dialect";
 import {
   intentFor,
   intentReadDue,
+  observedIso,
   peopleSignalsFor,
   ridingLaneDate,
   type IntentSignal,
@@ -522,7 +523,9 @@ export default async function GroundworkPage({
   // The grab note the intent reading came from, as the stamp opens it.
   const grabLines = (id: string): string[] => {
     const at = intentById.get(id)?.at ?? "";
-    const note = (accountNotes.get(id) ?? []).find((n) => n.createdAt === at);
+    // The reading's moment is its capture moment (observedIso), which is
+    // the filing moment only when the head carries none.
+    const note = (accountNotes.get(id) ?? []).find((n) => observedIso(n) === at);
     return (note?.body ?? "")
       .split("\n")
       .map((l) => l.trim())
@@ -538,7 +541,9 @@ export default async function GroundworkPage({
         ? "posted"
         : ruleKey === "new-in-seat"
           ? "new-in-seat"
-          : "";
+          : ruleKey === "contact-left"
+            ? "left"
+            : "";
     return kind
       ? (peopleSignalsFor(accountNotes.get(id), now, getPeo(id)?.name ?? "").find(
           (s) => s.kind === kind,

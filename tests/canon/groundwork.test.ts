@@ -605,6 +605,7 @@ describe("Groundwork is outbound only: no rule stages a reactive move (A9.10)", 
     roster: "R0000000000000011",
     post: "R0000000000000012",
     hire: "R0000000000000013",
+    left: "R0000000000000014",
   };
   const AT = STALE_BOOK; // 2026-10-15, a quarter past the book sweep
   const day = (d: string) => `${d}T12:00:00Z`;
@@ -689,6 +690,16 @@ describe("Groundwork is outbound only: no rule stages a reactive move (A9.10)", 
         [
           {
             body: "SALESNAV ACCOUNTS - captured 10/14/2026 - 1 rows collected\n\nRule 13\nNeutral\n0 activities\nDeborah Dhuy\n· 3rd\n! CRM\nDirector of Project Services\nRecently hired",
+            source: "salesnav",
+            createdAt: day("2026-10-14"),
+          },
+        ],
+      ],
+      [
+        ids.left,
+        [
+          {
+            body: "SALESNAV ALERTS - captured 10/14/2026 - 1 alerts\n\nJordan Ellis started a new position as VP of Operations at Nextep\n2 days",
             source: "salesnav",
             createdAt: day("2026-10-14"),
           },

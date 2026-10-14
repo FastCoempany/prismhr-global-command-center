@@ -36,3 +36,25 @@
 - **Not built:** Sales Navigator alert emails into the app. Forwarding work mail or connecting Outlook needs PrismHR IT's answer first, and an email sample to read against. The alerts grab carries the same alerts in the meantime.
 - **Not built:** a contact-left signal (your contact leaves a book account). It needs a real job-change alert to know what the old and new companies look like in the text.
 - **Not built:** connection paths and TeamLink as a ranking input.
+
+## Addendum: alert emails and job moves (second PR, 2026-10-14)
+
+- **Alert emails file as grabs.** A Sales Navigator alert email (LinkedIn's, about Sales Navigator, with at least one alert line) files as a SALESNAV ALERTS grab and, for its intent alerts, a SALESNAV INTENT grab (src/lib/ingest/salesnav-email.ts). Each alert files on the account it names. The alerts date from the email's own sent time, not the day it was filed.
+- **Three doors take one:**
+  - the Chute (drop the .eml or .msg)
+  - a Drop or the Chute's paste (the Outlook grab of the email)
+  - the inbound route, /inbound/salesnav, behind the SALESNAV_INBOUND_SECRET shared secret, for a mail rule that forwards the alerts as they arrive
+  
+  The inbound route files under a new door, `inbound`.
+- **SALESNAV INTENT** reads as an intent reading, like the daily grab. It never quiets the daily nudge, and it carries no lead badge or deal date.
+- **A job move files on both companies.** The company they joined is routed on its own. The rest of the row, with that company taken out, routes by the person's name or the old company. The account they joined reads new-in-seat. The account they left reads a new person signal, `left`.
+- **contact-left (83, people band, burns):** "Ask who replaces {name}." / "Left for {company} {day}." The draft goes to the person who left, on LinkedIn, since their old address is dead. It congratulates them and asks who picks up their work. The file drops every email address. Stamp: "ASKED {NAME} WHO TAKES OVER".
+- **The grab filing moved** into src/lib/ingest/grab-server.ts, a plain module and not a "use server" file, so the inbound route can share it without exposing a callable action.
+- **An email is an alert email only when its own From line is LinkedIn's.** It must also be an Outlook thread or headless text (never a call, a Teams thread or a grab), mention Sales Navigator, and carry an alert line that opens with a person's capitalized name. A reply that mentions Sales Navigator, or a colleague's forward, files as the thread it is. The one exception is the inbound route, which is secret-gated and fed only by the operator's own rule. There, a LinkedIn From line inside a forwarded block counts.
+- **Alert rows route by their headline and company line only.** A post's quoted words never route it.
+- **Dates are read in Chicago time.** Capture stamps and zoneless Sent lines both use Chicago's offset for that date (daylight or standard), whatever zone the server runs in. Intent readings order by when they were observed, not when they were filed, so a late-dropped intent email can't override a fresher grab.
+- **The inbound body is capped at 2 MB** while it streams in, whether or not the post sends a Content-Length.
+- **Still unverified:**
+  - LinkedIn's alert email layout. The reader is a line reader held to alert sentences, tested on a synthetic email. The first real one should be dropped in the Chute and its receipt checked.
+  - The job-move wording.
+- **Not built:** the HomeRoom does not yet react when its relationship contact leaves; only Groundwork does, on off-board accounts. A board account's departed contact is the HomeRoom's next job.

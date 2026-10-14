@@ -172,11 +172,17 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
     assert.match(door, /carryFiling\(filingRequest\(door,/);
     assert.match(door, /\{ force: !!opts\.force, door, windows: opts\.windows \}/);
     assert.match(door, /whole: \(t\) => doors\.paste\(accountId, t, opts\),/);
-    assert.match(door, /piece: \(key, i, n, form\) => doors\.piece\(accountId, key, i, n, form, opts\),/);
+    assert.match(
+      door,
+      /piece: \(key, i, n, form\) => doors\.piece\(accountId, key, i, n, form, opts\),/,
+    );
     const actions = read("src/app/room/actions.ts");
     // The door is a required argument since pass 9 (pass 8 housekeeping):
     // roomPaste no longer defaults a caller that names none to the Drop.
-    assert.match(actions, /opts: \{ force\?: boolean; door: Door; windows\?: Window\[\] \},/);
+    assert.match(
+      actions,
+      /opts: \{ force\?: boolean; door: Door; windows\?: Window\[\] \},/,
+    );
     assert.match(actions, /const door: Door = opts\.door;/);
     assert.ok(!/opts\?\.door/.test(actions), "no caller's door is optional");
     // The fan-out is its own module since slice 6 (src/lib/ingest/fanout.ts).
@@ -221,7 +227,7 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
     assert.ok(isDoor(named.door));
     assert.deepEqual(
       [...DOORS],
-      ["chute", "drop", "act-lane", "intranet", "activity", "seed", "hand"],
+      ["chute", "drop", "act-lane", "intranet", "activity", "seed", "hand", "inbound"],
     );
     assert.equal(isDoor("supabase"), false);
   });
