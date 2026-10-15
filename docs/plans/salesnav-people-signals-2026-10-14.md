@@ -25,7 +25,7 @@
 6. **Two new queue rules.**
    - post-trigger (87, send band, burns): "Message {name}." / "Posted {day}." Fresh for five days. The draft is a LinkedIn message quoting at most twelve of the post's opening words.
    - new-in-seat (86, people band, burns): "Meet {name}." / "New in seat {day}." from a job alert, or "New in seat, seen {day}." from the badge, dated by the FIRST grab in the unbroken run that showed it, since a badge carries no hire date. Fresh for 21 days from that moment; the newest accounts read must also be inside the seven-day intent decay.
-   Both name the person as given and never shorten a name, compose a note addressed to that person, drop the relationship's email from the file (it is the wrong address), and stamp "WROTE TO {NAME} ABOUT THE POST" / "WROTE TO {NAME} · NEW IN SEAT". Once stamped worked, a people move stays off the queue while the same signal holds. A job alert naming a company other than the account it filed on fires nothing there. The live-motion exclusion holds: an account the HomeRoom is working stages neither.
+     Both name the person as given and never shorten a name, compose a note addressed to that person, drop the relationship's email from the file (it is the wrong address), and stamp "WROTE TO {NAME} ABOUT THE POST" / "WROTE TO {NAME} · NEW IN SEAT". Once stamped worked, a people move stays off the queue while the same signal holds. A job alert naming a company other than the account it filed on fires nothing there. The live-motion exclusion holds: an account the HomeRoom is working stages neither.
 7. **The shelf.** The three Sales Nav grabs share one card, what each takes and refuses one click down, so the shelf arrives at its 88-piece budget. This changes a face that predates the ship-order rule.
 8. **The stakeholder-gap recipe** no longer promises a confirm flow that does not exist; it points at the people grab and says nobody joins the roster until the operator adds them.
 
@@ -44,8 +44,9 @@
   - the Chute (drop the .eml or .msg)
   - a Drop or the Chute's paste (the Outlook grab of the email)
   - the inbound route, /inbound/salesnav, behind the SALESNAV_INBOUND_SECRET shared secret, for a mail rule that forwards the alerts as they arrive
-  
+
   The inbound route files under a new door, `inbound`.
+
 - **SALESNAV INTENT** reads as an intent reading, like the daily grab. It never quiets the daily nudge, and it carries no lead badge or deal date.
 - **A job move files on both companies.** The company they joined is routed on its own. The rest of the row, with that company taken out, routes by the person's name or the old company. The account they joined reads new-in-seat. The account they left reads a new person signal, `left`.
 - **contact-left (83, people band, burns):** "Ask who replaces {name}." / "Left for {company} {day}." The draft goes to the person who left, on LinkedIn, since their old address is dead. It congratulates them and asks who picks up their work. The file drops every email address. Stamp: "ASKED {NAME} WHO TAKES OVER".
@@ -79,3 +80,12 @@ The founder picked Concept C, the day spine, from docs/mockups/groundwork-salesn
 - **Working an alert.** Worked it calls workedChannel with the alert's rule as the move key. That's the same stamp and Sendbook tap the Channel Ask files, so the queue drops the move and the wing stamps it. The channel is EMAIL after an Outlook draft, INMAIL after Open InMail, and otherwise LINKEDIN (EMAIL for an intent note with an email on file). The ↺ shows only on the day it was worked, because the take-back removes today's stamp.
 - **✕ and mute.** These are snav:gone and snav:mute namespaced notes, which every account view and the intranet mirror skip. Only the activity group can be muted.
 - **Not built:** a per-alert count on the wing, and a weekly roll-up for anyone. Nothing is rolled up to anyone unless the founder says so.
+
+## Three months and the backfill (2026-10-15)
+
+The founder: "keep today, yesterday and this week and then fold the others by month underneath."
+
+- **The column reads 90 days.** TODAY, YESTERDAY and THIS WEEK stay open. Each older month folds beneath them under its own name ("Earlier in October", "September"), with its count. The live count and the lead alert read the open sections only. The filter reaches the folds.
+- **The backfill rides the inbound route.** A mail rule only acts on mail as it arrives, so nothing before the rule reached the column. The route now reads messages attached to the post (.eml or .msg, at most 60), each like a dropped file, each filing at its own sent date. The operator selects old alert emails in Outlook and uses Forward as attachment to the Postmark address. The body cap rose from 2 MB to 4.4 MB, just under Vercel's request limit, so a batch of about fifteen fits.
+- **Old alerts make no old moves.** A post stays fresh five days and a new seat 21, both from the alert's own date, so a backfilled July post shows in the column and stages nothing on the queue.
+- **Worked it is per alert.** The column's Worked it marks the alert by its key (snav:worked). Only the newest alert of a rule on an account stamps the queue's move, and the queue's stamp marks only that newest alert. Working an August post never marks October's. ↺ takes back the mark, and the stamp too when it landed today.

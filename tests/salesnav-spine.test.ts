@@ -19,7 +19,12 @@ import {
 } from "../src/lib/ingest/salesnav-links";
 import { alertBlocks, grabsFromSalesNavEmail } from "../src/lib/ingest/salesnav-email";
 import { planGrab } from "../src/lib/ingest/grab";
-import { buildSpine, spineWorked, splitPayload } from "../src/lib/groundwork/spine";
+import {
+  buildSpine,
+  newestPerRule,
+  spineWorked,
+  splitPayload,
+} from "../src/lib/groundwork/spine";
 import { KIND_GROUP, KIND_RULE } from "../src/lib/groundwork/spine-kinds";
 import { intentFor, peopleSignalsFor } from "../src/lib/groundwork/signals";
 
@@ -289,9 +294,17 @@ describe("the spine", () => {
     assert.ok(posts[0]!.quote.startsWith("Clients keep asking"));
   });
 
-  test("nothing older than a week, nothing from the future", () => {
+  test("three months back, folded by month past the week; nothing older, nothing from the future", () => {
+    const later = buildSpine(ACCOUNTS, filed(DIGEST), new Date("2026-10-21T15:00:00Z"));
+    assert.equal(later.length, 5);
+    assert.ok(
+      later.every((i) => i.when === "2026-10"),
+      "eight days on, they fold under October",
+    );
+    const dec = buildSpine(ACCOUNTS, filed(DIGEST), new Date("2026-12-20T15:00:00Z"));
+    assert.ok(dec.every((i) => i.when === "2026-10"));
     assert.deepEqual(
-      buildSpine(ACCOUNTS, filed(DIGEST), new Date("2026-10-21T15:00:00Z")),
+      buildSpine(ACCOUNTS, filed(DIGEST), new Date("2027-01-12T15:00:00Z")),
       [],
     );
     assert.deepEqual(
@@ -369,14 +382,17 @@ describe("worked, and the draft's parts", () => {
     assert.deepEqual(spineWorked(it, ["groundwork:2026-10-15:A1:post-trigger"], NOW), {
       worked: true,
       today: true,
+      stampedToday: true,
     });
     assert.deepEqual(spineWorked(it, ["groundwork:2026-10-14:A1:post-trigger"], NOW), {
       worked: true,
       today: false,
+      stampedToday: false,
     });
     assert.deepEqual(spineWorked(it, ["groundwork:2026-10-12:A1:post-trigger"], NOW), {
       worked: false,
       today: false,
+      stampedToday: false,
     });
     assert.equal(
       spineWorked(it, ["groundwork:2026-10-15:A1:intent-warm"], NOW).worked,
@@ -386,6 +402,28 @@ describe("worked, and the draft's parts", () => {
       spineWorked({ ...it, rule: null }, ["groundwork:2026-10-15:A1:post-trigger"], NOW)
         .worked,
       false,
+    );
+  });
+
+  test("the queue's stamp speaks for the newest alert of its rule only; a mark speaks for its own", () => {
+    const stamp = ["groundwork:2026-10-15:A1:post-trigger"];
+    const old = { ...it, at: "2026-08-04T15:00:00Z" };
+    assert.equal(spineWorked(old, stamp, NOW, { newest: false }).worked, false);
+    assert.deepEqual(spineWorked(old, [], NOW, { newest: false, marked: true }), {
+      worked: true,
+      today: true,
+      stampedToday: false,
+    });
+    assert.deepEqual(
+      [
+        ...newestPerRule([
+          { key: "a", accountId: "A1", rule: "post-trigger", at: "2026-08-04T15:00:00Z" },
+          { key: "b", accountId: "A1", rule: "post-trigger", at: "2026-10-15T14:00:00Z" },
+          { key: "c", accountId: "A2", rule: "post-trigger", at: "2026-09-01T14:00:00Z" },
+          { key: "d", accountId: "A1", rule: null, at: "2026-10-15T15:00:00Z" },
+        ]),
+      ].sort(),
+      ["b", "c"],
     );
   });
 

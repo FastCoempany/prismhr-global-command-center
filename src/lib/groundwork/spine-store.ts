@@ -6,6 +6,8 @@
 
 export const SPINE_GONE = "snav:gone";
 export const SPINE_MUTE = "snav:mute";
+/** An alert worked from the column, by its key (2026-10-15). */
+export const SPINE_WORKED = "snav:worked";
 
 /** A spine key is the builder's own hash (src/lib/groundwork/spine.ts). */
 export const isSpineKey = (k: unknown): k is string =>

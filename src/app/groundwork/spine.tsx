@@ -21,6 +21,8 @@ import type { SpineDraft, SpineItem } from "@/lib/groundwork/spine";
 import { KIND_GROUP } from "@/lib/groundwork/spine-kinds";
 import {
   hideAlert,
+  markAlertWorked,
+  unmarkAlertWorked,
   muteAlerts,
   showAlert,
   unWork,
@@ -37,6 +39,11 @@ export type SpineCard = SpineItem & {
   sfNew: string | null;
   worked: boolean;
   workedToday: boolean;
+  /** The newest alert of its rule on its account: only its Worked it moves
+   *  the queue. */
+  newest: boolean;
+  /** The queue's stamp for it landed today, so ↺ returns the move too. */
+  stampedToday: boolean;
 };
 
 const FILTERS = [
@@ -52,6 +59,29 @@ const DAYS = [
   ["yesterday", "Yesterday"],
   ["week", "This week"],
 ] as const;
+const OPEN = new Set<string>(["today", "yesterday", "week"]);
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** "2026-09" as "September"; the current month's older alerts read
+ *  "Earlier in October". */
+function monthLabel(month: string, nowMonth: string): string {
+  const name = MONTHS[Number(month.slice(5, 7)) - 1] ?? month;
+  return month === nowMonth ? `Earlier in ${name}` : name;
+}
 
 const shortDay = (iso: string): string => {
   const t = Date.parse(iso);
@@ -149,11 +179,15 @@ export function SpineColumn({
   hidden,
   muted,
   canWrite,
+  nowMonth,
 }: {
   cards: readonly SpineCard[];
   hidden: readonly { key: string; label: string }[];
   muted: readonly string[];
   canWrite: boolean;
+  /** The current Chicago month, "2026-10", from the server's clock, so the
+   *  folds read the same on both renders. */
+  nowMonth: string;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<string | null>(null);
@@ -162,8 +196,10 @@ export function SpineColumn({
 
   const live = cards.filter((c) => !gone.has(c.key));
   const shown = live.filter((c) => filter === "all" || KIND_GROUP[c.kind] === filter);
+  const week = live.filter((c) => OPEN.has(c.when));
   const today = live.filter((c) => c.when === "today").length;
-  const firstKey = shown[0]?.key;
+  // The newest open alert leads; a folded month never leads.
+  const firstKey = shown.find((c) => OPEN.has(c.when))?.key;
 
   useEffect(() => {
     if (!open) return;
@@ -180,6 +216,56 @@ export function SpineColumn({
     await hideAlert(key);
   };
 
+  const renderEvent = (c: SpineCard) => (
+    <SpineEvent
+      key={c.key}
+      card={c}
+      lead={c.key === firstKey}
+      open={open === c.key}
+      busy={busy === c.key}
+      canWrite={canWrite}
+      onOpen={() => setOpen(open === c.key ? null : c.key)}
+      onClose={() => setOpen(null)}
+      onHide={() => void hide(c.key)}
+      onWorked={async (used) => {
+        if (!c.rule) return;
+        setBusy(c.key);
+        // Only the newest alert's move is on the queue; an older one is
+        // marked worked by itself and stamps nothing.
+        if (c.newest)
+          await workedChannel(
+            `${c.accountId}:${c.rule}`,
+            c.accountId,
+            channelOf(c, used),
+            c.who || c.draft?.to || "",
+            clauseOf(c),
+          );
+        await markAlertWorked(c.key);
+        setBusy(null);
+        setOpen(null);
+      }}
+      onUnwork={async () => {
+        if (!c.rule) return;
+        setBusy(c.key);
+        await unmarkAlertWorked(c.key);
+        if (c.newest && c.stampedToday)
+          await unWork(`${c.accountId}:${c.rule}`, c.accountId);
+        setBusy(null);
+      }}
+      onMute={async () => {
+        await muteAlerts(KIND_GROUP[c.kind]);
+      }}
+    />
+  );
+
+  const months: [string, SpineCard[]][] = [];
+  for (const c of shown) {
+    if (c.when === "today" || c.when === "yesterday" || c.when === "week") continue;
+    const at = months.find(([m]) => m === c.when);
+    if (at) at[1].push(c);
+    else months.push([c.when, [c]]);
+  }
+
   return (
     <aside className={styles.spine} aria-label="Sales Nav alerts">
       <div className={styles.snHead}>
@@ -188,7 +274,7 @@ export function SpineColumn({
         </span>
         <span className={styles.snTitle}>Sales Nav</span>
         <span className={styles.snCount}>
-          {live.length} this week · {today} today
+          {week.length} this week · {today} today
         </span>
       </div>
       <div className={styles.snSeg} role="group" aria-label="Show">
@@ -207,8 +293,8 @@ export function SpineColumn({
       {shown.length === 0 && (
         <p className={styles.snEmpty}>
           {live.length === 0
-            ? "No Sales Nav alerts on your accounts this week."
-            : "Nothing under this filter this week."}
+            ? "No Sales Nav alerts on your accounts in the last three months."
+            : "Nothing under this filter."}
         </p>
       )}
 
@@ -218,44 +304,22 @@ export function SpineColumn({
         return (
           <div key={when}>
             <div className={styles.snDay}>{kicker}</div>
-            {day.map((c) => (
-              <SpineEvent
-                key={c.key}
-                card={c}
-                lead={c.key === firstKey}
-                open={open === c.key}
-                busy={busy === c.key}
-                canWrite={canWrite}
-                onOpen={() => setOpen(open === c.key ? null : c.key)}
-                onClose={() => setOpen(null)}
-                onHide={() => void hide(c.key)}
-                onWorked={async (used) => {
-                  if (!c.rule) return;
-                  setBusy(c.key);
-                  await workedChannel(
-                    `${c.accountId}:${c.rule}`,
-                    c.accountId,
-                    channelOf(c, used),
-                    c.who || c.draft?.to || "",
-                    clauseOf(c),
-                  );
-                  setBusy(null);
-                  setOpen(null);
-                }}
-                onUnwork={async () => {
-                  if (!c.rule) return;
-                  setBusy(c.key);
-                  await unWork(`${c.accountId}:${c.rule}`, c.accountId);
-                  setBusy(null);
-                }}
-                onMute={async () => {
-                  await muteAlerts(KIND_GROUP[c.kind]);
-                }}
-              />
-            ))}
+            {day.map(renderEvent)}
           </div>
         );
       })}
+
+      {/* Older alerts fold by Chicago month, newest month first; each fold
+          says its count and opens with one click (the click-depth law). */}
+      {months.map(([month, items]) => (
+        <details key={month} className={styles.snMonth}>
+          <summary>
+            {monthLabel(month, nowMonth)} · {items.length} alert
+            {items.length === 1 ? "" : "s"}
+          </summary>
+          {items.map(renderEvent)}
+        </details>
+      ))}
 
       {(hidden.length > 0 || muted.length > 0) && (
         <details className={styles.snFold}>
