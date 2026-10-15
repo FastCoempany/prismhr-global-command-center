@@ -1,0 +1,68 @@
+[
+ [
+  "web-banner-3x1",
+  1500,
+  500,
+  "Webinar / web hero banner, email header (scales to 600x200, 1200x400)"
+ ],
+ [
+  "web-hero-1920x640",
+  1920,
+  640,
+  "Full-width web hero"
+ ],
+ [
+  "linkedin-banner-1584x396",
+  1584,
+  396,
+  "LinkedIn page / profile banner"
+ ],
+ [
+  "x-header-1500x500",
+  1500,
+  500,
+  "X / Twitter header"
+ ],
+ [
+  "leaderboard-728x90",
+  728,
+  90,
+  "Display ad leaderboard"
+ ],
+ [
+  "link-preview-1200x628",
+  1200,
+  628,
+  "Link preview / Open Graph / LinkedIn post image"
+ ],
+ [
+  "slide-16x9-1920x1080",
+  1920,
+  1080,
+  "Presentation title slide, Zoom/Teams background, video title card"
+ ],
+ [
+  "social-square-1080",
+  1080,
+  1080,
+  "Instagram / LinkedIn square post"
+ ],
+ [
+  "social-portrait-1080x1350",
+  1080,
+  1350,
+  "Instagram / LinkedIn portrait post"
+ ],
+ [
+  "story-1080x1920",
+  1080,
+  1920,
+  "Story / reel / mobile full screen"
+ ],
+ [
+  "display-300x250",
+  300,
+  250,
+  "Display ad medium rectangle"
+ ]
+]

@@ -1,0 +1,152 @@
+/* Grow Beyond Borders banner: one block that lays itself out for any frame.
+
+   Put <div class="gbb">…</div> (markup in banner.html) into any box that has a width and a height.
+   The layout follows that box's aspect ratio through container queries:
+     5:1 and wider     one-line strip (leaderboards)
+     2.2:1 to 5:1      banner (web hero, email header, LinkedIn, X)
+     1.4:1 to 2.2:1    landscape (slides, link previews, video title cards)
+     0.9:1 to 1.4:1    square (social posts, display rectangles)
+     0.7:1 to 0.9:1    portrait (4:5 social)
+     under 0.7:1       story (9:16)
+   Every layer is its own element, so any one can be hidden, swapped or restyled on its own.
+
+   All sizing lives in custom properties on .gbb-stage. A container query restyles the stage, never the
+   container itself, so each override recalculates everything derived from it. */
+
+.gbb {
+  container: gbb / size;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  background: #061f3a;
+}
+
+.gbb-stage {
+  position: absolute;
+  inset: 0;
+  font-family: Lato, "Helvetica Neue", Arial, sans-serif;
+
+  /* banner (default) */
+  --fs: 13.5cqh;                                       /* headline size */
+  --tx: 17cqh;                                         /* headline left edge */
+  --top: calc(50cqh - 1.4915 * var(--fs));             /* top of the capitals */
+  --R: max(45cqh, min(88cqh, calc((100cqw - var(--tx) - 7.465 * var(--fs)) / 2)));  /* globe radius */
+  --gcx: calc(100cqw - var(--R));                      /* globe centre */
+  --gcy: 54cqh;
+  --tile: calc(0.48 * var(--R));                       /* GBL tile face size */
+  --tcx: calc(var(--gcx) + 0.01 * var(--R));           /* tile centre */
+  --tcy: calc(var(--gcy) - 0.03 * var(--R));
+  --angle: 100deg;                                     /* background sweep, text side to globe side */
+  --pitch: max(6px, 2.94cqmin);                        /* halftone dot pitch */
+}
+.gbb-stage > * { position: absolute; margin: 0; }
+
+/* ---- layers, back to front --------------------------------------------- */
+.gbb-bg {
+  inset: 0;
+  background:
+    linear-gradient(to bottom, transparent 55%, rgba(8, 26, 51, 0.55)),
+    radial-gradient(circle calc(1.05 * var(--R)) at calc(var(--gcx) + 0.55 * var(--R)) calc(var(--gcy) - 0.35 * var(--R)),
+      rgba(160, 40, 90, 0.75), rgba(160, 40, 90, 0.25) 60%, transparent),
+    radial-gradient(circle 55cqmax at calc(0.4 * var(--tx)) calc(0.5 * var(--top)), rgba(10, 86, 150, 0.85), transparent),
+    linear-gradient(var(--angle), #08467f 0%, #073059 28%, #061f3a 55%, #2a1033 80%, #57142b 100%);
+}
+.gbb-halftone {
+  inset: 0;
+  background-image: radial-gradient(circle closest-side, rgba(62, 134, 201, 0.4) 0 55%, transparent 62%);
+  background-size: var(--pitch) var(--pitch);
+  -webkit-mask-image: radial-gradient(ellipse 70% 95% at 0% 0%, #000, rgba(0, 0, 0, 0.45) 45%, transparent 80%);
+  mask-image: radial-gradient(ellipse 70% 95% at 0% 0%, #000, rgba(0, 0, 0, 0.45) 45%, transparent 80%);
+}
+.gbb-plexus {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+  -webkit-mask-image: radial-gradient(circle calc(1.9 * var(--R)) at var(--gcx) var(--gcy), #000 52%, transparent);
+  mask-image: radial-gradient(circle calc(1.9 * var(--R)) at var(--gcx) var(--gcy), #000 52%, transparent);
+}
+.gbb-globe {
+  /* globe.svg is 1240 units across around a 960-unit sphere */
+  width: calc(2.58333 * var(--R));
+  height: calc(2.58333 * var(--R));
+  left: calc(var(--gcx) - 1.29167 * var(--R));
+  top: calc(var(--gcy) - 1.29167 * var(--R));
+}
+.gbb-tile {
+  /* gbl-tile.svg is 124 x 128 units around a 100-unit face (room for the rim and shadow) */
+  width: calc(1.24 * var(--tile));
+  left: calc(var(--tcx) - 0.62 * var(--tile));
+  top: calc(var(--tcy) - 0.6 * var(--tile));
+}
+.gbb-headline {
+  left: var(--tx);
+  top: calc(var(--top) - 0.229 * var(--fs));
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--fs);
+  line-height: 1.13;
+  white-space: nowrap;
+}
+
+/* ---- landscape, 1.4:1 to 2.2:1 ------------------------------------------ */
+@container gbb (min-aspect-ratio: 7/5) and (max-aspect-ratio: 11/5) {
+  .gbb-stage {
+    --fs: 10.5cqh;
+    --tx: 6.5cqw;
+    --R: max(45cqh, min(62cqh, calc((100cqw - var(--tx) - 7.465 * var(--fs)) / 1.82)));
+    --gcx: calc(100cqw - 0.82 * var(--R));
+    --gcy: 53cqh;
+    --tile: calc(0.42 * var(--R));
+  }
+}
+
+/* ---- square, portrait and story: headline on top, globe rising ---------- */
+@container gbb (max-aspect-ratio: 7/5) {
+  .gbb-stage {
+    --fs: 8.8cqw;
+    --tx: 7.5cqw;
+    --top: 8.5cqh;
+    --gap: 0.65;
+    --R: 64cqw;
+    --gcx: 56cqw;
+    --gcy: calc(var(--top) + (2.983 + var(--gap)) * var(--fs) + var(--R));
+    --tile: 22cqw;
+    --tcx: var(--gcx);
+    --tcy: calc(var(--gcy) - 0.52 * var(--R));
+    --angle: 150deg;
+  }
+}
+@container gbb (max-aspect-ratio: 9/10) {
+  .gbb-stage { --fs: 9.8cqw; --tx: 8cqw; --R: 72cqw; --tile: 25cqw; --angle: 160deg; }
+}
+@container gbb (max-aspect-ratio: 7/10) {
+  .gbb-stage {
+    --fs: 11.2cqw;
+    --top: 11cqh;
+    --gap: 0.9;
+    --R: 86cqw;
+    --tcy: calc(var(--gcy) - 0.42 * var(--R));
+    --angle: 165deg;
+  }
+}
+
+/* ---- ultra-wide strip, 5:1 and wider ------------------------------------ */
+@container gbb (min-aspect-ratio: 5/1) {
+  .gbb-stage {
+    --tx: 42cqh;
+    --fs: min(30cqh, calc((100cqw - 297cqh) / 17.81));
+    --top: calc(50cqh - 0.3615 * var(--fs));
+    --R: 120cqh;
+    --gcx: calc(100cqw - 120cqh);
+    --gcy: 78cqh;
+    --tile: 60cqh;
+    --tcx: calc(var(--gcx) - 5cqh);
+    --tcy: 50cqh;
+  }
+  .gbb-headline br { display: none; }
+  .gbb-halftone { display: none; }
+}

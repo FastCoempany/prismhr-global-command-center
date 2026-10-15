@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-620 -620 1240 1240" width="1240" height="1240"><title>Globe Atmosphere Only</title><defs>
+<linearGradient id="gbb-land" gradientUnits="userSpaceOnUse" x1="-480" y1="0" x2="480" y2="0">
+  <stop offset="0" stop-color="#A5EEFF"/><stop offset=".5" stop-color="#DCD6F7"/><stop offset="1" stop-color="#FF8DB6"/></linearGradient>
+<linearGradient id="gbb-net" gradientUnits="userSpaceOnUse" x1="-480" y1="0" x2="480" y2="0">
+  <stop offset="0" stop-color="#6FD8FF"/><stop offset=".55" stop-color="#E8E4FF"/><stop offset="1" stop-color="#FF6FA0"/></linearGradient>
+<radialGradient id="gbb-sphere" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="480">
+  <stop offset="0" stop-color="#05172F" stop-opacity=".62"/><stop offset=".78" stop-color="#0A2A55" stop-opacity=".58"/>
+  <stop offset=".95" stop-color="#173F74" stop-opacity=".6"/><stop offset="1" stop-color="#2D63A6" stop-opacity=".62"/></radialGradient>
+<radialGradient id="gbb-light" gradientUnits="userSpaceOnUse" cx="-210" cy="-170" r="560">
+  <stop offset="0" stop-color="#9FDCFF" stop-opacity=".16"/><stop offset="1" stop-color="#9FDCFF" stop-opacity="0"/></radialGradient>
+<linearGradient id="gbb-atmo-color" gradientUnits="userSpaceOnUse" x1="-480" y1="0" x2="480" y2="0">
+  <stop offset="0" stop-color="#4FD2FF"/><stop offset=".5" stop-color="#8F8CFF"/><stop offset="1" stop-color="#FF4F8B"/></linearGradient>
+<radialGradient id="gbb-atmo-alpha" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="570">
+  <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#fff" stop-opacity="0"/>
+  <stop offset=".842" stop-color="#fff" stop-opacity=".5"/><stop offset=".875" stop-color="#fff" stop-opacity=".16"/>
+  <stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<mask id="gbb-atmo-mask" maskUnits="userSpaceOnUse" x="-600" y="-600" width="1200" height="1200">
+  <circle r="570" fill="url(#gbb-atmo-alpha)"/></mask>
+<radialGradient id="gbb-flare-cyan"><stop offset="0" stop-color="#fff"/><stop offset=".14" stop-color="#7FE0FF" stop-opacity=".95"/><stop offset=".45" stop-color="#3FB8FF" stop-opacity=".28"/><stop offset="1" stop-color="#3FB8FF" stop-opacity="0"/></radialGradient>
+<radialGradient id="gbb-flare-white"><stop offset="0" stop-color="#fff"/><stop offset=".14" stop-color="#EDE8FF" stop-opacity=".95"/><stop offset=".45" stop-color="#B7A8FF" stop-opacity=".25"/><stop offset="1" stop-color="#B7A8FF" stop-opacity="0"/></radialGradient>
+<radialGradient id="gbb-flare-pink"><stop offset="0" stop-color="#fff"/><stop offset=".14" stop-color="#FF9CC0" stop-opacity=".95"/><stop offset=".45" stop-color="#FF4F8B" stop-opacity=".28"/><stop offset="1" stop-color="#FF4F8B" stop-opacity="0"/></radialGradient>
+</defs><g id="globe-atmosphere"><circle r="570" fill="url(#gbb-atmo-color)" mask="url(#gbb-atmo-mask)"/></g></svg>

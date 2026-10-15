@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" preserveAspectRatio="xMidYMid slice"><title>Background field</title><defs>
+<linearGradient id="gbb-bg-base" gradientUnits="userSpaceOnUse" x1="120" y1="80" x2="1684.9" y2="672.5">
+  <stop offset="0" stop-color="#08467F"/><stop offset=".28" stop-color="#073059"/><stop offset=".55" stop-color="#061F3A"/>
+  <stop offset=".8" stop-color="#2A1033"/><stop offset="1" stop-color="#57142B"/></linearGradient>
+<radialGradient id="gbb-bg-blue" gradientUnits="userSpaceOnUse" cx="120" cy="80" r="880">
+  <stop offset="0" stop-color="#0A5696" stop-opacity=".85"/><stop offset="1" stop-color="#0A5696" stop-opacity="0"/></radialGradient>
+<radialGradient id="gbb-bg-magenta" gradientUnits="userSpaceOnUse" cx="1417.5" cy="288" r="546">
+  <stop offset="0" stop-color="#A0285A" stop-opacity=".75"/><stop offset=".6" stop-color="#A0285A" stop-opacity=".25"/><stop offset="1" stop-color="#A0285A" stop-opacity="0"/></radialGradient>
+<linearGradient id="gbb-bg-floor" x1="0" y1="0" x2="0" y2="1">
+  <stop offset=".55" stop-color="#081A33" stop-opacity="0"/><stop offset="1" stop-color="#081A33" stop-opacity=".55"/></linearGradient>
+</defs><rect width="1600" height="900" fill="url(#gbb-bg-base)"/><rect width="1600" height="900" fill="url(#gbb-bg-blue)"/><rect width="1600" height="900" fill="url(#gbb-bg-magenta)"/><rect width="1600" height="900" fill="url(#gbb-bg-floor)"/></svg>
