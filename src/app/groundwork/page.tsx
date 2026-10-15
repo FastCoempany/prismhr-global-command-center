@@ -36,10 +36,11 @@ import {
   KIND_GROUP,
   buildSpine,
   spineWorked,
+  newestPerRule,
   splitPayload,
   type SpineDraft,
 } from "@/lib/groundwork/spine";
-import { SPINE_GONE, SPINE_MUTE } from "@/lib/groundwork/spine-store";
+import { SPINE_GONE, SPINE_MUTE, SPINE_WORKED } from "@/lib/groundwork/spine-store";
 import { SpineColumn, type SpineCard } from "./spine";
 import {
   buildQueue,
@@ -807,7 +808,7 @@ export default async function GroundworkPage({
     `/groundwork?focus=${encodeURIComponent(q.accountId)}${open ? "&file=1" : ""}`;
 
   // ── The Sales Nav spine (Concept C, ship order 2026-10-15) ──────────────
-  // Every Sales Navigator alert on a book account in the last week, read from
+  // Every Sales Navigator alert on a book account in the last three months, read from
   // the notes the grabs and the alert emails filed. The ledger's exclusions
   // hold here too (not mine, parked, snoozed); live motion does not hide an
   // alert, because an alert is a fact about the account, not a move.
@@ -820,6 +821,10 @@ export default async function GroundworkPage({
     now,
   );
   const stampKeys = [...doneTimes.keys()];
+  const spineMarked = new Set(
+    (notesMap.get(SPINE_WORKED) ?? []).map((n) => n.body.trim()),
+  );
+  const spineNewest = newestPerRule(spineAll);
   const spineCards: SpineCard[] = [];
   const spineHidden: { key: string; label: string }[] = [];
   for (const it of spineAll) {
@@ -896,7 +901,11 @@ export default async function GroundworkPage({
               : "LinkedIn message",
       };
     }
-    const stamped = spineWorked(it, stampKeys, now);
+    const newest = spineNewest.has(it.key);
+    const stamped = spineWorked(it, stampKeys, now, {
+      newest,
+      marked: spineMarked.has(it.key),
+    });
     const [first, ...restName] = it.who.split(/\s+/);
     spineCards.push({
       ...it,
@@ -914,6 +923,8 @@ export default async function GroundworkPage({
           : null,
       worked: stamped.worked,
       workedToday: stamped.today,
+      newest,
+      stampedToday: stamped.stampedToday,
     });
   }
 

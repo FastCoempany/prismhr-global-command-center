@@ -329,7 +329,7 @@ describe("the inbound route's readers", () => {
       [...route.matchAll(/^export (?:async )?(?:function|const) (\w+)/gm)].map(
         (m) => m[1],
       ),
-      ["dynamic", "POST"],
+      ["dynamic", "maxDuration", "POST"],
     );
   });
 });

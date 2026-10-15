@@ -39,6 +39,8 @@ import { fileGrabTexts } from "@/lib/ingest/grab-server";
 import { hasDatabaseEnv } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+// A backfill batch files dozens of accounts one after another.
+export const maxDuration = 300;
 
 const MAX_BYTES = 4_400_000;
 

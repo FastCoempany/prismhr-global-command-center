@@ -53,6 +53,8 @@ const card = (over: Partial<SpineCard>): SpineCard => ({
   sfNew: null,
   worked: false,
   workedToday: false,
+  newest: true,
+  stampedToday: false,
   ...over,
 });
 

@@ -44,7 +44,7 @@ The rule only catches mail as it arrives. To bring in alerts from before it:
 1. In Outlook, search `from:messages-noreply@linkedin.com` and narrow to the last three months.
 2. Select about fifteen emails at a time. The route takes up to 60 attached messages, but Vercel caps a post near 4.5 MB.
 3. Choose **Forward as attachment** and send it to the Postmark inbound address.
-4. Repeat until you reach the newest. Each alert files at its own sent date, and a batch sent twice files nothing new.
+4. Repeat until you reach the newest. Each alert files at its own sent date, and a batch sent twice files nothing new. If the Sales Nav column shows nothing new after a batch, Outlook may have sent it as winmail.dat, which the route can't read. Send the batch from Outlook on the web instead.
 
 Old alerts show in the Sales Nav column under their month. They don't put old moves on the queue: a post stays fresh for five days and a new seat for 21, counted from the alert's own date.
 

@@ -19,6 +19,7 @@ import { roomResearch } from "@/app/room/actions";
 import { SOURCES } from "@/lib/ingest/dialect";
 import {
   SPINE_GONE,
+  SPINE_WORKED,
   SPINE_MUTE,
   isMutable,
   isSpineKey,
@@ -313,6 +314,18 @@ export async function hideAlert(key: string): Promise<void> {
 export async function showAlert(key: string): Promise<void> {
   if (!(await requireWrite()) || !isSpineKey(key)) return;
   await spineUnmark(SPINE_GONE, key);
+  revalidatePath("/groundwork");
+}
+
+export async function markAlertWorked(key: string): Promise<void> {
+  if (!(await requireWrite()) || !isSpineKey(key)) return;
+  await spineMark(SPINE_WORKED, key);
+  revalidatePath("/groundwork");
+}
+
+export async function unmarkAlertWorked(key: string): Promise<void> {
+  if (!(await requireWrite()) || !isSpineKey(key)) return;
+  await spineUnmark(SPINE_WORKED, key);
   revalidatePath("/groundwork");
 }
 

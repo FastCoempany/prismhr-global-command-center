@@ -462,25 +462,54 @@ export function buildSpine(
     .sort((a, b) => b.at.localeCompare(a.at));
 }
 
-/** Whether the operator worked an alert: the move it feeds was stamped on
- *  the alert's day or after (the stamp store the queue reads). */
+/** The newest alert per account and rule: the one the queue's move is
+ *  about. Keys only. */
+export function newestPerRule(
+  items: Pick<SpineItem, "key" | "accountId" | "rule" | "at">[],
+): Set<string> {
+  const best = new Map<string, { key: string; at: string }>();
+  for (const it of items) {
+    if (!it.rule) continue;
+    const k = `${it.accountId}:${it.rule}`;
+    const b = best.get(k);
+    if (!b || it.at > b.at) best.set(k, { key: it.key, at: it.at });
+  }
+  return new Set([...best.values()].map((b) => b.key));
+}
+
+/** Whether the operator worked an alert. Two stores say so: the alert's own
+ *  mark (snav:worked, set by Worked it in the column), and the queue's stamp
+ *  for its account and rule on the alert's day or after. The stamp speaks
+ *  only for the newest alert of that rule on that account, because the
+ *  queue's move is about that one: working an August post never marks
+ *  October's (review of #411). `today` is whether the ↺ shows: a mark can
+ *  always be taken back, a stamp only on its own day. `stampedToday` says
+ *  the take-back also returns the queue's move. */
 export function spineWorked(
   it: Pick<SpineItem, "accountId" | "rule" | "at">,
   stampKeys: Iterable<string>,
   now: Date,
-): { worked: boolean; today: boolean } {
-  if (!it.rule) return { worked: false, today: false };
-  const since = userDayKey(it.at);
-  let worked = false;
-  let today = false;
-  const todayKey = userDayKey(now);
-  for (const k of stampKeys) {
-    const m = /^groundwork:(\d{4}-\d{2}-\d{2}):(.+)$/.exec(k);
-    if (!m || m[2] !== `${it.accountId}:${it.rule}` || m[1]! < since) continue;
-    worked = true;
-    if (m[1] === todayKey) today = true;
+  own: { newest?: boolean; marked?: boolean } = {},
+): { worked: boolean; today: boolean; stampedToday: boolean } {
+  const newest = own.newest ?? true;
+  const marked = own.marked ?? false;
+  let stamped = false;
+  let stampedToday = false;
+  if (it.rule && newest) {
+    const since = userDayKey(it.at);
+    const todayKey = userDayKey(now);
+    for (const k of stampKeys) {
+      const m = /^groundwork:(\d{4}-\d{2}-\d{2}):(.+)$/.exec(k);
+      if (!m || m[2] !== `${it.accountId}:${it.rule}` || m[1]! < since) continue;
+      stamped = true;
+      if (m[1] === todayKey) stampedToday = true;
+    }
   }
-  return { worked, today };
+  return {
+    worked: marked || stamped,
+    today: marked || stampedToday,
+    stampedToday,
+  };
 }
 
 // ── The draft a pop-out opens ────────────────────────────────────────────

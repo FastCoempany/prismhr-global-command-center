@@ -147,6 +147,10 @@ describe("the note pops out, and the column's own controls", () => {
       "EMAIL",
       "Deborah Dhuy",
     ]);
+    assert.ok(
+      (await calls(page)).some(([n]) => n === "markAlertWorked"),
+      "the alert's own mark was not set",
+    );
     await page.close();
   });
 

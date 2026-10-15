@@ -21,6 +21,8 @@ import type { SpineDraft, SpineItem } from "@/lib/groundwork/spine";
 import { KIND_GROUP } from "@/lib/groundwork/spine-kinds";
 import {
   hideAlert,
+  markAlertWorked,
+  unmarkAlertWorked,
   muteAlerts,
   showAlert,
   unWork,
@@ -37,6 +39,11 @@ export type SpineCard = SpineItem & {
   sfNew: string | null;
   worked: boolean;
   workedToday: boolean;
+  /** The newest alert of its rule on its account: only its Worked it moves
+   *  the queue. */
+  newest: boolean;
+  /** The queue's stamp for it landed today, so ↺ returns the move too. */
+  stampedToday: boolean;
 };
 
 const FILTERS = [
@@ -223,20 +230,26 @@ export function SpineColumn({
       onWorked={async (used) => {
         if (!c.rule) return;
         setBusy(c.key);
-        await workedChannel(
-          `${c.accountId}:${c.rule}`,
-          c.accountId,
-          channelOf(c, used),
-          c.who || c.draft?.to || "",
-          clauseOf(c),
-        );
+        // Only the newest alert's move is on the queue; an older one is
+        // marked worked by itself and stamps nothing.
+        if (c.newest)
+          await workedChannel(
+            `${c.accountId}:${c.rule}`,
+            c.accountId,
+            channelOf(c, used),
+            c.who || c.draft?.to || "",
+            clauseOf(c),
+          );
+        await markAlertWorked(c.key);
         setBusy(null);
         setOpen(null);
       }}
       onUnwork={async () => {
         if (!c.rule) return;
         setBusy(c.key);
-        await unWork(`${c.accountId}:${c.rule}`, c.accountId);
+        await unmarkAlertWorked(c.key);
+        if (c.newest && c.stampedToday)
+          await unWork(`${c.accountId}:${c.rule}`, c.accountId);
         setBusy(null);
       }}
       onMute={async () => {
