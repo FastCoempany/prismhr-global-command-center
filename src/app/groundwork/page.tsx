@@ -29,7 +29,18 @@ import {
   loadTouches,
 } from "@/lib/today/overlay";
 import { clockShort, userDayKey } from "@/lib/tz";
-import { sfAccountUrl } from "@/lib/salesforce";
+import { sfAccountUrl, sfNewContactUrl } from "@/lib/salesforce";
+import { personKey } from "@/lib/book/contacts";
+import { composeFor } from "@/lib/groundwork/compose";
+import {
+  KIND_GROUP,
+  buildSpine,
+  spineWorked,
+  splitPayload,
+  type SpineDraft,
+} from "@/lib/groundwork/spine";
+import { SPINE_GONE, SPINE_MUTE } from "@/lib/groundwork/spine-store";
+import { SpineColumn, type SpineCard } from "./spine";
 import {
   buildQueue,
   ledgerExclusions,
@@ -79,6 +90,7 @@ import {
   peopleSignalsFor,
   ridingLaneDate,
   type IntentSignal,
+  type PersonSignal,
 } from "@/lib/groundwork/signals";
 import {
   INST_NS,
@@ -794,10 +806,129 @@ export default async function GroundworkPage({
   const stageHref = (q: { accountId: string }, open?: boolean) =>
     `/groundwork?focus=${encodeURIComponent(q.accountId)}${open ? "&file=1" : ""}`;
 
+  // ── The Sales Nav spine (Concept C, ship order 2026-10-15) ──────────────
+  // Every Sales Navigator alert on a book account in the last week, read from
+  // the notes the grabs and the alert emails filed. The ledger's exclusions
+  // hold here too (not mine, parked, snoozed); live motion does not hide an
+  // alert, because an alert is a fact about the account, not a move.
+  const spineOff = ledgerExclusions(dispositions, snoozes.keys());
+  const spineGone = new Set((notesMap.get(SPINE_GONE) ?? []).map((n) => n.body.trim()));
+  const spineMuted = new Set((notesMap.get(SPINE_MUTE) ?? []).map((n) => n.body.trim()));
+  const spineAll = buildSpine(
+    peos.filter((p) => !spineOff.has(p.id)).map((p) => ({ id: p.id, name: p.name })),
+    accountNotes,
+    now,
+  );
+  const stampKeys = [...doneTimes.keys()];
+  const spineCards: SpineCard[] = [];
+  const spineHidden: { key: string; label: string }[] = [];
+  for (const it of spineAll) {
+    if (spineMuted.has(KIND_GROUP[it.kind])) continue;
+    if (spineGone.has(it.key)) {
+      spineHidden.push({ key: it.key, label: `${it.who || it.account} · ${it.label}` });
+      continue;
+    }
+    const p = getPeo(it.accountId);
+    if (!p) continue;
+    const read = readById.get(it.accountId);
+    // The read's relationship, the seed only when the account has no read
+    // (the same reading the stage's file takes).
+    const rel =
+      read?.relationship ??
+      relationshipFor([], contactsFor(it.accountId), {
+        name: p.contactName,
+        email: p.contactEmail,
+      });
+    // A person the record or the book already knows, by name: their email
+    // for an Outlook draft, and whether Salesforce has them.
+    const known = it.who
+      ? [
+          ...(read?.people ?? []).map((x) => ({ name: x.name, email: x.email })),
+          ...contactsFor(it.accountId).map((c) => ({
+            name: [c.first, c.last].filter(Boolean).join(" "),
+            email: c.email ?? "",
+          })),
+        ].filter((x) => personKey(x.name) && personKey(x.name) === personKey(it.who))
+      : [];
+    const personEmail = known.find((x) => x.email)?.email ?? "";
+    let draft: SpineDraft | null = null;
+    if (it.rule) {
+      const person: PersonSignal | null = it.who
+        ? {
+            kind:
+              it.kind === "posted"
+                ? "posted"
+                : it.kind === "left"
+                  ? "left"
+                  : "new-in-seat",
+            name: it.who,
+            title: it.title,
+            company: it.company,
+            snippet: it.quote,
+            at: it.at,
+          }
+        : null;
+      const composed = composeFor({
+        ruleId: it.rule,
+        account: p,
+        intel: intelById.get(it.accountId),
+        intent: intentById.get(it.accountId) ?? null,
+        contactName: rel.name,
+        person,
+      });
+      const parts = splitPayload(composed.payload);
+      const relEmail =
+        rel.source === "record" ? rel.email : rel.email || (p.contactEmail ?? "");
+      const email =
+        it.kind === "intent" ? relEmail : it.kind === "left" ? "" : personEmail;
+      draft = {
+        // With no name for the relationship the note is addressed by the
+        // account, never by the composer's placeholder.
+        to: it.kind === "intent" ? rel.name : it.who,
+        email,
+        subject: parts.subject,
+        body: parts.body,
+        via:
+          it.kind === "left"
+            ? "LinkedIn message · their old address is gone"
+            : email
+              ? "Email · on file"
+              : "LinkedIn message",
+      };
+    }
+    const stamped = spineWorked(it, stampKeys, now);
+    const [first, ...restName] = it.who.split(/\s+/);
+    spineCards.push({
+      ...it,
+      draft,
+      sf: sfAccountUrl(it.accountId),
+      // A person Salesforce may not have: New Contact, pre-filled. Never for
+      // someone who left, and never for a name the book already holds.
+      sfNew:
+        it.who && it.kind !== "left" && known.length === 0
+          ? sfNewContactUrl(it.accountId, {
+              firstName: first ?? "",
+              lastName: restName.join(" "),
+              title: it.title,
+            })
+          : null,
+      worked: stamped.worked,
+      workedToday: stamped.today,
+    });
+  }
+
   return (
     <>
       <AppWayfinder current="Groundwork" trail="Homeroom" />
       <GroundworkFace
+        spine={
+          <SpineColumn
+            cards={spineCards}
+            hidden={spineHidden}
+            muted={[...spineMuted]}
+            canWrite={canWrite}
+          />
+        }
         nudge={!!nudge}
         done={doneToday}
         canWrite={canWrite}

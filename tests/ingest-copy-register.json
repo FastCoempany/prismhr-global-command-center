@@ -430,6 +430,7 @@
       "SALESNAV ALERTS - captured X - X alerts - from an alert email\n\nX",
       "SALESNAV INTENT - captured X - X accounts - from an alert email\n\nX"
     ],
+    "src/lib/ingest/salesnav-links.ts": ["Link · ", "See who's active", "view post"],
     "src/lib/ingest/today-filings.ts": ["☰ Call transcript"],
     "src/lib/ingest/vault.ts": [
       "The backup didn't finish. Drop it again.",

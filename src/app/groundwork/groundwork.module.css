@@ -881,3 +881,412 @@ a.wingItem:hover .wingNm {
   font-size: 12.5px;
   color: var(--ds-ink-soft);
 }
+
+/* ── The Sales Nav spine (Concept C, ship order 2026-10-15) ──────────────
+   The fourth column inside the instrument: every Sales Navigator alert on a
+   book account this week, under day kickers, a glyph per kind down the
+   spine. System-intelligence blue; orange stays the stage's one move. */
+.wings4 {
+  grid-template-columns: 176px minmax(0, 1fr) 196px minmax(280px, 320px);
+}
+.spine {
+  border-left: 1px solid var(--color-line);
+  padding: 20px 16px 18px;
+  align-self: stretch;
+  min-width: 0;
+  background: var(--ds-surface-sub);
+  border-radius: 0 8px 0 0;
+}
+.snHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.snMark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--ds-blue-soft);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.snMark .snGlyph {
+  stroke: var(--ds-blue);
+}
+.snGlyph {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--color-ink-soft);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.snTitle {
+  font: 700 10.5px/1.2 var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+.snCount {
+  margin-left: auto;
+  font: 600 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+  font-variant-numeric: tabular-nums;
+}
+.snSeg {
+  display: flex;
+  border: 1px solid var(--color-line);
+  border-radius: var(--ds-radius-control);
+  overflow: hidden;
+  margin: 12px 0 4px;
+}
+.snSeg button {
+  flex: 1;
+  border: 0;
+  border-left: 1px solid var(--color-line);
+  background: var(--color-surface);
+  padding: 5px 4px;
+  font: 600 9px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+.snSeg button:first-child {
+  border-left: 0;
+}
+.snSeg button[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--ds-on-ink);
+}
+.snEmpty {
+  font-size: 12.5px;
+  color: var(--color-ink-disabled);
+  margin: 14px 0 0;
+}
+.snDay {
+  font: 600 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+  margin: 16px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.snDay::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-line);
+}
+.snEv {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 0 10px;
+  padding: 8px 0;
+  position: relative;
+  outline: none;
+}
+.snIc {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  display: grid;
+  place-items: center;
+}
+.snHot .snIc {
+  border-color: var(--ds-blue);
+  background: var(--ds-blue-soft);
+}
+.snHot .snIc .snGlyph {
+  stroke: var(--ds-blue);
+}
+.snBody {
+  min-width: 0;
+}
+.snKick {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font: 600 9.5px/1.5 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ds-blue);
+}
+.snKickTxt {
+  font: 600 9.5px/1.5 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ds-blue);
+}
+.snX {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  color: var(--ds-ink-quiet);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+.snEv:hover .snX,
+.snX:focus-visible {
+  opacity: 1;
+}
+.snX:hover {
+  color: var(--color-ink);
+}
+.snLine {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+.snLead .snLine {
+  font: 400 21px/1.2 var(--font-serif);
+}
+.snMeta {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-ink-disabled);
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.snAcct {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--ds-ink-quiet);
+  text-underline-offset: 3px;
+}
+.snAcct:hover {
+  text-decoration-color: var(--color-ink);
+}
+.snQuote {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+  margin-top: 4px;
+}
+.snActs {
+  display: none;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+.snLead .snActs,
+.snEv:hover .snActs,
+.snEv:focus-within .snActs {
+  display: flex;
+}
+@media (hover: none) {
+  .snActs {
+    display: flex;
+  }
+  .snX {
+    opacity: 1;
+  }
+}
+.snBtn {
+  border: 1px solid var(--color-line-strong, var(--color-line));
+  background: var(--color-surface);
+  border-radius: var(--ds-radius-control);
+  padding: 3px 7px;
+  font: 600 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+}
+.snBtn:hover {
+  color: var(--color-ink);
+  border-color: var(--ds-ink-quiet);
+}
+.snBtnInk {
+  color: var(--color-ink);
+  border-color: var(--ds-ink-quiet);
+}
+.snBtnBlue {
+  color: var(--ds-blue);
+  border-color: color-mix(in srgb, var(--ds-blue) 30%, transparent);
+}
+.snWorked .snLine,
+.snWorked .snMeta {
+  opacity: 0.6;
+}
+.snDone {
+  margin-top: 6px;
+  font: 600 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ds-green);
+}
+.snDone button,
+.snFoldRow button {
+  border: 0;
+  background: none;
+  margin-left: 6px;
+  padding: 0;
+  color: var(--color-ink-disabled);
+  cursor: pointer;
+  font: inherit;
+}
+.snDone button:hover,
+.snFoldRow button:hover {
+  color: var(--color-ink);
+}
+.snFold {
+  margin-top: 16px;
+}
+.snFold summary {
+  cursor: pointer;
+  font: 600 9.5px/1.5 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+}
+.snFoldRow {
+  display: block;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+  padding: 3px 0;
+}
+
+/* The pop-out: beside the column, over the waiting wing and the stage. */
+.snPop {
+  position: absolute;
+  z-index: var(--ds-z-drawer);
+  top: 0;
+  right: calc(100% + 14px);
+  width: min(420px, 60vw);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  box-shadow: var(--ds-shadow-offset);
+  padding: 16px 16px 14px;
+  text-align: left;
+}
+.snPopHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.snPopTitle {
+  font: 400 20px/1.2 var(--font-serif);
+  color: var(--color-ink);
+  margin-top: 2px;
+}
+.snPopClose {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--color-ink-disabled);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.snPopClose:hover {
+  color: var(--color-ink);
+}
+.snVia {
+  font: 600 9.5px/1.5 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+  margin: 8px 0 6px;
+}
+.snSubject {
+  font-size: 13px;
+  color: var(--color-ink-soft);
+  margin: 0 0 6px;
+}
+.snText {
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: 400 14px/1.55 var(--ds-font-sans);
+  color: var(--color-ink);
+  background: var(--ds-surface-sub);
+  box-sizing: border-box;
+}
+.snPopFoot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+.snPbtn {
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  border-radius: 6px;
+  padding: 7px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+.snPbtn:hover {
+  border-color: var(--ds-ink-quiet);
+}
+.snPbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.snPbtnInk {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--ds-on-ink);
+}
+.snHint {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--color-ink-disabled);
+}
+
+@media (max-width: 1180px) {
+  .wings4 {
+    grid-template-columns: 180px minmax(0, 1fr) 200px;
+  }
+  .spine {
+    grid-column: 1 / -1;
+    border-left: none;
+    border-top: 1px solid var(--color-line);
+    border-radius: 0;
+  }
+  .snPop {
+    position: static;
+    width: auto;
+    margin-top: 10px;
+    box-shadow: var(--ds-shadow-rest);
+  }
+}
+@media (max-width: 900px) {
+  .wings4 {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .snPop {
+    animation: snIn 0.14s ease-out;
+  }
+  @keyframes snIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+}

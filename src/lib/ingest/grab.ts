@@ -150,10 +150,14 @@ type Best = NonNullable<ReturnType<typeof routeCapture>["best"]>;
 
 function routesFor(row: string, head: string, roster: readonly RouteAccount[]): Best[] {
   const alerts = /^SALESNAV ALERTS\b/i.test(head);
+  // An alert, or an intent alert from an email, is identified by its
+  // headline and the line beneath it; a link line (a Sales Navigator search
+  // can name any company) and a post's quoted words never route it.
+  const short = alerts || /^SALESNAV INTENT\b/i.test(head);
   // An alert is identified by its headline and the company line beneath it;
   // a post's quoted words can name any company, so they never route it.
   const lines = row.split("\n").filter((l) => l.trim());
-  const ident = alerts ? lines.slice(0, 2).join("\n") : row;
+  const ident = short ? lines.slice(0, 2).join("\n") : row;
   // Only the alert's own first line says who moved; a job sentence inside a
   // post's quoted words is the post's, never a move.
   const job = alerts ? JOB_MOVE_RE.exec((lines[0] ?? "").trim()) : null;

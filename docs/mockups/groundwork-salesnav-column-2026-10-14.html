@@ -1,0 +1,413 @@
+<title>Sales Nav Column</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Layout: Groundwork as production draws it (Klaxon over the winged stage),
+     with the Sales Nav column added three ways. One theme, by canon. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff; --surface-sub:#fafbfd; --surface-sunk:#eff2f7;
+    --ink:#0a1c40; --ink-soft:rgba(10,28,64,.66); --ink-faint:rgba(10,28,64,.42); --ink-quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.07); --hair-strong:rgba(10,28,64,.14); --scrim:rgba(10,28,64,.35);
+    --orange:#e6701e; --orange-soft:rgba(230,112,30,.1);
+    --blue:#2563eb; --blue-soft:rgba(37,99,235,.08);
+    --green:#22c55e; --green-soft:rgba(34,197,94,.1);
+    --amber:#f59e0b; --amber-soft:rgba(245,158,11,.12); --amber-half:rgba(245,158,11,.45);
+    --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --raised:0 1px 2px rgba(10,28,64,.06),0 6px 18px rgba(10,28,64,.06);
+    --float:0 2px 6px rgba(10,28,64,.08),0 18px 48px rgba(10,28,64,.16);
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer}
+  button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1240px;margin:0 auto;padding-block:40px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  h1{font:400 clamp(30px,5vw,48px)/1.1 var(--serif);margin:10px 0 12px;text-wrap:balance}
+  .lede{color:var(--ink-soft);max-width:72ch;margin:0}
+  .status{display:inline-block;margin-top:16px;padding:6px 12px;border:1px solid var(--hair-strong);border-radius:99px;background:var(--surface);font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .notes{margin:18px 0 0;padding:0;list-style:none;max-width:84ch}
+  .notes li{font-size:13.5px;color:var(--ink-soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--ink-faint)}
+  section{margin-top:64px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .why{margin:0 0 22px;padding:0;list-style:none;max-width:80ch}
+  .why li{font-size:14px;color:var(--ink-soft);padding:3px 0 3px 16px;position:relative}
+  .why li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--ink-faint)}
+  .why b{color:var(--ink);font-weight:600}
+
+  /* ── Groundwork chrome, as production draws it ───────────────────── */
+  .gw{background:var(--field);border:1px solid var(--hair);border-radius:12px;padding:18px 18px 22px;position:relative}
+  .kx{padding:2px 2px 12px;border-bottom:1px solid var(--hair-strong);margin-bottom:14px}
+  .kxTop{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .kxVerb{font:400 clamp(30px,4vw,46px)/1 var(--serif)}
+  .kxCount{font:700 clamp(28px,3.6vw,42px)/1 var(--mono);color:var(--orange);margin-left:auto;font-variant-numeric:tabular-nums}
+  .kxSub{display:flex;gap:14px;flex-wrap:wrap;font:600 10px/1.5 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-quiet);margin:8px 0 8px}
+  .kxSub b{color:var(--ink)}
+  .kxBurn{height:7px;border-radius:4px;background:var(--hair);overflow:hidden}
+  .kxBurn i{display:block;height:100%;width:58%;background:var(--orange);border-radius:4px}
+
+  .wings{display:grid;align-items:start;background:var(--surface);border:1px solid var(--hair-strong);border-bottom:3px solid var(--orange);border-radius:8px;box-shadow:var(--raised);min-width:0}
+  .wing{padding:20px 14px;font-size:12.5px;color:var(--ink-faint);align-self:stretch;min-width:0}
+  .wingL{border-right:1px solid var(--hair-strong)}
+  .wingR{border-left:1px solid var(--hair-strong);text-align:right}
+  .wk{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:8px}
+  .wi{display:block;padding:4px 0}
+  .wi b{font-weight:600}
+  .wi .tm{font:600 10px/1.4 var(--mono);color:var(--ink-quiet)}
+  .wi .why2{display:block;font-size:10.5px;line-height:1.35;color:var(--ink-faint)}
+  .tick{color:var(--green);font-weight:700}
+  .heat{display:inline-block;width:4px;height:11px;border-radius:1px;margin-left:6px;vertical-align:-1px}
+  .h3{background:var(--amber)} .h2{background:var(--amber-half)} .h1{background:var(--hair-strong)}
+  .n3{color:var(--ink)} .n2{color:var(--ink-soft)} .n1{color:var(--ink-faint)}
+  .stage{padding:40px 28px 30px;text-align:center;min-width:0}
+  .stage .acct{font:600 10.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .stage .act{font:400 clamp(26px,3vw,38px)/1.1 var(--serif);margin:12px 0 6px;text-wrap:balance}
+  .stage .rsn{color:var(--ink-soft);margin:0}
+  .stage .chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:14px 0 18px}
+  .chip{font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--hair-strong);border-radius:4px;padding:3px 7px;color:var(--ink-soft);background:var(--surface)}
+  .move{display:inline-block;background:var(--orange);color:#fff;border:0;border-radius:6px;padding:10px 18px;font-weight:600;font-size:14px}
+
+  /* ── Shared alert vocabulary ─────────────────────────────────────── */
+  .sn-head{display:flex;align-items:center;gap:8px}
+  .sn-glyph{width:22px;height:22px;border-radius:6px;background:var(--blue-soft);display:grid;place-items:center;flex:none}
+  .sn-glyph svg{width:14px;height:14px;fill:none;stroke:var(--blue);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .sn-title{font:700 10.5px/1.2 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+  .sn-count{margin-left:auto;font:600 10px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+  .ty{font:600 9.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}
+  .ty.dim{color:var(--ink-faint)}
+  .who{font-weight:700;color:var(--ink)}
+  .role{color:var(--ink-soft)}
+  a.acctlink{color:var(--ink);text-decoration:underline;text-decoration-color:var(--ink-quiet);text-underline-offset:3px}
+  a.acctlink:hover{text-decoration-color:var(--ink)}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--ink-quiet);border:1px dashed var(--ink-quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px}
+  .acts{display:flex;flex-wrap:wrap;gap:4px}
+  .ab{border:1px solid var(--hair-strong);background:var(--surface);border-radius:4px;padding:3px 7px;font:600 9.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .ab:hover{color:var(--ink);border-color:var(--ink-quiet)}
+  .ab.draft{color:var(--ink);border-color:var(--ink-quiet)}
+  .ab.sf{color:var(--blue);border-color:rgba(37,99,235,.3)}
+  .ab.ok{color:var(--green);border-color:rgba(34,197,94,.35)}
+  .x{border:0;background:none;color:var(--ink-quiet);padding:0 2px;font-size:13px;line-height:1}
+  .x:hover{color:var(--ink)}
+  .crm{font:600 9px/1.3 var(--mono);letter-spacing:.08em;color:var(--amber);text-transform:uppercase}
+  .worked{opacity:.55}
+  .worked .who::after{content:" ✓";color:var(--green)}
+  .stampline{font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+  .undo{border:0;background:none;font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);padding:0;margin-left:6px}
+  .undo:hover{color:var(--ink)}
+  .gone{font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-quiet);padding:6px 0}
+
+  /* ── The pop-out note (shared) ───────────────────────────────────── */
+  .pop{position:absolute;z-index:20;width:min(420px,calc(100% - 24px));background:var(--surface);border:1px solid var(--hair-strong);border-radius:10px;box-shadow:var(--float);padding:16px 16px 14px}
+  .pop .ph{display:flex;align-items:flex-start;gap:10px}
+  .pop .pt{font:400 20px/1.2 var(--serif);margin:2px 0 0}
+  .pop .pclose{margin-left:auto;border:0;background:none;color:var(--ink-faint);font-size:18px;line-height:1;padding:0}
+  .pop .pclose:hover{color:var(--ink)}
+  .pop .via{font:600 9.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:8px 0 6px}
+  .pop textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--hair-strong);border-radius:6px;padding:10px 12px;font:400 14px/1.55 var(--sans);color:var(--ink);background:var(--surface-sub)}
+  .pop .pf{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .pbtn{border:1px solid var(--hair-strong);background:var(--surface);border-radius:6px;padding:7px 11px;font-size:13px;font-weight:600}
+  .pbtn:hover{border-color:var(--ink-quiet)}
+  .pbtn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .pbtn[disabled]{opacity:.45;cursor:not-allowed}
+  .pop .hint{flex-basis:100%;font-size:12px;color:var(--ink-faint);margin-top:2px}
+  .pop .noDraft{font-size:14px;color:var(--ink-soft);margin:6px 0 0}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:8px;font-size:13px;box-shadow:var(--float);z-index:50;max-width:calc(100% - 32px)}
+
+  /* ── Concept A · the fourth wing ─────────────────────────────────── */
+  .A .wings{grid-template-columns:150px minmax(0,1fr) 170px minmax(260px,300px)}
+  .A .snw{border-left:1px solid var(--hair-strong);padding:18px 14px;align-self:stretch;background:var(--surface-sub);border-radius:0 8px 0 0;min-width:0}
+  .A .filters{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0 6px}
+  .fchip{border:1px solid var(--hair-strong);background:var(--surface);border-radius:99px;padding:2px 8px;font:600 9px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .fchip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .A .al{padding:11px 0;border-top:1px solid var(--hair)}
+  .A .al:first-of-type{border-top:0}
+  .A .al .top{display:flex;align-items:center;gap:6px}
+  .A .al .top .x{margin-left:auto}
+  .A .al .line{margin:3px 0 2px;font-size:13.5px;line-height:1.4}
+  .A .al .meta{font-size:12px;color:var(--ink-faint)}
+  .A .al .acts{margin-top:7px}
+
+  /* ── Concept B · the rail beside ─────────────────────────────────── */
+  .B .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:16px;align-items:start}
+  .B .wings{grid-template-columns:150px minmax(0,1fr) 170px}
+  .B .rail{background:var(--surface);border:1px solid var(--hair-strong);border-top:3px solid var(--blue);border-radius:8px;box-shadow:var(--raised);padding:16px 16px 8px;min-width:0;position:sticky;top:12px}
+  .B .lead{margin:14px 0 10px;padding:14px;border-radius:8px;background:var(--blue-soft)}
+  .B .lead .big{font:400 24px/1.15 var(--serif);margin:6px 0 4px;text-wrap:balance}
+  .B .lead .acts{margin-top:10px}
+  .B .grp{padding:10px 0;border-top:1px solid var(--hair)}
+  .B .grp-h{display:flex;align-items:baseline;gap:8px}
+  .B .grp-h .n{margin-left:auto;font:600 10px/1.4 var(--mono);color:var(--ink-faint)}
+  .B .grp-h a{font-weight:700}
+  .B .gi{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 8px;align-items:baseline;padding:6px 0 2px 2px}
+  .B .gi .txt{font-size:13px;line-height:1.4;min-width:0}
+  .B .gi .open{border:0;background:none;padding:0;text-align:left;cursor:pointer}
+  .B .gi .open:hover .txt{text-decoration:underline;text-decoration-color:var(--ink-quiet);text-underline-offset:3px}
+  .B .gi .acts{grid-column:2 / 4;margin:4px 0 2px}
+  .B .gi .acts{display:none}
+  .B .gi.on .acts{display:flex}
+
+  /* ── Concept C · the day spine ───────────────────────────────────── */
+  .C .wings{grid-template-columns:150px minmax(0,1fr) 170px minmax(300px,360px)}
+  .C .spine{border-left:1px solid var(--hair-strong);padding:18px 16px;align-self:stretch;min-width:0}
+  .C .seg{display:flex;border:1px solid var(--hair-strong);border-radius:6px;overflow:hidden;margin:10px 0 4px}
+  .C .seg button{flex:1;border:0;background:var(--surface);padding:5px 4px;font:600 9px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);border-left:1px solid var(--hair-strong)}
+  .C .seg button:first-child{border-left:0}
+  .C .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .C .day{font:600 9.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:16px 0 6px;display:flex;align-items:center;gap:8px}
+  .C .day::after{content:"";flex:1;height:1px;background:var(--hair-strong)}
+  .C .ev{display:grid;grid-template-columns:26px minmax(0,1fr);gap:0 10px;padding:8px 0}
+  .C .ev .ic{width:26px;height:26px;border-radius:50%;border:1px solid var(--hair-strong);display:grid;place-items:center;background:var(--surface)}
+  .C .ev .ic svg{width:13px;height:13px;fill:none;stroke:var(--ink-soft);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .C .ev.hot .ic{border-color:var(--blue);background:var(--blue-soft)}
+  .C .ev.hot .ic svg{stroke:var(--blue)}
+  .C .ev .line{font-size:14px;line-height:1.4}
+  .C .ev.first .line{font:400 21px/1.2 var(--serif)}
+  .C .ev .meta{font-size:12px;color:var(--ink-faint);margin-top:2px}
+  .C .ev .acts{margin-top:7px}
+  .C .ev:not(.first) .acts{display:none}
+  .C .ev:not(.first):hover .acts,.C .ev:not(.first):focus-within .acts{display:flex}
+  .C .ev .x{float:right}
+
+  @media (max-width:1100px){
+    .A .wings,.C .wings{grid-template-columns:150px minmax(0,1fr) 170px}
+    .A .snw,.C .spine{grid-column:1 / -1;border-left:0;border-top:1px solid var(--hair-strong);border-radius:0}
+    .B .row{grid-template-columns:1fr}
+    .B .rail{position:static}
+  }
+  @media (max-width:720px){
+    .wings,.A .wings,.B .wings,.C .wings{grid-template-columns:1fr}
+    .wingL{border-right:0;border-bottom:1px solid var(--hair-strong)}
+    .wingR{border-left:0;border-top:1px solid var(--hair-strong);text-align:left}
+  }
+  @media (prefers-reduced-motion:no-preference){.pop{animation:popIn .14s ease-out}@keyframes popIn{from{opacity:0;transform:translateY(4px)}}}
+</style>
+
+<div class="page">
+  <div class="kick">Groundwork · the Sales Nav column · three concepts · 2026-10-14</div>
+  <h1>Sales Nav column</h1>
+  <p class="lede">Every Sales Navigator alert about a book account, in one column on Groundwork. The alerts lead; the copy-ready note opens as a pop-out. Each concept puts the column in a different place on the page and orders it a different way. Click any alert's buttons to try the pop-out, Worked it and dismiss.</p>
+  <span class="status">Three concepts · judging, not shipping</span>
+  <ul class="notes">
+    <li>Sample alerts. Deborah Dhuy at Armhr, Employees at Nextep, Leadership at Engage PEO and Amplify's intent come from your own Sales Nav screens and emails. The two marked <span class="sample">SAMPLE</span> are made up to show a post and a departure.</li>
+    <li>No LinkedIn or Salesforce logos: they are trademarks, and their blues are not in the palette. The column wears its own glyph and the mono kicker, in system-intelligence blue.</li>
+    <li>Buttons that leave the app (Post, Profile, InMail, Account, Salesforce) show what they open here; in the app they open the real page in a new tab. The Outlook draft downloads a .eml that opens as an unsent draft, and only when the person is already a contact with an email on file.</li>
+  </ul>
+
+  <section class="A" id="A">
+    <div class="kick">Concept A</div>
+    <h2>The fourth wing</h2>
+    <ul class="why">
+      <li><b>Inside the instrument.</b> The column joins the same card as the done wing, the stage and the queue, so Groundwork stays one object.</li>
+      <li><b>Newest first, every alert the same shape:</b> type and date, who, what, account, then the buttons. Filter chips sit at the top.</li>
+      <li><b>Costs:</b> the widest layout. Below about 1,100px the column drops under the stage.</li>
+    </ul>
+    <div class="gw" data-concept="A"></div>
+  </section>
+
+  <section class="B" id="B">
+    <div class="kick">Concept B</div>
+    <h2>The rail beside</h2>
+    <ul class="why">
+      <li><b>Its own card beside Groundwork,</b> blue-topped, sticky as you scroll. The newest alert takes a large spotlight at the top.</li>
+      <li><b>The rest group by account,</b> so three alerts about Armhr read as one account's week. Click a line to open its buttons.</li>
+      <li><b>Costs:</b> a second card on the page, and grouping hides the strict time order.</li>
+    </ul>
+    <div class="gw" data-concept="B"></div>
+  </section>
+
+  <section class="C" id="C">
+    <div class="kick">Concept C</div>
+    <h2>The day spine</h2>
+    <ul class="why">
+      <li><b>A timeline inside the instrument,</b> under TODAY, YESTERDAY and THIS WEEK, the way the Scratchpaper dates its lines. A glyph per alert type runs down the spine.</li>
+      <li><b>The newest alert reads large with its buttons showing;</b> the rest show their buttons on hover. One segmented control filters by type.</li>
+      <li><b>Costs:</b> hover-only buttons need a tap on touch screens.</li>
+    </ul>
+    <div class="gw" data-concept="C"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  // The sample alerts. Real ones carry no sample flag.
+  var ALERTS=[
+    {id:"a1",type:"new-in-seat",tyl:"New in seat",day:"Oct 14",when:"today",heat:3,who:"Deborah Dhuy",role:"Director of Project Services",acct:"Armhr",line:"Recently hired, by Sales Nav's own badge.",crm:true,email:"",links:["Profile","InMail","Account"],
+     draft:"Hi Deborah — congrats on the new role as Director of Project Services at Armhr. I work on PrismHR Global, which employs and pays people outside the US for PEO clients. Once you've settled in, I'd be glad to walk you through it, kind of a fifteen-minute version. If any of your clients have people abroad today, I can start there.",via:"LinkedIn message · InMail"},
+    {id:"a2",type:"active",tyl:"Employees active",day:"Oct 14",when:"today",heat:3,who:"",role:"",acct:"Nextep",line:"Employees at Nextep are active.",links:["Account","See who's active"],draft:"",via:""},
+    {id:"a3",type:"intent",tyl:"Intent ↑ High",day:"Oct 14",when:"today",heat:3,who:"",role:"",acct:"Amplify HR Management",line:"Intent rose to High · 11 activities.",links:["Account"],email:"on file",to:"the relationship contact on file",
+     draft:"Hi — I work on PrismHR Global, which employs and pays people outside the US for your clients. One question to see whether it's worth a conversation: which countries do your clients have people in today? If a walkthrough is faster than email, name a slot and I'll bring answers.",via:"Email · the relationship contact"},
+    {id:"a4",type:"posted",tyl:"Posted",day:"Oct 13",when:"yesterday",heat:2,who:"Allie Menz",role:"Head of Client Operations",acct:"AlphaStaffHCM",line:"“Clients keep asking how to hire in Mexico without an entity…”",sample:true,links:["Post","Profile","InMail","Account"],
+     draft:"Hi Allie — saw your post about \"Clients keep asking how to hire in Mexico without an entity\". I work on the Global side at PrismHR, so we employ and pay people outside the US for PEO clients. Honestly, if any of your clients have people abroad or ask about it, I'd be glad to compare notes sometime.",via:"LinkedIn message · or comment under the post"},
+    {id:"a5",type:"active",tyl:"Leadership active",day:"Oct 13",when:"yesterday",heat:2,who:"",role:"",acct:"Engage PEO",line:"Leadership at Engage PEO has been active.",links:["Account","See who's active"],draft:"",via:""},
+    {id:"a6",type:"left",tyl:"Left for Nextep",day:"Oct 9",when:"week",heat:1,who:"Jordan Ellis",role:"VP of Operations",acct:"Armhr",line:"Took a role at Nextep.",sample:true,links:["Profile","InMail"],
+     draft:"Hi Jordan — congrats on the move to Nextep. Quick one: who's picking up your work at Armhr? I'd like to keep them in the loop on the Global side. And once you've settled in, I'd be glad to walk you through it there too, if it's useful.",via:"LinkedIn message · their old address is gone"}
+  ];
+  var GLYPH={
+    sn:'<svg viewBox="0 0 16 16"><path d="M2 12.5 6 8l3 2.5L14 4"/><path d="M10.5 4H14v3.5"/></svg>',
+    "new-in-seat":'<svg viewBox="0 0 16 16"><circle cx="7" cy="5.5" r="2.5"/><path d="M2.5 14c.6-2.6 2.3-4 4.5-4s3.9 1.4 4.5 4"/><path d="M13 3.5v4M11 5.5h4"/></svg>',
+    active:'<svg viewBox="0 0 16 16"><path d="M1.5 8h3l2-4.5 3 9 2-4.5h3"/></svg>',
+    intent:'<svg viewBox="0 0 16 16"><path d="M3 13V9M8 13V6M13 13V3"/></svg>',
+    posted:'<svg viewBox="0 0 16 16"><path d="M3 3.5h10v7H7l-3 2.5v-2.5H3z"/></svg>',
+    left:'<svg viewBox="0 0 16 16"><path d="M6 3.5H3.5v9H6"/><path d="M9.5 5 13 8l-3.5 3M13 8H6.5"/></svg>'
+  };
+  var state={};ALERTS.forEach(function(a){state[a.id]="live"});
+  var filter={A:"all",C:"all"};
+  var openRow={B:null};
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
+  function heat(a){return '<span class="heat h'+a.heat+'" aria-hidden="true"></span>'}
+  function who(a){return a.who?'<span class="who">'+esc(a.who)+'</span>':'<a class="acctlink who" href="#'+'x" onclick="return false">'+esc(a.acct)+'</a>'}
+  function sample(a){return a.sample?'<span class="sample">SAMPLE</span>':''}
+  function actsFor(a){
+    var h='';
+    if(a.draft)h+='<button class="ab draft" data-act="draft" data-id="'+a.id+'">Draft note</button>';
+    a.links.forEach(function(l){h+='<button class="ab" data-act="link" data-l="'+esc(l)+'" data-id="'+a.id+'">'+esc(l)+'</button>'});
+    h+='<button class="ab sf" data-act="sf" data-id="'+a.id+'">Salesforce</button>';
+    if(a.crm)h+='<button class="ab sf" data-act="sfnew" data-id="'+a.id+'">Add to Salesforce</button>';
+    h+='<button class="ab ok" data-act="worked" data-id="'+a.id+'">Worked it</button>';
+    return '<div class="acts">'+h+'</div>';
+  }
+  function dismissBtn(a){return '<button class="x" data-act="dismiss" data-id="'+a.id+'" aria-label="Dismiss this alert" title="Dismiss">✕</button>'}
+  function goneRow(a){
+    var s=state[a.id];
+    if(s==="worked")return '<div class="gone">✓ Worked · '+esc(a.who||a.acct)+'<button class="undo" data-act="undo" data-id="'+a.id+'">↺ take back</button></div>';
+    if(s==="dismissed")return '<div class="gone">Hidden · '+esc(a.who||a.acct)+'<button class="undo" data-act="undo" data-id="'+a.id+'">↺ show</button>'+(a.type==="active"?'<button class="undo" data-act="mute" data-id="'+a.id+'">Mute “active” alerts</button>':'')+'</div>';
+    return '';
+  }
+  function chrome(inner,extra){
+    return '<div class="kx"><div class="kxTop"><span class="kxVerb">Reach out.</span><span class="kxCount">47</span></div>'+
+      '<div class="kxSub"><span><b>10:13</b></span><span>Wed Oct 14</span><span>61° Chicago</span><span>Sends till 11:00</span></div>'+
+      '<div class="kxBurn"><i></i></div></div>'+inner+(extra||'');
+  }
+  function wingsCore(){
+    return '<div class="wing wingL"><span class="wk">Done today</span>'+
+      '<span class="wi"><span class="tick">✓</span> <span class="tm">9:41</span> <b class="n2">Simploy</b><span class="why2">EMAIL · STEP 2 · CHASSIE</span></span>'+
+      '<span class="wi"><span class="tick">✓</span> <span class="tm">9:58</span> <b class="n2">XcelHR</b><span class="why2">SENT THE NEWS NOTE</span></span></div>'+
+      '<div class="stage"><div class="acct">Armhr</div><div class="act">Meet Deborah Dhuy.</div><p class="rsn">New in seat, seen October 14.</p>'+
+      '<div class="chips"><span class="chip">Director of Project Services</span><span class="chip">! Update CRM</span><span class="chip">High intent</span></div>'+
+      '<button class="move" type="button">Copy the note — to Deborah</button></div>'+
+      '<div class="wing wingR"><span class="wk">Waiting</span>'+
+      '<span class="wi"><b class="n3">Amplify HR</b><span class="heat h3"></span><span class="why2">Intent rose to High.</span></span>'+
+      '<span class="wi"><b class="n3">AlphaStaffHCM</b><span class="heat h3"></span><span class="why2">Posted October 13.</span></span>'+
+      '<span class="wi"><b class="n2">Infiniti HR</b><span class="heat h2"></span><span class="why2">No reply since October 6.</span></span>'+
+      '<span class="wi"><b class="n1">Adapt HR</b><span class="heat h1"></span><span class="why2">Find a second name.</span></span></div>';
+  }
+  function head(n){
+    var live=ALERTS.filter(function(a){return state[a.id]==="live"}).length;
+    var today=ALERTS.filter(function(a){return state[a.id]==="live"&&a.when==="today"}).length;
+    return '<div class="sn-head"><span class="sn-glyph">'+GLYPH.sn+'</span><span class="sn-title">Sales Nav</span><span class="sn-count">'+live+' live · '+today+' today</span></div>';
+  }
+  var TYPES=[["all","All"],["people","People"],["intent","Intent"],["active","Activity"]];
+  function pass(a,f){if(f==="all")return true;if(f==="people")return a.type==="posted"||a.type==="new-in-seat"||a.type==="left";return a.type===f}
+
+  function renderA(el){
+    var list=ALERTS.filter(function(a){return pass(a,filter.A)}).map(function(a){
+      if(state[a.id]!=="live")return goneRow(a);
+      return '<div class="al"><div class="top"><span class="ty">'+esc(a.tyl)+' · '+esc(a.day)+'</span>'+heat(a)+sample(a)+dismissBtn(a)+'</div>'+
+        '<div class="line">'+who(a)+(a.role?' <span class="role">· '+esc(a.role)+'</span>':'')+'</div>'+
+        '<div class="line">'+esc(a.line)+'</div>'+
+        '<div class="meta">'+(a.who?'<a class="acctlink" href="#x" onclick="return false">'+esc(a.acct)+'</a>':'')+(a.crm?' <span class="crm">· ! Update CRM</span>':'')+'</div>'+
+        actsFor(a)+'</div>';
+    }).join('');
+    var chips=TYPES.map(function(t){return '<button class="fchip" data-f="'+t[0]+'" data-c="A" aria-pressed="'+(filter.A===t[0])+'">'+t[1]+'</button>'}).join('');
+    el.innerHTML=chrome('<div class="wings">'+wingsCore()+'<div class="snw">'+head()+'<div class="filters">'+chips+'</div>'+list+'</div></div>');
+  }
+  function renderB(el){
+    var live=ALERTS.filter(function(a){return state[a.id]==="live"});
+    var lead=live[0];
+    var leadH=lead?'<div class="lead"><span class="ty">'+esc(lead.tyl)+' · '+esc(lead.day)+'</span>'+heat(lead)+sample(lead)+
+      '<div class="big">'+esc(lead.who||lead.acct)+'</div><div style="font-size:13.5px">'+(lead.role?esc(lead.role)+' at ':'')+'<a class="acctlink" href="#x" onclick="return false">'+esc(lead.acct)+'</a>'+(lead.crm?' <span class="crm">· ! Update CRM</span>':'')+'</div>'+
+      '<div style="font-size:13.5px;color:var(--ink-soft);margin-top:4px">'+esc(lead.line)+'</div>'+actsFor(lead)+'</div>':'';
+    var groups={},order=[];
+    ALERTS.forEach(function(a){if(lead&&a.id===lead.id)return;if(!groups[a.acct]){groups[a.acct]=[];order.push(a.acct)}groups[a.acct].push(a)});
+    var gh=order.map(function(acct){
+      var items=groups[acct];
+      var n=items.filter(function(a){return state[a.id]==="live"}).length;
+      return '<div class="grp"><div class="grp-h"><a class="acctlink" href="#x" onclick="return false">'+esc(acct)+'</a><span class="n">'+n+' alert'+(n===1?'':'s')+'</span></div>'+
+        items.map(function(a){
+          if(state[a.id]!=="live")return goneRow(a);
+          return '<div class="gi'+(openRow.B===a.id?' on':'')+'">'+heat(a)+
+            '<button class="open" data-act="toggle" data-id="'+a.id+'" aria-expanded="'+(openRow.B===a.id)+'"><span class="ty'+(a.heat<2?' dim':'')+'">'+esc(a.tyl)+' · '+esc(a.day)+'</span>'+sample(a)+
+            '<div class="txt">'+(a.who?'<b>'+esc(a.who)+'</b> · ':'')+esc(a.line)+'</div></button>'+dismissBtn(a)+actsFor(a)+'</div>';
+        }).join('')+'</div>';
+    }).join('');
+    el.innerHTML=chrome('<div class="row"><div class="wings">'+wingsCore()+'</div><aside class="rail" aria-label="Sales Nav alerts">'+head()+leadH+gh+'</aside></div>');
+  }
+  function renderC(el){
+    var segs=TYPES.map(function(t){return '<button data-f="'+t[0]+'" data-c="C" aria-pressed="'+(filter.C===t[0])+'">'+t[1]+'</button>'}).join('');
+    var days=[["today","Today"],["yesterday","Yesterday"],["week","This week"]];
+    var first=true;
+    var body=days.map(function(d){
+      var items=ALERTS.filter(function(a){return a.when===d[0]&&pass(a,filter.C)});
+      if(!items.length)return '';
+      return '<div class="day">'+d[1]+'</div>'+items.map(function(a){
+        if(state[a.id]!=="live")return goneRow(a);
+        var cls='ev'+(a.heat===3?' hot':'')+(first?' first':'');first=false;
+        return '<div class="'+cls+'" tabindex="-1"><span class="ic">'+GLYPH[a.type]+'</span><div>'+dismissBtn(a)+
+          '<span class="ty">'+esc(a.tyl)+' · '+esc(a.day)+'</span>'+heat(a)+sample(a)+
+          '<div class="line">'+(a.who?esc(a.who)+(a.role?', '+esc(a.role):''):esc(a.line))+'</div>'+
+          '<div class="meta">'+(a.who?esc(a.line)+' · ':'')+'<a class="acctlink" href="#x" onclick="return false">'+esc(a.acct)+'</a>'+(a.crm?' <span class="crm">· ! Update CRM</span>':'')+'</div>'+
+          actsFor(a)+'</div></div>';
+      }).join('');
+    }).join('');
+    el.innerHTML=chrome('<div class="wings">'+wingsCore()+'<div class="spine">'+head()+'<div class="seg" role="group" aria-label="Filter by type">'+segs+'</div>'+body+'</div></div>');
+  }
+  var R={A:renderA,B:renderB,C:renderC};
+  function renderAll(){document.querySelectorAll(".gw").forEach(function(el){closePop();R[el.dataset.concept](el)})}
+
+  var popEl=null;
+  function closePop(){if(popEl){popEl.remove();popEl=null}}
+  function toast(msg){var t=document.createElement("div");t.className="toast";t.textContent=msg;t.setAttribute("role","status");document.body.appendChild(t);setTimeout(function(){t.remove()},2600)}
+  function openPop(btn,a){
+    closePop();
+    var gw=btn.closest(".gw");var gr=gw.getBoundingClientRect();var br=btn.getBoundingClientRect();
+    var p=document.createElement("div");p.className="pop";p.setAttribute("role","dialog");p.setAttribute("aria-label","Note to "+(a.who||a.acct));
+    var hasEmail=!!a.email;
+    p.innerHTML='<div class="ph"><div><span class="ty">'+esc(a.tyl)+' · '+esc(a.acct)+'</span><div class="pt">Note to '+esc(a.who||(a.to||a.acct))+'</div></div><button class="pclose" aria-label="Close">×</button></div>'+
+      '<div class="via">'+esc(a.via)+'</div><textarea id="draft-'+a.id+'" aria-label="The note">'+esc(a.draft)+'</textarea>'+
+      '<div class="pf"><button class="pbtn primary" data-pact="copy">Copy note</button>'+
+      '<button class="pbtn" data-pact="eml"'+(hasEmail?'':' disabled')+'>Outlook draft</button>'+
+      (a.links.indexOf("InMail")>=0?'<button class="pbtn" data-pact="inmail">Open InMail</button>':'')+
+      '<button class="pbtn" data-pact="worked">Worked it</button>'+
+      '<span class="hint">'+(hasEmail?'Outlook draft downloads a .eml that opens as an unsent draft, addressed and ready to send.':'No email on file for '+esc(a.who||a.acct)+'. Copy the note and send it as an InMail.')+'</span></div>';
+    gw.appendChild(p);popEl=p;
+    var w=p.offsetWidth;var left=br.left-gr.left-w-10;if(left<12)left=Math.max(12,Math.min(br.left-gr.left,gr.width-w-12));
+    var top=br.top-gr.top-8;if(left===Math.max(12,Math.min(br.left-gr.left,gr.width-w-12)))top=br.bottom-gr.top+8;
+    p.style.left=left+"px";p.style.top=Math.max(12,top)+"px";
+    p.querySelector(".pclose").onclick=closePop;
+    p.querySelector("textarea").focus();
+    p.addEventListener("click",function(e){
+      var b=e.target.closest("[data-pact]");if(!b)return;var k=b.dataset.pact;
+      if(k==="copy"){var ta=p.querySelector("textarea");var done=function(){toast("Copied. Paste it into "+(hasEmail?"your email.":"the InMail."))};
+        if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();toast("Selected. Press Ctrl+C to copy.")})}else{ta.select();toast("Selected. Press Ctrl+C to copy.")}}
+      if(k==="eml")toast("In the app: downloads an Outlook draft to the relationship contact.");
+      if(k==="inmail")toast("In the app: opens "+(a.who||"their")+"'s InMail in Sales Navigator.");
+      if(k==="worked"){state[a.id]="worked";closePop();renderAll();toast("Worked it. Logged in the Sendbook as LINKEDIN.")}
+    });
+  }
+  document.addEventListener("click",function(e){
+    var f=e.target.closest("[data-f]");
+    if(f){filter[f.dataset.c]=f.dataset.f;renderAll();return}
+    var b=e.target.closest("[data-act]");
+    if(!b){if(popEl&&!e.target.closest(".pop"))closePop();return}
+    var a=ALERTS.filter(function(x){return x.id===b.dataset.id})[0];var k=b.dataset.act;
+    if(k==="draft")openPop(b,a);
+    else if(k==="link"){var l=b.dataset.l;toast(l==="See who's active"?"In the app: opens "+a.acct+"'s employee list in Sales Navigator.":"In the app: opens the "+l.toLowerCase()+" in Sales Navigator.")}
+    else if(k==="sf")toast("In the app: opens "+a.acct+" in Salesforce.");
+    else if(k==="sfnew")toast("In the app: opens Salesforce's New Contact form for "+a.who+", filled in. You click Save.");
+    else if(k==="worked"){state[a.id]="worked";renderAll();toast("Worked it. Logged in the Sendbook.")}
+    else if(k==="dismiss"){state[a.id]="dismissed";renderAll()}
+    else if(k==="undo"){state[a.id]="live";renderAll()}
+    else if(k==="mute"){ALERTS.forEach(function(x){if(x.type==="active")state[x.id]="dismissed"});renderAll();toast("“Active” alerts muted. Undo from any hidden line.")}
+    else if(k==="toggle"){openRow.B=openRow.B===a.id?null:a.id;renderAll()}
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")closePop()});
+  renderAll();
+})();
+</script>

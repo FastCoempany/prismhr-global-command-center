@@ -107,6 +107,7 @@ export const SOURCES = {
   sheet: "sheet", // the room's routed line (sheet-actions.ts), never a spreadsheet
   pipeline: "pipeline",
   mailTemplate: "mail-template",
+  spine: "snav", // the Sales Nav spine's ✕ and mute marks (snav: notes)
 } as const;
 
 export type Source = (typeof SOURCES)[keyof typeof SOURCES];
