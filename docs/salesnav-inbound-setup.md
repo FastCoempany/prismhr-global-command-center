@@ -11,7 +11,7 @@ Every Sales Navigator alert email ends up in the same place, whichever door it c
    - Someone starting at a book account becomes **"Meet {name}."** (people band, 21 days fresh).
    - Someone leaving a book account becomes **"Ask who replaces {name}."** on the account they left (people band, 21 days fresh).
    - An intent alert becomes a fresh intent reading. The account ranks warm, or rises, on the intent rule.
-   
+
    An account the HomeRoom is already working (a real inbound inside 21 days, or a meeting inside 14) gets none of these. That's the live-motion exclusion.
 
 ## The doors
@@ -36,6 +36,17 @@ Every Sales Navigator alert email ends up in the same place, whichever door it c
 ## Forward or redirect
 
 An Outlook rule can redirect an alert, which keeps LinkedIn as the sender, or forward it, which puts you on the From line with LinkedIn's inside. The inbound route takes both, because only your own rule can reach it past the secret. A Power Automate flow reads the original email, so LinkedIn stays the sender there too.
+
+## Bringing in older alerts
+
+The rule only catches mail as it arrives. To bring in alerts from before it:
+
+1. In Outlook, search `from:messages-noreply@linkedin.com` and narrow to the last three months.
+2. Select about fifteen emails at a time. The route takes up to 60 attached messages, but Vercel caps a post near 4.5 MB.
+3. Choose **Forward as attachment** and send it to the Postmark inbound address.
+4. Repeat until you reach the newest. Each alert files at its own sent date, and a batch sent twice files nothing new.
+
+Old alerts show in the Sales Nav column under their month. They don't put old moves on the queue: a post stays fresh for five days and a new seat for 21, counted from the alert's own date.
 
 ## What it never does
 

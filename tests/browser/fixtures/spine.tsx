@@ -153,6 +153,35 @@ export const SPINE: SpineCard[] = [
       via: "LinkedIn message · their old address is gone",
     },
   }),
+  card({
+    key: "m1",
+    label: "Leadership active",
+    accountId: "E0000000000000001",
+    account: "Engage PEO",
+    line: "Their leadership is active on LinkedIn.",
+    at: "2026-07-08T15:00:00Z",
+    when: "2026-07",
+  }),
+  card({
+    key: "m2",
+    kind: "posted",
+    label: "Posted",
+    accountId: "S0000000000000002",
+    account: "AlphaStaffHCM",
+    who: "Cristina Bouchard",
+    title: "President & CEO",
+    line: "Shared a post on LinkedIn.",
+    at: "2026-06-12T15:00:00Z",
+    when: "2026-06",
+    rule: "post-trigger",
+    draft: {
+      to: "Cristina Bouchard",
+      email: "",
+      subject: "",
+      body: "Hi Cristina — saw your post.",
+      via: "LinkedIn message",
+    },
+  }),
 ];
 
 export default function Fixture() {
@@ -164,6 +193,7 @@ export default function Fixture() {
           hidden={[{ key: "h1", label: "Base.com · Company post" }]}
           muted={[]}
           canWrite
+          nowMonth="2026-07"
         />
       }
       nudge={false}

@@ -4,6 +4,7 @@
 // hold every shape.
 
 import { timingSafeEqual } from "node:crypto";
+import { emlToPaste, msgToPaste } from "@/lib/paste-files";
 
 /** Whether the request carries the configured secret. False when none is
  *  configured: an unset secret opens nothing. */
@@ -70,4 +71,77 @@ export function emailText(f: Fields): string {
     date ? `Date: ${date}` : "",
   ].filter(Boolean);
   return [...head, "", body].join("\n");
+}
+
+// ── Forwarded attachments (2026-10-15) ──────────────────────────────────────
+// The backfill road: select the old Sales Navigator alerts in Outlook,
+// "Forward as attachment" to the inbound address, and each attached alert
+// files at its own sent date. Postmark posts the attachments in its JSON as
+// { Name, ContentType, Content (base64) }; a message attached by Outlook
+// arrives as message/rfc822 (.eml), or as an Outlook item (.msg) the route
+// reads with msgreader.
+
+export type InboundAttachment = { name: string; type: string; content: string };
+
+/** The message attachments in a post: .eml (message/rfc822) and .msg, at
+ *  most MAX_ATTACHED. Anything else (an image, a PDF) is not an alert and is
+ *  left alone. */
+export const MAX_ATTACHED = 60;
+export function messageAttachments(f: Fields): InboundAttachment[] {
+  const list = (f.Attachments ?? f.attachments) as unknown;
+  if (!Array.isArray(list)) return [];
+  const out: InboundAttachment[] = [];
+  for (const a of list) {
+    if (!a || typeof a !== "object") continue;
+    const o = a as Record<string, unknown>;
+    const name = String(o.Name ?? o.name ?? "");
+    const type = String(o.ContentType ?? o.contentType ?? o.content_type ?? "");
+    const content = String(o.Content ?? o.content ?? "");
+    if (!content) continue;
+    const isEml = /message\/rfc822/i.test(type) || /\.eml$/i.test(name);
+    const isMsg = /vnd\.ms-outlook/i.test(type) || /\.msg$/i.test(name);
+    if (!isEml && !isMsg) continue;
+    out.push({ name: name || (isMsg ? "attached.msg" : "attached.eml"), type, content });
+    if (out.length >= MAX_ATTACHED) break;
+  }
+  return out;
+}
+
+/** An attached .eml as the text the Sales Navigator converter reads: the
+ *  same reader a .eml dropped on the Chute takes. */
+export function attachedEmlText(a: InboundAttachment): string {
+  const raw = Buffer.from(a.content, "base64").toString("utf8");
+  return emlToPaste(raw, a.name);
+}
+
+/** Any attached message as the text the Sales Navigator converter reads:
+ *  .eml through attachedEmlText, .msg through msgreader the way the Chute
+ *  reads a dropped .msg (src/app/room/read-file.ts). An attachment that will
+ *  not read is empty text, so one bad item never sinks the batch. */
+export async function attachedText(a: InboundAttachment): Promise<string> {
+  try {
+    const isMsg = /vnd\.ms-outlook/i.test(a.type) || /\.msg$/i.test(a.name);
+    if (!isMsg) return attachedEmlText(a);
+    const { default: MsgReader } = await import("@kenjiuno/msgreader");
+    const buf = Buffer.from(a.content, "base64");
+    const data = new MsgReader(
+      buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer,
+    ).getFileData();
+    return msgToPaste(
+      {
+        subject: data.subject,
+        senderName: data.senderName,
+        senderEmail: data.senderEmail,
+        recipients: (data.recipients ?? []).map((r) => ({
+          name: r.name,
+          email: r.email ?? r.smtpAddress,
+        })),
+        body: data.body,
+        messageDeliveryTime: data.messageDeliveryTime,
+      },
+      a.name,
+    );
+  } catch {
+    return "";
+  }
 }

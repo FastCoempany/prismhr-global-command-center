@@ -289,9 +289,17 @@ describe("the spine", () => {
     assert.ok(posts[0]!.quote.startsWith("Clients keep asking"));
   });
 
-  test("nothing older than a week, nothing from the future", () => {
+  test("three months back, folded by month past the week; nothing older, nothing from the future", () => {
+    const later = buildSpine(ACCOUNTS, filed(DIGEST), new Date("2026-10-21T15:00:00Z"));
+    assert.equal(later.length, 5);
+    assert.ok(
+      later.every((i) => i.when === "2026-10"),
+      "eight days on, they fold under October",
+    );
+    const dec = buildSpine(ACCOUNTS, filed(DIGEST), new Date("2026-12-20T15:00:00Z"));
+    assert.ok(dec.every((i) => i.when === "2026-10"));
     assert.deepEqual(
-      buildSpine(ACCOUNTS, filed(DIGEST), new Date("2026-10-21T15:00:00Z")),
+      buildSpine(ACCOUNTS, filed(DIGEST), new Date("2027-01-12T15:00:00Z")),
       [],
     );
     assert.deepEqual(

@@ -205,3 +205,35 @@ describe("the note pops out, and the column's own controls", () => {
     await page.close();
   });
 });
+
+describe("older alerts fold by month (2026-10-15)", () => {
+  test("each month folds shut under the open week, newest month first, with its count", async () => {
+    const page = await open();
+    const folds = page.locator($("snMonth"));
+    assert.deepEqual(
+      (await folds.locator("summary").allInnerTexts()).map((t) => t.trim().toUpperCase()),
+      ["EARLIER IN JULY · 1 ALERT", "JUNE · 1 ALERT"],
+    );
+    assert.equal(await page.getByText("Cristina Bouchard").isVisible(), false);
+    await folds.nth(1).locator("summary").click();
+    assert.ok(await page.getByText("Cristina Bouchard, President & CEO").isVisible());
+    assert.match(
+      await page.locator($("snCount")).innerText(),
+      /^5 THIS WEEK · 2 TODAY$/i,
+    );
+    await page.close();
+  });
+
+  test("a folded alert never leads, and the filter reaches into the folds", async () => {
+    const page = await open();
+    assert.match(await page.locator($("snLead")).innerText(), /Deborah Dhuy/);
+    await page.getByRole("button", { name: "Activity", exact: true }).click();
+    assert.deepEqual(
+      (await page.locator($("snMonth")).locator("summary").allInnerTexts()).map((t) =>
+        t.trim().toUpperCase(),
+      ),
+      ["EARLIER IN JULY · 1 ALERT"],
+    );
+    await page.close();
+  });
+});

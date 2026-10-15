@@ -17,7 +17,14 @@ import {
   isSalesNavEmail,
   sentStamp,
 } from "../src/lib/ingest/salesnav-email";
-import { emailText, htmlToText, secretOk } from "../src/lib/ingest/inbound-email";
+import {
+  attachedText,
+  emailText,
+  htmlToText,
+  MAX_ATTACHED,
+  messageAttachments,
+  secretOk,
+} from "../src/lib/ingest/inbound-email";
 import { planGrab } from "../src/lib/ingest/grab";
 import {
   capturedOf,
@@ -559,5 +566,89 @@ describe("the operator's real Sales Navigator digest", () => {
     assert.equal(post?.name, "Naomi Walsh");
     assert.equal(post?.title, "Associate Director");
     assert.equal(post?.company, "Strive - GTM Talent Partner");
+  });
+});
+
+describe("the backfill: alerts forwarded as attachments (2026-10-15)", () => {
+  const eml = (sent: string, who: string) =>
+    [
+      "From: LinkedIn Sales Navigator <messages-noreply@linkedin.com>",
+      "To: Antaeus Coe <antaeus.coe@prismhr.com>",
+      `Date: ${sent}`,
+      `Subject: ${who} shared a post`,
+      "MIME-Version: 1.0",
+      "Content-Type: text/plain; charset=utf-8",
+      "",
+      "Sales Navigator",
+      `${who} shared a post`,
+      "Head of Client Operations at AlphaStaffHCM",
+      "Clients keep asking how to hire in Mexico.",
+      "",
+    ].join("\r\n");
+  const b64 = (t: string) => Buffer.from(t, "utf8").toString("base64");
+  const post = {
+    From: "antaeus.coe@prismhr.com",
+    Subject: "FW: three alerts",
+    TextBody: "See attached.",
+    Attachments: [
+      {
+        Name: "a.eml",
+        ContentType: "message/rfc822",
+        Content: b64(eml("Tue, 14 Jul 2026 07:02:00 -0500", "Allie Menz")),
+      },
+      { Name: "logo.png", ContentType: "image/png", Content: "iVBORw0KGgo=" },
+      {
+        Name: "b.eml",
+        ContentType: "message/rfc822",
+        Content: b64(eml("Mon, 03 Aug 2026 08:15:00 -0500", "Allie Menz")),
+      },
+    ],
+  };
+
+  test("only the attached messages are read; an image is left alone", () => {
+    const list = messageAttachments(post);
+    assert.deepEqual(
+      list.map((a) => a.name),
+      ["a.eml", "b.eml"],
+    );
+  });
+
+  test("each attached alert files at its own sent date", async () => {
+    const texts = await Promise.all(messageAttachments(post).map(attachedText));
+    assert.equal(
+      grabsFromSalesNavEmail(emailText(post), NOW, { forwarded: true }).length,
+      0,
+    );
+    const grabs = texts.flatMap((t) =>
+      grabsFromSalesNavEmail(t, NOW, { forwarded: true }),
+    );
+    assert.equal(grabs.length, 2);
+    assert.match(grabs[0]!, /7\/14\/2026/);
+    assert.match(grabs[1]!, /8\/3\/2026/);
+    const plan = planGrab(grabs[0]!, ROSTER, NOW);
+    assert.deepEqual(
+      plan.filings.map((f) => f.account.id),
+      ["A1"],
+    );
+    assert.equal(plan.day, "2026-07-14");
+  });
+
+  test("a broken attachment reads as nothing and the batch is capped", async () => {
+    assert.equal(
+      await attachedText({
+        name: "x.msg",
+        type: "application/vnd.ms-outlook",
+        content: "AAAA",
+      }),
+      "",
+    );
+    const many = {
+      Attachments: Array.from({ length: MAX_ATTACHED + 5 }, (_, i) => ({
+        Name: `${i}.eml`,
+        ContentType: "message/rfc822",
+        Content: "eA==",
+      })),
+    };
+    assert.equal(messageAttachments(many).length, MAX_ATTACHED);
   });
 });

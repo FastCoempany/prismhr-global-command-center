@@ -1,6 +1,7 @@
 // The Sales Nav spine (Concept C, ship order 2026-10-15): every Sales
-// Navigator alert about a book account in the last seven days, newest first,
-// under TODAY / YESTERDAY / THIS WEEK, in the fourth column on Groundwork.
+// Navigator alert about a book account in the last three months, newest
+// first, under TODAY / YESTERDAY / THIS WEEK, older alerts folded by month,
+// in the fourth column on Groundwork.
 //
 // It reads the notes the grabs and the alert emails already file, and
 // nothing else: the alerts feed and the alert emails (SALESNAV ALERTS), the
@@ -63,13 +64,18 @@ export type SpineItem = {
   quote: string;
   /** ISO: when it happened, as near as the alert says. */
   at: string;
-  /** "today" | "yesterday" | "week": the spine's three day kickers. */
-  when: "today" | "yesterday" | "week";
+  /** "today" | "yesterday" | "week" (the last seven days): the three open
+   *  kickers. Older alerts carry their Chicago month, "2026-08", and fold
+   *  under it (2026-10-15). */
+  when: "today" | "yesterday" | "week" | `${number}-${number}`;
   links: SpineLink[];
   rule: QueueRuleId | null;
 };
 
-export const SPINE_DAYS = 7;
+/** How far back the spine reads (the founder, 2026-10-15: three months). */
+export const SPINE_DAYS = 90;
+/** The open sections cover this many days; older alerts fold by month. */
+export const OPEN_DAYS = 7;
 /** Two sightings of one person's post this close together are one post. */
 const POST_MERGE_HOURS = 36;
 const DAY_MS = 86_400_000;
@@ -435,8 +441,15 @@ export function buildSpine(
     .map(withFallbacks)
     .map((it) => {
       const day = userDayKey(it.at);
+      const age = (now.getTime() - Date.parse(it.at)) / DAY_MS;
       const when: SpineItem["when"] =
-        day === today ? "today" : day === yesterday ? "yesterday" : "week";
+        day === today
+          ? "today"
+          : day === yesterday
+            ? "yesterday"
+            : age <= OPEN_DAYS
+              ? "week"
+              : (day.slice(0, 7) as SpineItem["when"]);
       return {
         ...it,
         label: redactMoney(it.label),

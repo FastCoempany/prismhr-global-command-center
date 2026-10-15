@@ -927,6 +927,7 @@ export default async function GroundworkPage({
             hidden={spineHidden}
             muted={[...spineMuted]}
             canWrite={canWrite}
+            nowMonth={userDayKey(now).slice(0, 7)}
           />
         }
         nudge={!!nudge}

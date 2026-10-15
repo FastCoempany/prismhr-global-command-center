@@ -19,16 +19,28 @@
 // counts only, never a name or a line of the email. A post that is not an
 // alert answers 200 with nothing filed, so an inbound service's own check
 // (Postmark's Check button sends a sample email) reads the route as healthy.
+//
+// The backfill (2026-10-15): a mail rule only acts on mail as it arrives, so
+// older alerts come in by Outlook's "Forward as attachment". Each attached
+// message (.eml or .msg, at most MAX_ATTACHED) is read like a dropped file
+// and files at its own sent date. The body cap sits just under Vercel's
+// request limit, so a batch of about fifteen digests fits in one post.
 
 import { NextResponse, type NextRequest } from "next/server";
-import { emailText, secretOk, type Fields } from "@/lib/ingest/inbound-email";
+import {
+  attachedText,
+  emailText,
+  messageAttachments,
+  secretOk,
+  type Fields,
+} from "@/lib/ingest/inbound-email";
 import { grabsFromSalesNavEmail } from "@/lib/ingest/salesnav-email";
 import { fileGrabTexts } from "@/lib/ingest/grab-server";
 import { hasDatabaseEnv } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-const MAX_BYTES = 2_000_000;
+const MAX_BYTES = 4_400_000;
 
 /** The body, read up to MAX_BYTES and refused past it, whatever the
  *  Content-Length says or omits. */
@@ -56,18 +68,21 @@ async function readCapped(req: NextRequest): Promise<Uint8Array | null> {
   return out;
 }
 
-async function readEmail(type: string, bytes: Uint8Array): Promise<string> {
+/** The post's own body and its attached messages, each as email text. */
+async function readEmails(type: string, bytes: Uint8Array): Promise<string[]> {
   const text = new TextDecoder().decode(bytes);
-  if (/application\/json/i.test(type)) return emailText(JSON.parse(text) as Fields);
-  if (/multipart\/form-data|application\/x-www-form-urlencoded/i.test(type)) {
+  let f: Fields | null = null;
+  if (/application\/json/i.test(type)) f = JSON.parse(text) as Fields;
+  else if (/multipart\/form-data|application\/x-www-form-urlencoded/i.test(type)) {
     const form = await new Response(new Blob([bytes as BlobPart]), {
       headers: { "content-type": type },
     }).formData();
-    const f: Fields = {};
+    f = {};
     for (const [k, v] of form.entries()) if (typeof v === "string") f[k] = v;
-    return emailText(f);
   }
-  return text;
+  if (!f) return [text];
+  const attached = await Promise.all(messageAttachments(f).map(attachedText));
+  return [emailText(f), ...attached.filter(Boolean)];
 }
 
 export async function POST(req: NextRequest) {
@@ -79,18 +94,24 @@ export async function POST(req: NextRequest) {
   if (!hasDatabaseEnv())
     return NextResponse.json({ ok: false, reason: "No database." }, { status: 503 });
 
-  let text = "";
+  let texts: string[] = [];
   try {
     const bytes = await readCapped(req);
     if (!bytes)
       return NextResponse.json({ ok: false, reason: "Too large." }, { status: 413 });
-    text = await readEmail(req.headers.get("content-type") ?? "", bytes);
+    texts = await readEmails(req.headers.get("content-type") ?? "", bytes);
   } catch {
     return NextResponse.json({ ok: false, reason: "Unreadable body." }, { status: 400 });
   }
   // The inbound route is the operator's own forward, behind the secret: a
   // LinkedIn From line inside the forwarded block counts.
-  const grabs = grabsFromSalesNavEmail(text, new Date(), { forwarded: true });
+  const now = new Date();
+  let emails = 0;
+  const grabs = texts.flatMap((t) => {
+    const g = grabsFromSalesNavEmail(t, now, { forwarded: true });
+    if (g.length) emails++;
+    return g;
+  });
   if (!grabs.length)
     return NextResponse.json({
       ok: true,
@@ -102,6 +123,7 @@ export async function POST(req: NextRequest) {
     const g = "grab" in r ? r.grab : undefined;
     return NextResponse.json({
       ok: r.ok,
+      emails,
       filed: r.filed,
       duplicates: g?.duplicates.length ?? 0,
       unmatched: g?.unmatched ?? 0,

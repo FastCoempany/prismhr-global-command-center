@@ -1143,6 +1143,24 @@ a.wingItem:hover .wingNm {
 .snFoldRow button:hover {
   color: var(--color-ink);
 }
+.snMonth {
+  margin-top: 14px;
+  border-top: 1px solid var(--color-line);
+  padding-top: 10px;
+}
+.snMonth summary {
+  cursor: pointer;
+  font: 600 9.5px/1.5 var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+}
+.snMonth summary:hover {
+  color: var(--color-ink);
+}
+.snMonth[open] summary {
+  margin-bottom: 4px;
+}
 .snFold {
   margin-top: 16px;
 }
