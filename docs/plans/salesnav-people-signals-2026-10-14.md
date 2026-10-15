@@ -69,3 +69,13 @@
   - **Sent time fixed:** a Sent line that closes on a zone comment, "+0000 (UTC)", now reads at its real offset. It was reading as Chicago time.
 - **The "94 new lead suggestions" digest files nothing, by design.** It never says "Sales Navigator", and its people carry no company, so none of them could be placed on an account. Its "New executives hired at saved Accounts" section would have been a new-in-seat signal if it named the account.
 - **Both emails go to the work mailbox and pass through Proofpoint URL Defense** (urldefense.com links).
+
+## The Sales Nav spine (ship order 2026-10-15)
+
+The founder picked Concept C, the day spine, from docs/mockups/groundwork-salesnav-column-2026-10-14.html: "the day spine is the one. build it and ship it."
+
+- **Where it reads.** src/lib/groundwork/spine.ts builds the list from the Sales Nav notes only: alerts rows (person and account alerts), intent rows, and the daily grab's intent rise and "Recently hired" badge. Seven days, newest first, deduped per alert: a post is one person on one Chicago day, a job move is one person, an intent reading is one per day, and an account alert is one line per day.
+- **Links.** The alert emails' buttons are kept now. src/lib/ingest/salesnav-links.ts unwraps Proofpoint URL Defense v3 and LinkedIn's sales-web-view and contract-chooser redirects, drops the tracking keys, and keeps only https://www.linkedin.com/sales/ pages. They file as `Link · <label> · <url>` lines in the alert's row, after the lines the router reads. It was checked against the operator's real digest: Post, InMail, Nextep's employee list and Engage PEO's leadership search all decode. An alert with no link gets a Sales Navigator keyword search. That search URL form is unverified; the employee-list links in the real email confirm the `query=(…)` syntax it uses.
+- **Working an alert.** Worked it calls workedChannel with the alert's rule as the move key. That's the same stamp and Sendbook tap the Channel Ask files, so the queue drops the move and the wing stamps it. The channel is EMAIL after an Outlook draft, INMAIL after Open InMail, and otherwise LINKEDIN (EMAIL for an intent note with an email on file). The ↺ shows only on the day it was worked, because the take-back removes today's stamp.
+- **✕ and mute.** These are snav:gone and snav:mute namespaced notes, which every account view and the intranet mirror skip. Only the activity group can be muted.
+- **Not built:** a per-alert count on the wing, and a weekly roll-up for anyone. Nothing is rolled up to anyone unless the founder says so.

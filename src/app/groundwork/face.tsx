@@ -3,7 +3,8 @@
 // center stage with an action line and a reason line; the day's worked
 // stamps in the left wing, each with its take-back; the waiting queue in the
 // right wing, heat-mapped, each name with its trigger whispered beneath; the
-// lower deck (the wire · the institutions · State of play); and the
+// lower deck (the wire · the institutions · State of play); the Sales Nav
+// spine, the fourth column (ship order 2026-10-15); and the
 // Tallyfoot, the Sendbook's one door, at the page foot. The page holds the
 // reads; these hold the face, so the suite can render it whole.
 
@@ -55,6 +56,7 @@ export function GroundworkFace({
   hrefOf,
   deck,
   foot,
+  spine,
 }: {
   nudge: boolean;
   done: readonly DoneStamp[];
@@ -68,6 +70,8 @@ export function GroundworkFace({
   hrefOf: (q: { accountId: string }) => string;
   deck: LowerDeckProps;
   foot: TallyfootProps;
+  /** The Sales Nav spine, the fourth column (ship order 2026-10-15). */
+  spine?: ReactNode;
 }) {
   return (
     <main className={styles.wrap}>
@@ -86,7 +90,7 @@ export function GroundworkFace({
       )}
 
       {/* ── The wings ─────────────────────────────────────────────── */}
-      <div className={styles.wings}>
+      <div className={spine ? `${styles.wings} ${styles.wings4}` : styles.wings}>
         <DoneWing done={done} canWrite={canWrite} />
 
         {/* ── Center stage ────────────────────────────────────────── */}
@@ -104,6 +108,8 @@ export function GroundworkFace({
         </section>
 
         <WaitingWing waiting={waiting} rest={rest} hrefOf={hrefOf} />
+
+        {spine}
       </div>
 
       <LowerDeck {...deck} />

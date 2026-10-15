@@ -16,6 +16,13 @@ import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
 import { takeBack, workChannel } from "@/lib/groundwork/worked";
 import { roomResearch } from "@/app/room/actions";
+import { SOURCES } from "@/lib/ingest/dialect";
+import {
+  SPINE_GONE,
+  SPINE_MUTE,
+  isMutable,
+  isSpineKey,
+} from "@/lib/groundwork/spine-store";
 import {
   WIRE_NS,
   parseWireBody,
@@ -266,5 +273,57 @@ export async function attachWireToAccount(
   } catch {
     return;
   }
+  revalidatePath("/groundwork");
+}
+
+// ── The Sales Nav spine's ✕ and mute (2026-10-15) ───────────────────────
+// ✕ hides one alert; ↺ brings it back. Mute hides a read-only kind
+// (activity) until unmuted. Each writes one namespaced note the spine reads
+// and nothing else does (src/lib/groundwork/spine-store.ts).
+
+async function spineMark(ns: string, value: string): Promise<void> {
+  const prisma = getPrisma();
+  const existing = await prisma.accountNote
+    .findFirst({ where: { accountId: ns, body: value }, select: { id: true } })
+    .catch(() => null);
+  if (existing) return;
+  await createAccountNoteRow({
+    accountId: ns,
+    kind: "account",
+    body: value,
+    door: "hand",
+    lane: "background",
+    actors: "",
+    source: SOURCES.spine,
+  }).catch(() => undefined);
+}
+
+async function spineUnmark(ns: string, value: string): Promise<void> {
+  await getPrisma()
+    .accountNote.deleteMany({ where: { accountId: ns, body: value } })
+    .catch(() => undefined);
+}
+
+export async function hideAlert(key: string): Promise<void> {
+  if (!(await requireWrite()) || !isSpineKey(key)) return;
+  await spineMark(SPINE_GONE, key);
+  revalidatePath("/groundwork");
+}
+
+export async function showAlert(key: string): Promise<void> {
+  if (!(await requireWrite()) || !isSpineKey(key)) return;
+  await spineUnmark(SPINE_GONE, key);
+  revalidatePath("/groundwork");
+}
+
+export async function muteAlerts(group: string): Promise<void> {
+  if (!(await requireWrite()) || !isMutable(group)) return;
+  await spineMark(SPINE_MUTE, group);
+  revalidatePath("/groundwork");
+}
+
+export async function unmuteAlerts(group: string): Promise<void> {
+  if (!(await requireWrite()) || !isMutable(group)) return;
+  await spineUnmark(SPINE_MUTE, group);
   revalidatePath("/groundwork");
 }

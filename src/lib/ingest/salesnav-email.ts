@@ -24,6 +24,7 @@
 
 import { isGrab } from "./grab";
 import { sniffHead } from "./dialect";
+import { alertLink, linkLine } from "./salesnav-links";
 import { chicagoWallToUtc } from "@/lib/tz";
 
 /** Whether a capture is a Sales Navigator alert email: FROM LinkedIn, by
@@ -148,10 +149,18 @@ function wallAsChicago(raw: string): number {
 const stamp = (d: Date): string =>
   d.toLocaleString("en-US", { timeZone: "America/Chicago" });
 
+/** One alert in an email: its kind, its own lines, and the Sales
+ *  Navigator pages its buttons open (src/lib/ingest/salesnav-links.ts). */
+export type AlertBlock = {
+  kind: Start["kind"];
+  lines: string[];
+  links: { label: string; href: string }[];
+};
+
 /** The alerts in an email, each as its own block of lines. */
-export function alertBlocks(text: string): { kind: Start["kind"]; lines: string[] }[] {
-  const out: { kind: Start["kind"]; lines: string[] }[] = [];
-  let cur: { kind: Start["kind"]; lines: string[] } | null = null;
+export function alertBlocks(text: string): AlertBlock[] {
+  const out: AlertBlock[] = [];
+  let cur: AlertBlock | null = null;
   for (const l of lines(text)) {
     if (!l) continue;
     if (STOP.test(l)) {
@@ -160,8 +169,15 @@ export function alertBlocks(text: string): { kind: Start["kind"]; lines: string[
     }
     const s = alertStart(l);
     if (s) {
-      cur = { kind: s.kind, lines: [l] };
+      cur = { kind: s.kind, lines: [l], links: [] };
       out.push(cur);
+      continue;
+    }
+    // A button's link rides with its alert, unwrapped to the Sales
+    // Navigator page it opens (2026-10-15); it never counts as a line.
+    const link = cur ? alertLink(l) : null;
+    if (cur && link) {
+      if (!cur.links.some((k) => k.href === link.href)) cur.links.push(link);
       continue;
     }
     // An alert carries its company or title line, its time and the post's
@@ -184,7 +200,7 @@ export function grabsFromSalesNavEmail(
   const when = sentStamp(text) ?? stamp(now);
   const blocks = alertBlocks(text);
   const join = (bs: typeof blocks) =>
-    bs.map((b) => b.lines.join("\n")).join("\n\n----\n\n");
+    bs.map((b) => [...b.lines, ...b.links.map(linkLine)].join("\n")).join("\n\n----\n\n");
   const alerts = blocks.filter((b) => b.kind !== "intent");
   const intent = blocks.filter((b) => b.kind === "intent");
   const out: string[] = [];

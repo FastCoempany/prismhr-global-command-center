@@ -128,7 +128,7 @@ export function sfNewOppUrl(
 // pick it on the opportunity.
 export function sfNewContactUrl(
   id: string,
-  opts: { firstName?: string; lastName?: string; email?: string } = {},
+  opts: { firstName?: string; lastName?: string; email?: string; title?: string } = {},
 ): string | null {
   const real = resolveSfId(id);
   if (!real) return null;
@@ -137,6 +137,7 @@ export function sfNewContactUrl(
     FirstName: opts.firstName ?? "",
     LastName: opts.lastName ?? "",
     Email: opts.email ?? "",
+    Title: opts.title ?? "",
   });
   return `${sfBase()}/lightning/o/Contact/new?defaultFieldValues=${fields}`;
 }

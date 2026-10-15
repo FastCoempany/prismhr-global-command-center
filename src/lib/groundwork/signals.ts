@@ -406,7 +406,9 @@ export function parseAlerts(body: string, filedAt: string): PersonSignal[] {
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean)
-      .filter((l) => !ALERTS_HEAD_RE.test(l));
+      .filter((l) => !ALERTS_HEAD_RE.test(l))
+      // A filed link line is a button, never the alert's company or title.
+      .filter((l) => !l.startsWith("Link · "));
     if (!lines.length) continue;
     const head = lines[0]!.replace(ALERT_PREFIX_RE, "");
     const sub = lines[1] ?? "";

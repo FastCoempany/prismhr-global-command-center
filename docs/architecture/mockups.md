@@ -16,6 +16,7 @@ The ship-order rule was decreed 2026-08-19. A mockup judged before that day pred
 
 | File | What it judged | Disposition | Cite |
 |---|---|---|---|
+| groundwork-salesnav-column-2026-10-14.html | the Sales Nav column on Groundwork, three concepts: the fourth wing, the rail beside, the day spine | shipped · ship order 2026-10-15 | CLAUDE.md, "The Sales Nav spine (Concept C, ship order 2026-10-15)"; the founder: "the day spine is the one. build it and ship it"; shipped in #410 |
 | chute-faces-2026-10-06.html | the held file and the receipt, three faces | shipped · ship order 2026-10-06 | CLAUDE.md, "The held file and the receipt (ship order 2026-10-06)"; the order recorded in #358, the face shipped in #359 and #360 |
 | groundwork-dayspine-desk-2026-07-30.html | the day spine and the desk, rebuilt | concept · predates the rule | judged 2026-07-30; Groundwork shipped as the rail and the file (#179, 2026-07-31) and the Stage replaced that face 2026-08-10 |
 | groundwork-desk-triptych-2026-07-30.html | the desk, three ways | concept · predates the rule | judged 2026-07-30; see the row above |
