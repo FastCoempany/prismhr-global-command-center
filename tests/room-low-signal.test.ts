@@ -13,6 +13,7 @@ import {
   GROUP_ORDER,
   LOW_SIGNAL_NS,
   lowSignalKey,
+  lowSignalKeys,
 } from "../src/lib/room/low-signal";
 import { ledgerExclusions } from "../src/lib/groundwork/day";
 
@@ -62,6 +63,14 @@ describe("the key and the order", () => {
     assert.equal(lowSignalKey({ accountId: "001A", cardId: "c1" }), "lowsig:001A");
     assert.equal(lowSignalKey({ accountId: "", cardId: "c1" }), "lowsig:card:c1");
     assert.ok(LOW_SIGNAL_NS.endsWith(":"));
+  });
+
+  test("a card marked before the book bound it still reads as marked once it is bound", () => {
+    const markedUnbound = lowSignalKey({ accountId: "", cardId: "c1" });
+    const bound = { accountId: "001A", cardId: "c1" };
+    assert.ok(lowSignalKeys(bound).includes(markedUnbound));
+    assert.ok(lowSignalKeys(bound).includes(lowSignalKey(bound)));
+    assert.deepEqual(lowSignalKeys({ accountId: "001B", cardId: "" }), ["lowsig:001B"]);
   });
 
   test("Groundwork never reads the mark: a namespaced key is not an account", () => {

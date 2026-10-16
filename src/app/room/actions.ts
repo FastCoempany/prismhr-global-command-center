@@ -105,7 +105,7 @@ import {
 import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
 import { SEAT_NS } from "@/lib/act/lane";
 import { editedSeatBody, editedSheetBody } from "@/lib/room/sheet-view";
-import { lowSignalKey } from "@/lib/room/low-signal";
+import { lowSignalKey, lowSignalKeys } from "@/lib/room/low-signal";
 import { groundworkDoneKey } from "@/lib/groundwork/file";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
@@ -1259,7 +1259,8 @@ export async function roomLowSignal(
   const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
   if (!acct && !cid) return { ok: false, reason: "Not a bound row." };
   if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
-  const key = lowSignalKey({ accountId: acct?.id ?? "", cardId: cid });
+  const row = { accountId: acct?.id ?? "", cardId: cid };
+  const key = lowSignalKey(row);
   try {
     const prisma = getPrisma();
     if (on === true)
@@ -1268,7 +1269,12 @@ export async function roomLowSignal(
         create: { accountId: key, status: "parked", reason: "low signal" },
         update: { status: "parked", reason: "low signal" },
       });
-    else await prisma.accountDisposition.deleteMany({ where: { accountId: key } });
+    // Back to the live board clears every key that can mark the row, so a
+    // card marked before the book bound it comes back too.
+    else
+      await prisma.accountDisposition.deleteMany({
+        where: { accountId: { in: lowSignalKeys(row) } },
+      });
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };

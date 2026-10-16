@@ -18,6 +18,16 @@ export function lowSignalKey(r: { accountId: string; cardId: string }): string {
   return `${LOW_SIGNAL_NS}${r.accountId || `card:${r.cardId}`}`;
 }
 
+/** Every key that can mark a row: its account's and its card's. A card marked
+ *  while it was bound to no account carries the card key; once the book binds
+ *  it, the row still reads as marked, and taking it back clears both. */
+export function lowSignalKeys(r: { accountId: string; cardId: string }): string[] {
+  const keys: string[] = [];
+  if (r.accountId) keys.push(`${LOW_SIGNAL_NS}${r.accountId}`);
+  if (r.cardId) keys.push(`${LOW_SIGNAL_NS}card:${r.cardId}`);
+  return keys;
+}
+
 export type BoardGroup = "live" | "low" | "closed";
 
 /** Where a row sits on the board. A stamped outcome outranks the low-signal

@@ -85,7 +85,7 @@ import {
 import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/build";
 import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
 import { multiTone as multiToneOf } from "@/lib/room/multi";
-import { boardGroup, GROUP_ORDER, lowSignalKey } from "@/lib/room/low-signal";
+import { boardGroup, GROUP_ORDER, lowSignalKeys } from "@/lib/room/low-signal";
 import {
   type CadenceRow,
   type CheckinRow,
@@ -754,7 +754,7 @@ export default async function RoomPage() {
   // sinks below everything live, whatever its health once was. A deal the
   // operator marked low signal (not in the Salesforce pipeline) sits between
   // the two.
-  for (const r of rows) r.lowSignal = dispositions.has(lowSignalKey(r));
+  for (const r of rows) r.lowSignal = lowSignalKeys(r).some((k) => dispositions.has(k));
   rows.sort(
     (a, b) =>
       GROUP_ORDER[boardGroup(a)] - GROUP_ORDER[boardGroup(b)] ||
