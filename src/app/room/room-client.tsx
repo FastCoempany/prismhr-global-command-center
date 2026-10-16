@@ -42,6 +42,7 @@ import {
   roomGapDismiss,
   roomGapsRefill,
   roomLossDismiss,
+  roomLowSignal,
   roomMarkLost,
   roomMoveDone,
   roomMarkWon,
@@ -81,6 +82,7 @@ import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
 import type { PipelineRecord } from "@/lib/pipeline/build";
 import { researchChip, todayRegister } from "@/lib/room/springs";
+import { boardGroup } from "@/lib/room/low-signal";
 import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 
@@ -101,6 +103,20 @@ function readShut(): Set<string> {
     return new Set(Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : []);
   } catch {
     return new Set();
+  }
+}
+
+// The closed ledger hides and shows as a whole, remembered per browser like
+// the fold: it is how the operator wants to read the board, not a fact about
+// any deal. The server paints it shown.
+const CLOSED_HIDDEN_KEY = "room:closed-hidden";
+
+function readClosedHidden(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(CLOSED_HIDDEN_KEY) === "1";
+  } catch {
+    return false;
   }
 }
 
@@ -181,6 +197,9 @@ export type RoomRow = {
   loss: { noteId: string; phrase: string; date: string; status: "lost" | "won" } | null;
   owed: { noteId: string; key: string; text: string; src: string }[];
   outcome: { status: "won" | "lost"; phrase: string; at: string } | null;
+  /** Marked low signal by the operator: not in the Salesforce pipeline. The
+   *  row sits in the LOW SIGNAL section above the closed ledger. */
+  lowSignal?: boolean;
   gaps: { id: string; question: string; at: string }[];
   /** The asks waiting behind the shown few, in the carousel's order. "· N
    *  queued" opens to them and N is their length (the click-depth law; H5). */
@@ -462,10 +481,14 @@ export function Row({
   onToggle,
   defaultSpring = null,
   defaultMinted = null,
+  hidden = false,
 }: {
   row: RoomRow;
   collapsed: boolean;
   onToggle: () => void;
+  /** The closed ledger is hidden. The row stays mounted, so nothing typed in
+   *  it is lost; it only stops painting. */
+  hidden?: boolean;
   /** The register sprung on first paint, for the suite. */
   defaultSpring?: "unknown" | "peers" | "today" | null;
   /** The mint's receipt on first paint, for the suite. */
@@ -1125,6 +1148,22 @@ export function Row({
       else setNote(r.reason ?? "That didn't save.");
     });
   };
+  // The low-signal control's name, for the tooltip and the screen reader
+  // alike: the glyph alone says nothing out loud.
+  const lowTitle = row.lowSignal
+    ? "Return it to the live board."
+    : "Send to low signal. Not in your Salesforce pipeline.";
+  // Low signal: the row moves to the section above the closed ledger, and
+  // the same control brings it back. The board re-sorts on the refresh.
+  const toggleLowSignal = () => {
+    if (pending) return;
+    const on = !row.lowSignal;
+    start(async () => {
+      const r = took(await roomLowSignal(row.accountId, row.cardId, on));
+      if (r.ok) addInfo(on ? "Moved to low signal." : "Back on the live board.");
+      else setNote(r.reason ?? "That didn't save.");
+    });
+  };
   const [askGone, setAskGone] = useState<Set<string>>(new Set());
   // The move's own door: the built line by default, the whole commitment on
   // a click. Nothing deep ever surfaces uninvited.
@@ -1335,8 +1374,9 @@ export function Row({
     <div
       className={[
         styles.row,
-        row.outcome ? styles.rowClosed : "",
+        row.outcome ? styles.rowClosed : row.lowSignal ? styles.rowLow : "",
         collapsed ? styles.rowShut : "",
+        hidden ? styles.rowHidden : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -1491,6 +1531,23 @@ export function Row({
                 title="Worked today. Click to take the mark back."
               >
                 ✓ WORKED
+              </button>
+            )}
+            {/* Low signal: a deal that isn't in the Salesforce pipeline moves
+                to the section above the closed ledger. Revealed under the
+                hand like the other minimal controls; the same seat takes it
+                back. A closed deal belongs to the closed ledger, so it has
+                none. */}
+            {row.canWrite && !row.outcome && (
+              <button
+                type="button"
+                className={styles.lowBtn}
+                disabled={pending}
+                onClick={toggleLowSignal}
+                title={lowTitle}
+                aria-label={lowTitle}
+              >
+                {row.lowSignal ? "↺" : "⇣"}
               </button>
             )}
           </span>
@@ -3146,7 +3203,16 @@ export function RoomClient({
   );
   const [shutPref, setShutPref] = useState<Set<string>>(() => readShut());
   const shut = hydrated ? shutPref : EMPTY_SHUT;
-  const allShut = rows.length > 0 && rows.every((r) => shut.has(rowKey(r)));
+  const [closedHiddenPref, setClosedHiddenPref] = useState<boolean>(() =>
+    readClosedHidden(),
+  );
+  const closedHidden = hydrated && closedHiddenPref;
+  // Collapse all reads only the rows on screen: a hidden closed row keeps its
+  // own fold and never decides what the button says.
+  const shownKeys = rows
+    .filter((r) => !(closedHidden && boardGroup(r) === "closed"))
+    .map(rowKey);
+  const allShut = shownKeys.length > 0 && shownKeys.every((k) => shut.has(k));
   const writeShut = (next: Set<string>) => {
     setShutPref(next);
     try {
@@ -3161,7 +3227,26 @@ export function RoomClient({
     else next.add(key);
     writeShut(next);
   };
-  const toggleAll = () => writeShut(allShut ? new Set() : new Set(rows.map(rowKey)));
+  const toggleAll = () => {
+    const next = new Set(shut);
+    for (const k of shownKeys) {
+      if (allShut) next.delete(k);
+      else next.add(k);
+    }
+    writeShut(next);
+  };
+  const toggleClosed = () => {
+    const next = !closedHidden;
+    setClosedHiddenPref(next);
+    try {
+      if (next) localStorage.setItem(CLOSED_HIDDEN_KEY, "1");
+      else localStorage.removeItem(CLOSED_HIDDEN_KEY);
+    } catch {
+      /* private mode — the toggle still works, it just won't survive a reload */
+    }
+  };
+  const lowCount = rows.filter((r) => boardGroup(r) === "low").length;
+  const closedCount = rows.filter((r) => boardGroup(r) === "closed").length;
   // Click away (or press Escape) to leave any of them — the trigger lives
   // inside each wrapper, so its own toggle still works.
   const addRef = useDismiss<HTMLSpanElement>(menuOpen, () => setMenuOpen(false));
@@ -3274,23 +3359,41 @@ export function RoomClient({
           and add the deals you&apos;re working.
         </p>
       )}
-      {rows.map((r, i) => (
-        <Fragment key={rowKey(r)}>
-          {!!r.outcome && !rows[i - 1]?.outcome && (
-            <div className={styles.closedRule}>
-              <span>
-                CLOSED · {rows.filter((x) => !!x.outcome).length} · THE RECORD KEEPS
-                EVERYTHING
-              </span>
-            </div>
-          )}
-          <Row
-            row={r}
-            collapsed={shut.has(rowKey(r))}
-            onToggle={() => toggleRow(rowKey(r))}
-          />
-        </Fragment>
-      ))}
+      {rows.map((r, i) => {
+        // The board runs live, then low signal, then the closed ledger; one
+        // mono rule opens each section after the live book.
+        const group = boardGroup(r);
+        const opens = group !== "live" && (i === 0 || boardGroup(rows[i - 1]) !== group);
+        return (
+          <Fragment key={rowKey(r)}>
+            {opens && group === "low" && (
+              <div className={styles.lowRule}>
+                <span>LOW SIGNAL · {lowCount} · NOT IN YOUR SALESFORCE PIPELINE</span>
+              </div>
+            )}
+            {opens && group === "closed" && (
+              <div className={styles.closedRule}>
+                <span>CLOSED · {closedCount} · THE RECORD KEEPS EVERYTHING</span>
+                <button
+                  type="button"
+                  className={styles.ruleToggle}
+                  aria-expanded={!closedHidden}
+                  title={closedHidden ? "Show the closed deals" : "Hide the closed deals"}
+                  onClick={toggleClosed}
+                >
+                  {closedHidden ? "SHOW" : "HIDE"}
+                </button>
+              </div>
+            )}
+            <Row
+              row={r}
+              collapsed={shut.has(rowKey(r))}
+              onToggle={() => toggleRow(rowKey(r))}
+              hidden={group === "closed" && closedHidden}
+            />
+          </Fragment>
+        );
+      })}
       {boardNames.length > 0 && null}
 
       {/* The legend, retired here — once, at the foot (founder-decreed
@@ -3309,6 +3412,7 @@ export function RoomClient({
           <span>⟳ mint sharper asks</span>
           <span>→ find the answer</span>
           <span>✕ not this deal</span>
+          <span>⇣ low signal</span>
         </div>
       )}
 
