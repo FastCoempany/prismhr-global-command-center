@@ -85,6 +85,7 @@ import {
 import { buildPipelineReport, homeSideFrom, rankPipeline } from "@/lib/pipeline/build";
 import { collectPipelineAccounts, pipelineDayLabel } from "@/lib/pipeline/collect";
 import { multiTone as multiToneOf } from "@/lib/room/multi";
+import { boardGroup, GROUP_ORDER, lowSignalKey } from "@/lib/room/low-signal";
 import {
   type CadenceRow,
   type CheckinRow,
@@ -750,10 +751,13 @@ export default async function RoomPage() {
     });
   }
   // A closed deal keeps its row but stops competing for attention: closed
-  // sinks below everything live, whatever its health once was.
+  // sinks below everything live, whatever its health once was. A deal the
+  // operator marked low signal (not in the Salesforce pipeline) sits between
+  // the two.
+  for (const r of rows) r.lowSignal = dispositions.has(lowSignalKey(r));
   rows.sort(
     (a, b) =>
-      Number(!!a.outcome) - Number(!!b.outcome) ||
+      GROUP_ORDER[boardGroup(a)] - GROUP_ORDER[boardGroup(b)] ||
       HEALTH_ORDER[a.health] - HEALTH_ORDER[b.health] ||
       a.name.localeCompare(b.name),
   );

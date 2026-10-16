@@ -265,7 +265,14 @@ describe("each register rests as one summary line (A6.1)", () => {
 });
 
 describe("the per-row keybar is retired; one legend lives at the page foot (A6.5)", () => {
-  const KEYS = ["✉ send", "⚑ owed", "✸ action", "⌕ ask the brain", "✕ not this deal"];
+  const KEYS = [
+    "✉ send",
+    "⚑ owed",
+    "✸ action",
+    "⌕ ask the brain",
+    "✕ not this deal",
+    "⇣ low signal",
+  ];
   const board = (rows: ReturnType<typeof roomRow>[]) =>
     render(
       createElement(room.RoomClient, {
@@ -322,12 +329,19 @@ describe("the per-row keybar is retired; one legend lives at the page foot (A6.5
 });
 
 describe("the minimalist controls are glyphs with titles, never words (A6.6)", () => {
-  const WORDS = /ask the brain|mint sharper asks|find the answer|not this deal/i;
+  const WORDS =
+    /ask the brain|mint sharper asks|find the answer|not this deal|low signal|live board/i;
   const CONTROLS: { glyph: string; title: string; tag: "a" | "button"; cls: string }[] = [
     { glyph: "⌕", title: "Ask the brain", tag: "a", cls: "sic" },
     { glyph: "⟳", title: "Mint sharper asks", tag: "button", cls: "sic" },
     { glyph: "✕", title: "Not this deal", tag: "button", cls: "askX" },
     { glyph: "→", title: "Find the answer", tag: "a", cls: "askGo" },
+    {
+      glyph: "⇣",
+      title: "Send to low signal. Not in your Salesforce pipeline.",
+      tag: "button",
+      cls: "lowBtn",
+    },
   ];
   /** Every element carrying `title`, with its own text. */
   const carrying = (html: string, title: string) =>
@@ -373,6 +387,28 @@ describe("the minimalist controls are glyphs with titles, never words (A6.6)", (
   test("the ✕ rests hidden and the ask's own row reveals it on hover", () => {
     assert.match(rule(".askX"), /opacity:\s*0;/);
     assert.match(rule(".askRow:hover .askX"), /opacity:\s*1;/);
+  });
+
+  test("⇣ rests hidden and its row reveals it on hover or focus; a low-signal row's ↺ takes it back", async () => {
+    assert.match(rule(".lowBtn"), /opacity:\s*0;/);
+    assert.match(rule(".row:hover .lowBtn"), /opacity:\s*1;/);
+    assert.match(rule(".lowBtn:focus-visible"), /opacity:\s*1;/);
+    const back = carrying(
+      await paintRow(springRow({ lowSignal: true }), null),
+      "Back to the live board",
+    );
+    assert.equal(back.length, 1);
+    assert.equal(back[0][3], "↺");
+    assert.match(back[0][2], /class="lowBtn"/);
+  });
+
+  test("a closed row and a read-only session carry no low-signal control", async () => {
+    const closed = await paintRow(
+      springRow({ outcome: { status: "lost", phrase: "", at: "2026-10-01T15:00:00Z" } }),
+      null,
+    );
+    const readOnly = await paintRow(springRow({ canWrite: false }), null);
+    for (const html of [closed, readOnly]) assert.ok(!html.includes('class="lowBtn"'));
   });
 });
 

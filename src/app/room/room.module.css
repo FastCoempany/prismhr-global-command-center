@@ -2340,7 +2340,8 @@ button.sdRadio:hover {
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.45);
 }
-.closedRule {
+.closedRule,
+.lowRule {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -2352,10 +2353,60 @@ button.sdRadio:hover {
   color: var(--faint);
 }
 .closedRule::before,
-.closedRule::after {
+.closedRule::after,
+.lowRule::before,
+.lowRule::after {
   content: "";
   flex: 1;
   border-top: 1px solid rgba(10, 28, 64, 0.14);
+}
+/* The closed ledger hides and shows whole: one quiet mono word on its rule,
+   ink on hover, no accent (orange is the surface's one move, elsewhere). */
+.ruleToggle {
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--faint);
+  cursor: pointer;
+}
+.ruleToggle:hover,
+.ruleToggle:focus-visible {
+  color: var(--ink);
+}
+
+/* ── low signal (founder's order, 2026-10-16) ───────────────────────────
+   A deal that isn't in the Salesforce pipeline sits between the live book
+   and the closed ledger. It recedes less than a closed row, because it may
+   still be worked, and wakes under the hand. The control rests invisible
+   and shows when the row is hovered or focused, like the asks' ✕. */
+.rowLow {
+  opacity: 0.72;
+  transition: opacity 0.25s ease;
+}
+.rowLow:hover,
+.rowLow:focus-within {
+  opacity: 1;
+}
+.lowBtn {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  font-size: 13px;
+  color: var(--quiet);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.row:hover .lowBtn {
+  opacity: 1;
+}
+.lowBtn:focus-visible {
+  opacity: 1;
+}
+.lowBtn:hover {
+  color: var(--ink);
 }
 
 /* ── the Hairline patch (decreed 2026-08-18) ─────────────────────────── */

@@ -105,6 +105,7 @@ import {
 import { createAccountNoteRow, createTodoRow } from "@/lib/notes/write";
 import { SEAT_NS } from "@/lib/act/lane";
 import { editedSeatBody, editedSheetBody } from "@/lib/room/sheet-view";
+import { lowSignalKey } from "@/lib/room/low-signal";
 import { groundworkDoneKey } from "@/lib/groundwork/file";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
@@ -1237,6 +1238,37 @@ export async function roomRetire(
       where: { id: cid },
       data: { archived: true },
     });
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save. Try again." };
+  }
+}
+
+// --- Low signal ------------------------------------------------------------
+// A deal row that isn't in the operator's Salesforce pipeline moves into the
+// LOW SIGNAL section above the closed ledger; the same control sends it back.
+// Nothing files to the record and nothing leaves the row: this is how the
+// operator sorts the board, stored as a namespaced disposition that no queue
+// reads (src/lib/room/low-signal.ts).
+export async function roomLowSignal(
+  accountId: string,
+  cardId: string,
+  on: boolean,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
+  if (!acct && !cid) return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  const key = lowSignalKey({ accountId: acct?.id ?? "", cardId: cid });
+  try {
+    const prisma = getPrisma();
+    if (on === true)
+      await prisma.accountDisposition.upsert({
+        where: { accountId: key },
+        create: { accountId: key, status: "parked", reason: "low signal" },
+        update: { status: "parked", reason: "low signal" },
+      });
+    else await prisma.accountDisposition.deleteMany({ where: { accountId: key } });
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };

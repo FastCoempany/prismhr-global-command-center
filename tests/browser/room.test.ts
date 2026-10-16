@@ -513,3 +513,98 @@ describe("TODAY shows today's filings from the record, with their ↺, after a r
     await tomorrow.close();
   });
 });
+
+// Low signal (founder's order, 2026-10-16): the deals that aren't in the
+// Salesforce pipeline sit in their own section above the closed ledger, a
+// row's ⇣ sends it there and ↺ brings it back, and the closed ledger hides
+// and shows as a whole, remembered per browser.
+const SECTIONS_FIX = "tests/browser/fixtures/room-sections.tsx";
+const rowOf = (page: Page, name: string) =>
+  page
+    .locator("a", { hasText: new RegExp(`^${name}$`) })
+    .first()
+    .locator("xpath=ancestor::*[contains(@class,'room__row')][1]");
+
+describe("low signal · a section above the closed ledger, and a closed ledger that hides", () => {
+  test("⇣ rests invisible, shows under the hand, and sends the row to low signal", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const row = rowOf(page, "Simploy");
+    const btn = row.locator($("lowBtn"));
+    assert.equal(
+      await btn.getAttribute("title"),
+      "Send to low signal. Not in your Salesforce pipeline.",
+    );
+    assert.equal(await btn.evaluate((el) => getComputedStyle(el).opacity), "0");
+    await row.hover();
+    await page.waitForTimeout(250);
+    assert.equal(await btn.evaluate((el) => getComputedStyle(el).opacity), "1");
+    await btn.click();
+    await page.waitForFunction(
+      () => (window as { __refreshes?: number[] }).__refreshes?.length,
+    );
+    const call = (await callsOf(page)).find(([n]) => n === "roomLowSignal");
+    assert.ok(call, "the mark never reached the server");
+    assert.deepEqual(call[1], [ROW_A, "card-simploy", true]);
+    await page.close();
+  });
+
+  test("a low-signal row's ↺ brings it back to the live board", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const row = rowOf(page, "Regis HR Group");
+    await row.hover();
+    const back = row.locator("button[title='Back to the live board']");
+    assert.equal((await back.innerText()).trim(), "↺");
+    await back.click();
+    await page.waitForFunction(
+      () => (window as { __refreshes?: number[] }).__refreshes?.length,
+    );
+    const call = (await callsOf(page)).find(([n]) => n === "roomLowSignal");
+    assert.deepEqual(call?.[1], ["001F000000w38OHIAY", "card-regis", false]);
+    await page.close();
+  });
+
+  test("LOW SIGNAL sits between the live book and the closed ledger", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const y = async (sel: string) => (await box(page, sel)).y;
+    const live = (await rowOf(page, "Simploy").boundingBox())!.y;
+    const low = await y($("lowRule"));
+    const regis = (await rowOf(page, "Regis HR Group").boundingBox())!.y;
+    const closed = await y($("closedRule"));
+    const axcet = (await rowOf(page, "Axcet HR").boundingBox())!.y;
+    assert.ok(live < low && low < regis && regis < closed && closed < axcet);
+    assert.match(
+      await page.locator($("lowRule")).innerText(),
+      /LOW SIGNAL · 1 · NOT IN YOUR SALESFORCE PIPELINE/,
+    );
+    await page.close();
+  });
+
+  test("HIDE takes the closed ledger away and a reload remembers it; SHOW brings it back", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const toggle = page.locator(`${$("closedRule")} button`);
+    assert.equal((await toggle.innerText()).trim(), "HIDE");
+    await toggle.click();
+    assert.equal(await rowOf(page, "Axcet HR").count(), 0, "the closed row stayed");
+    assert.equal((await toggle.innerText()).trim(), "SHOW");
+    assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    assert.match(await page.locator($("closedRule")).innerText(), /CLOSED · 1/);
+    assert.equal(await rowOf(page, "Regis HR Group").count(), 1, "low signal went too");
+    const kept = await page.evaluate(() => localStorage.getItem("room:closed-hidden"));
+    assert.equal(kept, "1");
+    await page.close();
+
+    const again = await mount(browser, SECTIONS_FIX, {
+      storage: { "room:closed-hidden": "1" },
+    });
+    await again.waitForTimeout(50);
+    assert.equal(await rowOf(again, "Axcet HR").count(), 0, "the reload showed it again");
+    const t2 = again.locator(`${$("closedRule")} button`);
+    await t2.click();
+    assert.equal(await rowOf(again, "Axcet HR").count(), 1);
+    assert.equal(
+      await again.evaluate(() => localStorage.getItem("room:closed-hidden")),
+      null,
+    );
+    await again.close();
+  });
+});
