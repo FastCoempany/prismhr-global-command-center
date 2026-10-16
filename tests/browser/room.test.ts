@@ -552,7 +552,7 @@ describe("low signal · a section above the closed ledger, and a closed ledger t
     const page = await mount(browser, SECTIONS_FIX);
     const row = rowOf(page, "Regis HR Group");
     await row.hover();
-    const back = row.locator("button[title='Back to the live board']");
+    const back = row.locator("button[title='Return it to the live board.']");
     assert.equal((await back.innerText()).trim(), "↺");
     await back.click();
     await page.waitForFunction(
@@ -584,11 +584,19 @@ describe("low signal · a section above the closed ledger, and a closed ledger t
     const toggle = page.locator(`${$("closedRule")} button`);
     assert.equal((await toggle.innerText()).trim(), "HIDE");
     await toggle.click();
-    assert.equal(await rowOf(page, "Axcet HR").count(), 0, "the closed row stayed");
+    assert.equal(
+      await rowOf(page, "Axcet HR").isVisible(),
+      false,
+      "the closed row stayed",
+    );
     assert.equal((await toggle.innerText()).trim(), "SHOW");
     assert.equal(await toggle.getAttribute("aria-expanded"), "false");
     assert.match(await page.locator($("closedRule")).innerText(), /CLOSED · 1/);
-    assert.equal(await rowOf(page, "Regis HR Group").count(), 1, "low signal went too");
+    assert.equal(
+      await rowOf(page, "Regis HR Group").isVisible(),
+      true,
+      "low signal stays",
+    );
     const kept = await page.evaluate(() => localStorage.getItem("room:closed-hidden"));
     assert.equal(kept, "1");
     await page.close();
@@ -597,14 +605,50 @@ describe("low signal · a section above the closed ledger, and a closed ledger t
       storage: { "room:closed-hidden": "1" },
     });
     await again.waitForTimeout(50);
-    assert.equal(await rowOf(again, "Axcet HR").count(), 0, "the reload showed it again");
+    assert.equal(
+      await rowOf(again, "Axcet HR").isVisible(),
+      false,
+      "the reload showed it",
+    );
     const t2 = again.locator(`${$("closedRule")} button`);
     await t2.click();
-    assert.equal(await rowOf(again, "Axcet HR").count(), 1);
+    assert.equal(await rowOf(again, "Axcet HR").isVisible(), true);
     assert.equal(
       await again.evaluate(() => localStorage.getItem("room:closed-hidden")),
       null,
     );
     await again.close();
+  });
+
+  test("a note half-typed in a closed row survives HIDE and SHOW", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const row = rowOf(page, "Axcet HR");
+    await row.locator(`button${$("doorAct")}`).click();
+    const ta = row.locator(`textarea[aria-label="Log to Axcet HR"]`);
+    await ta.fill("Call them about the renewal.");
+    const toggle = page.locator(`${$("closedRule")} button`);
+    await toggle.click();
+    await toggle.click();
+    assert.equal(await ta.inputValue(), "Call them about the renewal.");
+    await page.close();
+  });
+
+  test("Collapse all reads only the rows on screen while the ledger is hidden", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const all = page.locator(`button${$("shutAll")}`);
+    await page.locator(`${$("closedRule")} button`).click();
+    await all.click();
+    assert.equal((await all.textContent())?.trim(), "Open all");
+    for (const n of ["Simploy", "Regis HR Group"])
+      assert.match((await rowOf(page, n).getAttribute("class")) ?? "", /rowShut/);
+    // The hidden closed row kept its own fold, so SHOW brings back an open
+    // row and the button asks to collapse again.
+    await page.locator(`${$("closedRule")} button`).click();
+    assert.doesNotMatch(
+      (await rowOf(page, "Axcet HR").getAttribute("class")) ?? "",
+      /rowShut/,
+    );
+    assert.equal((await all.textContent())?.trim(), "Collapse all");
+    await page.close();
   });
 });

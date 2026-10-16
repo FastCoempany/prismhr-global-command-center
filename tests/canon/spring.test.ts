@@ -395,7 +395,7 @@ describe("the minimalist controls are glyphs with titles, never words (A6.6)", (
     assert.match(rule(".lowBtn:focus-visible"), /opacity:\s*1;/);
     const back = carrying(
       await paintRow(springRow({ lowSignal: true }), null),
-      "Back to the live board",
+      "Return it to the live board.",
     );
     assert.equal(back.length, 1);
     assert.equal(back[0][3], "↺");

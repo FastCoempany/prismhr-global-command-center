@@ -9,6 +9,8 @@
 // key with a colon, so marking a row low signal changes nothing outside the
 // HomeRoom.
 
+import { accountIdsOf } from "@/lib/book/merge";
+
 export const LOW_SIGNAL_NS = "lowsig:";
 
 /** The disposition key for a row: its account, or its card when the card is
@@ -18,12 +20,13 @@ export function lowSignalKey(r: { accountId: string; cardId: string }): string {
   return `${LOW_SIGNAL_NS}${r.accountId || `card:${r.cardId}`}`;
 }
 
-/** Every key that can mark a row: its account's and its card's. A card marked
- *  while it was bound to no account carries the card key; once the book binds
- *  it, the row still reads as marked, and taking it back clears both. */
+/** Every key that can mark a row: its account's, through every duplicate the
+ *  book folds into it (src/lib/book/merge.ts), and its card's. A mark made on
+ *  a duplicate before the fold, or on a card before the book bound it, still
+ *  reads on the row, and taking it back clears them all. */
 export function lowSignalKeys(r: { accountId: string; cardId: string }): string[] {
   const keys: string[] = [];
-  if (r.accountId) keys.push(`${LOW_SIGNAL_NS}${r.accountId}`);
+  if (r.accountId) keys.push(...accountIdsOf(`${LOW_SIGNAL_NS}${r.accountId}`));
   if (r.cardId) keys.push(`${LOW_SIGNAL_NS}card:${r.cardId}`);
   return keys;
 }

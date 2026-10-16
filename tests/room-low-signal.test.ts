@@ -73,6 +73,14 @@ describe("the key and the order", () => {
     assert.deepEqual(lowSignalKeys({ accountId: "001B", cardId: "" }), ["lowsig:001B"]);
   });
 
+  test("a mark made on a duplicate before the book folded it reads on the canonical row", () => {
+    // ALIASES (src/lib/book/merge.ts): the My HR Professionals shell folds
+    // into Southern Personnel Management.
+    const keys = lowSignalKeys({ accountId: "001F000000w389qIAA", cardId: "" });
+    assert.ok(keys.includes("lowsig:001F000000w389qIAA"));
+    assert.ok(keys.includes("lowsig:0013k00002dGqODAA0"));
+  });
+
   test("Groundwork never reads the mark: a namespaced key is not an account", () => {
     const out = ledgerExclusions(
       new Map([[lowSignalKey({ accountId: "001A", cardId: "" }), { status: "parked" }]]),

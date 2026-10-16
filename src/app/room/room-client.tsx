@@ -481,10 +481,14 @@ export function Row({
   onToggle,
   defaultSpring = null,
   defaultMinted = null,
+  hidden = false,
 }: {
   row: RoomRow;
   collapsed: boolean;
   onToggle: () => void;
+  /** The closed ledger is hidden. The row stays mounted, so nothing typed in
+   *  it is lost; it only stops painting. */
+  hidden?: boolean;
   /** The register sprung on first paint, for the suite. */
   defaultSpring?: "unknown" | "peers" | "today" | null;
   /** The mint's receipt on first paint, for the suite. */
@@ -1144,6 +1148,11 @@ export function Row({
       else setNote(r.reason ?? "That didn't save.");
     });
   };
+  // The low-signal control's name, for the tooltip and the screen reader
+  // alike: the glyph alone says nothing out loud.
+  const lowTitle = row.lowSignal
+    ? "Return it to the live board."
+    : "Send to low signal. Not in your Salesforce pipeline.";
   // Low signal: the row moves to the section above the closed ledger, and
   // the same control brings it back. The board re-sorts on the refresh.
   const toggleLowSignal = () => {
@@ -1367,6 +1376,7 @@ export function Row({
         styles.row,
         row.outcome ? styles.rowClosed : row.lowSignal ? styles.rowLow : "",
         collapsed ? styles.rowShut : "",
+        hidden ? styles.rowHidden : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -1534,11 +1544,8 @@ export function Row({
                 className={styles.lowBtn}
                 disabled={pending}
                 onClick={toggleLowSignal}
-                title={
-                  row.lowSignal
-                    ? "Back to the live board"
-                    : "Send to low signal. Not in your Salesforce pipeline."
-                }
+                title={lowTitle}
+                aria-label={lowTitle}
               >
                 {row.lowSignal ? "↺" : "⇣"}
               </button>
@@ -3196,7 +3203,16 @@ export function RoomClient({
   );
   const [shutPref, setShutPref] = useState<Set<string>>(() => readShut());
   const shut = hydrated ? shutPref : EMPTY_SHUT;
-  const allShut = rows.length > 0 && rows.every((r) => shut.has(rowKey(r)));
+  const [closedHiddenPref, setClosedHiddenPref] = useState<boolean>(() =>
+    readClosedHidden(),
+  );
+  const closedHidden = hydrated && closedHiddenPref;
+  // Collapse all reads only the rows on screen: a hidden closed row keeps its
+  // own fold and never decides what the button says.
+  const shownKeys = rows
+    .filter((r) => !(closedHidden && boardGroup(r) === "closed"))
+    .map(rowKey);
+  const allShut = shownKeys.length > 0 && shownKeys.every((k) => shut.has(k));
   const writeShut = (next: Set<string>) => {
     setShutPref(next);
     try {
@@ -3211,11 +3227,14 @@ export function RoomClient({
     else next.add(key);
     writeShut(next);
   };
-  const toggleAll = () => writeShut(allShut ? new Set() : new Set(rows.map(rowKey)));
-  const [closedHiddenPref, setClosedHiddenPref] = useState<boolean>(() =>
-    readClosedHidden(),
-  );
-  const closedHidden = hydrated && closedHiddenPref;
+  const toggleAll = () => {
+    const next = new Set(shut);
+    for (const k of shownKeys) {
+      if (allShut) next.delete(k);
+      else next.add(k);
+    }
+    writeShut(next);
+  };
   const toggleClosed = () => {
     const next = !closedHidden;
     setClosedHiddenPref(next);
@@ -3366,13 +3385,12 @@ export function RoomClient({
                 </button>
               </div>
             )}
-            {!(group === "closed" && closedHidden) && (
-              <Row
-                row={r}
-                collapsed={shut.has(rowKey(r))}
-                onToggle={() => toggleRow(rowKey(r))}
-              />
-            )}
+            <Row
+              row={r}
+              collapsed={shut.has(rowKey(r))}
+              onToggle={() => toggleRow(rowKey(r))}
+              hidden={group === "closed" && closedHidden}
+            />
           </Fragment>
         );
       })}

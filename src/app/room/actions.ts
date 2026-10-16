@@ -1269,7 +1269,7 @@ export async function roomLowSignal(
         create: { accountId: key, status: "parked", reason: "low signal" },
         update: { status: "parked", reason: "low signal" },
       });
-    // Back to the live board clears every key that can mark the row, so a
+    // Returning it to the live board clears every key that can mark the row, so a
     // card marked before the book bound it comes back too.
     else
       await prisma.accountDisposition.deleteMany({

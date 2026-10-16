@@ -351,6 +351,7 @@
 }
 
 .chips {
+  position: relative;
   display: inline-flex;
   gap: 6px;
   align-items: center;
@@ -2380,7 +2381,9 @@ button.sdRadio:hover {
    A deal that isn't in the Salesforce pipeline sits between the live book
    and the closed ledger. It recedes less than a closed row, because it may
    still be worked, and wakes under the hand. The control rests invisible
-   and shows when the row is hovered or focused, like the asks' ✕. */
+   and shows when the row is hovered or focused, like the asks' ✕. It sits
+   just past the last chip, out of the flow, so at rest it takes no width
+   and never pushes the title line onto two lines. */
 .rowLow {
   opacity: 0.72;
   transition: opacity 0.25s ease;
@@ -2390,6 +2393,11 @@ button.sdRadio:hover {
   opacity: 1;
 }
 .lowBtn {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 6px;
   border: 0;
   background: none;
   padding: 0 2px;
@@ -2407,6 +2415,11 @@ button.sdRadio:hover {
 }
 .lowBtn:hover {
   color: var(--ink);
+}
+/* A closed row while the ledger is hidden: still mounted, so a half-typed
+   note survives SHOW; it only stops painting. After .row on purpose. */
+.rowHidden {
+  display: none;
 }
 
 /* ── the Hairline patch (decreed 2026-08-18) ─────────────────────────── */
