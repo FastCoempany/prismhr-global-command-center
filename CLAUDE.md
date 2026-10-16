@@ -637,4 +637,11 @@ founder-decreed 2026-09-15.
   a slim tab on the HomeRoom's right edge flies out every active account's
   record in one fixed order, built from the room's own stores, every line
   editable and strikable, the copy built from the record and the overlay.
-  It is the HomeRoom's, not the retired Pipeline page.
+  It is the HomeRoom's, not the retired Pipeline page. A deal marked low
+  signal is not active and drops out of it (founder, 2026-10-16).
+- **Low signal** (founder's order, 2026-10-16, #412): a HomeRoom deal row
+  that isn't in the Salesforce pipeline moves by its hover ⇣ to the LOW
+  SIGNAL section above the closed ledger, and back by ↺. The mark is the
+  operator's own hand, a namespaced disposition (`lowsig:`) that no queue
+  reads; a stamped outcome outranks it. The closed ledger hides and shows
+  whole, remembered per browser, and hidden rows stay mounted.
