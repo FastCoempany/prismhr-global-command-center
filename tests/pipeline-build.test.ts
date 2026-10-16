@@ -30,6 +30,7 @@ import {
 import { createElement } from "react";
 import { reportDocument, reportSection, reportFileName } from "../src/lib/pipeline/docx";
 import { collectPipelineAccounts, pipelineDayLabel } from "../src/lib/pipeline/collect";
+import { lowSignalKey } from "../src/lib/room/low-signal";
 import { readAccount, type RecordNote } from "../src/lib/record/read";
 import { digestFor, digestForCardName } from "../src/lib/intel/digest";
 
@@ -762,6 +763,30 @@ describe("collecting the active accounts", () => {
       },
     });
     assert.equal(collect({ ...base, cards: [closed] }).length, 0);
+  });
+  test("a deal marked low signal is not in the report (founder, 2026-10-16)", () => {
+    for (const key of [
+      lowSignalKey({ accountId: "acc", cardId: "c1" }),
+      lowSignalKey({ accountId: "", cardId: "c1" }),
+    ])
+      assert.equal(
+        collect({
+          ...base,
+          cards: [card()],
+          dispositions: new Map<string, unknown>([[key, { status: "parked" }]]),
+        }).length,
+        0,
+        `${key} left the deal in the report`,
+      );
+    // Another account's mark leaves this deal where it was.
+    const other = collect({
+      ...base,
+      cards: [card()],
+      dispositions: new Map<string, unknown>([
+        [lowSignalKey({ accountId: "other", cardId: "c9" }), { status: "parked" }],
+      ]),
+    });
+    assert.equal(other.length, 1);
   });
   test("a ✕-parked note leaves the report, as it leaves every register", () => {
     const got = collect({

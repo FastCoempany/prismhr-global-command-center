@@ -12,6 +12,7 @@
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { cardNextStep } from "@/lib/today/build";
 import { GAP_DISMISS, readGaps } from "@/lib/room/gaps";
+import { lowSignalKeys } from "@/lib/room/low-signal";
 import { digestForCardName } from "@/lib/intel/digest";
 import type { AccountRead } from "@/lib/record/read";
 import type { PipelineAccount } from "./build";
@@ -56,8 +57,8 @@ type CollectInput = {
   labels: Record<string, string>;
   notesById: ReadonlyMap<string, Note[]>;
   todos: readonly Todo[];
-  /** Dispositions gate the dismissed gaps here; ✕-parked rows leave through
-   *  the read's own filter. */
+  /** Dispositions gate the dismissed gaps and the low-signal mark here;
+   *  ✕-parked rows leave through the read's own filter. */
   dispositions: ReadonlyMap<string, unknown>;
   secondById: ReadonlyMap<string, Second>;
   peos: readonly { id: string; name: string; csm?: string }[];
@@ -71,8 +72,10 @@ type CollectInput = {
 };
 
 /** Every ACTIVE account's inputs. "Active" is the rule the board already keeps
- *  — not archived, and no Closed Won / Closed Lost stamp. Nothing new is
- *  invented to define it, and the count is whatever the board says. */
+ *  — not archived, no Closed Won / Closed Lost stamp, and not marked low
+ *  signal (the HomeRoom's section for deals outside the Salesforce pipeline).
+ *  Nothing new is invented to define it, and the count is whatever the board
+ *  says. */
 export function collectPipelineAccounts(input: CollectInput): PipelineAccount[] {
   const idByName = new Map(input.peos.map((p) => [p.name.toLowerCase(), p.id]));
   const peoById = new Map(input.peos.map((p) => [p.id, p]));
@@ -89,6 +92,13 @@ export function collectPipelineAccounts(input: CollectInput): PipelineAccount[] 
       "";
     if (!accountId) continue;
     if (readOutcome(card.notes)) continue;
+    // A deal marked low signal is not in the Salesforce pipeline, so it is
+    // not in the Pipeline report either (founder, 2026-10-16). The keys are
+    // the room's own: the account, its folded duplicates, and the card.
+    if (
+      lowSignalKeys({ accountId, cardId: card.id }).some((k) => input.dispositions.has(k))
+    )
+      continue;
 
     // A card the caller holds no read for has nothing to report from; the
     // page's loop reads every live card, so this never skips one there.
