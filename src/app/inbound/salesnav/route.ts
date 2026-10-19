@@ -38,7 +38,7 @@ import {
 import { grabsFromSalesNavEmail } from "@/lib/ingest/salesnav-email";
 import { fileGrabTexts } from "@/lib/ingest/grab-server";
 import { hasDatabaseEnv } from "@/lib/db";
-import { relayedSentCopy } from "@/lib/sent-copy";
+import { relayedCopy } from "@/lib/sent-copy";
 import { fileSentCopy } from "@/lib/sent-copy-file";
 
 export const dynamic = "force-dynamic";
@@ -113,13 +113,16 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ ok: false, reason: "Unreadable body." }, { status: 400 });
   }
-  // The relay (2026-10-19): a sent copy a flow mailed to this inbound
-  // address, its subject tagged, files as the sent copy it carries
-  // (src/lib/sent-copy.ts), never as alerts.
-  const relayed = fields ? relayedSentCopy(fields) : null;
+  // The relay (2026-10-19): a sent copy or an inbox copy a flow mailed to
+  // this inbound address, its subject tagged, files as the message it
+  // carries (src/lib/sent-copy.ts), never as alerts.
+  const relayed = fields ? relayedCopy(fields) : null;
   if (relayed) {
     try {
-      return NextResponse.json({ relay: "sent", ...(await fileSentCopy(relayed)) });
+      return NextResponse.json({
+        relay: relayed.kind,
+        ...(await fileSentCopy(relayed.copy, relayed.kind)),
+      });
     } catch {
       return NextResponse.json({ ok: false, reason: "Filing failed." }, { status: 500 });
     }
