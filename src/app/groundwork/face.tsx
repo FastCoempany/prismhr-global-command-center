@@ -11,6 +11,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { heatOf, type QueueItem } from "@/lib/groundwork/day";
+import { WAITING_ON_COPY } from "@/lib/groundwork/stage-draft";
 import type { Institution } from "@/lib/groundwork/institutions";
 import type { WireItem } from "@/lib/groundwork/wire";
 import type { weekStats } from "@/lib/sendbook/read";
@@ -33,7 +34,8 @@ import { SweepButton } from "./sweep-button";
 import styles from "./groundwork.module.css";
 
 /** One worked stamp on the left wing. `mk` is the move key the take-back
- *  hands back; `sub` is the stamp's subtext (wingStamp, D27). */
+ *  hands back, "" for a stamp the record made (a sent copy is a fact, not a
+ *  stamp, and carries no ↺); `sub` is the stamp's subtext (wingStamp, D27). */
 export type DoneStamp = {
   name: string;
   at: string;
@@ -57,6 +59,7 @@ export function GroundworkFace({
   deck,
   foot,
   spine,
+  drafted,
 }: {
   nudge: boolean;
   done: readonly DoneStamp[];
@@ -72,6 +75,8 @@ export function GroundworkFace({
   foot: TallyfootProps;
   /** The Sales Nav spine, the fourth column (ship order 2026-10-15). */
   spine?: ReactNode;
+  /** The waiting moves whose note is drafted (the draft on the stage). */
+  drafted?: ReadonlySet<string>;
 }) {
   return (
     <main className={styles.wrap}>
@@ -107,7 +112,7 @@ export function GroundworkFace({
           )}
         </section>
 
-        <WaitingWing waiting={waiting} rest={rest} hrefOf={hrefOf} />
+        <WaitingWing waiting={waiting} rest={rest} hrefOf={hrefOf} drafted={drafted} />
 
         {spine}
       </div>
@@ -138,9 +143,18 @@ export function DoneWing({
       ) : (
         done.map((d, i) => (
           <span key={i} className={`${styles.wingItem} ${styles.wingDone}`}>
-            <span className={styles.wingTick}>✓</span> {d.name}{" "}
-            <span className={styles.wingTm}>{d.at}</span>
-            {canWrite && (
+            {d.sub === WAITING_ON_COPY ? (
+              <span
+                className={styles.wingPend}
+                title="Sent from the stage. It stamps when your sent copy comes back."
+              >
+                ◐
+              </span>
+            ) : (
+              <span className={styles.wingTick}>✓</span>
+            )}{" "}
+            {d.name} <span className={styles.wingTm}>{d.at}</span>
+            {canWrite && d.mk && (
               <form
                 action={unWork.bind(null, d.mk, d.accountId)}
                 className={styles.wingUndoForm}
@@ -214,10 +228,12 @@ export function WaitingWing({
   waiting,
   rest,
   hrefOf,
+  drafted,
 }: {
   waiting: readonly QueueItem[];
   rest: readonly QueueItem[];
   hrefOf: (q: { accountId: string }) => string;
+  drafted?: ReadonlySet<string>;
 }) {
   const row = (q: QueueItem) => (
     <Link
@@ -235,6 +251,15 @@ export function WaitingWing({
         >
           {" "}
           carried
+        </span>
+      )}
+      {drafted?.has(q.accountId) && (
+        <span
+          className={styles.wingDrafted}
+          title="Its note is drafted. Pick the name to put the draft on the stage."
+        >
+          {" "}
+          drafted
         </span>
       )}
       <span className={styles.wingWhy}>{q.reason}</span>

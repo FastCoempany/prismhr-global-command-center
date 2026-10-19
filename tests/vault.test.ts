@@ -22,7 +22,12 @@ import { readFileToText } from "../src/app/room/read-file";
 import { DROP_ACCEPT, readerFor } from "../src/lib/paste-files";
 import { routeCapture, type RouteAccount } from "../src/lib/route-capture";
 import { splitDrop, vaultAfterVerdict } from "../src/lib/room/drop-plan";
-import { loadLedger, saveLedger, storedRow, type LedgerRow } from "../src/app/room/chute-ledger";
+import {
+  loadLedger,
+  saveLedger,
+  storedRow,
+  type LedgerRow,
+} from "../src/app/room/chute-ledger";
 import { chute, render, roomClient, roomRow, textOf } from "./helpers/room-render";
 
 test("the lane is size alone: repo file, pre-release, or refused", () => {
@@ -74,8 +79,10 @@ test("the release face carries tag, title, description, and pre-release", () => 
   assert.ok(meta.body.includes("2026-09-02"));
 });
 
-
-const memory = (): { getItem(k: string): string | null; setItem(k: string, v: string): void } => {
+const memory = (): {
+  getItem(k: string): string | null;
+  setItem(k: string, v: string): void;
+} => {
   const m = new Map<string, string>();
   return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) };
 };
@@ -448,4 +455,3 @@ test("a mid-upload break with no published release clears the draft", async () =
     globalThis.fetch = real;
   }
 });
-

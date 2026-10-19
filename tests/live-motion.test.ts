@@ -181,13 +181,19 @@ test("chasing, scheduling, and doubting a meeting never read as one held", () =>
   not(
     "✔ SF activity — Follow-up with Anika — week of Aug 31 meeting · Antaeus Coe → Anika\nAwaiting word from Anika on whether the meeting scheduled for the week of Aug 31 actually took place.",
   );
-  not("✔ SF activity — Schedule the quarterly meeting · Antaeus Coe → Anika\nGet it on the calendar.");
-  not("✔ SF activity — Prep for Thursday demo · Antaeus Coe → Anika\nPull the deck together.");
+  not(
+    "✔ SF activity — Schedule the quarterly meeting · Antaeus Coe → Anika\nGet it on the calendar.",
+  );
+  not(
+    "✔ SF activity — Prep for Thursday demo · Antaeus Coe → Anika\nPull the deck together.",
+  );
   not("✉ SF 8/18 — Re: rescheduling our call with Marcus\nCan we move it?");
   // The real things still read as meetings.
   const yes = (body: string, source = "sf-ai") =>
     assert.equal(isMeetingNote({ body, source }), true, body.slice(0, 60));
-  yes("✔ SF activity — Meeting — quarterly business review · Anika → Antaeus Coe\nCovered the roadmap.");
+  yes(
+    "✔ SF activity — Meeting — quarterly business review · Anika → Antaeus Coe\nCovered the roadmap.",
+  );
   yes("✉ SF 8/18 — met with Darlene on BE resolutions\nGood session.");
   yes("☰ CALL TRANSCRIPT — Aug 27\nA: hello\nB: hi there", "transcript");
 });

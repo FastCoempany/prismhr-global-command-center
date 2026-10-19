@@ -35,7 +35,10 @@ describe("HML prospect field rules", () => {
     });
 
     assert.equal(result.classification, HmlValue.HIGH);
-    assert.equal(result.recommendedNextAction, "Identify safe channel path before motion.");
+    assert.equal(
+      result.recommendedNextAction,
+      "Identify safe channel path before motion.",
+    );
     assert.match(result.explanation, /2 high qualification signal/);
   });
 

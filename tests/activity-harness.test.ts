@@ -200,27 +200,52 @@ test("a hold over an empty store is a coverage gap, not coverage", () => {
   const allHeld = { a: "held", b: "held" };
   // Nothing to fall back on: both are gaps and the run must fail coverage.
   assert.deepEqual(
-    coverageGaps(accounts, allHeld, () => false, () => false),
+    coverageGaps(
+      accounts,
+      allHeld,
+      () => false,
+      () => false,
+    ),
     ["Alpha", "Bravo"],
   );
   // A hold that points at a real gem IS coverage — that is what a hold means.
   assert.deepEqual(
-    coverageGaps(accounts, allHeld, () => false, () => true),
+    coverageGaps(
+      accounts,
+      allHeld,
+      () => false,
+      () => true,
+    ),
     [],
   );
   // One of each: only the empty one is a gap.
   assert.deepEqual(
-    coverageGaps(accounts, allHeld, () => false, (id) => id === "a"),
+    coverageGaps(
+      accounts,
+      allHeld,
+      () => false,
+      (id) => id === "a",
+    ),
     ["Bravo"],
   );
   // A prior rollup never rescues a hold — a rollup is arithmetic, not a gem.
   assert.deepEqual(
-    coverageGaps(accounts, allHeld, () => true, () => false),
+    coverageGaps(
+      accounts,
+      allHeld,
+      () => true,
+      () => false,
+    ),
     ["Alpha", "Bravo"],
   );
   // Judged accounts are unaffected by the gem store either way.
   assert.deepEqual(
-    coverageGaps(accounts, { a: "gems", b: "verdict" }, () => false, () => false),
+    coverageGaps(
+      accounts,
+      { a: "gems", b: "verdict" },
+      () => false,
+      () => false,
+    ),
     [],
   );
 });
@@ -238,7 +263,10 @@ test("a receipt line is stamped once and keeps the clock it was written at", () 
   // collect a second clock, or the receipt starts lying about its own age.
   const once = "16:56 · The drop landed — 67872 rows across 124 accounts.";
   assert.equal(STAMP.test(once), true);
-  assert.equal(once.replace(STAMP, ""), "The drop landed — 67872 rows across 124 accounts.");
+  assert.equal(
+    once.replace(STAMP, ""),
+    "The drop landed — 67872 rows across 124 accounts.",
+  );
   assert.equal(STAMP.test("The drop landed — 67872 rows."), false);
   // A stamp is a clock, never a date — the receipt is one drop's own story.
   assert.equal(STAMP.test("2026-09-01 · The drop landed."), false);

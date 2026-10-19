@@ -59,6 +59,7 @@ import {
   type VaultChunkClient,
   type VaultReceipt,
 } from "../src/lib/ingest/vault";
+import { roomActionsSource } from "./room-source";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -372,7 +373,7 @@ describe("routing runs on the server; the roster never ships to the browser", ()
   });
 
   test("roomPaste's two rungs read the joined roster, read once", () => {
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     const a = actions.indexOf("export async function roomPaste(");
     const b = actions.indexOf("export async function roomMoveDone(", a);
     const roomPaste = actions.slice(a, b);
@@ -1060,7 +1061,7 @@ describe("the Sales Nav grab files each row on its own account", () => {
   });
 
   test("roomPaste splits a grab before the duplicate claim and the read, and the Chute's door files it", () => {
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     const a = actions.indexOf("export async function roomPaste(");
     const roomPaste = actions.slice(
       a,

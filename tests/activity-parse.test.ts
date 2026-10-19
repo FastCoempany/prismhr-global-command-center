@@ -311,11 +311,17 @@ test("a canonical column never loses its value to an alias column", () => {
   // Both spellings present: the canonical one is read, and an empty canonical
   // cell falls through to the alias rather than blanking the field.
   const headers = ["18 Digit ID", "Subject", "Assigned", "Assigned To: Full Name"];
-  assert.equal(rowRecord(headers, ["1", "s", "Real Name", "Logger"]).assigned, "Real Name");
+  assert.equal(
+    rowRecord(headers, ["1", "s", "Real Name", "Logger"]).assigned,
+    "Real Name",
+  );
   assert.equal(rowRecord(headers, ["1", "s", "", "Logger"]).assigned, "Logger");
   // And it wins from either side of the file — column order is not a tiebreak.
   const flipped = ["18 Digit ID", "Subject", "Assigned To: Full Name", "Assigned"];
-  assert.equal(rowRecord(flipped, ["1", "s", "Logger", "Real Name"]).assigned, "Real Name");
+  assert.equal(
+    rowRecord(flipped, ["1", "s", "Logger", "Real Name"]).assigned,
+    "Real Name",
+  );
   assert.equal(rowRecord(flipped, ["1", "s", "Logger", ""]).assigned, "Logger");
 });
 
@@ -403,9 +409,7 @@ test("an export with no email-body column is recognized and REFUSED", () => {
 });
 
 test("the refusal names every load-bearing column that is gone", () => {
-  const fp = fingerprintHeaders(
-    GUTLESS.filter((h) => h !== "Assigned To: Full Name"),
-  );
+  const fp = fingerprintHeaders(GUTLESS.filter((h) => h !== "Assigned To: Full Name"));
   assert.deepEqual(
     fp.blockers.map((b) => b.header),
     ["Full Comments", "Assigned"],
@@ -431,9 +435,28 @@ test("the door closes before a single row is bucketed", async () => {
 test("the manifest counts what could actually be read", async () => {
   const ing = createIngest(BOOK);
   const cells = (comments: string) => [
-    "Trend Personnel", "Email: Re: LMS?", BOOK[0].id, "", "", "", "", "", "",
-    "1", "", "Email", "", "", "Service Provider", "", "Anika Steenstra",
-    "8/28/2026", comments, "Completed", "8/20/2026", "Automated Process",
+    "Trend Personnel",
+    "Email: Re: LMS?",
+    BOOK[0].id,
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "1",
+    "",
+    "Email",
+    "",
+    "",
+    "Service Provider",
+    "",
+    "Anika Steenstra",
+    "8/28/2026",
+    comments,
+    "Completed",
+    "8/20/2026",
+    "Automated Process",
     "8/21/2026",
   ];
   ing.takeRow(REBUILT_HEADERS);
@@ -467,15 +490,21 @@ const mkRow = (patch: Record<string, string>): string[] => {
 test("one send logged once per contact stages ONCE, counted", async () => {
   const ing = createIngest(BOOK, { dropDay: "2026-08-31" });
   ing.takeRow(REBUILT_HEADERS);
-  const body = "To: a@trend.example\nCC: \nBCC: \n\nSubject: Monthly call\nBody:\nSee you Tuesday.";
+  const body =
+    "To: a@trend.example\nCC: \nBCC: \n\nSubject: Monthly call\nBody:\nSee you Tuesday.";
   for (let i = 0; i < 12; i++)
     ing.takeRow(mkRow({ Subject: "Email: Re: Monthly call", Comments: body }));
   // A genuinely different email on the same thread is NOT folded into it.
   ing.takeRow(
-    mkRow({ Subject: "Email: Re: Monthly call", Comments: body.replace("Tuesday", "Wednesday") }),
+    mkRow({
+      Subject: "Email: Re: Monthly call",
+      Comments: body.replace("Tuesday", "Wednesday"),
+    }),
   );
   const { slices, manifest } = await ing.finish({
-    fileName: "x.csv", fileBytes: 1, dropDay: "2026-08-31",
+    fileName: "x.csv",
+    fileBytes: 1,
+    dropDay: "2026-08-31",
   });
   assert.equal(manifest.rowCount, 13);
   const s = slices[0];
@@ -489,12 +518,25 @@ test("one send logged once per contact stages ONCE, counted", async () => {
 test("an OPEN row dated ahead never sets the window nor leads the account", async () => {
   const ing = createIngest(BOOK, { dropDay: "2026-08-31" });
   ing.takeRow(REBUILT_HEADERS);
-  ing.takeRow(mkRow({ Subject: "Email: real work", Date: "8/28/2026", Comments: "To: a@b.com\n\nBody:\nDone." }));
   ing.takeRow(
-    mkRow({ Subject: "Strategic Business Review", Date: "3/26/2027", Status: "Not Started", "Task Subtype": "Task" }),
+    mkRow({
+      Subject: "Email: real work",
+      Date: "8/28/2026",
+      Comments: "To: a@b.com\n\nBody:\nDone.",
+    }),
+  );
+  ing.takeRow(
+    mkRow({
+      Subject: "Strategic Business Review",
+      Date: "3/26/2027",
+      Status: "Not Started",
+      "Task Subtype": "Task",
+    }),
   );
   const { slices, manifest } = await ing.finish({
-    fileName: "x.csv", fileBytes: 1, dropDay: "2026-08-31",
+    fileName: "x.csv",
+    fileBytes: 1,
+    dropDay: "2026-08-31",
   });
   // Kept and counted — it is a real row.
   assert.equal(manifest.rowCount, 2);
@@ -507,7 +549,11 @@ test("an OPEN row dated ahead never sets the window nor leads the account", asyn
   const ing2 = createIngest(BOOK, { dropDay: "2026-08-31" });
   ing2.takeRow(REBUILT_HEADERS);
   ing2.takeRow(mkRow({ Subject: "Email: odd", Date: "3/26/2027", Status: "Completed" }));
-  const r2 = await ing2.finish({ fileName: "x.csv", fileBytes: 1, dropDay: "2026-08-31" });
+  const r2 = await ing2.finish({
+    fileName: "x.csv",
+    fileBytes: 1,
+    dropDay: "2026-08-31",
+  });
   assert.equal(r2.manifest.window.to, "2027-03-26");
 });
 
@@ -537,7 +583,8 @@ test("the sender is read from the signature, not from who logged the row", () =>
 
 test("the read declines rather than guess", () => {
   // Two signatures in one flattened body: say nothing.
-  const crossed = "Body:\nSure.\n\nRegards,\nAnika Steenstra\nE: mary.mahoney@prismhr.com";
+  const crossed =
+    "Body:\nSure.\n\nRegards,\nAnika Steenstra\nE: mary.mahoney@prismhr.com";
   assert.deepEqual(senderOf(crossed), { name: "", email: "" });
   // A bare first name names whoever else shares it.
   assert.equal(senderOf("Body:\nOn my way.\n\nThanks,\nRiley").name, "");

@@ -238,9 +238,7 @@ export async function mount(
   fixture: string,
   opts: MountOptions = {},
 ): Promise<Page> {
-  const { js, css } = opts.html
-    ? { js: "", css: rawModuleCss() }
-    : await bundle(fixture);
+  const { js, css } = opts.html ? { js: "", css: rawModuleCss() } : await bundle(fixture);
   const page = await browser.newPage({
     viewport: opts.viewport ?? { width: 1400, height: 900 },
     reducedMotion: opts.reducedMotion ? "reduce" : "no-preference",

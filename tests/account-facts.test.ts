@@ -72,7 +72,10 @@ describe("the account's standing", () => {
 
   it("says the account is on the dashboard when it is", () => {
     const lines = factLines(accountFacts(peo(), { onDashboard: true }));
-    assert.ok(lines.some((l) => /on the dashboard/.test(l)), lines.join(" | "));
+    assert.ok(
+      lines.some((l) => /on the dashboard/.test(l)),
+      lines.join(" | "),
+    );
   });
 
   it("claims nothing about a board it was not told about", () => {
@@ -85,10 +88,26 @@ describe("the sheet and the brain cannot drift", () => {
   // Every value the meta line prints, and the fact it comes from. A new fact
   // on the meta line without a line for the brain fails here.
   const PARITY: { label: string; inMeta: (f: string) => boolean; inLines: RegExp }[] = [
-    { label: "CSM", inMeta: (m) => m.includes("CSM ANIKA STEENSTRA"), inLines: /Anika Steenstra is the CSM/ },
-    { label: "industry", inMeta: (m) => m.includes("PEO/ASO"), inLines: /PEO\/ASO account/ },
-    { label: "platform", inMeta: (m) => m.includes("INF.HSG"), inLines: /runs on PrismHR INF\.HSG/ },
-    { label: "location", inMeta: (m) => m.includes("COLUMBIA, MD"), inLines: /in Columbia, MD/ },
+    {
+      label: "CSM",
+      inMeta: (m) => m.includes("CSM ANIKA STEENSTRA"),
+      inLines: /Anika Steenstra is the CSM/,
+    },
+    {
+      label: "industry",
+      inMeta: (m) => m.includes("PEO/ASO"),
+      inLines: /PEO\/ASO account/,
+    },
+    {
+      label: "platform",
+      inMeta: (m) => m.includes("INF.HSG"),
+      inLines: /runs on PrismHR INF\.HSG/,
+    },
+    {
+      label: "location",
+      inMeta: (m) => m.includes("COLUMBIA, MD"),
+      inLines: /in Columbia, MD/,
+    },
   ];
 
   it("every fact the meta line shows is answerable by the brain", () => {
@@ -117,8 +136,14 @@ describe("the sheet and the brain cannot drift", () => {
   it("the brain reads the same module", async () => {
     const { readFileSync } = await import("node:fs");
     const live = readFileSync("src/lib/ask/live.ts", "utf8");
-    assert.ok(live.includes("accountFacts"), "the live read must compose from the shared facts");
-    assert.ok(live.includes("factLines"), "the live read must push the shared fact lines");
+    assert.ok(
+      live.includes("accountFacts"),
+      "the live read must compose from the shared facts",
+    );
+    assert.ok(
+      live.includes("factLines"),
+      "the live read must push the shared fact lines",
+    );
   });
 
   it("holds against the real book, not just a fixture", () => {

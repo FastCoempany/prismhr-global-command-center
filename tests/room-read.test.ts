@@ -205,11 +205,11 @@ describe("an off-board account in live motion takes a HomeRoom row (pass 8 call 
       createdAt: "2026-09-30T15:00:00Z",
     });
     const read = readOf([send]);
-    const second = new Map([
-      ["G1", { rollup: { lastTheirs: { day: "2026-10-02" } } }],
-    ]);
+    const second = new Map([["G1", { rollup: { lastTheirs: { day: "2026-10-02" } } }]]);
     // Groundwork excludes the account on the export's attributed row...
-    assert.ok(liveMotionIds(new Map(), new Map([["G1", read.intel]]), NOW_OCT, second).has("G1"));
+    assert.ok(
+      liveMotionIds(new Map(), new Map([["G1", read.intel]]), NOW_OCT, second).has("G1"),
+    );
     // ...and the HomeRoom gives it no row.
     assert.equal(ownRecordMotion("G1", [send], read.intel, NOW_OCT), false);
   });
@@ -228,13 +228,21 @@ describe("an off-board account in live motion takes a HomeRoom row (pass 8 call 
       body: "⚑ Send the Canada numbers · — · seated 2026-10-06",
       createdAt: "2026-10-06T15:00:00Z",
     };
-    const sheet = buildAccountSheet([], "G1", new Set(["in1"]), new Map(), NOW_OCT, [inbound], {
-      rows: [seat],
-      excluded,
-      // The worked stamps with their times (the pass 9 seam, S-7: the sheet
-      // reads seatWorked, so it takes stamps, not a day's flag).
-      stamps: new Map(),
-    });
+    const sheet = buildAccountSheet(
+      [],
+      "G1",
+      new Set(["in1"]),
+      new Map(),
+      NOW_OCT,
+      [inbound],
+      {
+        rows: [seat],
+        excluded,
+        // The worked stamps with their times (the pass 9 seam, S-7: the sheet
+        // reads seatWorked, so it takes stamps, not a day's flag).
+        stamps: new Map(),
+      },
+    );
     assert.deepEqual(
       sheet.open.map((o) => o.body),
       ["Send the Canada numbers"],

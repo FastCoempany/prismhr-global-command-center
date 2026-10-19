@@ -32,6 +32,7 @@ import {
 } from "../src/lib/intel/deep-research";
 import { mintPrompt, parseAsks } from "../src/lib/intel/ask-mint";
 import type { AccountNote } from "../src/lib/today/overlay";
+import { roomActionsSource } from "./room-source";
 
 // The Call Sheet's filter helpers left the bank 2026-09-25 (pass 4 ruling);
 // the empty filter set stays here as the fixture selectQuestions is tested with.
@@ -542,7 +543,7 @@ describe("the restructure holds", () => {
 
 describe("the room wires every new mechanism", () => {
   const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
-  const actions = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
+  const actions = roomActionsSource(root);
   const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
   for (const wired of [
     "roomGapDismiss",
@@ -827,7 +828,7 @@ describe("the repairs hold", () => {
   });
 
   test("the room's own actions guard the new ids", () => {
-    const actions = readFileSync(join(root, "src/app/room/actions.ts"), "utf8");
+    const actions = roomActionsSource(root);
     // Every new writer binds to the book before it writes.
     for (const fn of ["roomGapDismiss", "roomGapsRefill", "roomResearch", "roomRetire"]) {
       const i = actions.indexOf(`export async function ${fn}(`);

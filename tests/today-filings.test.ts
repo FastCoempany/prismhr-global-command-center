@@ -28,6 +28,7 @@ import { takeBackTarget } from "../src/app/room/ingest/use-undo";
 import { pasteKeyOf } from "../src/lib/ingest/filing";
 import { gapNs } from "../src/lib/room/gaps";
 import { playbookBody } from "../src/lib/playbook/store";
+import { roomActionsSource } from "./room-source";
 
 const A = "001A";
 const B = "001B";
@@ -368,7 +369,7 @@ describe("a row's TODAY merges the record with the tab", () => {
 });
 
 describe("a take-back makes the capture fileable again", () => {
-  const src = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+  const src = roomActionsSource(cwd());
   const undo = src.slice(
     src.indexOf("export async function roomPasteUndo("),
     src.indexOf("// --- Closing a deal"),

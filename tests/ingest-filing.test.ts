@@ -83,12 +83,13 @@ import {
   type AccountNoteData,
   type TodoData,
 } from "../src/lib/notes/write";
+import { roomActionsSource } from "./room-source";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
 /** A book account's id, for the carriage pins: Simploy's. */
 const SIMPLOY_ID = "001F000000w38BOIAY";
-const actions = read("src/app/room/actions.ts");
+const actions = roomActionsSource(root);
 const fanoutSrc = read("src/lib/ingest/fanout.ts");
 
 /** The body of one top-level function, from its head to the next marker. */
@@ -613,6 +614,7 @@ describe("the windows list names what was cut of what arrived (D4)", () => {
     assert.equal(TEXT_FLOOR, 20);
     for (const f of [
       "src/app/room/actions.ts",
+      "src/lib/room/paste-core.ts",
       "src/app/room/read-file.ts",
       "src/lib/paste-files.ts",
       "src/lib/intel/ai-clean.ts",

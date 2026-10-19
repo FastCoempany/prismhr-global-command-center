@@ -90,7 +90,13 @@ export function roomRow(over: Partial<RoomRow> = {}): RoomRow {
     sfUrl: null,
     climb: { frac: 0.4, capTone: "ok", label: "needs analysis", why: ["demo booked"] },
     stages: [
-      { key: "investigate", label: "Investigate", state: "done", items: [], judgment: "" },
+      {
+        key: "investigate",
+        label: "Investigate",
+        state: "done",
+        items: [],
+        judgment: "",
+      },
       {
         key: "first_meeting",
         label: "First meeting",
@@ -108,7 +114,9 @@ export function roomRow(over: Partial<RoomRow> = {}): RoomRow {
     sheetRest: [],
     sheetDelayed: [{ id: "todo-2", body: "Call the CSM.", when: "tomorrow" }],
     sheetDoneToday: [{ id: "todo-3", body: "Book the demo.", at: "9:10 AM" }],
-    record: [{ id: "n1", t: "9/25", text: "✉ Chassie asked for the invoices.", struck: false }],
+    record: [
+      { id: "n1", t: "9/25", text: "✉ Chassie asked for the invoices.", struck: false },
+    ],
     recordTotal: 1,
     backgroundTotal: 0,
     loss: null,

@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Draft on Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Groundwork's stage with the note already written: drafted overnight,
+     sent in one click, stamped when the sent copy comes back. One theme. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff; --surface-sub:#fafbfd; --surface-sunk:#eff2f7;
+    --ink:#0a1c40; --ink-soft:rgba(10,28,64,.66); --ink-faint:rgba(10,28,64,.42); --ink-quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.07); --hair-strong:rgba(10,28,64,.14);
+    --orange:#e6701e;
+    --blue:#2563eb; --blue-soft:rgba(37,99,235,.08);
+    --green:#22c55e; --green-ink:#15803d; --green-soft:rgba(34,197,94,.1);
+    --amber:#f59e0b; --amber-ink:#b45309; --amber-soft:rgba(245,158,11,.12); --amber-half:rgba(245,158,11,.45);
+    --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --raised:0 1px 2px rgba(10,28,64,.06),0 6px 18px rgba(10,28,64,.06);
+    --float:0 2px 6px rgba(10,28,64,.08),0 18px 48px rgba(10,28,64,.16);
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer}
+  button:focus-visible,[contenteditable]:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1240px;margin:0 auto;padding-block:40px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  h1{font:400 clamp(30px,5vw,48px)/1.1 var(--serif);margin:10px 0 12px;text-wrap:balance}
+  .lede{color:var(--ink-soft);max-width:74ch;margin:0}
+  .status{display:inline-block;margin-top:16px;padding:6px 12px;border:1px solid var(--hair-strong);border-radius:99px;background:var(--surface);font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .notes,.why{margin:18px 0 0;padding:0;list-style:none;max-width:84ch}
+  .notes li,.why li{font-size:13.5px;color:var(--ink-soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before,.why li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--ink-faint)}
+  .why{margin:0 0 22px}
+  .why b,.notes b{color:var(--ink);font-weight:600}
+  section{margin-top:64px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--ink-quiet);border:1px dashed var(--ink-quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px}
+
+  /* ── The loop, drawn once ─────────────────────────────────────────── */
+  .loop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:22px}
+  .lp{background:var(--surface);border:1px solid var(--hair-strong);border-radius:8px;padding:12px 14px}
+  .lp .k{font:600 9.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .lp p{margin:4px 0 0;font-size:13px;line-height:1.45;color:var(--ink-soft)}
+  .lp p b{color:var(--ink)}
+  @media (max-width:820px){.loop{grid-template-columns:1fr 1fr}}
+  @media (max-width:480px){.loop{grid-template-columns:1fr}}
+
+  /* ── Groundwork chrome, as production draws it ───────────────────── */
+  .gw{background:var(--field);border:1px solid var(--hair);border-radius:12px;padding:18px 18px 22px;position:relative}
+  .kx{padding:2px 2px 12px;border-bottom:1px solid var(--hair-strong);margin-bottom:14px}
+  .kxTop{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .kxVerb{font:400 clamp(30px,4vw,46px)/1 var(--serif)}
+  .kxCount{font:700 clamp(28px,3.6vw,42px)/1 var(--mono);color:var(--orange);margin-left:auto;font-variant-numeric:tabular-nums}
+  .kxSub{display:flex;gap:14px;flex-wrap:wrap;font:600 10px/1.5 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-quiet);margin:8px 0 8px}
+  .kxSub b{color:var(--ink)}
+  .kxBurn{height:7px;border-radius:4px;background:var(--hair);overflow:hidden}
+  .kxBurn i{display:block;height:100%;width:58%;background:var(--orange);border-radius:4px}
+
+  .wings{display:grid;grid-template-columns:170px minmax(0,1fr) 190px;align-items:start;background:var(--surface);border:1px solid var(--hair-strong);border-bottom:3px solid var(--orange);border-radius:8px;box-shadow:var(--raised);min-width:0}
+  .wing{padding:20px 14px;font-size:12.5px;color:var(--ink-faint);align-self:stretch;min-width:0}
+  .wingL{border-right:1px solid var(--hair-strong)}
+  .wingR{border-left:1px solid var(--hair-strong);text-align:right}
+  .wk{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:8px}
+  .wi{display:block;padding:5px 0}
+  .wi b{font-weight:600;color:var(--ink)}
+  .wi .sub{display:block;font:600 9px/1.45 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+  .wi .sub.ok{color:var(--green-ink)}
+  .wi .sub.wait{color:var(--amber-ink)}
+  .tick{color:var(--green);font-weight:700}
+  .pend{color:var(--amber);font-weight:700}
+  .heat{display:inline-block;width:4px;height:11px;border-radius:1px;margin-left:6px;vertical-align:-1px}
+  .h3{background:var(--amber)} .h2{background:var(--amber-half)} .h1{background:var(--hair-strong)}
+  .wi .why2{display:block;font-size:10.5px;line-height:1.35;color:var(--ink-faint)}
+  .dr{font:600 8.5px/1 var(--mono);letter-spacing:.08em;color:var(--blue);margin-left:5px}
+  .wingR .wi{cursor:pointer;border-radius:4px}
+  .wingR .wi:hover b{text-decoration:underline;text-decoration-color:var(--ink-quiet);text-underline-offset:3px}
+  .wingR .wi.on b{color:var(--ink)}
+  .wingR .wi.on{box-shadow:inset -2px 0 0 var(--ink)}
+  .dim b{color:var(--ink-soft)!important}
+
+  .stage{padding:30px 28px 26px;min-width:0}
+  .carry{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber-ink)}
+  .acct{font:600 10.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px}
+  .act{font:400 clamp(26px,3vw,36px)/1.1 var(--serif);margin:10px 0 4px;text-wrap:balance}
+  .rsn{color:var(--ink-soft);margin:0}
+  .centered{text-align:center}
+
+  /* the letter */
+  .letter{margin:18px auto 0;max-width:560px;text-align:left;background:var(--surface);border:1px solid var(--hair-strong);border-radius:8px}
+  .lh{display:grid;grid-template-columns:62px minmax(0,1fr);border-bottom:1px solid var(--hair)}
+  .lh > div{padding:7px 12px;font-size:13.5px;min-width:0}
+  .lh .l{font:600 9.5px/2.2 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);border-right:1px solid var(--hair)}
+  .lh .who{color:var(--ink);font-weight:600}
+  .lh .who small{font-weight:400;color:var(--ink-faint);margin-left:6px}
+  .lb{padding:12px 14px 14px;font-size:14.5px;line-height:1.6;white-space:pre-wrap;min-height:120px}
+  .lb:focus{background:var(--surface-sub)}
+  .drafted{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:7px 12px;border-top:1px solid var(--hair);font:600 9px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .drafted .ai{color:var(--blue)}
+  .flag{margin:10px auto 0;max-width:560px;text-align:left;font-size:13px;color:var(--amber-ink);display:flex;gap:8px;align-items:baseline}
+  .flag::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--amber);transform:translateY(-1px)}
+
+  .moves{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px;align-items:center}
+  .send{background:var(--orange);color:#fff;border:0;border-radius:6px;padding:10px 20px;font-weight:600;font-size:14.5px}
+  .send:hover{filter:brightness(.96)}
+  .btn{border:1px solid var(--hair-strong);background:var(--surface);border-radius:6px;padding:9px 14px;font-weight:600;font-size:13.5px}
+  .btn:hover{border-color:var(--ink-quiet)}
+  .ghost{border:0;background:none;color:var(--ink-faint);font-size:13.5px;padding:9px 8px}
+  .ghost:hover{color:var(--ink)}
+  .key{font:600 9px/1 var(--mono);color:var(--ink-faint);border:1px solid var(--hair-strong);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px}
+  .send .key{color:#fff;border-color:rgba(255,255,255,.5)}
+
+  /* the why fold */
+  .whyBtn{display:block;margin:14px auto 0;border:0;background:none;font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .whyBtn:hover{color:var(--ink)}
+  .whyBody{max-width:560px;margin:8px auto 0;text-align:left;border-top:1px solid var(--hair);padding-top:8px}
+  .wl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;padding:5px 0;font-size:13px;border-bottom:1px solid var(--hair)}
+  .wl:last-child{border-bottom:0}
+  .wl .c{font:600 9.5px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .wl .c.blue{color:var(--blue)}
+  .wl .m{color:var(--ink-soft)}
+  .wl .m b{color:var(--ink);font-weight:600}
+  .wl .use{font:600 9px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+  .use.in{color:var(--green-ink)} .use.out{color:var(--ink-quiet)}
+
+  /* the sent state on the stage */
+  .sentState{max-width:560px;margin:18px auto 0;border:1px solid var(--hair-strong);border-radius:8px;background:var(--surface-sub);padding:16px 18px;text-align:left}
+  .ss1{font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--amber-ink)}
+  .ss1.ok{color:var(--green-ink)}
+  .sentState p{margin:6px 0 0;font-size:14px;color:var(--ink-soft)}
+  .sim{margin-top:12px;border:1px dashed var(--ink-quiet);background:var(--surface);border-radius:6px;padding:6px 10px;font:600 9.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .sim:hover{color:var(--ink);border-color:var(--ink-faint)}
+
+  /* ── B · the run ──────────────────────────────────────────────────── */
+  .B .wings{grid-template-columns:minmax(0,1fr)}
+  .runbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--hair-strong)}
+  .runbar .rk{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .pips{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:160px}
+  .pip{flex:1;min-width:16px;max-width:64px;height:6px;border-radius:3px;background:var(--hair-strong)}
+  .pip.sent{background:var(--amber)} .pip.seen{background:var(--green)} .pip.now{background:var(--ink)} .pip.skip{background:var(--hair)}
+  .runbar .rc{font:600 10px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .deck{position:relative;max-width:640px;margin:0 auto;padding:26px 20px 8px}
+  .deck .under{position:absolute;left:34px;right:34px;height:12px;border:1px solid var(--hair-strong);border-top:0;border-radius:0 0 8px 8px;background:var(--surface-sub)}
+  .card{position:relative;background:var(--surface);border:1px solid var(--hair-strong);border-radius:10px;box-shadow:var(--raised);padding:22px 22px 18px}
+  .card .letter{margin-top:14px}
+  .runlog{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--hair-strong);margin-top:22px}
+  .runlog > div{padding:14px 18px;min-width:0}
+  .runlog > div + div{border-left:1px solid var(--hair-strong)}
+  .rl{display:flex;gap:8px;align-items:baseline;padding:4px 0;font-size:13px}
+  .rl b{font-weight:600}
+  .rl .s{margin-left:auto;font:600 9px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+  .rl .s.ok{color:var(--green-ink)} .rl .s.wait{color:var(--amber-ink)} .rl .s.q{color:var(--ink-faint)}
+
+  /* ── C · the cited draft ──────────────────────────────────────────── */
+  .C .stage{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:22px;text-align:left}
+  .C .head{grid-column:1/-1}
+  .C .letter{margin:0;max-width:none}
+  .C .lb{white-space:normal}
+  .C .lb p{margin:0 0 10px}
+  .C .lb p:last-child{margin:0}
+  sup.n{font:700 9px/1 var(--mono);color:var(--blue);margin-left:2px;cursor:pointer}
+  .C .lb span.s{border-radius:3px;transition:background .12s}
+  .C .lb span.s.hl{background:var(--blue-soft)}
+  .margin .mk{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+  .cite{padding:8px 0;border-top:1px solid var(--hair);font-size:12.5px;line-height:1.4;color:var(--ink-soft);border-radius:4px;transition:background .12s}
+  .cite:first-of-type{border-top:0}
+  .cite.hl{background:var(--blue-soft)}
+  .cite .cn{font:700 9.5px/1.4 var(--mono);color:var(--blue);margin-right:6px}
+  .cite .rung{display:block;font:600 9px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+  .cite.out{opacity:.6}
+  .cite.out .cn{color:var(--ink-faint)}
+  .C .moves{justify-content:flex-start}
+  .C .flag{margin-left:0}
+
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:8px;font-size:13px;box-shadow:var(--float);z-index:50;max-width:calc(100% - 32px)}
+
+  @media (max-width:980px){
+    .wings{grid-template-columns:minmax(0,1fr)}
+    .wingL,.wingR{border:0;border-top:1px solid var(--hair-strong);text-align:left}
+    .wingL{order:2} .wingR{order:3}
+    .wingR .wi.on{box-shadow:inset 2px 0 0 var(--ink);padding-left:8px}
+    .C .stage{grid-template-columns:minmax(0,1fr)}
+  }
+  @media (max-width:560px){
+    .gw{padding:12px 10px 16px}
+    .stage{padding:22px 14px 20px}
+    .runlog{grid-template-columns:1fr}
+    .runlog > div + div{border-left:0;border-top:1px solid var(--hair-strong)}
+    .wl{grid-template-columns:1fr;gap:2px}
+    .deck{padding:18px 8px 6px}
+    .card{padding:18px 14px 14px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="kick">Groundwork · the draft on the stage · three concepts · 2026-10-19</div>
+  <h1>Draft on the stage</h1>
+  <p class="lede">The stage stops telling you to write a note and hands you the note. Every move in the queue is drafted before the send band opens, Send opens it in Outlook, and the move stamps itself when your sent copy comes back. The chips go one click down, translated into what they mean for this note. Each concept arranges the same machinery differently. Try Send, then the dashed "sent copy arrives" button to watch the loop close.</p>
+  <span class="status">Three concepts · judging, not shipping</span>
+
+  <div class="loop" aria-label="The loop all three concepts share">
+    <div class="lp"><div class="k">6:00 · Drafted</div><p>Overnight, each queued move gets <b>a person, a subject and a body</b>, written from the record and its research note.</p></div>
+    <div class="lp"><div class="k">9:00 · Send</div><p>One click opens the draft in Outlook, filled. You edit there or here. <b>Nothing sends without you.</b></p></div>
+    <div class="lp"><div class="k">On send · Sent copy</div><p>An Outlook rule forwards Sent Items to the inbound route that already takes Sales Nav alerts. <b>The sent email files as the touch.</b></p></div>
+    <div class="lp"><div class="k">Stamped</div><p>The move leaves the queue with its channel line: <b>EMAIL · STEP 1 · CRISTINA B.</b> No Worked it click. Send from Outlook directly and it still stamps.</p></div>
+  </div>
+
+  <ul class="notes">
+    <li>The person, the news and the draft are <span class="sample">SAMPLE</span>. The chip values are the ones on your screenshot.</li>
+    <li>Where the draft differs from what went out, the record keeps what went out. The sent copy is the touch; the draft is never filed.</li>
+    <li>The action line names the person and the channel: "Email Cristina." The reason keeps the trigger.</li>
+  </ul>
+
+  <section class="A" id="A">
+    <div class="kick">Concept A</div>
+    <h2>The letter</h2>
+    <ul class="why">
+      <li><b>The stage is the note.</b> Action and reason on top, the draft beneath, edited in place. Send is the one orange move.</li>
+      <li><b>The waiting wing shows which moves are drafted.</b> Click a name to put its draft on the stage.</li>
+      <li><b>The chips fold under "Why this note".</b> Each one says what it means and whether the draft uses it.</li>
+      <li><b>Costs:</b> one account at a time, as today. The stage gets taller.</li>
+    </ul>
+    <div class="gw" data-concept="A"></div>
+  </section>
+
+  <section class="B" id="B">
+    <div class="kick">Concept B</div>
+    <h2>The run</h2>
+    <ul class="why">
+      <li><b>The send band becomes a run through a stack of drafts.</b> One card, keyboard driven: S sends, E edits, N skips to tomorrow.</li>
+      <li><b>The wings turn into a run log.</b> Sent on the left with each one's loop state, still to go on the right.</li>
+      <li><b>The pip bar reads the run at a glance:</b> amber sent, green seen in Sent Items, ink is now.</li>
+      <li><b>Costs:</b> the queue's heat map flattens into run order. Moves outside the send band need their own run.</li>
+    </ul>
+    <div class="gw" data-concept="B"></div>
+  </section>
+
+  <section class="C" id="C">
+    <div class="kick">Concept C</div>
+    <h2>The cited draft</h2>
+    <ul class="why">
+      <li><b>Every sentence shows what it stands on.</b> A numbered mark beside it, the evidence in the margin. Hover either to match them.</li>
+      <li><b>The chips survive as sources, not badges.</b> What the draft leaves out is listed too, with the reason.</li>
+      <li><b>Evidence or nothing:</b> a sentence with no source cannot be drafted.</li>
+      <li><b>Costs:</b> a busier stage. The margin drops under the draft on narrow screens.</li>
+    </ul>
+    <div class="gw" data-concept="C"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  // The sample run. Real drafts come from the record and the research note.
+  var Q=[
+    {acct:"Engage PEO",who:"Cristina B.",first:"Cristina",role:"VP, Client Services",email:"cristina@engagepeo.example",
+     act:"Email Cristina.",rsn:"They made the wire October 15.",carry:true,heat:3,trig:"wire · 10/15",
+     subj:"Your news on the 15th",
+     body:"Hi Cristina,\n\nSaw the announcement on the 15th. Congratulations to the team.\n\nIf any of your clients have asked about hiring outside the US, I can walk you through how we handle it. Thirty minutes, whenever suits you.\n\nWant me to send a couple of times?",
+     flag:"Keep it short. Marketing sent 907 this week.",
+     sents:[
+       {t:"Saw the announcement on the 15th.",c:[1]},
+       {t:"Congratulations to the team.",c:[]},
+       {t:"If any of your clients have asked about hiring outside the US, I can walk you through how we handle it.",c:[2,3]},
+       {t:"Thirty minutes, whenever suits you.",c:[]},
+       {t:"Want me to send a couple of times?",c:[]}],
+     cites:[
+       {n:1,t:"The wire item, October 15.",r:"Research"},
+       {n:2,t:"Opened 176 and clicked 9 marketing emails in 30 days. Both clicks this week were the global hiring piece.",r:"Second record · intent"},
+       {n:3,t:"A filed note from their quarterly review names two clients hiring abroad.",r:"Filed thread · report review gem"}],
+     out:[
+       {t:"274 support cases in 90 days, busiest 7/22.",why:"Left out. A cold note doesn't bring up their support load."}],
+     why:[
+       {c:"◆ Report review",blue:true,m:"A verified note from their quarterly review: <b>two clients hiring abroad</b>.",use:"in"},
+       {c:"Intent · O 176 · C 9",blue:true,m:"<b>176 opens, 9 clicks</b> on marketing emails in 30 days.",use:"in"},
+       {c:"Support 274",m:"<b>274 support cases</b> in 90 days.",use:"out"},
+       {c:"Spike 07/22",m:"Their busiest support day was <b>July 22</b>.",use:"out"},
+       {c:"Mktg cadence live",m:"Marketing sent them <b>907 emails this week</b>. Keep it short.",use:"in"}]},
+    {acct:"Armhr",who:"Deborah D.",first:"Deborah",role:"COO",email:"deborah@armhr.example",
+     act:"Email Deborah.",rsn:"New in seat October 9.",heat:3,trig:"new in seat · 10/9",
+     subj:"Congratulations on the new role",
+     body:"Hi Deborah,\n\nCongratulations on the move to COO.\n\nWe work with Armhr's team on clients hiring outside the US. When you're settled, I'd be glad to show you what that looks like so you know it's there.\n\nWould a short call in early November work?",
+     flag:"",sents:[],cites:[],out:[],why:[]},
+    {acct:"Nextep",who:"Marcus L.",first:"Marcus",role:"Director, Sales",email:"marcus@nextep.example",
+     act:"Email Marcus.",rsn:"Clicked the EOR guide twice.",heat:2,trig:"intent warm · 10/17",
+     subj:"The EOR guide",
+     body:"Hi Marcus,\n\nI saw the EOR guide came through to you. Happy to answer anything it left open.\n\nIf a client of yours is looking at a hire abroad right now, tell me the country and I'll send what it takes there.",
+     flag:"",sents:[],cites:[],out:[],why:[]},
+    {acct:"Amplify HR",who:"Priya S.",first:"Priya",role:"President",email:"priya@amplifyhr.example",
+     act:"Email Priya.",rsn:"Posted about Canada hires Friday.",heat:2,trig:"post · 10/17",
+     subj:"Your post on Canada",
+     body:"Hi Priya,\n\nSaw your post on Friday about clients hiring in Canada.\n\nWe run employment in Canada for PEOs today. If it helps, I can send what a Canadian hire needs from the client, so your team has it ready.\n\nShould I send it over?",
+     flag:"",sents:[],cites:[],out:[],why:[]},
+    {acct:"Vensure",who:"Tom R.",first:"Tom",role:"VP, Partnerships",email:"tom@vensure.example",
+     act:"Email Tom.",rsn:"No reply since September 30.",heat:1,trig:"step 2 · drumbeat",
+     subj:"Following up",
+     body:"Hi Tom,\n\nFollowing up on my note from the 30th about clients hiring outside the US.\n\nIf now isn't the time, just say so and I'll check back in January.",
+     flag:"",sents:[],cites:[],out:[],why:[]}
+  ];
+  var DONE=[{who:"Asure",sub:"EMAIL · STEP 1 · JORDAN K.",ok:true},{who:"Paychex PEO",sub:"CALL · DANA M.",ok:true}];
+
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  var toastT;
+  function toast(msg){
+    var t=document.querySelector(".toast");
+    if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}
+    t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true},2600);
+  }
+
+  function klaxon(left){
+    return '<div class="kx"><div class="kxTop"><span class="kxVerb">Send</span><span class="kxCount">'+left+'</span></div>'+
+      '<div class="kxSub"><span><b>9:41</b> Chicago</span><span>Mon Oct 19</span><span>52° clear</span><span>Send band to 11:00</span></div>'+
+      '<div class="kxBurn"><i></i></div></div>';
+  }
+
+  // state per concept: cur index, status per item ("" | "sent" | "seen" | "skip"), edited bodies
+  function mk(){return {cur:0,st:Q.map(function(){return ""}),body:Q.map(function(q){return q.body}),why:false}}
+  var S={A:mk(),B:mk(),C:mk()};
+
+  function nextOpen(s){for(var i=0;i<Q.length;i++)if(!s.st[i])return i;return -1}
+  function left(s){return s.st.filter(function(x){return !x}).length}
+
+  function letterHTML(c,i,editable){
+    var q=Q[i],s=S[c];
+    return '<div class="letter">'+
+      '<div class="lh"><div class="l">To</div><div class="who">'+esc(q.who.replace(/ .*/,""))+' '+esc(q.who.split(" ")[1]||"")+'<small>'+esc(q.role)+' · '+esc(q.email)+'</small></div></div>'+
+      '<div class="lh"><div class="l">Subject</div><div>'+esc(q.subj)+'</div></div>'+
+      (c==="C"&&q.sents.length?citedBody(q):'<div class="lb"'+(editable?' contenteditable="true" spellcheck="true" data-body="'+i+'" aria-label="Draft body"':'')+'>'+esc(s.body[i])+'</div>')+
+      '<div class="drafted"><span class="ai">Drafted 6:02 from the record</span><span>Edits here carry to Outlook</span></div>'+
+    '</div>';
+  }
+  function citedBody(q){
+    var h='<div class="lb"><p>Hi '+esc(q.first)+',</p><p>';
+    q.sents.forEach(function(x,k){
+      if(k===2||k===4)h+='</p><p>';
+      h+='<span class="s" data-c="'+x.c.join(",")+'">'+esc(x.t)+'</span>'+x.c.map(function(n){return '<sup class="n" data-c="'+n+'">'+n+'</sup>'}).join("")+' ';
+    });
+    return h+'</p></div>';
+  }
+  function whyHTML(c,i){
+    var q=Q[i],s=S[c];
+    if(!q.why.length)return "";
+    var h='<button class="whyBtn" data-act="why" aria-expanded="'+s.why+'">Why this note '+(s.why?"▴":"▾")+'</button>';
+    if(s.why){
+      h+='<div class="whyBody">'+q.why.map(function(w){
+        return '<div class="wl"><span class="c'+(w.blue?" blue":"")+'">'+esc(w.c)+'</span><span class="m">'+w.m+'<span class="use '+w.use+'">'+(w.use==="in"?"In the note":"Left out")+'</span></span></div>';
+      }).join("")+'</div>';
+    }
+    return h;
+  }
+  function sentHTML(c,i){
+    var q=Q[i],st=S[c].st[i];
+    if(st==="sent")return '<div class="sentState"><div class="ss1">Sent · waiting on your sent copy</div><p>Outlook has the draft. When it leaves your Sent Items, the copy files here and the move stamps itself.</p><button class="sim" data-act="seen">Demo · the sent copy arrives</button></div>';
+    return '<div class="sentState"><div class="ss1 ok">✓ Seen in Sent Items 9:43 · Filed</div><p>EMAIL · STEP 1 · '+esc(q.who.toUpperCase())+'. The move has left the queue.</p></div>';
+  }
+  function stamps(c){
+    var s=S[c],h="";
+    DONE.forEach(function(d){h+='<span class="wi"><span class="tick">✓</span> <b>'+esc(d.who)+'</b><span class="sub ok">'+esc(d.sub)+'</span></span>'});
+    Q.forEach(function(q,i){
+      if(s.st[i]==="seen")h+='<span class="wi"><span class="tick">✓</span> <b>'+esc(q.acct)+'</b><span class="sub ok">EMAIL · STEP 1 · '+esc(q.who.toUpperCase())+'</span></span>';
+      if(s.st[i]==="sent")h+='<span class="wi"><span class="pend">◐</span> <b>'+esc(q.acct)+'</b><span class="sub wait">Sent · waiting on the copy</span></span>';
+    });
+    return h;
+  }
+  function waiting(c){
+    var s=S[c],h="";
+    Q.forEach(function(q,i){
+      if(s.st[i]&&s.st[i]!=="skip")return;
+      h+='<span class="wi'+(i===s.cur?" on":"")+(s.st[i]==="skip"?" dim":"")+'" tabindex="0" role="button" data-pick="'+i+'"><b>'+esc(q.acct)+'</b><span class="heat h'+q.heat+'"></span><span class="dr">'+(s.st[i]==="skip"?"TOMORROW":"DRAFTED")+'</span><span class="why2">'+esc(q.trig)+'</span></span>';
+    });
+    return h||'<span class="wi">Nothing waiting.</span>';
+  }
+  function head(q,center){
+    return '<div class="head'+(center?" centered":"")+'">'+(q.carry?'<div class="carry">Left from yesterday</div>':'')+
+      '<div class="acct">'+esc(q.acct)+'</div><div class="act">'+esc(q.act)+'</div><p class="rsn">'+esc(q.rsn)+'</p></div>';
+  }
+  function movesHTML(withKeys){
+    return '<div class="moves"><button class="send" data-act="send">Send in Outlook'+(withKeys?'<span class="key">S</span>':'')+'</button>'+
+      '<button class="btn" data-act="redraft">Redraft</button>'+
+      '<button class="btn" data-act="call">Call instead</button>'+
+      '<button class="ghost" data-act="skip">Not today'+(withKeys?'<span class="key">N</span>':'')+'</button></div>';
+  }
+
+  function renderA(root){
+    var s=S.A,i=s.cur,q=Q[i],st=s.st[i],stage;
+    if(i<0)stage='<div class="stage centered"><div class="act">Run done.</div><p class="rsn">Every draft is sent or set for tomorrow.</p></div>';
+    else stage='<div class="stage centered">'+head(q,true)+
+      (st==="sent"||st==="seen"?sentHTML("A",i):letterHTML("A",i,true)+(q.flag?'<div class="flag">'+esc(q.flag)+'</div>':'')+movesHTML(false)+whyHTML("A",i))+'</div>';
+    root.innerHTML=klaxon(left(s))+'<div class="wings"><div class="wing wingL"><span class="wk">Done today</span>'+stamps("A")+'</div>'+stage+
+      '<div class="wing wingR"><span class="wk">Waiting · drafted</span>'+waiting("A")+'</div></div>';
+  }
+
+  function renderB(root){
+    var s=S.B,i=s.cur,q=i>=0?Q[i]:null,st=q?s.st[i]:"";
+    var pips=Q.map(function(_,k){var x=s.st[k];return '<span class="pip '+(k===i&&!x?"now":x)+'"></span>'}).join("");
+    var sentN=s.st.filter(function(x){return x==="sent"||x==="seen"}).length;
+    var card;
+    if(!q)card='<div class="card"><div class="act">Run done.</div><p class="rsn">'+sentN+' sent. Skipped ones come back tomorrow saying so.</p></div>';
+    else card='<div class="card">'+head(q,false)+(st==="sent"||st==="seen"?sentHTML("B",i):letterHTML("B",i,true)+(q.flag?'<div class="flag" style="margin-left:0">'+esc(q.flag)+'</div>':'')+movesHTML(true).replace('class="moves"','class="moves" style="justify-content:flex-start"'))+'</div>';
+    var log='',todo='';
+    DONE.forEach(function(d){log+='<div class="rl"><b>'+esc(d.who)+'</b><span class="s ok">✓ '+esc(d.sub)+'</span></div>'});
+    Q.forEach(function(x,k){
+      var t=s.st[k];
+      if(t==="seen")log+='<div class="rl"><b>'+esc(x.acct)+'</b><span class="s ok">✓ Email · step 1 · '+esc(x.who)+'</span></div>';
+      else if(t==="sent")log+='<div class="rl"><b>'+esc(x.acct)+'</b><span class="s wait">◐ Waiting on the copy</span></div>';
+      else if(t==="skip")todo+='<div class="rl"><b>'+esc(x.acct)+'</b><span class="s q">Tomorrow</span></div>';
+      else todo+='<div class="rl"><b>'+esc(x.acct)+'</b><span class="s q">'+(k===i?"On the stage":esc(x.trig))+'</span></div>';
+    });
+    root.innerHTML=klaxon(left(s))+'<div class="wings"><div class="runbar"><span class="rk">Drafted 6:02 · '+Q.length+' in the run</span><span class="pips" aria-hidden="true">'+pips+'</span><span class="rc">'+sentN+' of '+Q.length+' sent</span></div>'+
+      '<div class="deck">'+card+(q&&left(s)>1?'<div class="under"></div>':'')+'</div>'+
+      '<div class="runlog"><div><span class="wk">Sent this run</span>'+(log||'<div class="rl">Nothing yet.</div>')+'</div><div><span class="wk">Still to go</span>'+(todo||'<div class="rl">Nothing left.</div>')+'</div></div></div>';
+  }
+
+  function renderC(root){
+    var s=S.C,i=s.cur,q=Q[i],st=q?s.st[i]:"",stage;
+    if(i<0)stage='<div class="stage"><div class="head"><div class="act">Run done.</div></div></div>';
+    else{
+      var margin='';
+      if(q.cites.length){
+        margin='<div class="margin"><div class="mk">What it stands on</div>'+q.cites.map(function(x){
+          return '<div class="cite" data-c="'+x.n+'"><span class="cn">'+x.n+'</span>'+esc(x.t)+'<span class="rung">'+esc(x.r)+'</span></div>';
+        }).join("")+q.out.map(function(x){
+          return '<div class="cite out"><span class="cn">—</span>'+esc(x.t)+'<span class="rung">'+esc(x.why)+'</span></div>';
+        }).join("")+'</div>';
+      }else margin='<div class="margin"><div class="mk">What it stands on</div><div class="cite">Pick Engage PEO to see a cited draft. The other samples carry no cites.</div></div>';
+      stage='<div class="stage">'+head(q,false)+
+        (st==="sent"||st==="seen"?'<div>'+sentHTML("C",i)+'</div><div></div>':
+        '<div style="min-width:0">'+letterHTML("C",i,!q.sents.length)+(q.flag?'<div class="flag">'+esc(q.flag)+'</div>':'')+movesHTML(false)+'</div>'+margin)+'</div>';
+    }
+    root.innerHTML=klaxon(left(s))+'<div class="wings"><div class="wing wingL"><span class="wk">Done today</span>'+stamps("C")+'</div>'+stage+
+      '<div class="wing wingR"><span class="wk">Waiting · drafted</span>'+waiting("C")+'</div></div>';
+  }
+
+  var R={A:renderA,B:renderB,C:renderC};
+  function render(c){R[c](document.querySelector('[data-concept="'+c+'"]'))}
+
+  function advance(c){var s=S[c];var n=nextOpen(s);s.cur=n;s.why=false}
+
+  document.addEventListener("click",function(e){
+    var root=e.target.closest("[data-concept]");if(!root)return;
+    var c=root.getAttribute("data-concept"),s=S[c];
+    var pick=e.target.closest("[data-pick]");
+    if(pick){s.cur=+pick.getAttribute("data-pick");if(s.st[s.cur]==="skip")s.st[s.cur]="";s.why=false;render(c);return}
+    var b=e.target.closest("[data-act]");if(!b)return;
+    var a=b.getAttribute("data-act"),i=s.cur;
+    if(a==="send"){s.st[i]="sent";toast("Opening the draft in Outlook. The demo stops here.");render(c)}
+    else if(a==="seen"){s.st[i]="seen";toast("Sent copy filed. "+Q[i].acct+" stamped and left the queue.");setTimeout(function(){advance(c);render(c)},900);render(c)}
+    else if(a==="skip"){s.st[i]="skip";toast("Back tomorrow, marked left from yesterday.");advance(c);render(c)}
+    else if(a==="redraft"){toast("A fresh draft from the same record. The demo keeps this one.")}
+    else if(a==="call"){toast("The stage swaps the draft for a call card: the number and three lines to say.")}
+    else if(a==="why"){s.why=!s.why;render(c)}
+  });
+  document.addEventListener("keydown",function(e){
+    var p=e.target.closest&&e.target.closest("[data-pick]");
+    if(p&&(e.key==="Enter"||e.key===" ")){e.preventDefault();p.click();return}
+    if(e.target.isContentEditable||/INPUT|TEXTAREA/.test(e.target.tagName))return;
+    var b=document.getElementById("B").getBoundingClientRect();
+    if(b.top>innerHeight||b.bottom<0)return; // the keys drive the run only while it is on screen
+    var s=S.B;if(s.cur<0)return;
+    if(e.key==="s"||e.key==="S"){if(!s.st[s.cur]){s.st[s.cur]="sent";toast("Opening the draft in Outlook.");render("B")}}
+    else if(e.key==="n"||e.key==="N"){s.st[s.cur]="skip";advance("B");render("B")}
+    else if(e.key==="e"||e.key==="E"){var lb=document.querySelector('[data-concept="B"] .lb');if(lb){e.preventDefault();lb.focus()}}
+  });
+  document.addEventListener("input",function(e){
+    var i=e.target.getAttribute&&e.target.getAttribute("data-body");if(i==null)return;
+    var c=e.target.closest("[data-concept]").getAttribute("data-concept");S[c].body[+i]=e.target.innerText;
+  });
+  document.addEventListener("mouseover",function(e){
+    var root=document.querySelector('[data-concept="C"]');
+    root.querySelectorAll(".hl").forEach(function(x){x.classList.remove("hl")});
+    var t=e.target.closest('[data-concept="C"] [data-c]');if(!t)return;
+    var ns=String(t.getAttribute("data-c")).split(",").filter(Boolean);
+    ns.forEach(function(n){
+      root.querySelectorAll('.cite[data-c="'+n+'"]').forEach(function(x){x.classList.add("hl")});
+      root.querySelectorAll('.lb span.s').forEach(function(x){if(x.getAttribute("data-c").split(",").indexOf(n)>=0)x.classList.add("hl")});
+    });
+  });
+
+  ["A","B","C"].forEach(render);
+})();
+</script>
+</body>
+</html>

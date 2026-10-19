@@ -280,6 +280,8 @@ describe("every derived fact comes from the account read or a named adapter (A2.
         "the read's rule with the declared home side over the whole book (pass 8 call 7; tests/canon/act-lane.test.ts)",
       "src/app/groundwork/page.tsx":
         "the seed alone, only when the account has no read (readById ?? relationshipFor([], …))",
+      "src/lib/groundwork/draft-run.ts":
+        "the stage draft's recipient, the page's own reading: the seed alone, only when the account has no read",
     },
     // Who is in the deal.
     peopleFor: {

@@ -5,7 +5,8 @@
 // paste takes (src/lib/ingest/salesnav-email.ts, src/lib/ingest/grab.ts).
 //
 // The gate is a shared secret, because a mail server carries no session:
-// SALESNAV_INBOUND_SECRET, sent as `Authorization: Bearer <secret>`, an
+// SALESNAV_INBOUND_SECRET or the Power Automate flows' one secret,
+// SENT_INBOUND_SECRET, sent as `Authorization: Bearer <secret>`, an
 // `x-inbound-secret` header, or `?key=<secret>` for services that can only
 // call a URL. With the secret unset, or shorter than sixteen characters, the
 // route refuses everything. It is not a page: it renders nothing, and the
@@ -37,6 +38,8 @@ import {
 import { grabsFromSalesNavEmail } from "@/lib/ingest/salesnav-email";
 import { fileGrabTexts } from "@/lib/ingest/grab-server";
 import { hasDatabaseEnv } from "@/lib/db";
+import { relayedSentCopy } from "@/lib/sent-copy";
+import { fileSentCopy } from "@/lib/sent-copy-file";
 
 export const dynamic = "force-dynamic";
 // A backfill batch files dozens of accounts one after another.
@@ -70,8 +73,12 @@ async function readCapped(req: NextRequest): Promise<Uint8Array | null> {
   return out;
 }
 
-/** The post's own body and its attached messages, each as email text. */
-async function readEmails(type: string, bytes: Uint8Array): Promise<string[]> {
+/** The post's own body and its attached messages, each as email text, and
+ *  the post's fields when it carried any. */
+async function readEmails(
+  type: string,
+  bytes: Uint8Array,
+): Promise<{ texts: string[]; fields: Fields | null }> {
   const text = new TextDecoder().decode(bytes);
   let f: Fields | null = null;
   if (/application\/json/i.test(type)) f = JSON.parse(text) as Fields;
@@ -82,13 +89,13 @@ async function readEmails(type: string, bytes: Uint8Array): Promise<string[]> {
     f = {};
     for (const [k, v] of form.entries()) if (typeof v === "string") f[k] = v;
   }
-  if (!f) return [text];
+  if (!f) return { texts: [text], fields: null };
   const attached = await Promise.all(messageAttachments(f).map(attachedText));
-  return [emailText(f), ...attached.filter(Boolean)];
+  return { texts: [emailText(f), ...attached.filter(Boolean)], fields: f };
 }
 
 export async function POST(req: NextRequest) {
-  if (!secretOk(req))
+  if (!secretOk(req, ["SALESNAV_INBOUND_SECRET", "SENT_INBOUND_SECRET"]))
     return NextResponse.json({ ok: false, reason: "Not authorized." }, { status: 401 });
   const size = Number(req.headers.get("content-length") ?? "0");
   if (size > MAX_BYTES)
@@ -97,13 +104,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: "No database." }, { status: 503 });
 
   let texts: string[] = [];
+  let fields: Fields | null = null;
   try {
     const bytes = await readCapped(req);
     if (!bytes)
       return NextResponse.json({ ok: false, reason: "Too large." }, { status: 413 });
-    texts = await readEmails(req.headers.get("content-type") ?? "", bytes);
+    ({ texts, fields } = await readEmails(req.headers.get("content-type") ?? "", bytes));
   } catch {
     return NextResponse.json({ ok: false, reason: "Unreadable body." }, { status: 400 });
+  }
+  // The relay (2026-10-19): a sent copy a flow mailed to this inbound
+  // address, its subject tagged, files as the sent copy it carries
+  // (src/lib/sent-copy.ts), never as alerts.
+  const relayed = fields ? relayedSentCopy(fields) : null;
+  if (relayed) {
+    try {
+      return NextResponse.json({ relay: "sent", ...(await fileSentCopy(relayed)) });
+    } catch {
+      return NextResponse.json({ ok: false, reason: "Filing failed." }, { status: 500 });
+    }
   }
   // The inbound route is the operator's own forward, behind the secret: a
   // LinkedIn From line inside the forwarded block counts.

@@ -134,7 +134,12 @@ test("note tags marker", async (t) => {
     });
     const { text, tags } = splitTags(body);
     assert.equal(text, "call aleks re: bulgaria");
-    assert.deepEqual(tags, { ...NO_TAGS, date: "2026-07-18", urgency: "high", when: "later" });
+    assert.deepEqual(tags, {
+      ...NO_TAGS,
+      date: "2026-07-18",
+      urgency: "high",
+      when: "later",
+    });
   });
 
   await t.test("empty tags add no marker line", () => {
@@ -157,7 +162,12 @@ test("note tags marker", async (t) => {
   });
 
   await t.test("tags coexist with a routing marker; visibleText strips both", () => {
-    const tagged = withTags("simploy note", { ...NO_TAGS, date: "", urgency: "med", when: "today" });
+    const tagged = withTags("simploy note", {
+      ...NO_TAGS,
+      date: "",
+      urgency: "med",
+      when: "today",
+    });
     const body = withMarker(
       tagged,
       { accountNoteIds: ["an1"], partnerNoteIds: [] },
@@ -175,7 +185,12 @@ test("note tags marker", async (t) => {
   await t.test("re-tagging replaces the old tag line instead of stacking", () => {
     const once = withTags("note", { ...NO_TAGS, date: "", urgency: "low", when: "" });
     const { text: stripped } = splitTags(once);
-    const twice = withTags(stripped, { ...NO_TAGS, date: "", urgency: "high", when: "today" });
+    const twice = withTags(stripped, {
+      ...NO_TAGS,
+      date: "",
+      urgency: "high",
+      when: "today",
+    });
     const { text, tags } = splitTags(twice);
     assert.equal(text, "note");
     assert.deepEqual(tags, { ...NO_TAGS, urgency: "high", when: "today" });
@@ -190,7 +205,6 @@ test("ledger lifecycle tags — kind / doneAt / country", async (t) => {
     assert.equal(text, "build the workbook");
     assert.equal(tags.kind, "action");
   });
-
 
   await t.test("doneAt keeps epoch millis; junk is ignored", () => {
     const body = withTags("done thing", { ...NO_TAGS, doneAt: "1753029600000" });

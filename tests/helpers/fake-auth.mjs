@@ -4,12 +4,12 @@
 // the face, not the gate, and every page's gate is pinned by
 // tests/canon/standing-decrees.test.ts ("every page signs in").
 const ACTIVE = {
-    appUser: { email: "operator@example.com", role: "owner" },
-    authEmail: "operator@example.com",
-    canRead: true,
-    canWrite: true,
-    message: "",
-    status: "active",
+  appUser: { email: "operator@example.com", role: "owner" },
+  authEmail: "operator@example.com",
+  canRead: true,
+  canWrite: true,
+  message: "",
+  status: "active",
 };
 /** The access the next render sees: a page sets globalThis.__fakeAccess to
  *  read the gate shut (the login page), and the default is signed in. */

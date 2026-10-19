@@ -58,7 +58,10 @@ describe("the shared door's plan, by door", () => {
     assert.deepEqual(onChute.refused, []);
     // The receipt, verbatim (D2 as amended 2026-10-05), in the writing canon:
     // plain imperative sentences, the Chute named, no dash aside, no hedge.
-    assert.equal(DROP_CSV_RECEIPT, "Not filed here. Backed up. Drop the export in the Chute.");
+    assert.equal(
+      DROP_CSV_RECEIPT,
+      "Not filed here. Backed up. Drop the export in the Chute.",
+    );
     assert.ok(DROP_CSV_RECEIPT.includes("Chute"));
     assert.ok(!/—|\(|consider|might|may be worth/i.test(DROP_CSV_RECEIPT));
   });
@@ -82,7 +85,12 @@ describe("the pick and the verdict", () => {
   test("each verdict carries its reason, at either rung", () => {
     const text = holdVerdict(
       {
-        mismatch: { claim: "Simploy", bound: "Regis HR Group", rung: "text", reason: "Names Simploy staff." },
+        mismatch: {
+          claim: "Simploy",
+          bound: "Regis HR Group",
+          rung: "text",
+          reason: "Names Simploy staff.",
+        },
         reason: "Names Simploy staff.",
       },
       { text: "the tape", files: [mp4], windows: [] },
@@ -93,12 +101,19 @@ describe("the pick and the verdict", () => {
     assert.equal(text.text, "the tape", "the text rides with the question (C20)");
     assert.deepEqual(text.files, [mp4], "the files wait with it, out of the vault");
     const readRung = holdVerdict(
-      { mismatch: { claim: "Simploy", bound: "Regis HR Group", rung: "read" }, reason: "The read names Simploy." },
+      {
+        mismatch: { claim: "Simploy", bound: "Regis HR Group", rung: "read" },
+        reason: "The read names Simploy.",
+      },
       { text: "the tape" },
     );
     assert.ok(readRung);
     assert.equal(readRung.rung, "read");
-    assert.equal(readRung.reason, "The read names Simploy.", "the result's reason is the fallback");
+    assert.equal(
+      readRung.reason,
+      "The read names Simploy.",
+      "the result's reason is the fallback",
+    );
     // An accepted or failed result holds nothing.
     assert.equal(holdVerdict({ reason: "Already on file." }, { text: "x" }), null);
   });
@@ -118,13 +133,16 @@ describe("the pick and the verdict", () => {
 
 describe("the take-back", () => {
   test("the undo hands the filing id and the id lists", () => {
-    assert.deepEqual(undoRequest("001", { noteIds: ["n1"], todoIds: ["t1"], filingId: "f1" }), [
+    assert.deepEqual(
+      undoRequest("001", { noteIds: ["n1"], todoIds: ["t1"], filingId: "f1" }),
+      ["001", ["n1"], ["t1"], "f1"],
+    );
+    assert.deepEqual(undoRequest("001", { noteIds: ["n1"] }), [
       "001",
       ["n1"],
-      ["t1"],
-      "f1",
+      [],
+      undefined,
     ]);
-    assert.deepEqual(undoRequest("001", { noteIds: ["n1"] }), ["001", ["n1"], [], undefined]);
     assert.deepEqual(undoRequest("001", { filingId: "f1" }), ["001", [], [], "f1"]);
   });
 });
@@ -202,7 +220,11 @@ describe("the door reads each file on the spot (A1.3)", () => {
     assert.deepEqual(started, ["a", "b", "c"]);
     gates.shift()!();
     await new Promise<void>((r) => setTimeout(r, 0));
-    assert.deepEqual(started, ["a", "b", "c", "d"], "the fourth starts when a slot frees");
+    assert.deepEqual(
+      started,
+      ["a", "b", "c", "d"],
+      "the fourth starts when a slot frees",
+    );
     while (gates.length) gates.shift()!();
     assert.deepEqual(await all, ["a", "b", "c", "d"]);
   });
@@ -210,11 +232,15 @@ describe("the door reads each file on the spot (A1.3)", () => {
   test("an email, a transcript and a text file read in the browser, with no round trip", async () => {
     const { ingest, pdfCalls } = await takeHook();
     const emlFile = new File(
-      ["From: dana@simploy.example\nTo: acoe@prismhr.com\nSubject: Re: Canada\n\nThursday."],
+      [
+        "From: dana@simploy.example\nTo: acoe@prismhr.com\nSubject: Re: Canada\n\nThursday.",
+      ],
       "reply.eml",
     );
     const vtt = new File(
-      ["WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Dana Ellis>We have one hire in Canada.</v>\n"],
+      [
+        "WEBVTT\n\n00:00:01.000 --> 00:00:04.000\n<v Dana Ellis>We have one hire in Canada.</v>\n",
+      ],
       "call.vtt",
     );
     const txt = new File(["Called Dana. They want the Canada numbers."], "note.txt");
@@ -227,7 +253,9 @@ describe("the door reads each file on the spot (A1.3)", () => {
 
   test("a PDF goes to the transcriber at once, once", async () => {
     const { ingest, pdfCalls } = await takeHook();
-    const r = await ingest.read(new File(["%PDF-1.7"], "scan.pdf", { type: "application/pdf" }));
+    const r = await ingest.read(
+      new File(["%PDF-1.7"], "scan.pdf", { type: "application/pdf" }),
+    );
     assert.ok(r.ok, JSON.stringify(r));
     assert.deepEqual(pdfCalls, ["scan.pdf"]);
   });
@@ -246,7 +274,11 @@ describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
   test("the page mounts the Chute once, first in main, above the board", () => {
     const page = read("src/app/room/page.tsx");
     assert.equal((page.match(/<RoomFace\b/g) ?? []).length, 1, "one frame");
-    assert.equal((page.match(/<Chute\b/g) ?? []).length, 0, "the page mounts a Chute of its own");
+    assert.equal(
+      (page.match(/<Chute\b/g) ?? []).length,
+      0,
+      "the page mounts a Chute of its own",
+    );
     const face = read("src/app/room/face.tsx");
     const main = face.slice(face.lastIndexOf("<main"));
     assert.equal((face.match(/<Chute\b/g) ?? []).length, 1, "one Chute");
@@ -254,7 +286,9 @@ describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
     const boardAt = main.indexOf("<RoomClient");
     assert.ok(chuteAt > 0 && boardAt > chuteAt, "the Chute leads the board");
     // Nothing but a comment sits between main's opening tag and the Chute.
-    const between = main.slice(main.indexOf(">") + 1, chuteAt).replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
+    const between = main
+      .slice(main.indexOf(">") + 1, chuteAt)
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
     assert.equal(between.trim(), "");
   });
 
@@ -263,7 +297,11 @@ describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
     const room = await roomClient();
     const rows = [
       roomRow(),
-      roomRow({ accountId: "001F000000w38OHIAY", cardId: "card-regis", name: "Regis HR Group" }),
+      roomRow({
+        accountId: "001F000000w38OHIAY",
+        cardId: "card-regis",
+        name: "Regis HR Group",
+      }),
     ];
     const board = await render(
       createElement(room.RoomClient, {
@@ -282,7 +320,9 @@ describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
       }),
     );
     const fileInputs = (board.match(/<input[^>]*type="file"/g) ?? []).length;
-    const drops = rows.map((r) => `THE DROP · FILES TO ${r.name.toUpperCase()}, EVERYWHERE`);
+    const drops = rows.map(
+      (r) => `THE DROP · FILES TO ${r.name.toUpperCase()}, EVERYWHERE`,
+    );
     for (const d of drops) assert.ok(textOf(board).includes(d), d);
     assert.equal(fileInputs, rows.length, "one file door per row, and no other");
     const { Chute } = await chute();

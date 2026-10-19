@@ -40,7 +40,7 @@ test("a missing workspace id latches the key dead instead of retrying forever", 
   assert.equal(
     noteClaudeFailure(
       new Error(
-        'anthropic-workspace-id is required when authenticating with an identity-linked API key; send the id of the workspace this request acts in.',
+        "anthropic-workspace-id is required when authenticating with an identity-linked API key; send the id of the workspace this request acts in.",
       ),
     ),
     true,

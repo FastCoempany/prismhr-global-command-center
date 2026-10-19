@@ -444,9 +444,17 @@ describe("the meeting branch keeps its own line", () => {
     const meeting = (now: Date, day: string, promised?: boolean) =>
       readDeal({
         ...base,
-        lastMeeting: { at: new Date(now.getTime() - 3_600_000).toISOString(), who: "Tom" },
+        lastMeeting: {
+          at: new Date(now.getTime() - 3_600_000).toISOString(),
+          who: "Tom",
+        },
         lastRecordAt: now.toISOString(),
-        theirBall: { who: "Adam", text: "the pricing model", day, ...(promised ? { promised } : {}) },
+        theirBall: {
+          who: "Adam",
+          text: "the pricing model",
+          day,
+          ...(promised ? { promised } : {}),
+        },
         now,
       }).move;
     assert.equal(
@@ -462,7 +470,10 @@ describe("the meeting branch keeps its own line", () => {
       [TUE, "2026-10-20", false],
     ] as const) {
       const stands = promiseStands(adam({ day, promised }), now);
-      assert.ok(meeting(now, day, promised).endsWith(` ${stands}.`), `${day} at ${now.toISOString()}`);
+      assert.ok(
+        meeting(now, day, promised).endsWith(` ${stands}.`),
+        `${day} at ${now.toISOString()}`,
+      );
     }
   });
 });
@@ -742,12 +753,22 @@ describe("a row whose open item is their promise is never quiet", () => {
   });
 
   test("a promise that stands reads green and sorts with the live rows", () => {
-    assert.equal(readDeal({ ...base, theirPromises: [adam()], now: TUE }).health, "green");
-    assert.equal(readDeal({ ...base, theirPromises: [adam()], now: FRI }).health, "green");
+    assert.equal(
+      readDeal({ ...base, theirPromises: [adam()], now: TUE }).health,
+      "green",
+    );
+    assert.equal(
+      readDeal({ ...base, theirPromises: [adam()], now: FRI }).health,
+      "green",
+    );
   });
 
   test("a blown promise reads amber, heard or not", () => {
-    const heard = readDeal({ ...base, theirPromises: [adam({ promised: true })], now: MON });
+    const heard = readDeal({
+      ...base,
+      theirPromises: [adam({ promised: true })],
+      now: MON,
+    });
     assert.equal(heard.move, "Chase Adam. PROMISED 10/9.");
     assert.equal(heard.health, "amber");
     const wall = readDeal({ ...base, theirPromises: [adam()], now: MON });
@@ -767,7 +788,6 @@ describe("a row whose open item is their promise is never quiet", () => {
     assert.equal(late.health, "amber");
   });
 });
-
 
 // ── a promise relayed through a colleague (the founder, 2026-10-06) ─────────
 // A promise of theirs that reached us through a colleague is marked as
@@ -885,9 +905,17 @@ describe("a relayed promise on the move line and its door", () => {
       "Simploy · Send the plan summary. · via Lesha · Promised to Lesha Cyphers" +
         " · No day given · Filed thread 10/3",
     );
-    const edge = readDeal({ ...base, theirPromises: [{ ...relay, at: at(7) }], now: TUE });
+    const edge = readDeal({
+      ...base,
+      theirPromises: [{ ...relay, at: at(7) }],
+      now: TUE,
+    });
     assert.equal(edge.move, "Wait on Simploy. Promise made 7 days ago.");
-    const late = readDeal({ ...base, theirPromises: [{ ...relay, at: at(8) }], now: TUE });
+    const late = readDeal({
+      ...base,
+      theirPromises: [{ ...relay, at: at(8) }],
+      now: TUE,
+    });
     assert.equal(late.move, "Chase Simploy. Promise made 8 days ago.");
     for (const r of [fresh, edge, late]) {
       assert.ok(!/PROMISED/.test(r.move), r.move);

@@ -38,13 +38,20 @@ const EVENT_RULES = [
   { id: "contracts-out", node: "contract", text: "Contracts sent for signature." },
   { id: "proposal-delivered", node: "proposal", text: "Proposal sent to the client." },
   { id: "partner-briefed", node: "first_meeting", text: "Partner briefed on it." },
-  { id: "cleared-approach", node: "first_meeting", text: "Cleared to engage the client." },
+  {
+    id: "cleared-approach",
+    node: "first_meeting",
+    text: "Cleared to engage the client.",
+  },
 ] as const;
 
 describe("evidence dated after today has not happened", () => {
   test("a proposal 'sent' on next week's task does not move the meter", () => {
     // The shape the Trend row carries: a self-set reminder, dated forward.
-    const future = doc("Follow up with TrendHR — proposal sent, check back", day("2026-10-02"));
+    const future = doc(
+      "Follow up with TrendHR — proposal sent, check back",
+      day("2026-10-02"),
+    );
     assert.deepEqual(nodes([future]), []);
   });
 

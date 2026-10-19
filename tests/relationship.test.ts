@@ -14,7 +14,12 @@ const note = (
 ): NoteForPeople => ({ actors, lane, body: "☎ CT — demo · x", createdAt });
 
 const roster: ContactForPeople[] = [
-  { first: "Bill", last: "Laffey", title: "VP, Operations", email: "bill.laffey@xcelhr.com" },
+  {
+    first: "Bill",
+    last: "Laffey",
+    title: "VP, Operations",
+    email: "bill.laffey@xcelhr.com",
+  },
   { first: "Ted", last: "Bross", title: "CEO", email: "ted.bross@xcelhr.com" },
 ];
 
@@ -28,10 +33,7 @@ test("an empty record falls back to the book seed", () => {
 });
 
 test("the record's most-seen person outranks the book primary", () => {
-  const notes = [
-    note("Antaeus Coe → Bill Laffey +6"),
-    note("Antaeus Coe → Bill Laffey"),
-  ];
+  const notes = [note("Antaeus Coe → Bill Laffey +6"), note("Antaeus Coe → Bill Laffey")];
   const r = relationshipFor(notes, roster, BOOK);
   assert.equal(r.source, "record");
   assert.equal(r.name, "Bill Laffey");

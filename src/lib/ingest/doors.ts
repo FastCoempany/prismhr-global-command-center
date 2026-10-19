@@ -13,7 +13,9 @@
 //   hand      the operator's own keystroke: a typed line, a click, a chip
 //   inbound   a mail rule's forward to the inbound route, behind its shared
 //             secret: Sales Navigator's alert emails as they arrive
-//             (src/app/inbound/salesnav/route.ts; 2026-10-14)
+//             (src/app/inbound/salesnav/route.ts; 2026-10-14), and the
+//             operator's sent mail, forwarded by a Power Automate flow
+//             (src/app/inbound/sent/route.ts; 2026-10-19)
 
 export const DOORS = [
   "chute",

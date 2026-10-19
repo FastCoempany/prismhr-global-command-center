@@ -6,23 +6,36 @@
 import { timingSafeEqual } from "node:crypto";
 import { emlToPaste, msgToPaste } from "@/lib/paste-files";
 
+export type InboundSecret = "SALESNAV_INBOUND_SECRET" | "SENT_INBOUND_SECRET";
+
 /** Whether the request carries the configured secret. False when none is
- *  configured: an unset secret opens nothing. */
-export function secretOk(req: {
-  headers: { get(name: string): string | null };
-  nextUrl: { searchParams: { get(name: string): string | null } };
-}): boolean {
-  const want = process.env.SALESNAV_INBOUND_SECRET ?? "";
-  if (want.length < 16) return false;
+ *  configured: an unset secret opens nothing. Each inbound route names its
+ *  own secret: the Sales Nav alerts' by default, the sent copy's
+ *  SENT_INBOUND_SECRET. A route that names two takes either: the Sales Nav
+ *  route takes the flows' one secret too (2026-10-19), so every Power
+ *  Automate flow carries the same header. */
+export function secretOk(
+  req: {
+    headers: { get(name: string): string | null };
+    nextUrl: { searchParams: { get(name: string): string | null } };
+  },
+  envName: InboundSecret | readonly InboundSecret[] = "SALESNAV_INBOUND_SECRET",
+): boolean {
+  const names: readonly InboundSecret[] =
+    typeof envName === "string" ? [envName] : envName;
   const bearer = /^Bearer\s+(.+)$/i.exec(req.headers.get("authorization") ?? "")?.[1];
-  const got =
+  const got = Buffer.from(
     bearer ??
-    req.headers.get("x-inbound-secret") ??
-    req.nextUrl.searchParams.get("key") ??
-    "";
-  const a = Buffer.from(got);
-  const b = Buffer.from(want);
-  return a.length === b.length && timingSafeEqual(a, b);
+      req.headers.get("x-inbound-secret") ??
+      req.nextUrl.searchParams.get("key") ??
+      "",
+  );
+  return names.some((n) => {
+    const want = process.env[n] ?? "";
+    if (want.length < 16) return false;
+    const w = Buffer.from(want);
+    return got.length === w.length && timingSafeEqual(got, w);
+  });
 }
 
 /** An HTML email body as plain lines: block ends become line breaks, tags

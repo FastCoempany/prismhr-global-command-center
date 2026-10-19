@@ -148,7 +148,10 @@ describe("no label can outgrow the rail", () => {
     // The Field/Rows prop only — `aria-label` is a different thing that never
     // reaches the rail.
     const labels = [...tab.matchAll(/(?<![\w-])label="([^"]+)"/g)].map((m) => m[1]);
-    assert.ok(labels.length >= 15, `only found ${labels.length} labels — did the prop change?`);
+    assert.ok(
+      labels.length >= 15,
+      `only found ${labels.length} labels — did the prop change?`,
+    );
     for (const l of labels) {
       const px = MEASURED[l];
       assert.ok(

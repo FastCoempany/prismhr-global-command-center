@@ -39,6 +39,7 @@ import { fileGaps, gapNs, knownGaps } from "../src/lib/room/gaps";
 import { dayBlown, owedByThem, theirLoopOf } from "../src/lib/room/owed";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { NO_TAGS, splitTags, tagName, withTags } from "../src/lib/today/route-notes";
+import { roomActionsSource } from "./room-source";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -83,19 +84,40 @@ describe("their commitments file as loops on their side (D10)", () => {
   test("a read with two owner-them actions writes two loops with the hearer and the day", async () => {
     const r = readOf({
       actions: [
-        { text: "Send the pricing model", owner: "them", due: "2026-10-09", fallback: "" },
+        {
+          text: "Send the pricing model",
+          owner: "them",
+          due: "2026-10-09",
+          fallback: "",
+        },
         { text: "Confirm the Canada headcount", owner: "them", due: "", fallback: "" },
         { text: "Send the recap", owner: "me", due: "", fallback: "" },
       ],
     });
     const theirs = theirCommitmentsOf(r);
     assert.deepEqual(theirs, [
-      { text: "Send the pricing model", day: "2026-10-09", hearer: "Antaeus Coe", by: "Adam Bell" },
-      { text: "Confirm the Canada headcount", day: "", hearer: "Antaeus Coe", by: "Adam Bell" },
+      {
+        text: "Send the pricing model",
+        day: "2026-10-09",
+        hearer: "Antaeus Coe",
+        by: "Adam Bell",
+      },
+      {
+        text: "Confirm the Canada headcount",
+        day: "",
+        hearer: "Antaeus Coe",
+        by: "Adam Bell",
+      },
     ]);
     const { client, writes } = loopStub();
     const loops = await fileTheirLoops(
-      { commitments: theirs, accountId: "A1", known: new Set(), position: 5, filingId: "f1" },
+      {
+        commitments: theirs,
+        accountId: "A1",
+        known: new Set(),
+        position: 5,
+        filingId: "f1",
+      },
       client,
     );
     assert.deepEqual(
@@ -110,7 +132,10 @@ describe("their commitments file as loops on their side (D10)", () => {
       writes[0].body,
       "Send the pricing model\n⚑[d:2026-10-09,o:them,h:Antaeus Coe,b:Adam Bell]",
     );
-    assert.equal(writes[1].body, "Confirm the Canada headcount\n⚑[o:them,h:Antaeus Coe,b:Adam Bell]");
+    assert.equal(
+      writes[1].body,
+      "Confirm the Canada headcount\n⚑[o:them,h:Antaeus Coe,b:Adam Bell]",
+    );
     for (const w of writes) {
       assert.equal(w.filingId, "f1");
       assert.equal(w.accountId, "A1");
@@ -147,7 +172,12 @@ describe("their commitments file as loops on their side (D10)", () => {
         {
           ...ENTRY,
           promises: [
-            { what: "send the pricing model", by: "them", hearer: "Antaeus Coe", day: "2026-10-09" },
+            {
+              what: "send the pricing model",
+              by: "them",
+              hearer: "Antaeus Coe",
+              day: "2026-10-09",
+            },
             { what: "Send the org chart.", by: "me", hearer: "Adam Bell", day: "" },
           ],
         },
@@ -157,12 +187,22 @@ describe("their commitments file as loops on their side (D10)", () => {
           dayLabel: "Oct 4",
           body: "Will send the pricing model Friday.",
           promises: [
-            { what: "Send the pricing model.", by: "them", hearer: "", day: "2026-10-09" },
+            {
+              what: "Send the pricing model.",
+              by: "them",
+              hearer: "",
+              day: "2026-10-09",
+            },
           ],
         },
       ],
       actions: [
-        { text: "Send the pricing model", owner: "them", due: "2026-10-09", fallback: "" },
+        {
+          text: "Send the pricing model",
+          owner: "them",
+          due: "2026-10-09",
+          fallback: "",
+        },
         { text: "Share the Mexico census", owner: "them", due: "", fallback: "" },
       ],
     });
@@ -171,8 +211,14 @@ describe("their commitments file as loops on their side (D10)", () => {
     assert.equal(theirs[0].text, "send the pricing model");
     assert.equal(theirs[0].hearer, "Antaeus Coe");
     assert.equal(theirs[0].by, "Adam Bell");
-    assert.equal(loopKey("Send the pricing model.", "2026-10-09"), loopKey("send the pricing model", "2026-10-09"));
-    assert.notEqual(loopKey("Send the pricing model", ""), loopKey("Send the pricing model", "2026-10-09"));
+    assert.equal(
+      loopKey("Send the pricing model.", "2026-10-09"),
+      loopKey("send the pricing model", "2026-10-09"),
+    );
+    assert.notEqual(
+      loopKey("Send the pricing model", ""),
+      loopKey("Send the pricing model", "2026-10-09"),
+    );
 
     // A loop the account already holds open is not written twice; the
     // operator's own open actions key on their side.
@@ -182,8 +228,14 @@ describe("their commitments file as loops on their side (D10)", () => {
     ];
     const { client, writes } = loopStub(open);
     const known = await openLoopKeys("A1", client);
-    assert.deepEqual([...known.theirs], [loopKey("Send the pricing model", "2026-10-09")]);
-    assert.deepEqual([...known.mine], [commitmentKey("Send the recap · from 10/5 paste\n⚑[k:a]")]);
+    assert.deepEqual(
+      [...known.theirs],
+      [loopKey("Send the pricing model", "2026-10-09")],
+    );
+    assert.deepEqual(
+      [...known.mine],
+      [commitmentKey("Send the recap · from 10/5 paste\n⚑[k:a]")],
+    );
     const loops = await fileTheirLoops(
       { commitments: theirs, accountId: "A1", known: known.theirs, position: 0 },
       client,
@@ -199,16 +251,39 @@ describe("their commitments file as loops on their side (D10)", () => {
   test("a loop with no hearer files without one and reads as a wall, never PROMISED (D28)", async () => {
     const r = readOf({
       entries: [{ ...ENTRY, to: "", recipients: [] }],
-      actions: [{ text: "Send the signed order form", owner: "them", due: "2026-10-03", fallback: "" }],
+      actions: [
+        {
+          text: "Send the signed order form",
+          owner: "them",
+          due: "2026-10-03",
+          fallback: "",
+        },
+      ],
     });
     const theirs = theirCommitmentsOf(r);
     assert.deepEqual(theirs, [
-      { text: "Send the signed order form", day: "2026-10-03", hearer: "", by: "Adam Bell" },
+      {
+        text: "Send the signed order form",
+        day: "2026-10-03",
+        hearer: "",
+        by: "Adam Bell",
+      },
     ]);
     const { client, writes } = loopStub();
-    await fileTheirLoops({ commitments: theirs, accountId: "A1", known: new Set(), position: 0 }, client);
-    assert.equal(writes[0].body, "Send the signed order form\n⚑[d:2026-10-03,o:them,b:Adam Bell]");
-    const row = { id: "t1", body: writes[0].body, createdAt: "2026-10-05T18:00:00Z", done: false };
+    await fileTheirLoops(
+      { commitments: theirs, accountId: "A1", known: new Set(), position: 0 },
+      client,
+    );
+    assert.equal(
+      writes[0].body,
+      "Send the signed order form\n⚑[d:2026-10-03,o:them,b:Adam Bell]",
+    );
+    const row = {
+      id: "t1",
+      body: writes[0].body,
+      createdAt: "2026-10-05T18:00:00Z",
+      done: false,
+    };
     const [owed] = owedByThem([], NOW, [row]);
     assert.ok(owed);
     assert.equal(owed.day, "2026-10-03");
@@ -225,8 +300,18 @@ describe("their commitments file as loops on their side (D10)", () => {
           to: "Antaeus Coe",
           recipients: ["Antaeus Coe", "Lesha Cyphers"],
           promises: [
-            { what: "Send the census file", by: "them", hearer: "Lesha Cyphers", day: "" },
-            { what: "Book the review with legal", by: "them", hearer: "", day: "2026-10-20" },
+            {
+              what: "Send the census file",
+              by: "them",
+              hearer: "Lesha Cyphers",
+              day: "",
+            },
+            {
+              what: "Book the review with legal",
+              by: "them",
+              hearer: "",
+              day: "2026-10-20",
+            },
           ],
         },
       ],
@@ -234,19 +319,26 @@ describe("their commitments file as loops on their side (D10)", () => {
     });
     const theirs = theirCommitmentsOf(r);
     assert.equal(theirs[0].hearer, "Lesha Cyphers", "the promise names its hearer");
-    assert.equal(theirs[1].hearer, "Antaeus Coe", "the entry was addressed to the operator");
+    assert.equal(
+      theirs[1].hearer,
+      "Antaeus Coe",
+      "the entry was addressed to the operator",
+    );
   });
 
   test("the money doctrine holds: a loop's text is the sanitized read's, never a figure", () => {
     const r = readOf({
-      actions: [{ text: "Send the $5,000 deposit invoice", owner: "them", due: "", fallback: "" }],
+      actions: [
+        { text: "Send the $5,000 deposit invoice", owner: "them", due: "", fallback: "" },
+      ],
     });
     const [c] = theirCommitmentsOf(r);
     assert.ok(c && !/\d/.test(c.text), c?.text);
   });
 
   test("a their-loop is never the operator's action: the register and the sheet leave it alone", () => {
-    const body = "Send the pricing model\n⚑[d:2026-10-01,o:them,h:Antaeus Coe,b:Adam Bell]";
+    const body =
+      "Send the pricing model\n⚑[d:2026-10-01,o:them,h:Antaeus Coe,b:Adam Bell]";
     const sheet = buildAccountSheet(
       [
         {
@@ -271,7 +363,12 @@ describe("their commitments file as loops on their side (D10)", () => {
 
   test("a name inside the tag line sheds the codec's own punctuation and survives otherwise", () => {
     assert.equal(tagName("Bell, Adam: [x]"), "Bell Adam [x");
-    const body = withTags("Send it", { ...NO_TAGS, owner: "them", hearer: "O'Neil, Dana", by: "" });
+    const body = withTags("Send it", {
+      ...NO_TAGS,
+      owner: "them",
+      hearer: "O'Neil, Dana",
+      by: "",
+    });
     assert.equal(body, "Send it\n⚑[o:them,h:O'Neil Dana]");
     assert.equal(splitTags(body).tags.hearer, "O'Neil Dana");
     assert.equal(splitTags("x\n⚑[o:me]").tags.owner, "", "only them is a side");
@@ -280,13 +377,19 @@ describe("their commitments file as loops on their side (D10)", () => {
 
 // ── the court reads them ───────────────────────────────────────────────────
 describe("owedByThem reads a their-loop row beside its regex", () => {
-  const loop = (id: string, body: string, createdAt = "2026-10-05T18:00:00Z", done = false) => ({
+  const loop = (
+    id: string,
+    body: string,
+    createdAt = "2026-10-05T18:00:00Z",
+    done = false,
+  ) => ({
     id,
     body,
     createdAt,
     done,
   });
-  const PRICING = "Send the pricing model\n⚑[d:2026-10-09,o:them,h:Antaeus Coe,b:Adam Bell]";
+  const PRICING =
+    "Send the pricing model\n⚑[d:2026-10-09,o:them,h:Antaeus Coe,b:Adam Bell]";
 
   test("a loop reads with who owes it, the day and the hearer, ahead of the Owed line", () => {
     const out = owedByThem(
@@ -315,15 +418,16 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
   });
 
   test("a blown one reads PROMISED with its date; a done row is closed; a plain action is not a loop", () => {
-    const out = owedByThem(
-      [],
-      LATER,
-      [
-        loop("t1", PRICING),
-        loop("t2", "Send the census\n⚑[d:2026-10-08,o:them,h:Antaeus Coe]", "2026-10-06T12:00:00Z", true),
-        loop("t3", "Send the recap · from 10/5 paste\n⚑[d:2026-10-08,k:a]"),
-      ],
-    );
+    const out = owedByThem([], LATER, [
+      loop("t1", PRICING),
+      loop(
+        "t2",
+        "Send the census\n⚑[d:2026-10-08,o:them,h:Antaeus Coe]",
+        "2026-10-06T12:00:00Z",
+        true,
+      ),
+      loop("t3", "Send the recap · from 10/5 paste\n⚑[d:2026-10-08,k:a]"),
+    ]);
     assert.equal(out.length, 1);
     assert.equal(out[0].noteId, "t1");
     assert.equal(out[0].promised, true);
@@ -344,7 +448,10 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
       now: NOW,
       theirBall: { who: "Adam", text: "the pricing model", day: "2026-10-09" },
     });
-    assert.equal(ahead.move, "Send Tom the recap. Adam owes the pricing model. Promised Friday.");
+    assert.equal(
+      ahead.move,
+      "Send Tom the recap. Adam owes the pricing model. Promised Friday.",
+    );
     const today = readDeal({
       ...base,
       now: NOW,
@@ -365,9 +472,17 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
       lastMeeting: { at: "2026-10-12T17:00:00Z", who: "Tom" },
       lastRecordAt: "2026-10-12T17:00:00Z",
       now: LATER,
-      theirBall: { who: "Adam", text: "the pricing model", day: "2026-10-09", promised: true },
+      theirBall: {
+        who: "Adam",
+        text: "the pricing model",
+        day: "2026-10-09",
+        promised: true,
+      },
     });
-    assert.equal(blown.move, "Send Tom the recap. Adam owes the pricing model. PROMISED 10/9.");
+    assert.equal(
+      blown.move,
+      "Send Tom the recap. Adam owes the pricing model. PROMISED 10/9.",
+    );
     const wall = readDeal({
       ...base,
       lastMeeting: { at: "2026-10-12T17:00:00Z", who: "Tom" },
@@ -375,7 +490,10 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
       now: LATER,
       theirBall: { who: "Adam", text: "the pricing model", day: "2026-10-09" },
     });
-    assert.equal(wall.move, "Send Tom the recap. Adam owes the pricing model. The 10/9 wall passed.");
+    assert.equal(
+      wall.move,
+      "Send Tom the recap. Adam owes the pricing model. The 10/9 wall passed.",
+    );
     // The Owed line's segment carries no day, and the move is what it was.
     const bare = readDeal({
       ...base,
@@ -395,7 +513,13 @@ describe("owedByThem reads a their-loop row beside its regex", () => {
       notes: [],
       touches: [],
       todos: [
-        { id: "t1", body: PRICING, done: false, accountId: "A1", createdAt: "2026-10-05T18:00:00Z" },
+        {
+          id: "t1",
+          body: PRICING,
+          done: false,
+          accountId: "A1",
+          createdAt: "2026-10-05T18:00:00Z",
+        },
       ],
       dispositions: new Map(),
       homeSide: [],
@@ -444,7 +568,11 @@ describe("fileGaps and filePlaybook build their own known-set when the caller pa
     assert.equal((await knownGaps("A1", client)).size, 2);
     const ids = await fileGaps({
       accountId: "A1",
-      questions: ["Who owns payroll there?", "who owns PAYROLL there", "Is the client on a PEO today?"],
+      questions: [
+        "Who owns payroll there?",
+        "who owns PAYROLL there",
+        "Is the client on a PEO today?",
+      ],
       door: "hand",
       client,
     });
@@ -470,7 +598,11 @@ describe("fileGaps and filePlaybook build their own known-set when the caller pa
   test("filePlaybook likewise", async () => {
     const { client, writes } = nsStub({
       "playbook:market": [
-        playbookBody("market", "Competitors ask for a deposit.", { a: "A1", n: "Acme", w: "Dana" }),
+        playbookBody("market", "Competitors ask for a deposit.", {
+          a: "A1",
+          n: "Acme",
+          w: "Dana",
+        }),
       ],
     });
     assert.equal((await knownPlaybook("market", client)).size, 1);
@@ -495,7 +627,7 @@ describe("fileGaps and filePlaybook build their own known-set when the caller pa
   });
 
   test("the callers dropped their inline sets", () => {
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     const research = actions.slice(
       actions.indexOf("export async function roomResearch("),
       actions.indexOf("export async function roomGapsRefill("),
@@ -517,8 +649,20 @@ describe("fileGaps and filePlaybook build their own known-set when the caller pa
       assert.ok(!args.includes("known"), `the fan-out hands ${name} no set`);
     }
     assert.ok(!absorb.includes("priorAsks"));
-    assert.ok(!actions.includes("async function absorbRead("), "absorbRead left actions.ts");
-    assert.match(actions, /import \{ absorbRead, fileCompletion, undoCompletions \} from "@\/lib\/ingest\/fanout";/);
+    assert.ok(
+      !actions.includes("async function absorbRead("),
+      "absorbRead left actions.ts",
+    );
+    // The room imports the fan-out it calls; the pipeline's core, which
+    // roomPaste wraps (src/lib/room/paste-core.ts), imports absorbRead.
+    assert.match(
+      actions,
+      /import \{ fileCompletion, undoCompletions \} from "@\/lib\/ingest\/fanout";/,
+    );
+    assert.match(
+      read("src/lib/room/paste-core.ts"),
+      /import \{ absorbRead \} from "@\/lib\/ingest\/fanout";/,
+    );
   });
 });
 
@@ -590,21 +734,27 @@ describe("undo by filing id removes every row and todo it wrote and nothing else
         },
       },
     } as unknown as FilingClient;
-    assert.deepEqual(await undoFiling("f1", "A1", client), { notes: 2, todos: 2, filing: 1 });
+    assert.deepEqual(await undoFiling("f1", "A1", client), {
+      notes: 2,
+      todos: 2,
+      filing: 1,
+    });
     assert.deepEqual([...notes.keys()], ["n3", "n4"]);
     assert.deepEqual([...todos.keys()], ["t3"]);
     assert.deepEqual([...filings.keys()], ["f2"]);
   });
 
   test("roomPasteUndo reads the filing's todos before the row goes and takes their completion lines back", () => {
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     const undo = actions.slice(
       actions.indexOf("export async function roomPasteUndo("),
       actions.indexOf("// --- Closing a deal"),
     );
     const readAt = undo.indexOf("where: { filingId: filing, accountId: acct.id }");
     const filingAt = undo.indexOf("await undoFiling(filing, acct.id)");
-    const doneAt = undo.indexOf("await undoCompletions(acct.id, [...todos, ...filingTodos])");
+    const doneAt = undo.indexOf(
+      "await undoCompletions(acct.id, [...todos, ...filingTodos])",
+    );
     assert.ok(readAt > 0, "the filing's todos are read by the column, on this account");
     assert.ok(filingAt > readAt, "read before the row goes");
     assert.ok(doneAt > filingAt, "the completion lines go after");
@@ -616,7 +766,9 @@ describe("undo by filing id removes every row and todo it wrote and nothing else
     // take-back above is the only door that reaches an opened action.
     assert.ok(!actions.includes("export async function roomActionUndo("));
     // The close still files its line through the module.
-    assert.ok(actions.includes("if (wasRouted) await fileCompletion(acct.id, id, t.body);"));
+    assert.ok(
+      actions.includes("if (wasRouted) await fileCompletion(acct.id, id, t.body);"),
+    );
   });
 
   test("a fileCompletion note keyed by an opened todo is taken back with its todo", async () => {
@@ -645,10 +797,17 @@ describe("undo by filing id removes every row and todo it wrote and nothing else
         upsert: async ({ where, create }) => {
           marks.set(where.accountId, { status: create.status, reason: create.reason });
         },
-        deleteMany: async ({ where }) => ({ count: marks.delete(where.accountId) ? 1 : 0 }),
+        deleteMany: async ({ where }) => ({
+          count: marks.delete(where.accountId) ? 1 : 0,
+        }),
       },
     };
-    await fileCompletion("A1", "t1", "Send the model.\n⚑[d:2026-10-09,u:high,k:a]", client);
+    await fileCompletion(
+      "A1",
+      "t1",
+      "Send the model.\n⚑[d:2026-10-09,u:high,k:a]",
+      client,
+    );
     assert.equal(notes.size, 1);
     const [[noteId, line]] = [...notes];
     // Flat since pass 10 (A12.5): two sentences, no dash aside.

@@ -31,7 +31,11 @@ describe("the act lane grammars", () => {
   });
 
   test("a seat renders and parses back whole", () => {
-    const s = { act: "Ask Russ about the follow-up.", term: "PHR STALL", day: "2026-08-21" };
+    const s = {
+      act: "Ask Russ about the follow-up.",
+      term: "PHR STALL",
+      day: "2026-08-21",
+    };
     assert.deepEqual(parseSeatBody(renderSeatBody(s)), s);
   });
 
@@ -75,7 +79,10 @@ describe("the seated rule", () => {
       touches: [],
       contactCountById: () => 1,
       seats: new Map([
-        ["A1", { act: "Ask Russ about the follow-up.", term: "PHR STALL", day: "2026-08-20" }],
+        [
+          "A1",
+          { act: "Ask Russ about the follow-up.", term: "PHR STALL", day: "2026-08-20" },
+        ],
       ]),
       now,
     });
@@ -124,6 +131,9 @@ describe("the seated rule", () => {
       seats: new Map([["ZZ", { act: "Ghost move.", term: "", day: "2026-08-21" }]]),
       now,
     });
-    assert.equal(all.some((q) => q.ruleId === "seated"), false);
+    assert.equal(
+      all.some((q) => q.ruleId === "seated"),
+      false,
+    );
   });
 });

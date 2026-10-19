@@ -29,15 +29,44 @@ export default function Fixture() {
       done={[
         // A filed touch's channel line opens to the name whole and the
         // touch's words, as the page hands it (channelOpens).
-        { name: "Worked One", at: "9:10 AM", sub: "EMAIL · STEP 1 · PAT E.", mk: "W1:wire-trigger", accountId: "W1", opens: { lines: ["To Pat Eriksen.", "Re: the Mexico hires"] } },
+        {
+          name: "Worked One",
+          at: "9:10 AM",
+          sub: "EMAIL · STEP 1 · PAT E.",
+          mk: "W1:wire-trigger",
+          accountId: "W1",
+          opens: { lines: ["To Pat Eriksen.", "Re: the Mexico hires"] },
+        },
       ]}
       stage={{ item: item({}), prox: "", body: null }}
       waiting={[
-        item({ accountId: "H1", name: "Burns", ruleId: "wire-trigger", reason: "They made the wire." }),
-        item({ accountId: "H2", name: "Dated", ruleId: "silence-bump", reason: "No reply since July 22." }),
-        item({ accountId: "H3", name: "Keeps", ruleId: "stakeholder-gap", reason: "One person carries it." }),
+        item({
+          accountId: "H1",
+          name: "Burns",
+          ruleId: "wire-trigger",
+          reason: "They made the wire.",
+        }),
+        item({
+          accountId: "H2",
+          name: "Dated",
+          ruleId: "silence-bump",
+          reason: "No reply since July 22.",
+        }),
+        item({
+          accountId: "H3",
+          name: "Keeps",
+          ruleId: "stakeholder-gap",
+          reason: "One person carries it.",
+        }),
       ]}
-      rest={[item({ accountId: "R1", name: "Rest One", ruleId: "stakeholder-gap", reason: "The book knows no one." })]}
+      rest={[
+        item({
+          accountId: "R1",
+          name: "Rest One",
+          ruleId: "stakeholder-gap",
+          reason: "The book knows no one.",
+        }),
+      ]}
       hrefOf={(q) => `/groundwork?focus=${q.accountId}`}
       deck={{
         canWrite: true,
@@ -57,7 +86,14 @@ export default function Fixture() {
         monthDay: () => "",
       }}
       foot={{
-        week: { total: 0, byChannel: [], accounts: 0, replied: 0, neverMet: 0, goneCold: 0 },
+        week: {
+          total: 0,
+          byChannel: [],
+          accounts: 0,
+          replied: 0,
+          neverMet: 0,
+          goneCold: 0,
+        },
         staleDropDays: null,
       }}
     />

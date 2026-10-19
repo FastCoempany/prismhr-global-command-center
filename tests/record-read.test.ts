@@ -30,7 +30,12 @@ import type { AccountSlice, StagedRow } from "../src/lib/activity/types";
 import { orgInboundKey } from "../src/lib/activity/read";
 import { buildAccountSheet } from "../src/lib/room/sheet-view";
 import { renderSeatBody } from "../src/lib/act/lane";
-import { inboundDates, recordSends, warmDates, whoChipNames } from "../src/lib/sendbook/read";
+import {
+  inboundDates,
+  recordSends,
+  warmDates,
+  whoChipNames,
+} from "../src/lib/sendbook/read";
 import { extractDealIntel, factAnswer } from "../src/lib/intel/extract";
 import { suggestChecks } from "../src/lib/intel/evidence";
 import { buildDocs } from "../src/lib/record/docs";
@@ -49,6 +54,7 @@ import { evidenceRung } from "../src/lib/record/docs";
 import { liveLines } from "../src/lib/ask/live";
 import { HIDE_NOTE_PREFIX, hideNoteKey } from "../src/lib/record/hide";
 import { touchCiteOf, unparked } from "../src/app/accounts/rules";
+import { roomActionsSource } from "./room-source";
 
 const NOW = new Date("2026-09-05T17:00:00Z");
 
@@ -795,7 +801,11 @@ describe("whoseMove agrees with the engine's answer on the room-read fixtures", 
     };
     const engine = readDeal({ ...facts, whoseMove: read.whoseMove });
     const fromFacts = readDeal(facts);
-    assert.equal(fromFacts.move, engine.move, "the verdict and the facts write one sentence");
+    assert.equal(
+      fromFacts.move,
+      engine.move,
+      "the verdict and the facts write one sentence",
+    );
     return { read, engine };
   };
 
@@ -1432,7 +1442,7 @@ describe("the minter's corpus is the read's docs: the shell id folds under the c
   });
 
   test("the minter, the intake prefill and the live read assemble the read from the stores, nothing of their own", () => {
-    const actions = readFileSync("src/app/room/actions.ts", "utf8");
+    const actions = roomActionsSource(".");
     const refill = actions.slice(
       actions.indexOf("export async function roomGapsRefill("),
       actions.indexOf("export async function roomGapDismiss("),
@@ -1452,6 +1462,7 @@ describe("the minter's corpus is the read's docs: the shell id folds under the c
       "src/lib/ask/live.ts",
       "src/lib/pipeline/build.ts",
       "src/app/room/actions.ts",
+      "src/lib/room/paste-core.ts",
     ]) {
       const src = readFileSync(f, "utf8");
       assert.ok(
@@ -1923,7 +1934,9 @@ describe("a seat on an excluded account reads on the HomeRoom's sheet as open (C
     // "Rides until worked" (the Act Lane decree): the HomeRoom's copy read
     // only today's stamp, so a seat worked yesterday came back here. It reads
     // the rule Groundwork's wing reads (seatWorked, pass 8 G2).
-    const yesterday = new Map([["groundwork:2026-09-04:A1:seated", "2026-09-04T16:00:00Z"]]);
+    const yesterday = new Map([
+      ["groundwork:2026-09-04:A1:seated", "2026-09-04T16:00:00Z"],
+    ]);
     assert.deepEqual(sheet({ rows: [SEAT], excluded: true, stamps: yesterday }).open, []);
     // A stamp from before the seat was filed worked an older seat: this one
     // still rides.
@@ -1937,7 +1950,10 @@ describe("a seat on an excluded account reads on the HomeRoom's sheet as open (C
     assert.equal(sheet({ rows: [SEAT], excluded: true, stamps: others }).open.length, 1);
     // The room hands the sheet every stamp with its time, never a day's key.
     const page = readFileSync("src/app/room/page.tsx", "utf8");
-    assert.ok(!page.includes("workedToday: doneKeys.has("), "the day-scoped stamp is back");
+    assert.ok(
+      !page.includes("workedToday: doneKeys.has("),
+      "the day-scoped stamp is back",
+    );
     assert.match(page, /stamps: doneTimes,/);
   });
 
@@ -2319,7 +2335,10 @@ describe("the five whose-move fixtures of pass 2 B rows 1 to 5 give one answer e
     );
     assert.equal(answered.engine.move, "Answer Adam Dingwell. They wrote today.");
     assert.equal(answered.sends.length, 1);
-    assert.ok(answered.inbound[0] > answered.sends[0].at, "the register orders them the same");
+    assert.ok(
+      answered.inbound[0] > answered.sends[0].at,
+      "the register orders them the same",
+    );
     // The same two entries with the send at 2:15 PM: a morning reply never
     // answers an afternoon send.
     const afternoon = everywhere(
@@ -2443,7 +2462,7 @@ describe("direction is who sent it, never a name in the subject (pass 8 H3)", ()
     now: OCT,
   });
 
-  test("their reply titled \"Antaeus, …\" is inbound, and the move is ours", () => {
+  test('their reply titled "Antaeus, …" is inbound, and the move is ours', () => {
     assert.equal(read.docs.find((d) => d.noteId === "in")?.direction, "in");
     assert.equal(read.lastInbound?.who, "Tom Harrison");
     assert.equal(read.whoseMove.rung, "reply");
@@ -2613,7 +2632,7 @@ describe("a fallback archive is no call and no tape (pass 8 X3)", () => {
     assert.equal(evidenceRung(doc!), "notes");
   });
 
-  test("a promise filed off the fallback never cites \"On tape\" on the door", () => {
+  test('a promise filed off the fallback never cites "On tape" on the door', () => {
     const loop = theirLoop(
       "t9",
       "Send the Mexico salaries",

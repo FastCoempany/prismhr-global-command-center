@@ -45,10 +45,11 @@ import { judgeFiling } from "../src/lib/intel/misfile";
 import { MODEL_READ, MODEL_VERDICT } from "../src/lib/intranet/doctrine";
 import { readFreeVerdict } from "../src/lib/room/paste";
 import type { RouteAccount } from "../src/lib/route-capture";
+import { roomActionsSource } from "./room-source";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
-const actions = read("src/app/room/actions.ts");
+const actions = roomActionsSource(root);
 const chute = read("src/app/room/chute.tsx");
 const client = read("src/app/room/room-client.tsx");
 const guardSrc = read("src/lib/ingest/guard.ts");

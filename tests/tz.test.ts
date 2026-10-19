@@ -329,8 +329,18 @@ describe("the read's day math names the Chicago day (pass 8 X5)", () => {
 // reminder is the due day's first Chicago moment now, so it is due all day.
 describe("a dated commitment is due from the first moment of its Chicago day (H11)", () => {
   const filedEarly = [
-    { label: "CDT (UTC-5)", day: "2026-09-25", start: "2026-09-25T05:00:00.000Z", now: "2026-09-25T11:10:00Z" },
-    { label: "CST (UTC-6)", day: "2026-12-11", start: "2026-12-11T06:00:00.000Z", now: "2026-12-11T12:10:00Z" },
+    {
+      label: "CDT (UTC-5)",
+      day: "2026-09-25",
+      start: "2026-09-25T05:00:00.000Z",
+      now: "2026-09-25T11:10:00Z",
+    },
+    {
+      label: "CST (UTC-6)",
+      day: "2026-12-11",
+      start: "2026-12-11T06:00:00.000Z",
+      now: "2026-12-11T12:10:00Z",
+    },
   ] as const;
   for (const c of filedEarly) {
     test(`${c.label}: due today and filed at 6:10 AM Chicago, it reads as due, not scheduled`, async () => {
@@ -348,11 +358,21 @@ describe("a dated commitment is due from the first moment of its Chicago day (H1
       const now = new Date(c.now);
       assert.equal(chicagoDay(now), c.day, "the filing moment is the due day in Chicago");
       await createTodoRow(
-        { body: "Send the census.", tags: { kind: "action" }, due: c.day, now, accountId: "esc", position: 0 },
+        {
+          body: "Send the census.",
+          tags: { kind: "action" },
+          due: c.day,
+          now,
+          accountId: "esc",
+          position: 0,
+        },
         client,
       );
       const remindAt = writes[0].remindAt;
-      assert.ok(remindAt && remindAt.getTime() <= now.getTime(), `the reminder is not ahead: ${remindAt?.toISOString()}`);
+      assert.ok(
+        remindAt && remindAt.getTime() <= now.getTime(),
+        `the reminder is not ahead: ${remindAt?.toISOString()}`,
+      );
       const sheet = buildAccountSheet(
         [
           {
@@ -375,9 +395,20 @@ describe("a dated commitment is due from the first moment of its Chicago day (H1
     });
   }
   test("the day's first moment follows the season on the switch days, and junk is no day", () => {
-    assert.equal(chicagoDayStart("2026-03-08")?.toISOString(), "2026-03-08T06:00:00.000Z", "the spring switch day starts in CST");
-    assert.equal(chicagoDayStart("2026-03-09")?.toISOString(), "2026-03-09T05:00:00.000Z");
-    assert.equal(chicagoDayStart("2026-11-01")?.toISOString(), "2026-11-01T05:00:00.000Z", "the fall switch day starts in CDT");
+    assert.equal(
+      chicagoDayStart("2026-03-08")?.toISOString(),
+      "2026-03-08T06:00:00.000Z",
+      "the spring switch day starts in CST",
+    );
+    assert.equal(
+      chicagoDayStart("2026-03-09")?.toISOString(),
+      "2026-03-09T05:00:00.000Z",
+    );
+    assert.equal(
+      chicagoDayStart("2026-11-01")?.toISOString(),
+      "2026-11-01T05:00:00.000Z",
+      "the fall switch day starts in CDT",
+    );
     assert.equal(chicagoDayStart("next friday"), undefined);
     assert.equal(chicagoDayStart(""), undefined);
   });

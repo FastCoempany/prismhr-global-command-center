@@ -311,15 +311,34 @@ describe("the inbound route's readers", () => {
     assert.equal(htmlToText("a&nbsp;&amp;&#39;b<br>c"), "a &'b\nc");
   });
 
+  test("the route takes the Power Automate flows' one secret too", () => {
+    const prev = process.env.SENT_INBOUND_SECRET;
+    process.env.SENT_INBOUND_SECRET = "flow-0123456789abcdef";
+    try {
+      const r = {
+        headers: {
+          get: (n: string) =>
+            n === "authorization" ? "Bearer flow-0123456789abcdef" : null,
+        },
+        nextUrl: { searchParams: { get: () => null } },
+      };
+      assert.equal(secretOk(r, ["SALESNAV_INBOUND_SECRET", "SENT_INBOUND_SECRET"]), true);
+      assert.equal(secretOk(r), false);
+    } finally {
+      if (prev === undefined) delete process.env.SENT_INBOUND_SECRET;
+      else process.env.SENT_INBOUND_SECRET = prev;
+    }
+  });
+
   test("the route checks its secret before it reads a byte, and files only through the split", () => {
     const route = readFileSync(
       join(process.cwd(), "src/app/inbound/salesnav/route.ts"),
       "utf8",
     );
     const post = route.slice(route.indexOf("export async function POST("));
-    assert.ok(post.indexOf("secretOk(req)") > 0);
+    assert.ok(post.indexOf("secretOk(req,") > 0);
     assert.ok(
-      post.indexOf("secretOk(req)") < post.indexOf("readCapped(req)"),
+      post.indexOf("secretOk(req,") < post.indexOf("readCapped(req)"),
       "the gate comes first",
     );
     assert.match(post, /fileGrabTexts\(grabs, "inbound", \[\]\)/);

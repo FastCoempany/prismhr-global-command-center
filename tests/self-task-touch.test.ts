@@ -109,7 +109,10 @@ describe("a send dated ahead of today has not happened", () => {
 
   test("today's own send is not mistaken for a future one", () => {
     const todaySend = note("Antaeus Coe → Melanie Dreyer", "2026-09-23T09:00:00Z");
-    assert.equal(newestOutbound([todaySend], { now: TODAY })?.createdAt, todaySend.createdAt);
+    assert.equal(
+      newestOutbound([todaySend], { now: TODAY })?.createdAt,
+      todaySend.createdAt,
+    );
   });
 });
 
@@ -127,7 +130,12 @@ describe("the Trend row, end to end", () => {
     const tr = lastTouchRead(notes, null, home, TODAY)!;
     const read = readDeal({
       accountName: "Trend Personnel Services",
-      step: { nodeKey: "proposal", nodeLabel: "Proposal", item: "Philippines pricing", ageDays: 21 },
+      step: {
+        nodeKey: "proposal",
+        nodeLabel: "Proposal",
+        item: "Philippines pricing",
+        ageDays: 21,
+      },
       timing: null,
       lastTouch: { at: tr.at, awaitingReply: tr.awaitingReply, who: "Melanie" },
       lastRecordAt: "2026-10-02T12:00:00",

@@ -56,6 +56,7 @@ import type { SecondRecord } from "../../src/lib/activity/read";
 import { liveMotionIds } from "../../src/lib/groundwork/day";
 import { lastHumanTouch } from "../../src/lib/record/accounts";
 import { orgSignalsOf } from "../../src/lib/sendbook/read";
+import { roomActionsSource } from "../room-source";
 
 describe("the record has moved on a gem when a row after its day carries the gem's person (D20)", () => {
   // A send as the acted sweep reads it: the head names no one, so each case
@@ -986,7 +987,7 @@ describe("the acted sweep reads every first-record row carrying the gem's person
   test("the filing runs its account's sweep after the write, fails open and never holds the filing", () => {
     // roomPaste gates on the session and the database, so its wiring is
     // read from source, as tests/ingest-filing.test.ts reads it.
-    const actions = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+    const actions = roomActionsSource(cwd());
     const paste = actions.slice(
       actions.indexOf("export async function roomPaste("),
       actions.indexOf("async function fileClaimed("),
