@@ -598,6 +598,12 @@ founder-decreed 2026-09-15.
 
 ## Other standing decrees
 
+- **IT is never asked** (founder-decreed 2026-10-19): no plan, setup or
+  automation may depend on asking PrismHR or Vensure IT for anything: no
+  license, no app registration, no admin consent, no policy exception. A
+  path that needs IT is not a path. Build on what the operator's own
+  accounts already allow: Power Automate's standard connectors, the inbound
+  relay, the app's own routes.
 - The word "steps" never appears in operator-facing copy.
 - Account names are plain links — no ↗ arrows or affordance glyphs.
 - Threading badge reads exactly `MULTI`, colored by the semantic ladder
