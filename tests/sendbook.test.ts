@@ -23,7 +23,9 @@ import {
 
 // The rows door: a fixture's rows become the read's docs (slice 13).
 const reads = (byId: [string, NoteLike[]][]) =>
-  new Map(byId.map(([id, notes]) => [id, { docs: docsFromRows(notes), secondRecord: null }]));
+  new Map(
+    byId.map(([id, notes]) => [id, { docs: docsFromRows(notes), secondRecord: null }]),
+  );
 
 const out = (createdAt: string, subject = "Re: Global") => ({
   body: `✉ OL Aug 1 — ${subject} · Antaeus Coe → Bill Laffey +4\nbody text`,

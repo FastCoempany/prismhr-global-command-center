@@ -21,7 +21,12 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import type Anthropic from "@anthropic-ai/sdk";
-import { handOffRow, loadLedger, saveLedger, seatHandOff } from "../src/app/room/chute-ledger";
+import {
+  handOffRow,
+  loadLedger,
+  saveLedger,
+  seatHandOff,
+} from "../src/app/room/chute-ledger";
 import { SEND_IT_LABEL } from "../src/app/room/ingest/hand-off";
 import { dismissHeld } from "../src/app/room/ingest/use-verdict";
 import { markClaudeUp } from "../src/lib/claude/health";
@@ -121,7 +126,11 @@ const canon = (line: string, label: string) => {
 describe("the capture door: file when the route is sure, hold when it is unsure, keep when nothing names an account (P2)", () => {
   test("a capture naming a known address routes to its account and files", async () => {
     const route = await routeText(NAMED, roster);
-    assert.equal(route.best?.id, SIMPLOY.id, route.candidates.map((c) => c.why).join(" | "));
+    assert.equal(
+      route.best?.id,
+      SIMPLOY.id,
+      route.candidates.map((c) => c.why).join(" | "),
+    );
     assert.equal(route.best?.rung, "email");
     const v = captureVerdict(route);
     assert.ok(v.file, "a sure route files");
@@ -195,7 +204,10 @@ describe("the Send-it box's action routes on the server and files through the pi
     assert.match(door, /^"use server";/);
     assert.match(door, /import \{ routeText \} from "@\/lib\/ingest\/route";/);
     assert.ok(!/route-actions/.test(door), "the server never calls its own action");
-    assert.ok(!/book\/roster|routingRoster\(/.test(door), "the door builds no roster of its own");
+    assert.ok(
+      !/book\/roster|routingRoster\(/.test(door),
+      "the door builds no roster of its own",
+    );
     assert.ok(!/roster/.test(client), "the roster never reaches the Intranet's client");
     assert.ok(!/ingest\/route|routeCapture\(/.test(client), "the client never routes");
   });
@@ -207,13 +219,21 @@ describe("the Send-it box's action routes on the server and files through the pi
       capture,
       /await roomPaste\(verdict\.account\.id, text, \{ door: "intranet" \}\)/,
     );
-    assert.ok(!/createAccountNoteRow|accountNote\.create/.test(door), "the pipeline writes the note, never the door");
+    assert.ok(
+      !/createAccountNoteRow|accountNote\.create/.test(door),
+      "the pipeline writes the note, never the door",
+    );
   });
 
   test("a filed capture never becomes an Intranet doc; a kept one never becomes a note (P2)", () => {
-    const filed = capture.indexOf("receipt: filedLine(verdict.account.name, r.readFailed)");
+    const filed = capture.indexOf(
+      "receipt: filedLine(verdict.account.name, r.readFailed)",
+    );
     const doc = capture.indexOf("prisma.intranetDoc.create(");
-    assert.ok(filed > 0 && doc > filed, "the filed return comes before any Intranet doc write");
+    assert.ok(
+      filed > 0 && doc > filed,
+      "the filed return comes before any Intranet doc write",
+    );
     // The filed reply carries no capture id: nothing of it waits in the brain.
     const filedReply = capture.slice(filed, capture.indexOf("};", filed));
     assert.match(filedReply, /captureId: ""/);
@@ -230,12 +250,21 @@ describe("the Send-it box's action routes on the server and files through the pi
     // above the box, and Send-it's line says where it waits.
     const dispute = capture.indexOf("receipt: heldLine(),");
     const doc = capture.indexOf("prisma.intranetDoc.create(");
-    assert.ok(dispute > 0 && doc > dispute, "the held return comes before any Intranet doc write");
+    assert.ok(
+      dispute > 0 && doc > dispute,
+      "the held return comes before any Intranet doc write",
+    );
     const heldReply = capture.slice(dispute, capture.indexOf("};", dispute));
     assert.match(heldReply, /captureId: ""/, "nothing of it waits in the brain");
-    assert.match(heldReply, /held: \{ account: verdict\.account, mismatch: r\.mismatch \}/);
+    assert.match(
+      heldReply,
+      /held: \{ account: verdict\.account, mismatch: r\.mismatch \}/,
+    );
     assert.equal(heldLine(), "Held in the Chute above.");
-    assert.match(capture, /if \(!r\.mismatch\) return refused\(r\.reason \?\? "That didn't land\."\);/);
+    assert.match(
+      capture,
+      /if \(!r\.mismatch\) return refused\(r\.reason \?\? "That didn't land\."\);/,
+    );
     // The brain's road still says why it kept a capture: the line for a
     // capture that names no account, or the held box's ✕ coming back down
     // it with keep.
@@ -246,7 +275,10 @@ describe("the Send-it box's action routes on the server and files through the pi
     const dup = capture.indexOf("if (r.duplicate)");
     const doc = capture.indexOf("prisma.intranetDoc.create(");
     assert.ok(dup > 0 && doc > dup);
-    assert.match(capture.slice(dup, dup + 400), /receipt: r\.reason \?\? "Already on file\. Nothing filed twice\."/);
+    assert.match(
+      capture.slice(dup, dup + 400),
+      /receipt: r\.reason \?\? "Already on file\. Nothing filed twice\."/,
+    );
   });
 
   test("the ask-and-answer module gave the capture up and still writes only to the brain's tables", () => {
@@ -262,10 +294,16 @@ describe("the Send-it box's action routes on the server and files through the pi
     const skip = slice(client, "if (!r.captureId) {", "return;");
     assert.match(skip, /lines: \[r\.receipt\]/);
     assert.match(skip, /router\.refresh\(\)/);
-    assert.ok(!/fetch\("\/intranet\/read"/.test(skip), "a filed capture never asks the brain to read it");
+    assert.ok(
+      !/fetch\("\/intranet\/read"/.test(skip),
+      "a filed capture never asks the brain to read it",
+    );
     // The two faces the receipt had before are the two it has now.
     assert.match(client, /lines: \[r\.receipt, "Reading what you sent…"\]/);
-    assert.match(client, /\{receipt && <p className=\{styles\.itDockErr\}>\{receipt\}<\/p>\}/);
+    assert.match(
+      client,
+      /\{receipt && <p className=\{styles\.itDockErr\}>\{receipt\}<\/p>\}/,
+    );
   });
 });
 
@@ -284,20 +322,29 @@ describe("an unsure Send-it capture is held in the Chute above, as a dispute is 
     assert.ok(!v.file && v.hold);
     // Ids, names and rungs only: never the why, which can carry an address,
     // and never the score (D13).
-    for (const c of v.candidates) assert.deepEqual(Object.keys(c).sort(), ["id", "name", "rung"]);
+    for (const c of v.candidates)
+      assert.deepEqual(Object.keys(c).sort(), ["id", "name", "rung"]);
     assert.ok(!JSON.stringify(v.candidates).includes("@"), "an address rode out");
-    assert.ok(!JSON.stringify(v.candidates).includes("regishrgroup.com"), "a domain rode out");
+    assert.ok(
+      !JSON.stringify(v.candidates).includes("regishrgroup.com"),
+      "a domain rode out",
+    );
     // The branch returns the held reply before any Intranet doc write.
     const hold = capture.indexOf("if (verdict.hold)");
     const doc = capture.indexOf("prisma.intranetDoc.create(");
     const create = capture.indexOf("prisma.intranetCapture.create(");
-    assert.ok(hold > 0 && hold < doc && hold < create, "the held return comes before any brain write");
+    assert.ok(
+      hold > 0 && hold < doc && hold < create,
+      "the held return comes before any brain write",
+    );
     const reply = capture.slice(hold, capture.indexOf("};", hold));
     assert.match(reply, /receipt: verdict\.line,/);
     assert.match(reply, /captureId: "",/, "nothing of it waits in the brain");
     assert.match(reply, /held: \{ candidates: verdict\.candidates \}/);
     // The route that decides it is the one the sure branch reads.
-    assert.ok(capture.indexOf("const verdict = captureVerdict(await routeText(text));") < hold);
+    assert.ok(
+      capture.indexOf("const verdict = captureVerdict(await routeText(text));") < hold,
+    );
     // Only the operator's ✕ brings it to the brain: keep skips the route.
     assert.ok(capture.indexOf("if (!opts?.keep) {") < capture.indexOf("captureVerdict("));
   });
@@ -313,16 +360,31 @@ describe("an unsure Send-it capture is held in the Chute above, as a dispute is 
     const line = client.indexOf("if (!r.captureId) {");
     assert.ok(hand > 0 && hand < line, "the hand-off comes first");
     const handed = client.slice(hand, line);
-    assert.match(handed, /handToChute\(\{[\s\S]*?filename: SEND_IT_LABEL,[\s\S]*?text: sent,[\s\S]*?door: "intranet",/);
-    assert.match(handed, /"candidates" in r\.held[\s\S]*?\{ candidates: r\.held\.candidates \}/);
+    assert.match(
+      handed,
+      /handToChute\(\{[\s\S]*?filename: SEND_IT_LABEL,[\s\S]*?text: sent,[\s\S]*?door: "intranet",/,
+    );
+    assert.match(
+      handed,
+      /"candidates" in r\.held[\s\S]*?\{ candidates: r\.held\.candidates \}/,
+    );
   });
 
   test("the Chute row it seeds is a pick row offering exactly those candidates, through a reload", async () => {
     const v = captureVerdict(await routeText(TIED, roster));
     assert.ok(!v.file && v.hold);
-    const handOff = { filename: SEND_IT_LABEL, text: TIED, candidates: v.candidates, door: "intranet" as const };
+    const handOff = {
+      filename: SEND_IT_LABEL,
+      text: TIED,
+      candidates: v.candidates,
+      door: "intranet" as const,
+    };
     const row = handOffRow(handOff, 3);
-    assert.equal(row.state, "pick", "the no-sure-match state the Chute's own unroutable files wait in");
+    assert.equal(
+      row.state,
+      "pick",
+      "the no-sure-match state the Chute's own unroutable files wait in",
+    );
     assert.equal(row.filename, "Send-it paste");
     assert.equal(row.text, TIED);
     assert.equal(row.door, "intranet");
@@ -332,14 +394,25 @@ describe("an unsure Send-it capture is held in the Chute above, as a dispute is 
     assert.equal(row.account, undefined, "no row to keep it on");
     // A stray field never rides into the ledger (D12).
     const stray = handOffRow(
-      { ...handOff, candidates: [{ ...v.candidates[0], why: "ops@simploy.com is Simploy's contact" } as (typeof v.candidates)[number]] },
+      {
+        ...handOff,
+        candidates: [
+          {
+            ...v.candidates[0],
+            why: "ops@simploy.com is Simploy's contact",
+          } as (typeof v.candidates)[number],
+        ],
+      },
       4,
     );
     assert.deepEqual(stray.candidates, [v.candidates[0]]);
     // With no Chute listening it is seated in the stored ledger and comes
     // back waiting on the pick, with its text and its candidates (C20).
     const m = new Map<string, string>();
-    const storage = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, x: string) => void m.set(k, x) };
+    const storage = {
+      getItem: (k: string) => m.get(k) ?? null,
+      setItem: (k: string, x: string) => void m.set(k, x),
+    };
     const now = new Date("2026-10-06T15:00:00Z");
     saveLedger([], storage, now);
     seatHandOff(handOff, storage, now);
@@ -353,13 +426,22 @@ describe("an unsure Send-it capture is held in the Chute above, as a dispute is 
   test("the ✕ on it keeps the capture in the brain", async () => {
     const v = captureVerdict(await routeText(TIED, roster));
     assert.ok(!v.file && v.hold);
-    const row = handOffRow({ filename: SEND_IT_LABEL, text: TIED, candidates: v.candidates, door: "intranet" }, 5);
-    assert.deepEqual(dismissHeld({ door: row.door, filename: row.filename, text: row.text }), {
-      kind: "keep",
-      text: TIED,
-    });
+    const row = handOffRow(
+      { filename: SEND_IT_LABEL, text: TIED, candidates: v.candidates, door: "intranet" },
+      5,
+    );
+    assert.deepEqual(
+      dismissHeld({ door: row.door, filename: row.filename, text: row.text }),
+      {
+        kind: "keep",
+        text: TIED,
+      },
+    );
     // The keep road is the brain's own: it skips the route and the pipeline.
-    assert.match(door, /export async function intranetKeep\(raw: string\): Promise<CaptureReply> \{\s*return intranetCapture\(raw, undefined, \{ keep: true \}\);/);
+    assert.match(
+      door,
+      /export async function intranetKeep\(raw: string\): Promise<CaptureReply> \{\s*return intranetCapture\(raw, undefined, \{ keep: true \}\);/,
+    );
   });
 
   test("a capture that names no account still stays in the brain with its line (P2)", async () => {
@@ -512,7 +594,13 @@ async function withoutKey<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-const input = (doc: { body: string; origin: string; space: string; occurredAt: string; speakers: string[] }) => ({
+const input = (doc: {
+  body: string;
+  origin: string;
+  space: string;
+  occurredAt: string;
+  speakers: string[];
+}) => ({
   body: doc.body,
   origin: doc.origin,
   space: doc.space,
@@ -527,7 +615,11 @@ describe("the extractor takes the stored read and calls the model only for docum
     const e = entryOf(STORED, noteDoc.body);
     assert.ok(e, "the entry was not found in the mirrored body");
     assert.equal(e.subject, "EOR for a client in Brazil");
-    assert.equal(entryOf(STORED, archiveDoc.body), null, "a tape's archive matches no entry");
+    assert.equal(
+      entryOf(STORED, archiveDoc.body),
+      null,
+      "a tape's archive matches no entry",
+    );
     assert.equal(entryOf(STORED, todoDoc.body), null);
   });
 
@@ -538,16 +630,22 @@ describe("the extractor takes the stored read and calls the model only for docum
 
   test("the model client is not called for a doc whose note has a read, with or without a key", async () => {
     const { client: c, calls } = stub([]);
-    const stored = await withoutKey(() => runRead({ ...input(noteDoc), stored: STORED }, c));
+    const stored = await withoutKey(() =>
+      runRead({ ...input(noteDoc), stored: STORED }, c),
+    );
     assert.equal(calls.length, 0, "the stored read reached the model");
     assert.equal(stored.filings.length, 1);
-    const withKeyToo = await withKey(() => runRead({ ...input(noteDoc), stored: STORED }, c));
+    const withKeyToo = await withKey(() =>
+      runRead({ ...input(noteDoc), stored: STORED }, c),
+    );
     assert.equal(calls.length, 0);
     assert.deepEqual(withKeyToo, stored);
   });
 
   test("a doc with no read still goes to the model, on the roster's slot", async () => {
-    const { client: c, calls } = stub([JSON.stringify({ brief: "read it", filings: [] })]);
+    const { client: c, calls } = stub([
+      JSON.stringify({ brief: "read it", filings: [] }),
+    ]);
     const r = await withKey(() => runRead({ ...input(noteDoc), stored: null }, c));
     assert.equal(calls.length, 1);
     assert.equal(calls[0].model, MODEL_EXTRACT);
@@ -583,10 +681,15 @@ describe("the extractor takes the stored read and calls the model only for docum
       ],
     });
     const model = stub([modelSaid]);
-    const fromModel = await withKey(() => runRead({ ...input(noteDoc), stored: null }, model.client));
+    const fromModel = await withKey(() =>
+      runRead({ ...input(noteDoc), stored: null }, model.client),
+    );
     assert.equal(model.calls.length, 1);
     const silent = stub([]);
-    const fromStored = await runRead({ ...input(noteDoc), stored: STORED }, silent.client);
+    const fromStored = await runRead(
+      { ...input(noteDoc), stored: STORED },
+      silent.client,
+    );
     assert.equal(silent.calls.length, 0);
     assert.deepEqual(fromStored, fromModel);
     // And the parity is not vacuous: both located the quote and carry it.
@@ -607,23 +710,33 @@ describe("the extractor takes the stored read and calls the model only for docum
       r.filings[0].statements.map((s) => [s.text, s.speaker, s.kind]),
       [[ACTION, OPERATOR, "commitment"]],
     );
-    assert.ok(r.filings[0].statements[0].offsetStart > 0, "the action is located in the mirror");
+    assert.ok(
+      r.filings[0].statements[0].offsetStart > 0,
+      "the action is located in the mirror",
+    );
   });
 
   test("a doc with a read that holds nothing of it emits nothing and spends nothing", async () => {
     const { client: c, calls } = stub([]);
-    const r = await withoutKey(() => runRead({ ...input(archiveDoc), stored: STORED }, c));
+    const r = await withoutKey(() =>
+      runRead({ ...input(archiveDoc), stored: STORED }, c),
+    );
     assert.equal(calls.length, 0);
     assert.deepEqual(r, { brief: "", filings: [] });
   });
 
   test("the stored shape is the sanitizer's own: clamping it again changes nothing", () => {
-    const raw = readFromFiling(STORED, { body: noteDoc.body, origin: "account-note", speakers: noteDoc.speakers });
+    const raw = readFromFiling(STORED, {
+      body: noteDoc.body,
+      origin: "account-note",
+      speakers: noteDoc.speakers,
+    });
     const once = sanitizeRead(raw, noteDoc.body);
     assert.deepEqual(sanitizeRead(once, noteDoc.body), once);
     assert.equal(raw.brief, "", "nothing is invented: no brief");
     // Every statement is the row's own words: the text is its own quote.
-    for (const f of raw.filings) for (const s of f.statements) assert.equal(s.text, s.quote);
+    for (const f of raw.filings)
+      for (const s of f.statements) assert.equal(s.text, s.quote);
   });
 
   test("the stored read runs before the key is looked at, and the model call reads the handed client", () => {
@@ -643,17 +756,30 @@ describe("the sweep looks up the read by the row's filing link, note and todo al
   const lookup = slice(runners, "async function storedRead(", "\n}\n");
 
   test("every document in a batch is asked for its stored read before the reads run", () => {
-    assert.match(extract, /const stored = await Promise\.all\(batch\.map\(\(d\) => storedRead\(d\)\)\);/);
+    assert.match(
+      extract,
+      /const stored = await Promise\.all\(batch\.map\(\(d\) => storedRead\(d\)\)\);/,
+    );
     assert.match(extract, /stored: stored\[b\],/);
     assert.match(extract, /speakers: d\.speakers,/);
   });
 
   test("a note's read comes through readOfNote, a todo's through its filingId (G6: the todo mirror carries the note's read)", () => {
-    assert.match(lookup, /if \(doc\.origin === "account-note"\) return readOfNote\(doc\.originRef\);/);
+    assert.match(
+      lookup,
+      /if \(doc\.origin === "account-note"\) return readOfNote\(doc\.originRef\);/,
+    );
     assert.match(lookup, /if \(doc\.origin === "todo"\)/);
-    assert.match(lookup, /todo\.findUnique\(\{ where: \{ id: doc\.originRef \}, select: \{ filingId: true \} \}\)/);
+    assert.match(
+      lookup,
+      /todo\.findUnique\(\{ where: \{ id: doc\.originRef \}, select: \{ filingId: true \} \}\)/,
+    );
     assert.match(lookup, /return t\?\.filingId \? readOfFiling\(t\.filingId\) : null;/);
-    assert.match(lookup, /\}\s*return null;\s*$/, "every other origin reads as no stored read");
+    assert.match(
+      lookup,
+      /\}\s*return null;\s*$/,
+      "every other origin reads as no stored read",
+    );
   });
 
   test("the log says when a row was read from its filing, so the second read's absence is visible", () => {
@@ -670,7 +796,9 @@ describe("the sweep looks up the read by the row's filing link, note and todo al
         async upsert() {
           throw new Error("unused");
         },
-        async findUnique(args: { where: { id: string } | { accountId_fingerprint: unknown } }) {
+        async findUnique(args: {
+          where: { id: string } | { accountId_fingerprint: unknown };
+        }) {
           if (broken) throw new Error('relation "Filing" does not exist');
           const w = args.where;
           const row = "id" in w ? rows.get(w.id) : undefined;
@@ -711,6 +839,10 @@ describe("the sweep looks up the read by the row's filing link, note and todo al
     assert.equal(await readOfFiling("f2", store), null, "a keyless filing has no read");
     assert.equal(await readOfFiling("nope", store), null);
     broken = true;
-    assert.equal(await readOfFiling("f1", store), null, "a missing table reads as no read");
+    assert.equal(
+      await readOfFiling("f1", store),
+      null,
+      "a missing table reads as no read",
+    );
   });
 });

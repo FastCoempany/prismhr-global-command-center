@@ -56,7 +56,11 @@ describe("A9.2 to A9.4 · the wings sit left and right of the stage, the heat ri
     assert.equal(await tick(3), AMBER);
     const half = await tick(2);
     assert.notEqual(half, AMBER);
-    assert.match(half, /^(rgba\(245, 158, 11, 0\.\d+\)|color\(srgb 0\.96\d* 0\.6\d* 0\.04\d* \/ 0\.\d+\))$/, half);
+    assert.match(
+      half,
+      /^(rgba\(245, 158, 11, 0\.\d+\)|color\(srgb 0\.96\d* 0\.6\d* 0\.04\d* \/ 0\.\d+\))$/,
+      half,
+    );
     const quiet = await tick(1);
     assert.ok(![AMBER, half].includes(quiet), quiet);
     assert.doesNotMatch(quiet, /245, 158, 11/);
@@ -75,7 +79,9 @@ describe("A9.2 to A9.4 · the wings sit left and right of the stage, the heat ri
     assert.ok(nm && why);
     assert.ok(why.y >= nm.y + nm.height - 1, "the trigger is not beneath the name");
     const px = (s: string) => Number.parseFloat(s);
-    const whyFont = px(await style(page, `${$("wingItem")} ${$("wingWhy")}`, "font-size"));
+    const whyFont = px(
+      await style(page, `${$("wingItem")} ${$("wingWhy")}`, "font-size"),
+    );
     const nmFont = px(await style(page, `${$("wingItem")} ${$("wingNm")}`, "font-size"));
     assert.ok(whyFont < nmFont, `${whyFont} is not smaller than ${nmFont}`);
     assert.notEqual(await style(page, `${$("wingItem")} ${$("wingWhy")}`, "color"), NAVY);
@@ -86,14 +92,20 @@ describe("A9.2 to A9.4 · the wings sit left and right of the stage, the heat ri
 describe("A9.5 to A9.7 · the Klaxon", () => {
   test("A9.5 · the serif verb runs the masthead's left, the orange count its right", async () => {
     const page = await mount(browser, FIX, { now: MID });
-    await page.waitForFunction((sel) => !/—/.test(document.querySelector(sel)?.textContent ?? "—"), $("kxCount"));
+    await page.waitForFunction(
+      (sel) => !/—/.test(document.querySelector(sel)?.textContent ?? "—"),
+      $("kxCount"),
+    );
     assert.match(await style(page, $("kxVerb"), "font-family"), /DM Serif Display/);
     assert.equal(await style(page, $("kxCount"), "color"), ORANGE);
     const top = await box(page, $("kxTop"));
     const v = await box(page, $("kxVerb"));
     const c = await box(page, $("kxCount"));
     assert.ok(v.x - top.x < 4, "the verb does not lead the masthead");
-    assert.ok(top.x + top.width - (c.x + c.width) < 4, "the count does not end the masthead");
+    assert.ok(
+      top.x + top.width - (c.x + c.width) < 4,
+      "the count does not end the masthead",
+    );
     await page.close();
   });
 
@@ -104,7 +116,10 @@ describe("A9.5 to A9.7 · the Klaxon", () => {
     const top = await box(page, $("klaxon"));
     const bar = await box(page, $("kxBurn"));
     assert.ok(bar.width >= top.width - 6, "the burn bar is not full width");
-    const fill = await page.$eval(`${$("kxBurn")} i`, (el) => (el as HTMLElement).getBoundingClientRect().width);
+    const fill = await page.$eval(
+      `${$("kxBurn")} i`,
+      (el) => (el as HTMLElement).getBoundingClientRect().width,
+    );
     const ratio = fill / bar.width;
     // Ten o'clock in a nine-to-eleven band: half the window is left.
     assert.ok(Math.abs(ratio - 0.5) < 0.06, `the bar holds ${ratio} at the midpoint`);
@@ -116,14 +131,26 @@ describe("A9.5 to A9.7 · the Klaxon", () => {
     const page = await mount(browser, FIX, { now: LATE });
     await page.waitForSelector($("kxLate"));
     assert.equal(await style(page, `${$("kxLate")} ${$("kxCount")}`, "color"), RED);
-    assert.equal(await style(page, `${$("kxLate")} ${$("kxBurn")} i`, "background-color"), RED);
-    assert.equal(await style(page, `${$("kxLate")} ${$("kxCount")}`, "animation-name"), "kxThrob");
-    assert.equal(await style(page, `${$("kxLate")} ${$("kxBurn")} i`, "animation-name"), "kxThrob");
+    assert.equal(
+      await style(page, `${$("kxLate")} ${$("kxBurn")} i`, "background-color"),
+      RED,
+    );
+    assert.equal(
+      await style(page, `${$("kxLate")} ${$("kxCount")}`, "animation-name"),
+      "kxThrob",
+    );
+    assert.equal(
+      await style(page, `${$("kxLate")} ${$("kxBurn")} i`, "animation-name"),
+      "kxThrob",
+    );
     await page.close();
     const still = await mount(browser, FIX, { now: LATE, reducedMotion: true });
     await still.waitForSelector($("kxLate"));
     assert.equal(await style(still, `${$("kxLate")} ${$("kxCount")}`, "color"), RED);
-    assert.equal(await style(still, `${$("kxLate")} ${$("kxCount")}`, "animation-name"), "none");
+    assert.equal(
+      await style(still, `${$("kxLate")} ${$("kxCount")}`, "animation-name"),
+      "none",
+    );
     await still.close();
     // At the midpoint there is no red and no throb.
     const calm = await mount(browser, FIX, { now: MID });

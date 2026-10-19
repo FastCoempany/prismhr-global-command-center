@@ -42,7 +42,10 @@ describe("edits round-trip through the store", () => {
     assert.deepEqual(parseEditsBody(ID, ""), {});
   });
   test("the keys carry the account they belong to", () => {
-    const back = parseEditsBody("other", renderEditsBody({ [`${ID}:model:0`]: "Referral" }));
+    const back = parseEditsBody(
+      "other",
+      renderEditsBody({ [`${ID}:model:0`]: "Referral" }),
+    );
     assert.ok(`other:model:0` in back, "re-keyed to the row's own account");
   });
   test("editsFrom reads the newest row, and nothing when there is none", () => {
@@ -79,7 +82,12 @@ describe("a saved edit is what the document says", () => {
       handoffs: [],
       unknowns: [],
       stage: null,
-      closeDate: { v: "2026-12-25", src: "the book's date", derived: true, passed: false },
+      closeDate: {
+        v: "2026-12-25",
+        src: "the book's date",
+        derived: true,
+        passed: false,
+      },
       risks: [],
       quietDays: null,
       contacts: [],
@@ -87,7 +95,10 @@ describe("a saved edit is what the document says", () => {
       fyiWho: "",
       owners: [],
     };
-    const saved = parseEditsBody(ID, renderEditsBody({ [lineKey(ID, "close")]: "2026-11-30" }));
+    const saved = parseEditsBody(
+      ID,
+      renderEditsBody({ [lineKey(ID, "close")]: "2026-11-30" }),
+    );
     assert.match(recordToText(r), /Close date: 12\/25/);
     assert.match(recordToText(r, saved), /Close date: 2026-11-30/);
   });

@@ -15,6 +15,7 @@ import {
   type ReadClient,
 } from "@/lib/intel/ai-clean";
 import { claudeDownReason, markClaudeDown, markClaudeUp } from "@/lib/claude/health";
+import { roomActionsSource } from "./room-source";
 
 test("sanitize: coerces a well-formed reply through intact", () => {
   const r = sanitizeAiResult({
@@ -228,7 +229,7 @@ describe("the reader's clock", () => {
     // The 33-message Infiniti HR thread read live in 179 seconds on 10/13.
     assert.ok(READ_BUDGET_MS >= 179_000 + 45_000, "the measured read fits with room");
     // The paste action runs both calls on the one clock.
-    const src = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+    const src = roomActionsSource(cwd());
     assert.match(src, /const filingDeadline = Date\.now\(\) \+ FILING_BUDGET_MS;/);
     assert.match(
       src,
@@ -343,7 +344,7 @@ describe("the reader's clock", () => {
   });
 
   test("the paste action logs why on both paths, never the paste itself", () => {
-    const src = readFileSync(join(cwd(), "src/app/room/actions.ts"), "utf8");
+    const src = roomActionsSource(cwd());
     const at = src.indexOf("let readFailed = false;");
     const block = src.slice(at, src.indexOf("if (entries.length === 0) {", at));
     assert.match(

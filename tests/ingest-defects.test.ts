@@ -27,10 +27,11 @@ import { DROP_ACCEPT } from "../src/lib/paste-files";
 import { filingRequest, planDrop } from "../src/app/room/ingest/use-ingest";
 import { holdVerdict } from "../src/app/room/ingest/use-verdict";
 import { undoRequest } from "../src/app/room/ingest/use-undo";
+import { roomActionsSource } from "./room-source";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
-const actions = read("src/app/room/actions.ts");
+const actions = roomActionsSource(root);
 // The fan-out lives in its own module since slice 6 of the Chute brains
 // refactor plan (src/lib/ingest/fanout.ts); roomPaste imports it by name.
 const fanoutSrc = read("src/lib/ingest/fanout.ts");
@@ -104,7 +105,12 @@ describe("bug 1 — the Chute picker's mismatch fell through to the vault", () =
   test("a disputed auto-route keeps its text for the pick, and the pick files it", () => {
     const disputed = {
       ok: false,
-      mismatch: { claim: "Simploy", bound: "Regis HR Group", rung: "text" as const, reason: "Names Simploy staff, not Regis HR Group." },
+      mismatch: {
+        claim: "Simploy",
+        bound: "Regis HR Group",
+        rung: "text" as const,
+        reason: "Names Simploy staff, not Regis HR Group.",
+      },
       reason: "Names Simploy staff, not Regis HR Group.",
     };
     const held = holdVerdict(disputed, { text: TAPE, windows: [] });
@@ -117,7 +123,11 @@ describe("bug 1 — the Chute picker's mismatch fell through to the vault", () =
     });
     assert.equal(accountId, SIMPLOY.id);
     assert.equal(text, TAPE, "the pick files the held text, not a re-read of nothing");
-    assert.equal(opts?.force, true, "the pick is final: the filing re-runs with force (D5)");
+    assert.equal(
+      opts?.force,
+      true,
+      "the pick is final: the filing re-runs with force (D5)",
+    );
     assert.equal(opts?.door, "chute");
   });
 });
@@ -138,7 +148,11 @@ describe("bug 2 — the Drop files the first readable file only", () => {
       [],
       "a readable file went to the vault unread",
     );
-    assert.deepEqual(split.readables, [a, b], "both files reach the reader, in drop order");
+    assert.deepEqual(
+      split.readables,
+      [a, b],
+      "both files reach the reader, in drop order",
+    );
     for (const door of ["drop", "chute"] as const) {
       const plan = planDrop([a, b], door);
       assert.deepEqual(plan.read, [a, b], `${door}: both files are read`);
@@ -167,7 +181,10 @@ describe("bug 3 — the guard's comments and copy contradict the canon", () => {
     assert.ok(earlyAt > 0, "roomPaste returns the early refusal");
     const lateAt = roomPaste.indexOf("if (!verdict.ok)");
     assert.ok(lateAt > earlyAt, "the late guard is still consulted");
-    assert.match(roomPaste.slice(lateAt, lateAt + 160), /return \{\s*ok: false,\s*filed: 0/);
+    assert.match(
+      roomPaste.slice(lateAt, lateAt + 160),
+      /return \{\s*ok: false,\s*filed: 0/,
+    );
     // The options are required since pass 9 (the door is a required
     // argument), so force reads without the optional chain.
     assert.ok(roomPaste.includes("opts.force"), "force stays the operator's override");
@@ -210,8 +227,14 @@ describe("bug 5 — absorbRead on a rules-fallback read", () => {
     // residual labeling question.
     const gateAt = roomPaste.indexOf("if (aiCleanAvailable()) {");
     const assignAt = roomPaste.indexOf("read = await aiCleanTimeline(");
-    assert.ok(gateAt > 0 && assignAt > gateAt, "the read is assigned only when the key is on");
-    assert.ok(roomPaste.slice(assignAt).includes("read = null;"), "a throw resets the read");
+    assert.ok(
+      gateAt > 0 && assignAt > gateAt,
+      "the read is assigned only when the key is on",
+    );
+    assert.ok(
+      roomPaste.slice(assignAt).includes("read = null;"),
+      "a throw resets the read",
+    );
     assert.match(roomPaste, /const absorbed(?::[^=]+)? = read\s*\?\s*await absorbRead\(/);
   });
   test("option 1: `how` stays the entries' provenance and the counts carry the model's judgment", () => {
@@ -233,7 +256,10 @@ describe("bug 6 — undo is partial", () => {
   // rows, playbook rows and an outcome marker. Undo has to take back all of
   // it, so a wrong-account drop leaves nothing behind.
   test("absorbRead hands back the ids of everything it wrote", () => {
-    assert.ok(absorbRead.includes("noteIds"), "gap, playbook and outcome ids are collected");
+    assert.ok(
+      absorbRead.includes("noteIds"),
+      "gap, playbook and outcome ids are collected",
+    );
     assert.match(
       absorbRead,
       /const \w+ = await createAccountNoteRow\(\{[\s\S]*?outcomeMarkBody\(/,
@@ -242,7 +268,10 @@ describe("bug 6 — undo is partial", () => {
     assert.match(roomPaste, /todoIds/, "the result carries the opened todo ids");
   });
   test("roomPasteUndo takes back notes in every namespace the filing wrote, and the todos", () => {
-    assert.ok(pasteUndo.includes("prisma.todo.deleteMany"), "opened actions are taken back");
+    assert.ok(
+      pasteUndo.includes("prisma.todo.deleteMany"),
+      "opened actions are taken back",
+    );
     assert.ok(pasteUndo.includes("gapNs(acct.id)"), "gap rows are taken back");
     assert.ok(
       pasteUndo.includes("PLAYBOOK_MARKET") && pasteUndo.includes("PLAYBOOK_LESSONS"),
@@ -267,12 +296,22 @@ describe("bug 6 — undo is partial", () => {
     assert.deepEqual(todoIds, ["t1"]);
     assert.equal(filingId, "f1");
     const older = undoRequest(SIMPLOY.id, { noteIds: ["n1"] });
-    assert.deepEqual(older.slice(1), [["n1"], [], undefined], "a pre-Filing receipt undoes by its lists");
+    assert.deepEqual(
+      older.slice(1),
+      [["n1"], [], undefined],
+      "a pre-Filing receipt undoes by its lists",
+    );
     // Neither door reaches the server's undo on its own any more.
     assert.ok(chute.includes("useUndo()"), "the Chute takes the shared undo");
     assert.ok(client.includes("useUndo()"), "the Drop takes the shared undo");
-    assert.ok(!chute.includes("roomPasteUndo("), "the Chute calls the hook, not the action");
-    assert.ok(!client.includes("roomPasteUndo("), "the Drop calls the hook, not the action");
+    assert.ok(
+      !chute.includes("roomPasteUndo("),
+      "the Chute calls the hook, not the action",
+    );
+    assert.ok(
+      !client.includes("roomPasteUndo("),
+      "the Drop calls the hook, not the action",
+    );
   });
 });
 
@@ -290,7 +329,10 @@ describe("bug 8 — every non-primary file dropped on a row is vaulted twice", (
     assert.deepEqual(plan.read, [vtt, png], "each readable one waits on its own verdict");
     assert.deepEqual(plan.refused, []);
     for (const f of plan.read)
-      assert.ok(!plan.vault.includes(f), `${f.name} is in both lists, so it would vault twice`);
+      assert.ok(
+        !plan.vault.includes(f),
+        `${f.name} is in both lists, so it would vault twice`,
+      );
     // Accepted: the waiting list is the one file, so the vault takes it once.
     assert.deepEqual(vaultAfterVerdict({ ok: true }, [vtt]).archive, [vtt]);
   });

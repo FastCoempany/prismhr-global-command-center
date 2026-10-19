@@ -59,6 +59,7 @@ import {
 import type { Rollup } from "../../src/lib/activity/rollup";
 import type { AccountSlice, DropManifest, StagedRow } from "../../src/lib/activity/types";
 import { ALIASES } from "../../src/lib/book/merge";
+import { roomActionsSource } from "../room-source";
 
 const root = cwd();
 const rel = (p: string) => relative(root, p).split("\\").join("/");
@@ -176,7 +177,7 @@ describe("every note carries its door in its own column (CLAUDE.md:405, P3)", ()
       door,
       /piece: \(key, i, n, form\) => doors\.piece\(accountId, key, i, n, form, opts\),/,
     );
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     // The door is a required argument since pass 9 (pass 8 housekeeping):
     // roomPaste no longer defaults a caller that names none to the Drop.
     assert.match(

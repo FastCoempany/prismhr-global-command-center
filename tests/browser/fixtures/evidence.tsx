@@ -38,19 +38,37 @@ export default function Fixture() {
                 act: "Answer Pat about Mexico.",
                 reason: "They asked on 9/30.",
                 whenDay: "2026-09-30",
-                cites: [{ k: "r1", day: "2026-09-30", who: "Pat Lee", subject: "Mexico" }],
+                cites: [
+                  { k: "r1", day: "2026-09-30", who: "Pat Lee", subject: "Mexico" },
+                ],
               },
             ]}
             support={{
               total: 14,
               spikeDay: "2026-09-12",
               spikeN: 5,
-              spikeCites: [{ k: "s1", day: "2026-09-12", who: "Dana Ruiz", subject: "Ontario payroll" }],
+              spikeCites: [
+                {
+                  k: "s1",
+                  day: "2026-09-12",
+                  who: "Dana Ruiz",
+                  subject: "Ontario payroll",
+                },
+              ],
             }}
             intent={{ opens30: 4, clicks30: 1, lastOpen: "2026-09-28", sends7: 0 }}
             collision={{
               mktgSends7: 0,
-              colleague: { who: "Lesha Cyphers", day: "2026-10-01", cite: { k: "c1", day: "2026-10-01", who: "Lesha Cyphers", subject: "Renewal" } },
+              colleague: {
+                who: "Lesha Cyphers",
+                day: "2026-10-01",
+                cite: {
+                  k: "c1",
+                  day: "2026-10-01",
+                  who: "Lesha Cyphers",
+                  subject: "Renewal",
+                },
+              },
             }}
           />
         ),
@@ -76,7 +94,14 @@ export default function Fixture() {
         monthDay: () => "",
       }}
       foot={{
-        week: { total: 0, byChannel: [], accounts: 0, replied: 0, neverMet: 0, goneCold: 0 },
+        week: {
+          total: 0,
+          byChannel: [],
+          accounts: 0,
+          replied: 0,
+          neverMet: 0,
+          goneCold: 0,
+        },
         staleDropDays: null,
       }}
     />

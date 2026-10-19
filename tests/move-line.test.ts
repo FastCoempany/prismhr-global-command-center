@@ -11,7 +11,12 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { clip, moveFromCommitment, pickOwed, MOVE_BUDGET } from "../src/lib/room/move-line";
+import {
+  clip,
+  moveFromCommitment,
+  pickOwed,
+  MOVE_BUDGET,
+} from "../src/lib/room/move-line";
 import { meterRead, readDeal } from "../src/lib/room/engine";
 import { buildAccountSheet, OPEN_SHOWN } from "../src/lib/room/sheet-view";
 
@@ -168,7 +173,7 @@ describe("the engine renders the built line and opens the door", () => {
         nodeKey: "demo",
         nodeLabel: "Demo",
         item: "Confirm the right attendees including the decision maker and the person feeling the operational pain today",
-        },
+      },
       doneInStage: 1,
       totalInStage: 3,
       allGatesDone: false,
@@ -201,7 +206,9 @@ describe("the register's cap ranks, and never drops silently", () => {
     updatedAt: "2026-09-03T12:00:00Z",
   });
   test("a blown wall is kept and the overflow is handed back, not lost", () => {
-    const many = Array.from({ length: 12 }, (_, i) => mk(`t${i}`, `Commitment number ${i}`));
+    const many = Array.from({ length: 12 }, (_, i) =>
+      mk(`t${i}`, `Commitment number ${i}`),
+    );
     // The blown wall sits LAST in store order — exactly where the old cap
     // would have thrown it away.
     many.push(mk("wall", "Send the thing you promised", "d:2026-08-01,k:a"));

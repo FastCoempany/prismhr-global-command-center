@@ -188,7 +188,9 @@ export async function renderPage(route: string): Promise<string> {
   const page = SERVER_PAGES.find((p) => p.route === route);
   if (!page) throw new Error(`no server page at ${route}`);
   const mod = (await import(page.file)) as {
-    default: (props: { searchParams?: Promise<Record<string, string>> }) => Promise<ReactElement>;
+    default: (props: {
+      searchParams?: Promise<Record<string, string>>;
+    }) => Promise<ReactElement>;
   };
   (globalThis as unknown as { __fakeAccess?: unknown }).__fakeAccess = page.shut
     ? SHUT

@@ -75,7 +75,10 @@ describe("the guard never cries wolf", () => {
       "To: Kevin Miller <kmiller@regishrgroup.com>",
       "Just talked to Chassie Smith at Simploy — different deal.",
     ].join("\n");
-    assert.equal(judgeFiling({ text: passing, claim: "", bound: REGIS, roster }).ok, true);
+    assert.equal(
+      judgeFiling({ text: passing, claim: "", bound: REGIS, roster }).ok,
+      true,
+    );
   });
   test("a capture with no signal at all files wherever it is dropped", () => {
     const bland = "Talked through pricing. They will come back to us next week.";
@@ -233,7 +236,11 @@ describe("the name scanner and the book's index", () => {
     const idx = peopleIndex();
     for (const a of live)
       for (const p of a.people ?? [])
-        assert.equal((idx.get(p) ?? []).length, 1, `${p} must bind to exactly one account`);
+        assert.equal(
+          (idx.get(p) ?? []).length,
+          1,
+          `${p} must bind to exactly one account`,
+        );
   });
   test("a person on two accounts routes nobody", () => {
     const shared: RouteAccount[] = [
@@ -254,29 +261,52 @@ describe("the name scanner and the book's index", () => {
 
 describe("a generic head token identifies nobody", () => {
   const bland: RouteAccount[] = [
-    { id: "e", name: "Employee Professionals NE LLC", emails: [], domains: [], people: [] },
-    { id: "p", name: "Pinnacle Employee Services, Inc.", emails: [], domains: [], people: [] },
+    {
+      id: "e",
+      name: "Employee Professionals NE LLC",
+      emails: [],
+      domains: [],
+      people: [],
+    },
+    {
+      id: "p",
+      name: "Pinnacle Employee Services, Inc.",
+      emails: [],
+      domains: [],
+      people: [],
+    },
   ];
   test("“employee” no longer routes, so an ordinary PEO sentence disputes nothing", () => {
     const text = "They have 40 employees on the plan and want employee onboarding fixed.";
     const { best } = routeCapture(text, bland);
     assert.equal(best, null);
     assert.equal(
-      judgeFiling({ text, claim: "", bound: { id: "p", name: bland[1].name }, roster: bland })
-        .ok,
+      judgeFiling({
+        text,
+        claim: "",
+        bound: { id: "p", name: bland[1].name },
+        roster: bland,
+      }).ok,
       true,
     );
   });
   test("the words that go with it are bland too", () => {
-    for (const w of ["employee", "employees", "professional", "professionals", "leasing"]) {
+    for (const w of [
+      "employee",
+      "employees",
+      "professional",
+      "professionals",
+      "leasing",
+    ]) {
       const { best } = routeCapture(`We discussed ${w} coverage at length.`, bland);
       assert.equal(best, null, w);
     }
   });
   test("a real distinctive head still routes", () => {
-    const { best } = routeCapture("Following up with Simploy on the reseller paperwork.", [
-      { id: "s", name: "Simploy", emails: [], domains: [], people: [] },
-    ]);
+    const { best } = routeCapture(
+      "Following up with Simploy on the reseller paperwork.",
+      [{ id: "s", name: "Simploy", emails: [], domains: [], people: [] }],
+    );
     assert.ok(best, "a distinctive name is still a signal");
   });
 });
@@ -472,12 +502,48 @@ describe("a tie does not clear the gate", () => {
 
 describe("a bound row outside the top five still shows its own evidence", () => {
   const crowded: RouteAccount[] = [
-    { id: "A", name: "Alpha PEO", emails: ["a@alpha.com"], domains: ["alpha.com"], people: [] },
-    { id: "B", name: "Bravo HR", emails: ["b@bravo.com"], domains: ["bravo.com"], people: [] },
-    { id: "C", name: "Charlie Staffing", emails: ["c@charlie.com"], domains: ["charlie.com"], people: [] },
-    { id: "D", name: "Delta Employer", emails: ["d@delta.com"], domains: ["delta.com"], people: [] },
-    { id: "E", name: "Echo Group", emails: ["e@echo.com"], domains: ["echo.com"], people: [] },
-    { id: "Z", name: "Zulu Workforce", emails: ["someone@zulu.com"], domains: ["zulu.com"], people: [] },
+    {
+      id: "A",
+      name: "Alpha PEO",
+      emails: ["a@alpha.com"],
+      domains: ["alpha.com"],
+      people: [],
+    },
+    {
+      id: "B",
+      name: "Bravo HR",
+      emails: ["b@bravo.com"],
+      domains: ["bravo.com"],
+      people: [],
+    },
+    {
+      id: "C",
+      name: "Charlie Staffing",
+      emails: ["c@charlie.com"],
+      domains: ["charlie.com"],
+      people: [],
+    },
+    {
+      id: "D",
+      name: "Delta Employer",
+      emails: ["d@delta.com"],
+      domains: ["delta.com"],
+      people: [],
+    },
+    {
+      id: "E",
+      name: "Echo Group",
+      emails: ["e@echo.com"],
+      domains: ["echo.com"],
+      people: [],
+    },
+    {
+      id: "Z",
+      name: "Zulu Workforce",
+      emails: ["someone@zulu.com"],
+      domains: ["zulu.com"],
+      people: [],
+    },
   ];
   // Five contacts by address (100 each); Zulu appears only as a different
   // address on its own domain (80), so it ranks sixth and falls off the list.

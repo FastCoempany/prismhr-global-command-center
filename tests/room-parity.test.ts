@@ -38,7 +38,12 @@ const ingestHooks = {
   ...(await import("../src/app/room/ingest/use-verdict")),
   ...(await import("../src/app/room/ingest/use-undo")),
 } as Record<string, unknown>;
-const modules = { room: roomActions, ledger: ledgerActions, dash: dashActions, ingest: ingestHooks };
+const modules = {
+  room: roomActions,
+  ledger: ledgerActions,
+  dash: dashActions,
+  ingest: ingestHooks,
+};
 
 // A board of two: one live row with open work, an owed line and a sheet; one
 // row whose record reads lost, so the judgment banner paints too.
@@ -113,7 +118,9 @@ const eye = await render(
     onClose: () => {},
   }),
 );
-const followUps = await render(createElement(room.FollowUpBlock, { rows: [followUpRow()] }));
+const followUps = await render(
+  createElement(room.FollowUpBlock, { rows: [followUpRow()] }),
+);
 // The check-ins tab with nothing due: its empty state is drawer copy too.
 const checkinsEmpty = await render(
   createElement(room.CadenceDrawer, {
@@ -130,7 +137,9 @@ const all = board + drawer + eye + followUps + checkinsEmpty;
 const copyOf = (html: string): string =>
   [
     textOf(html),
-    ...[...html.matchAll(/\s(?:title|placeholder|aria-label)="([^"]*)"/g)].map((m) => m[1]),
+    ...[...html.matchAll(/\s(?:title|placeholder|aria-label)="([^"]*)"/g)].map(
+      (m) => m[1],
+    ),
   ].join("\n");
 
 describe("room client — every absorbed capability is wired", () => {
@@ -156,7 +165,11 @@ describe("room client — every absorbed capability is wired", () => {
     },
     // The TODAY register rests folded (the Spring), so the sheet's own
     // controls open on a click and keep the server half alone here.
-    { what: "sheet item ops (done/undo/delay/drop)", action: "roomTodoSet", from: "room" },
+    {
+      what: "sheet item ops (done/undo/delay/drop)",
+      action: "roomTodoSet",
+      from: "room",
+    },
     { what: "a capture's receipt can undo", action: "roomUnlog", from: "room" },
     { what: "any note can become an action", action: "roomNoteToAction", from: "room" },
     { what: "record entries edit in place", action: "roomRecordEdit", from: "room" },
@@ -175,14 +188,42 @@ describe("room client — every absorbed capability is wired", () => {
       from: "ingest",
       shows: /File\. Email, PDF, transcript, spreadsheet, document, or image\./,
     },
-    { what: "a disputed paste is held for the pick", action: "useVerdict", from: "ingest" },
-    { what: "the paste's take-back is the shared undo", action: "useUndo", from: "ingest" },
-    { what: "the move closes for real", action: "roomClose", from: "room", shows: /Mark it done/ },
+    {
+      what: "a disputed paste is held for the pick",
+      action: "useVerdict",
+      from: "ingest",
+    },
+    {
+      what: "the paste's take-back is the shared undo",
+      action: "useUndo",
+      from: "ingest",
+    },
+    {
+      what: "the move closes for real",
+      action: "roomClose",
+      from: "room",
+      shows: /Mark it done/,
+    },
     // the roundups engine in the drawer
-    { what: "copy & mark sent", action: "logTouch", from: "ledger", shows: /Copy &amp; mark sent/ },
-    { what: "they replied", action: "markReplied", from: "ledger", shows: /They replied ▸/ },
+    {
+      what: "copy & mark sent",
+      action: "logTouch",
+      from: "ledger",
+      shows: /Copy &amp; mark sent/,
+    },
+    {
+      what: "they replied",
+      action: "markReplied",
+      from: "ledger",
+      shows: /They replied ▸/,
+    },
     { what: "I replied", action: "markResponded", from: "ledger", shows: /I replied ▸/ },
-    { what: "archive thread", action: "archiveThread", from: "ledger", shows: />Archive</ },
+    {
+      what: "archive thread",
+      action: "archiveThread",
+      from: "ledger",
+      shows: />Archive</,
+    },
     {
       what: "mute partner",
       action: "muteRoundupPartner",
@@ -191,12 +232,27 @@ describe("room client — every absorbed capability is wired", () => {
       // what it mutes. Rewritten from title="mute cadence" in pass 9.
       shows: /title="mute this partner&#x27;s roundups"/,
     },
-    { what: "unmute partner", action: "unmuteRoundupPartner", from: "ledger", shows: />restore</ },
+    {
+      what: "unmute partner",
+      action: "unmuteRoundupPartner",
+      from: "ledger",
+      shows: />restore</,
+    },
     // check-ins
     { what: "push a chase to tomorrow", action: "delayFollowUp", from: "ledger" },
     // the eye (was "then, if there's time")
-    { what: "park a warming signal", action: "snoozeSignal", from: "ledger", shows: /Park two weeks/ },
-    { what: "dismiss a warming signal", action: "dismissTriage", from: "ledger", shows: />Dismiss</ },
+    {
+      what: "park a warming signal",
+      action: "snoozeSignal",
+      from: "ledger",
+      shows: /Park two weeks/,
+    },
+    {
+      what: "dismiss a warming signal",
+      action: "dismissTriage",
+      from: "ledger",
+      shows: />Dismiss</,
+    },
     // the add menu
     {
       what: "arm a follow-up",
@@ -218,7 +274,11 @@ describe("room client — every absorbed capability is wired", () => {
       shows: /Keep salvaging/,
     },
     { what: "an owed item can open as work", action: "roomOwedAccept", from: "room" },
-    { what: "an owed suggestion can be dismissed", action: "roomOwedDismiss", from: "room" },
+    {
+      what: "an owed suggestion can be dismissed",
+      action: "roomOwedDismiss",
+      from: "room",
+    },
   ];
   for (const { what, action, from, shows } of wirings) {
     test(`${what} — ${action} is wired`, () => {
@@ -313,10 +373,17 @@ describe("room stylesheet — every class the client asks for exists", () => {
 // H5 (pass 8): UNKNOWN's "· N queued" and the STAGE GATE chip opened nothing.
 // The click-depth law: every compression opens, one click deep.
 describe("the UNKNOWN register's compressions open (H5)", () => {
-  const ask = (id: string, question: string) => ({ id, question, at: "2026-10-01T15:00:00Z" });
+  const ask = (id: string, question: string) => ({
+    id,
+    question,
+    at: "2026-10-01T15:00:00Z",
+  });
   const askRow = roomRow({
     gaps: [ask("g1", "Which countries come first?")],
-    gapsQueued: [ask("g2", "Who signs for the client?"), ask("g3", "When is the first hire?")],
+    gapsQueued: [
+      ask("g2", "Who signs for the client?"),
+      ask("g3", "When is the first hire?"),
+    ],
     outstanding: {
       item: "Book the room",
       node: "first_meeting",
@@ -402,7 +469,10 @@ describe("a row off the board (pass 8 call 1)", () => {
       frac: 0,
       capTone: "ok",
       label: "NOT ON THE BOARD",
-      why: ["No card on the board.", "A fresh message from them or a meeting is on file."],
+      why: [
+        "No card on the board.",
+        "A fresh message from them or a meeting is on file.",
+      ],
     },
   });
 
@@ -462,7 +532,10 @@ describe("the THEIRS line sits atop the register panel and the move keeps its se
   test("the line is the panel's first line, one line, before UNKNOWN", async () => {
     const html = await paint({ theirs });
     const panel = panelOf(html);
-    assert.ok(panel.startsWith('<div class="rec"><div class="theirs">'), panel.slice(0, 120));
+    assert.ok(
+      panel.startsWith('<div class="rec"><div class="theirs">'),
+      panel.slice(0, 120),
+    );
     assert.equal((html.match(/class="theirs"/g) ?? []).length, 1, "one line");
     const line = /<div class="theirs">([\s\S]*?)<\/div>/.exec(panel)?.[1] ?? "";
     assert.equal(textOf(line), "THEIRS · MEXICO ASK · PAT LEE");

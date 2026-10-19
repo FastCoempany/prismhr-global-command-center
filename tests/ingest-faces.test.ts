@@ -48,6 +48,7 @@ import {
   roomClient,
   textOf,
 } from "./helpers/room-render";
+import { roomActionsSource } from "./room-source";
 
 const root = cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -1185,7 +1186,7 @@ describe("a duplicate opens to the earlier filing (pass 8, C2)", () => {
     assert.equal(ALREADY_FILING, "Already filing. Nothing filed twice.");
     // The server hands the line and the earlier filing apart: no day spliced
     // between the decree's two sentences (B48).
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     assert.ok(!actions.includes("Already on file.${when}"));
     assert.match(actions, /reason: ALREADY_ON_FILE,\s*prior: \{/);
     assert.match(actions, /const earlier = await findFiling\(acct\.id, fingerprint\);/);
@@ -1247,7 +1248,7 @@ describe("a take-back and a backup open to what they report (pass 8, C5)", () =>
 
   test("the Chute hands the take-back's lines to its row, read before the rows go", () => {
     assert.match(read("src/app/room/chute.tsx"), /took: r\.took,/);
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     const undo = actions.slice(
       actions.indexOf("export async function roomPasteUndo("),
       actions.indexOf("// --- Closing a deal"),
@@ -1706,7 +1707,7 @@ describe("a Sales Nav grab's receipt counts every row and opens to the accounts 
     ]);
     // The server runs each share through the one take-back, bound to its
     // account: no id list reaches past the account it names.
-    const actions = read("src/app/room/actions.ts");
+    const actions = roomActionsSource(root);
     const undo = actions.slice(
       actions.indexOf("export async function roomGrabUndo("),
       actions.indexOf("export async function roomPasteUndo("),

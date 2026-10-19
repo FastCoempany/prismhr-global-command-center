@@ -12,7 +12,10 @@ export async function resolve(specifier, context, next) {
   // A font loader resolves to the stub the compiler's output stands in for
   // (next-font-stub.mjs), so a page module can be imported whole.
   if (specifier === "next/font/google") {
-    return { url: new URL("./next-font-stub.mjs", import.meta.url).href, shortCircuit: true };
+    return {
+      url: new URL("./next-font-stub.mjs", import.meta.url).href,
+      shortCircuit: true,
+    };
   }
   if (/\.css$/.test(specifier) && context.parentURL) {
     return { url: new URL(specifier, context.parentURL).href, shortCircuit: true };

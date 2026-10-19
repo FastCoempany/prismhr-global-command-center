@@ -124,10 +124,7 @@ describe("the home side is never the person you are waiting on", () => {
   test("Regis: the CSM leads the To line and the account is folded into +2", () => {
     const r = lastTouchRead(
       [
-        note(
-          "Lesha Cyphers → Leilani Gonzalez +4",
-          "2026-08-26T15:32:00Z",
-        ),
+        note("Lesha Cyphers → Leilani Gonzalez +4", "2026-08-26T15:32:00Z"),
         note("Antaeus Coe → Lesha Cyphers +2", "2026-08-26T18:04:00Z"),
       ],
       null,

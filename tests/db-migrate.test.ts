@@ -127,8 +127,14 @@ describe("the additive list and its files agree", () => {
     assert.equal(vault.statements.length, 2);
     assert.match(vault.statements[0], /CREATE TABLE IF NOT EXISTS "VaultChunk"/);
     assert.match(vault.statements[0], /"bytes" BYTEA NOT NULL/);
-    assert.match(vault.statements[1], /CREATE INDEX IF NOT EXISTS "VaultChunk_accountId_filename_idx"/);
-    assert.ok(!vault.statements.some((s) => /ALTER TABLE/.test(s)), "no existing table is altered");
+    assert.match(
+      vault.statements[1],
+      /CREATE INDEX IF NOT EXISTS "VaultChunk_accountId_filename_idx"/,
+    );
+    assert.ok(
+      !vault.statements.some((s) => /ALTER TABLE/.test(s)),
+      "no existing table is altered",
+    );
   });
 });
 

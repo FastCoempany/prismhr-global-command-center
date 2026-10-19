@@ -343,18 +343,25 @@ test("the paste carries the same head the .vtt path writes", () => {
 });
 
 test("an ordinary document is never mistaken for a call", () => {
-  assert.equal(parseTranscriptDoc("Quarterly plan\n\nWe hire in Mexico.\nBudget set."), null);
+  assert.equal(
+    parseTranscriptDoc("Quarterly plan\n\nWe hire in Mexico.\nBudget set."),
+    null,
+  );
   assert.equal(parseTranscriptDoc("Agenda\n9:00 Welcome\n9:30 Demo\n10:00 Q&A"), null);
   assert.equal(parseTranscriptDoc(""), null);
   // A recording title with no cues under it is a title, not a transcript.
   assert.equal(
-    parseTranscriptDoc("Global Payroll Prism-20260827_140038-Meeting Recording\nNo cues."),
+    parseTranscriptDoc(
+      "Global Payroll Prism-20260827_140038-Meeting Recording\nNo cues.",
+    ),
     null,
   );
 });
 
 test("a stampless transcript still reads once the cues are unmistakable", () => {
-  const cues = Array.from({ length: 12 }, (_, i) => `${i}:0${i % 10}Line ${i}.`).join("\n");
+  const cues = Array.from({ length: 12 }, (_, i) => `${i}:0${i % 10}Line ${i}.`).join(
+    "\n",
+  );
   const doc = parseTranscriptDoc(cues);
   assert.ok(doc);
   assert.equal(doc.title, "");
@@ -486,7 +493,9 @@ test("a .vtt paste carries the recorded date so the filing clock can read it", (
 });
 
 test("the document path falls back to the file name when the title has no stamp", () => {
-  const cues = Array.from({ length: 12 }, (_, i) => `${i}:0${i % 10}Line ${i}.`).join("\n");
+  const cues = Array.from({ length: 12 }, (_, i) => `${i}:0${i % 10}Line ${i}.`).join(
+    "\n",
+  );
   const doc = parseTranscriptDoc(cues)!;
   assert.equal(doc.startedAt, "");
   assert.match(transcriptDocToPaste(doc, REAL_NAME), /Recorded: 2026-08-27 14:00/);

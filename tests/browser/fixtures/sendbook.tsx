@@ -6,7 +6,14 @@ import { SendbookRegister } from "@/app/sendbook/register";
 export default function Fixture() {
   return (
     <SendbookRegister
-      week={{ total: 2, byChannel: [["EMAIL", 2]], accounts: 1, replied: 1, neverMet: 0, goneCold: 1 }}
+      week={{
+        total: 2,
+        byChannel: [["EMAIL", 2]],
+        accounts: 1,
+        replied: 1,
+        neverMet: 0,
+        goneCold: 1,
+      }}
       channelsPresent={["EMAIL"]}
       filter=""
       total={250}
@@ -21,7 +28,13 @@ export default function Fixture() {
           step: 2,
           name: "Simploy",
           day: "TODAY",
-          reply: { at: "2026-10-08T17:00:00Z", who: "Pat Lee", head: "Re: Mexico", excerpt: "Monday works.", from: "record" },
+          reply: {
+            at: "2026-10-08T17:00:00Z",
+            who: "Pat Lee",
+            head: "Re: Mexico",
+            excerpt: "Monday works.",
+            from: "record",
+          },
           booking: null,
           mktg: true,
           cold: true,

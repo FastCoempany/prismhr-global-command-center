@@ -264,7 +264,9 @@ describe("only their side's acceptance settles a scheduling promise", () => {
   const ROSTER = ["Lesha Cyphers"];
 
   test("their acceptance settles, as before", () => {
-    assert.ok(settledByRecord(commitment, [acceptedBy("Joseph Lyon → Antaeus Coe")], ROSTER));
+    assert.ok(
+      settledByRecord(commitment, [acceptedBy("Joseph Lyon → Antaeus Coe")], ROSTER),
+    );
   });
 
   test("the operator's own acceptance settles nothing", () => {
@@ -315,8 +317,14 @@ describe("only their side's acceptance settles a scheduling promise", () => {
         null,
         ROSTER,
       );
-    assert.equal(sheetOf([acceptedBy("Antaeus Coe → Joseph Lyon")]).open[0].settled, undefined);
-    assert.equal(sheetOf([acceptedBy("Lesha Cyphers → Antaeus Coe")]).open[0].settled, undefined);
+    assert.equal(
+      sheetOf([acceptedBy("Antaeus Coe → Joseph Lyon")]).open[0].settled,
+      undefined,
+    );
+    assert.equal(
+      sheetOf([acceptedBy("Lesha Cyphers → Antaeus Coe")]).open[0].settled,
+      undefined,
+    );
     assert.equal(
       sheetOf([acceptedBy("Joseph Lyon → Antaeus Coe")]).open[0].settled,
       "they accepted the invitation",
@@ -325,7 +333,10 @@ describe("only their side's acceptance settles a scheduling promise", () => {
 
   test("the room hands its declared roster to both settles", () => {
     const page = readFileSync(join(cwd(), "src/app/room/page.tsx"), "utf8");
-    assert.match(page, /settledByRecord\(\s*\{ text: o\.text, at: src\?\.createdAt \?\? "" \},\s*allNotes,\s*ourSide,?\s*\)/);
+    assert.match(
+      page,
+      /settledByRecord\(\s*\{ text: o\.text, at: src\?\.createdAt \?\? "" \},\s*allNotes,\s*ourSide,?\s*\)/,
+    );
     assert.match(page, /buildAccountSheet\(\s*todos,[\s\S]*?ourSide,\s*\);/);
   });
 });
@@ -688,7 +699,11 @@ describe("our own side's acceptance names nobody on the move line (H2)", () => {
       timing: null,
       whoseMove: read.whoseMove,
       lastTouch: read.lastTouch
-        ? { at: read.lastTouch.at, awaitingReply: read.lastTouch.awaitingReply, who: "Joseph" }
+        ? {
+            at: read.lastTouch.at,
+            awaitingReply: read.lastTouch.awaitingReply,
+            who: "Joseph",
+          }
         : null,
       lastAccepted: acceptedForMove(read.lastAccepted),
       lastRecordAt: read.lastRecordAt,

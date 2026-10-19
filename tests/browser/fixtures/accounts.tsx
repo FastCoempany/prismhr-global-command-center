@@ -80,9 +80,17 @@ const LIVE = row({
     supportTotal: 0,
     spikeDay: "",
   },
-  acted: [{ term: "CANADA ASK", act: "Send the Canada one-pager.", actedDay: "2026-09-20" }],
+  acted: [
+    { term: "CANADA ASK", act: "Send the Canada one-pager.", actedDay: "2026-09-20" },
+  ],
   touch: { who: "Pat Lee", day: "2026-09-22", kind: "theirs", record: "record" },
-  touchCite: { from: "record", day: "2026-09-22", who: "Pat Lee", how: "REPLY", text: "Can we talk Mexico?" },
+  touchCite: {
+    from: "record",
+    day: "2026-09-22",
+    who: "Pat Lee",
+    how: "REPLY",
+    text: "Can we talk Mexico?",
+  },
   score: 90,
 });
 

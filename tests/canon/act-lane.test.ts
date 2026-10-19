@@ -1607,9 +1607,8 @@ describe("every acted gem keeps its ↺ in THE SIGNAL's fold (A8.5)", () => {
   });
 
   test("the fold lists each acted gem with its ↺ while another gem leads the ACT cell", async () => {
-    const { default: SecondRecordPanel } = await import(
-      "../../src/app/accounts/second-record-panel"
-    );
+    const { default: SecondRecordPanel } =
+      await import("../../src/app/accounts/second-record-panel");
     const taken: string[] = [];
     const acted = [
       { term: "CANADA ASK", act: "Send the Canada one-pager.", actedDay: "2026-10-06" },
@@ -1623,9 +1622,9 @@ describe("every acted gem keeps its ↺ in THE SIGNAL's fold (A8.5)", () => {
         onTakeBack: (t: string) => taken.push(t),
       }),
     );
-    const lines = [
-      ...html.matchAll(/<div class="srActedLine">([\s\S]*?)<\/div>/g),
-    ].map((m) => textOf(m[1]));
+    const lines = [...html.matchAll(/<div class="srActedLine">([\s\S]*?)<\/div>/g)].map(
+      (m) => textOf(m[1]),
+    );
     assert.deepEqual(lines, [
       "✓ Send the Canada one-pager. ◆ CANADA ASK · ACTED 10/06 ↺",
       "✓ Answer Pat about Mexico. ◆ MEXICO ASK · ACTED 10/02 ↺",
@@ -1638,15 +1637,23 @@ describe("every acted gem keeps its ↺ in THE SIGNAL's fold (A8.5)", () => {
     );
     assert.ok(ro.includes("CANADA ASK") && !ro.includes("↺"));
     // The sheet hands the fold the row's list and the take-back.
-    const client = readFileSync(join(process.cwd(), "src/app/accounts-client.tsx"), "utf8");
+    const client = readFileSync(
+      join(process.cwd(), "src/app/accounts-client.tsx"),
+      "utf8",
+    );
     assert.match(client, /acted=\{a\.acted\}/);
-    assert.match(client, /canWrite \? \(term\) => tickUnacted\(a\.id, term\) : undefined/);
+    assert.match(
+      client,
+      /canWrite \? \(term\) => tickUnacted\(a\.id, term\) : undefined/,
+    );
   });
 
   test("with nothing live to lead, THE SIGNAL still opens the acted gems", async () => {
     const row = await sheetRow({
       second: { gems: [], act: null, verdict: "", supportTotal: 0, spikeDay: "" },
-      acted: [{ term: "MEXICO ASK", act: "Answer Pat about Mexico.", actedDay: "2026-10-02" }],
+      acted: [
+        { term: "MEXICO ASK", act: "Answer Pat about Mexico.", actedDay: "2026-10-02" },
+      ],
       actedDay: "2026-10-02",
       actedTerm: "MEXICO ASK",
     });

@@ -40,19 +40,30 @@ function clean(links: { text: string; before: string; after: string }[], where: 
   assert.ok(links.length > 0, `${where} links no account by name`);
   for (const l of links) {
     assert.doesNotMatch(l.text, GLYPH, `${where}: ${l.text}`);
-    for (const c of [l.before, l.after]) assert.ok(c === "none" || c === "normal" || c === '""', `${where}: ${l.text} draws ${c}`);
+    for (const c of [l.before, l.after])
+      assert.ok(
+        c === "none" || c === "normal" || c === '""',
+        `${where}: ${l.text} draws ${c}`,
+      );
   }
 }
 
 describe("A11.2 · account names are plain links on every face", () => {
   test("the HomeRoom's rows", async () => {
-    const page = await mount(browser, "tests/browser/fixtures/room.tsx", { returns: { chuteBook: [] } });
-    clean(await accountLinks(page, ["Simploy", "Regis HR Group", "Axcet HR"]), "the HomeRoom");
+    const page = await mount(browser, "tests/browser/fixtures/room.tsx", {
+      returns: { chuteBook: [] },
+    });
+    clean(
+      await accountLinks(page, ["Simploy", "Regis HR Group", "Axcet HR"]),
+      "the HomeRoom",
+    );
     await page.close();
   });
 
   test("Groundwork's stage", async () => {
-    const page = await mount(browser, "tests/browser/fixtures/groundwork.tsx", { now: "2026-07-30T15:00:00Z" });
+    const page = await mount(browser, "tests/browser/fixtures/groundwork.tsx", {
+      now: "2026-07-30T15:00:00Z",
+    });
     clean(await accountLinks(page, ["On Stage"]), "Groundwork");
     await page.close();
   });
@@ -66,7 +77,14 @@ describe("A11.2 · account names are plain links on every face", () => {
   test("the Intranet's passage drawer, opened by a drill from a digest count", async () => {
     const page = await mount(browser, "tests/browser/fixtures/intranet.tsx", {
       returns: {
-        intranetClaimLines: [{ id: "cl1", text: "We will send the census Friday.", speaker: "Pat Lee", saidAt: "2026-10-07T15:00:00Z" }],
+        intranetClaimLines: [
+          {
+            id: "cl1",
+            text: "We will send the census Friday.",
+            speaker: "Pat Lee",
+            saidAt: "2026-10-07T15:00:00Z",
+          },
+        ],
         intranetPassage: {
           ok: true,
           before: "Pat said ",
