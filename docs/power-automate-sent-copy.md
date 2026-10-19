@@ -62,3 +62,26 @@ It routes by the sender alone, by their exact address or their company's domain.
      ```
 3. **Save**.
 4. **Test it.** Have someone at a book account reply to you, or wait for the next real reply. The run shows green checks, and the account's record shows the reply as theirs.
+
+## The calendar copy (third flow)
+
+Each evening, the day's meetings with an account's people file on that account as meetings held. A meeting on file moves the account from Groundwork to the HomeRoom for two weeks, and the HomeRoom asks for the recap. An event that has not started yet, a cancelled or declined one, or one with only our own side or people outside the book files nothing.
+
+1. Left rail **+ Create** → **Scheduled cloud flow**. Name it `Calendar copy to Groundwork`. Set **Repeat every** to `1` **Day**, then **Create**.
+2. Click the **Recurrence** card. Under **Advanced parameters** add **Time zone** = `(UTC-06:00) Central Time (US & Canada)`, **At these hours** = `17`, **At these minutes** = `45`.
+3. Under the trigger: **+** → **Add an action** → **Get calendar view of events (V3)** (Office 365 Outlook).
+   - **Calendar Id:** Calendar.
+   - **Start Time:** click the box → **fx** → type `addHours(utcNow(), -12)` → **Add**.
+   - **End Time:** **fx** → `utcNow()` → **Add**.
+4. Under it: **+** → **Add an action** → **Send an email (V2)** (Office 365 Outlook). When you insert the first field from the calendar view, Power Automate wraps the email in a **For each** loop on its own; that is expected, one email per event.
+   - **To:** the inbound address.
+   - **Subject:** `[GW-CAL] ` then the calendar view's **Subject**.
+   - **Body**, one line each, every `{…}` a field from **Get calendar view of events (V3)**:
+     ```
+     From: {Organizer}
+     Sent: {Start time}
+     To: {Required attendees}
+     Cc: {Optional attendees}
+     Subject: {Subject}
+     ```
+5. **Save**. To test it now, click **Test** → **Manually** → **Test**: it runs at once on the last twelve hours. The field names above are the connector's usual ones; if one reads differently in your list, pick the closest match and tell Claude what it was called.

@@ -39,7 +39,7 @@ import { grabsFromSalesNavEmail } from "@/lib/ingest/salesnav-email";
 import { fileGrabTexts } from "@/lib/ingest/grab-server";
 import { hasDatabaseEnv } from "@/lib/db";
 import { relayedCopy } from "@/lib/sent-copy";
-import { fileSentCopy } from "@/lib/sent-copy-file";
+import { fileCalendarCopy, fileSentCopy } from "@/lib/sent-copy-file";
 
 export const dynamic = "force-dynamic";
 // A backfill batch files dozens of accounts one after another.
@@ -113,15 +113,17 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ ok: false, reason: "Unreadable body." }, { status: 400 });
   }
-  // The relay (2026-10-19): a sent copy or an inbox copy a flow mailed to
-  // this inbound address, its subject tagged, files as the message it
-  // carries (src/lib/sent-copy.ts), never as alerts.
+  // The relay (2026-10-19): a sent copy, an inbox copy or a calendar event
+  // a flow mailed to this inbound address, its subject tagged, files as what
+  // it carries (src/lib/sent-copy.ts), never as alerts.
   const relayed = fields ? relayedCopy(fields) : null;
   if (relayed) {
     try {
       return NextResponse.json({
         relay: relayed.kind,
-        ...(await fileSentCopy(relayed.copy, relayed.kind)),
+        ...(relayed.kind === "calendar"
+          ? await fileCalendarCopy(relayed.copy)
+          : await fileSentCopy(relayed.copy, relayed.kind)),
       });
     } catch {
       return NextResponse.json({ ok: false, reason: "Filing failed." }, { status: 500 });

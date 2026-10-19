@@ -30,6 +30,9 @@ import {
 } from "../src/lib/groundwork/drafter";
 import { cronOk } from "../src/lib/cron";
 import {
+  RELAY_CAL_TAG,
+  calendarMeeting,
+  routeCalendarCopy,
   RELAY_INBOX_TAG,
   RELAY_SENT_TAG,
   relayedCopy,
@@ -42,6 +45,7 @@ import {
   sentCopyText,
 } from "../src/lib/sent-copy";
 import type { RouteAccount } from "../src/lib/route-capture";
+import { isMeetingNote } from "../src/lib/intel/meeting";
 
 const NOW = new Date("2026-10-19T15:00:00Z");
 const MK = "001F000000w38ENGAG:wire-trigger";
@@ -487,5 +491,104 @@ describe("the sent copy", () => {
 
   test("a post with no sent message in it is not one", () => {
     assert.equal(sentCopyOf({ Subject: "x" }), null);
+  });
+});
+
+describe("the calendar relay", () => {
+  const ROSTER: RouteAccount[] = [
+    {
+      id: "ENG",
+      name: "Engage PEO",
+      emails: ["cristina@engage.example"],
+      domains: ["engage.example"],
+    },
+  ];
+  const NOW_CAL = new Date("2026-10-19T22:45:00Z");
+  const event = (over: Partial<Parameters<typeof calendarMeeting>[0]> = {}) => ({
+    from: "antaeus.coe@prismhr.com",
+    to: "cristina@engage.example; pat@vensure.com",
+    cc: "",
+    subject: "Follow-up: Canada hires",
+    sent: "2026-10-19T19:00:00Z",
+    body: "",
+    ...over,
+  });
+
+  test("a tagged event reads as a calendar relay", () => {
+    const html = [
+      "<p>From: antaeus.coe@prismhr.com</p>",
+      "<p>Sent: 2026-10-19T19:00:00Z</p>",
+      "<p>To: cristina@engage.example</p>",
+      "<p>Cc: </p>",
+      "<p>Subject: Follow-up: Canada hires</p>",
+    ].join("");
+    const r = relayedCopy({
+      Subject: `${RELAY_CAL_TAG} Follow-up: Canada hires`,
+      HtmlBody: html,
+    });
+    assert.equal(r?.kind, "calendar");
+    assert.equal(r?.copy.sent, "2026-10-19T19:00:00Z");
+  });
+
+  test("it routes by the attendees, our own side never, and keeps the matched people", () => {
+    const r = routeCalendarCopy(event(), ROSTER);
+    assert.equal(r?.hit.id, "ENG");
+    assert.deepEqual(r?.emails, ["cristina@engage.example"]);
+    assert.equal(routeCalendarCopy(event({ to: "pat@vensure.com" }), ROSTER), null);
+  });
+
+  test("an event that started files as a meeting held, whatever its title says", () => {
+    const m = calendarMeeting(
+      event(),
+      [{ email: "cristina@engage.example", name: "Cristina Bell" }],
+      NOW_CAL,
+      "Antaeus Coe",
+    );
+    assert.ok(!("skip" in m));
+    if ("skip" in m) return;
+    assert.match(
+      m.body,
+      /^✔ OL Oct 19, 2:00 PM — Meeting held · Antaeus Coe → Cristina Bell\n/,
+    );
+    assert.equal(m.at.toISOString(), "2026-10-19T19:00:00.000Z");
+    // The title says "Follow-up"; the meeting read still counts it.
+    assert.equal(isMeetingNote({ body: m.body, source: "outlook" }), true);
+    // A plain note about a follow-up meeting is still not a meeting.
+    assert.equal(
+      isMeetingNote({
+        body: "✔ SF Oct 19 — Follow-up on the meeting · Antaeus Coe",
+        source: "sf",
+      }),
+      false,
+    );
+  });
+
+  test("an event not started yet, cancelled or declined files nothing", () => {
+    const people = [{ email: "cristina@engage.example", name: "Cristina Bell" }];
+    assert.ok(
+      "skip" in
+        calendarMeeting(event({ sent: "2026-10-20T15:00:00Z" }), people, NOW_CAL, "A"),
+    );
+    assert.ok(
+      "skip" in
+        calendarMeeting(
+          event({ subject: "Canceled: Canada hires" }),
+          people,
+          NOW_CAL,
+          "A",
+        ),
+    );
+    assert.ok(
+      "skip" in
+        calendarMeeting(
+          event({ subject: "Declined: Canada hires" }),
+          people,
+          NOW_CAL,
+          "A",
+        ),
+    );
+    assert.ok(
+      "skip" in calendarMeeting(event({ sent: "not a date" }), people, NOW_CAL, "A"),
+    );
   });
 });

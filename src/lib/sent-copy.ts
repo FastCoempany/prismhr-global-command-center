@@ -96,20 +96,24 @@ export function forwardedOriginal(body: string): SentCopy | null {
 export const RELAY_SENT_TAG = "[GW-SENT]";
 /** The subject tag a relayed inbox copy carries. */
 export const RELAY_INBOX_TAG = "[GW-IN]";
+/** The subject tag a relayed calendar event carries. */
+export const RELAY_CAL_TAG = "[GW-CAL]";
+
+export type RelayKind = "sent" | "inbox" | "calendar";
 
 /** Which relay a post is, read from its subject's tag, and the message it
  *  carries. Null when the post is not a relay or carries no header block. */
-export function relayedCopy(
-  f: Fields,
-): { kind: "sent" | "inbox"; copy: SentCopy } | null {
+export function relayedCopy(f: Fields): { kind: RelayKind; copy: SentCopy } | null {
   const subject = text(get(f, "Subject", "subject"))
     .trim()
     .toUpperCase();
-  const kind = subject.startsWith(RELAY_SENT_TAG)
+  const kind: RelayKind | null = subject.startsWith(RELAY_SENT_TAG)
     ? "sent"
     : subject.startsWith(RELAY_INBOX_TAG)
       ? "inbox"
-      : null;
+      : subject.startsWith(RELAY_CAL_TAG)
+        ? "calendar"
+        : null;
   if (!kind) return null;
   const plain = text(get(f, "TextBody", "body-plain", "text", "plain", "stripped-text"));
   const html = text(get(f, "HtmlBody", "body-html", "html", "Body", "body"));
@@ -224,4 +228,77 @@ export function routeInboxCopy(
   const from = addressesIn(c.from)[0];
   if (!from || ROLE_SENDER.test(from.split("@")[0] ?? "")) return null;
   return routeAddress(from, roster);
+}
+
+// ── The calendar copy (2026-10-19) ───────────────────────────────────────
+// A daily flow at the day's end relays each calendar event that started
+// today, tagged [GW-CAL]: the organizer on the From line, the start on the
+// Sent line, the attendees on To and Cc. An event with an account's people
+// files on that account as a meeting held, so the live-motion exclusion,
+// the touch clock and the recap read it with no note typed. It routes by
+// the attendees, as the sent copy routes by recipients, and our own side
+// never routes. An event that has not started yet, or one the calendar
+// marks cancelled or declined, is not a meeting held and files nothing.
+
+const CANCELLED_RE = /^\s*(cancel+ed|declined)\s*:/i;
+
+const clock = (d: Date): string =>
+  d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Chicago",
+  });
+
+/** The record row a calendar event files as: a logged meeting (✔) on the
+ *  event's own start, with the people the account matched. Its head names
+ *  the meeting and nothing else, so the meeting read never mistakes the
+ *  event's own title ("Follow-up", "Prep") for a meeting in doubt; the
+ *  title rides on the line beneath. Null, with the reason, when the event
+ *  is not a meeting held. */
+export function calendarMeeting(
+  c: SentCopy,
+  people: readonly { email: string; name: string }[],
+  now: Date,
+  operator: string,
+): { at: Date; body: string; actors: string; recipients: string } | { skip: string } {
+  if (CANCELLED_RE.test(c.subject))
+    return { skip: "Cancelled or declined. Nothing filed." };
+  // The calendar view hands its times in UTC without a zone mark
+  // ("2026-10-19T19:00:00.0000000"); read a bare one as UTC.
+  const raw = c.sent.trim();
+  const at = new Date(
+    /^\d{4}-\d{2}-\d{2}T[\d:.]+$/.test(raw)
+      ? `${raw.replace(/(\.\d{3})\d+$/, "$1")}Z`
+      : raw,
+  );
+  if (Number.isNaN(at.getTime())) return { skip: "No start time. Nothing filed." };
+  if (at.getTime() > now.getTime()) return { skip: "Not started yet. Nothing filed." };
+  const names = people.map((p) => p.name || p.email).filter(Boolean);
+  const who = names[0] ?? "";
+  const actors = `${operator} → ${who}${names.length > 1 ? ` +${names.length - 1}` : ""}`;
+  const body = [
+    `✔ OL ${clock(at)} — Meeting held · ${actors}`,
+    c.subject ? `On the calendar: ${c.subject}` : "",
+    `With: ${names.join(", ")}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return { at, body, actors, recipients: names.join(", ") };
+}
+
+/** The account a calendar event belongs to and the attendees that placed
+ *  it there: the attendees routed one by one, exactly one account among
+ *  them, our own side never. */
+export function routeCalendarCopy(
+  c: SentCopy,
+  roster: readonly RouteAccount[],
+): { hit: RouteHit; emails: string[] } | null {
+  const hit = routeSentCopy(c, roster);
+  if (!hit) return null;
+  const emails = addressesIn(`${c.to}; ${c.cc}`).filter(
+    (a) => routeAddress(a, roster)?.id === hit.id,
+  );
+  return { hit, emails };
 }
