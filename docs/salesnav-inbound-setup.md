@@ -21,9 +21,8 @@ Every Sales Navigator alert email ends up in the same place, whichever door it c
 
 ## Connecting the automatic door
 
-1. **Ask PrismHR IT first.** Forwarding work mail to an outside service, or connecting a flow to your mailbox, is usually covered by policy. The safest route to ask about is a Power Automate flow inside Microsoft 365: when an email arrives from LinkedIn with "Sales Navigator" in it, it sends an HTTP POST. The mail never leaves 365 except as that one post to the app. Note that the HTTP action is a premium Power Automate connector.
-2. **Set the secret in Vercel.** Add `SALESNAV_INBOUND_SECRET` with a long random value (32+ characters) under the project's environment variables, then redeploy. With it unset, or shorter than 16 characters, the route refuses everything.
-3. **Point the sender at the route:**
+1. **Set the secret in Vercel.** Add `SALESNAV_INBOUND_SECRET` with a long random value (32+ characters) under the project's environment variables, then redeploy. With it unset, or shorter than 16 characters, the route refuses everything.
+2. **Point the sender at the route:**
    - URL: `https://<the app>/inbound/salesnav`
    - Header: `Authorization: Bearer <the secret>`. A service that can only call a bare URL can use `?key=<the secret>` instead.
    - Body: any of these shapes:
@@ -31,7 +30,7 @@ Every Sales Navigator alert email ends up in the same place, whichever door it c
      - Postmark's inbound JSON
      - SendGrid's or Mailgun's form post
      - the raw email as text
-4. **Test it with one real alert email.** The route answers with counts only: how many accounts it filed to, how many rows were already on file, and how many named no account. Check that the Groundwork move shows up on the right account.
+3. **Test it with one real alert email.** The route answers with counts only: how many accounts it filed to, how many rows were already on file, and how many named no account. Check that the Groundwork move shows up on the right account.
 
 ## Forward or redirect
 
