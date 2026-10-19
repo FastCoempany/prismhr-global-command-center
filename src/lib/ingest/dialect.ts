@@ -108,6 +108,8 @@ export const SOURCES = {
   pipeline: "pipeline",
   mailTemplate: "mail-template",
   spine: "snav", // the Sales Nav spine's ✕ and mute marks (snav: notes)
+  stageDraft: "stage-draft", // Groundwork's drafts on the stage (stagedraft: notes)
+  sendWait: "send-wait", // Send's marker until the sent copy comes back (sendwait: notes)
 } as const;
 
 export type Source = (typeof SOURCES)[keyof typeof SOURCES];

@@ -7,12 +7,17 @@ import { timingSafeEqual } from "node:crypto";
 import { emlToPaste, msgToPaste } from "@/lib/paste-files";
 
 /** Whether the request carries the configured secret. False when none is
- *  configured: an unset secret opens nothing. */
-export function secretOk(req: {
-  headers: { get(name: string): string | null };
-  nextUrl: { searchParams: { get(name: string): string | null } };
-}): boolean {
-  const want = process.env.SALESNAV_INBOUND_SECRET ?? "";
+ *  configured: an unset secret opens nothing. Each inbound route names its
+ *  own secret: the Sales Nav alerts' by default, the sent copy's
+ *  SENT_INBOUND_SECRET. */
+export function secretOk(
+  req: {
+    headers: { get(name: string): string | null };
+    nextUrl: { searchParams: { get(name: string): string | null } };
+  },
+  envName: "SALESNAV_INBOUND_SECRET" | "SENT_INBOUND_SECRET" = "SALESNAV_INBOUND_SECRET",
+): boolean {
+  const want = process.env[envName] ?? "";
   if (want.length < 16) return false;
   const bearer = /^Bearer\s+(.+)$/i.exec(req.headers.get("authorization") ?? "")?.[1];
   const got =

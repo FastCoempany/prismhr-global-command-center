@@ -34,6 +34,18 @@ import {
   wireNoteBody,
 } from "@/lib/groundwork/wire";
 
+import { loadGroundworkDay } from "@/lib/groundwork/load";
+import { draftMove, writeDraftNote } from "@/lib/groundwork/draft-run";
+import { moveKey } from "@/lib/groundwork/day";
+import {
+  DRAFT_KEEP_DAYS,
+  SEND_WAIT_NS,
+  STAGE_DRAFT_NS,
+  draftForMove,
+  renderStageDraft,
+} from "@/lib/groundwork/stage-draft";
+import { userDayKey } from "@/lib/tz";
+
 const WIRE_KEEP_DAYS = 30;
 
 async function requireWrite() {
@@ -135,6 +147,17 @@ export async function unWork(mk: string, accountId: string): Promise<void> {
   } catch {
     return;
   }
+  // Send's marker goes with its stamp, so a taken-back send stops waiting.
+  if (getPeo(accountId))
+    await prisma.accountNote
+      .deleteMany({
+        where: {
+          accountId: `${SEND_WAIT_NS}${accountId}`,
+          body: mk,
+          createdAt: { gte: new Date(Date.now() - 86_400_000) },
+        },
+      })
+      .catch(() => undefined);
   revalidatePath("/groundwork");
 }
 
@@ -338,5 +361,115 @@ export async function muteAlerts(group: string): Promise<void> {
 export async function unmuteAlerts(group: string): Promise<void> {
   if (!(await requireWrite()) || !isMutable(group)) return;
   await spineUnmark(SPINE_MUTE, group);
+  revalidatePath("/groundwork");
+}
+
+// ── The draft on the stage (ship order 2026-10-19) ──────────────────────
+// Redraft writes a fresh draft for the move on stage; an edit saves as the
+// operator's own hand; Send stamps the move and leaves Send's marker until
+// the sent copy comes back through the inbound route. None of these files
+// anything to the record: what went out is the record, by the sent copy.
+
+const MK_RE = /^[A-Za-z0-9]{6,40}:[a-z-]{3,40}$/;
+
+/** The account's draft notes: the move's newest, with older ones past the
+ *  keep window cleared as a new one lands. */
+async function stageDrafts(accountId: string) {
+  return getPrisma()
+    .accountNote.findMany({
+      where: { accountId: `${STAGE_DRAFT_NS}${accountId}` },
+      select: { body: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    })
+    .then((rows) =>
+      rows.map((r) => ({ body: r.body, createdAt: r.createdAt.toISOString() })),
+    )
+    .catch(() => []);
+}
+
+async function clearStaleDrafts(accountId: string, now: Date): Promise<void> {
+  await getPrisma()
+    .accountNote.deleteMany({
+      where: {
+        accountId: `${STAGE_DRAFT_NS}${accountId}`,
+        createdAt: { lt: new Date(now.getTime() - DRAFT_KEEP_DAYS * 86_400_000) },
+      },
+    })
+    .catch(() => undefined);
+}
+
+export async function redraftStage(accountId: string, mk: string): Promise<void> {
+  if (!(await requireWrite()) || !getPeo(accountId) || !MK_RE.test(mk)) return;
+  const now = new Date();
+  try {
+    const day = await loadGroundworkDay(now);
+    const item = day.rankedAll.find((q) => moveKey(q) === mk);
+    if (!item) return;
+    await draftMove(day, item, now);
+    await clearStaleDrafts(accountId, now);
+  } catch {
+    return;
+  }
+  revalidatePath("/groundwork");
+}
+
+/** The operator's edit, kept: the pad never eats your words. */
+async function keepEdit(
+  accountId: string,
+  mk: string,
+  subject: string,
+  body: string,
+  now: Date,
+): Promise<void> {
+  const prior = draftForMove(await stageDrafts(accountId), mk, now);
+  if (prior && prior.subject === subject.trim() && prior.body === body.trim()) return;
+  await writeDraftNote(
+    accountId,
+    renderStageDraft({
+      day: userDayKey(now),
+      mk,
+      by: "hand",
+      to: prior?.to ?? "",
+      email: prior?.email ?? "",
+      subject: subject.slice(0, 160),
+      uses: prior?.uses ?? [],
+      body: body.slice(0, 6000),
+    }),
+  ).catch(() => undefined);
+}
+
+export async function saveStageDraft(
+  accountId: string,
+  mk: string,
+  subject: string,
+  body: string,
+): Promise<void> {
+  if (!(await requireWrite()) || !getPeo(accountId) || !MK_RE.test(mk)) return;
+  if (!(body ?? "").trim()) return;
+  await keepEdit(accountId, mk, subject ?? "", body, new Date());
+}
+
+/** Send: the edit is kept, the move is stamped, and Send's marker waits for
+ *  the sent copy. The browser opens the draft in Outlook itself. */
+export async function sendFromStage(
+  accountId: string,
+  mk: string,
+  subject: string,
+  body: string,
+): Promise<void> {
+  if (!(await requireWrite()) || !getPeo(accountId) || !MK_RE.test(mk)) return;
+  const now = new Date();
+  if ((body ?? "").trim()) await keepEdit(accountId, mk, subject ?? "", body, now);
+  await createAccountNoteRow({
+    accountId: `${SEND_WAIT_NS}${accountId}`,
+    kind: "account",
+    body: mk,
+    door: "hand",
+    lane: "background",
+    actors: "",
+    source: SOURCES.sendWait,
+  }).catch(() => undefined);
+  await writeStamp(groundworkDoneKey(now, mk), now);
   revalidatePath("/groundwork");
 }

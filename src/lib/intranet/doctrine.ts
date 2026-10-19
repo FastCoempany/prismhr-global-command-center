@@ -52,6 +52,9 @@ export const MODEL_REFUTE = OPUS;
 export const MODEL_WIRE = OPUS;
 /** The partner room's follow-up draft (src/app/partners/actions.ts). */
 export const MODEL_PARTNER_DRAFT = OPUS;
+/** Groundwork's stage drafts, before the send band and on Redraft
+ *  (src/lib/groundwork/drafter.ts). */
+export const MODEL_STAGE_DRAFT = OPUS;
 
 // ── the thresholds ──────────────────────────────────────────────────────────
 /** Documents that must want a proposed topic before it joins the rail. */
