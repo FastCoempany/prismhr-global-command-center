@@ -21,7 +21,7 @@ Your Power Automate license has no Premium connectors, so the flow uses the rela
 3. **Build the flow** at make.powerautomate.com:
    1. Left rail **+ Create** → **Automated cloud flow**. Name it `Sent copy to Groundwork`. In **Choose your flow's trigger**, search `When a new email arrives (V3)`, pick the **Office 365 Outlook** one, then **Create**.
    2. Click the trigger card. Under **Advanced parameters** choose **Folder**, then pick **Sent Items** with the folder icon.
-   3. Under the trigger click **+** → **Add an action** → search `Condition` → **Condition** (Control). Left box: click it, choose the lightning icon, pick **Subject**. Middle: **does not start with**. Right box: `[GW-SENT]`. This keeps the relay's own copy from looping.
+   3. Under the trigger click **+** → **Add an action** → search `Condition` → **Condition** (Control). Left box: click it, choose the lightning icon, pick **Subject**. Middle: **does not start with**. Right box: `[GW-`. Every relay's own copy lands in Sent Items too, and this keeps the flow from relaying it again.
    4. In the **True** branch click **+** → **Add an action** → search `Send an email (V2)` → the **Office 365 Outlook** one:
       - **To:** the inbound address from step 2.
       - **Subject:** type `[GW-SENT] `, then the lightning icon → **Subject**.
@@ -40,3 +40,25 @@ Your Power Automate license has no Premium connectors, so the flow uses the rela
 ## When the copy never comes back
 
 The wing keeps saying **SENT · WAITING ON THE COPY** for that move. Its ↺ takes the send back, and the move returns to the queue. A sent copy that the misfile guard holds files nothing; the route's answer says `held`, and Worked it still stamps the move by hand.
+
+## The inbox copy (second flow)
+
+The same relay, for mail you receive. An email from an account's people files on that account, so a reply owed, ↩ REPLIED and the move from Groundwork to the HomeRoom all read it with no drag to the Chute.
+
+It routes by the sender alone, by their exact address or their company's domain. Mail from our own side (prismhr.com, vensure.com), a personal address, or a role or bulk sender (noreply, newsletter, marketing, info and the like) files nothing. A company's blast is never their voice.
+
+1. Left rail **+ Create** → **Automated cloud flow**. Name it `Inbox copy to Groundwork`. Trigger: search `When a new email arrives (V3)`, pick the **Office 365 Outlook** one, then **Create**. Leave **Folder** as **Inbox**.
+2. Under the trigger click **+** → **Add an action** → **Send an email (V2)** (Office 365 Outlook). No condition is needed here.
+   - **To:** the same inbound address as the sent-copy flow.
+   - **Subject:** type `[GW-IN] `, then the lightning icon → **Subject**.
+   - **Body:** the same six lines as the sent-copy flow:
+     ```
+     From: {From}
+     Sent: {Received Time}
+     To: {To}
+     Cc: {CC}
+     Subject: {Subject}
+     {Body}
+     ```
+3. **Save**.
+4. **Test it.** Have someone at a book account reply to you, or wait for the next real reply. The run shows green checks, and the account's record shows the reply as theirs.

@@ -30,7 +30,10 @@ import {
 } from "../src/lib/groundwork/drafter";
 import { cronOk } from "../src/lib/cron";
 import {
+  RELAY_INBOX_TAG,
   RELAY_SENT_TAG,
+  relayedCopy,
+  routeInboxCopy,
   addressesIn,
   forwardedOriginal,
   relayedSentCopy,
@@ -419,8 +422,67 @@ describe("the sent copy", () => {
   test("the Sales Nav route hands a tagged email to the sent copy before it reads alerts", () => {
     const src = readFileSync("src/app/inbound/salesnav/route.ts", "utf8");
     const post = src.slice(src.indexOf("export async function POST"));
-    assert.ok(post.indexOf("relayedSentCopy(") > 0);
-    assert.ok(post.indexOf("relayedSentCopy(") < post.indexOf("grabsFromSalesNavEmail("));
+    assert.ok(post.indexOf("relayedCopy(") > 0);
+    assert.ok(post.indexOf("relayedCopy(") < post.indexOf("grabsFromSalesNavEmail("));
+  });
+
+  test("a send to our own side routes nothing, even when the book holds one of ours", () => {
+    const roster: RouteAccount[] = [
+      ...ROSTER,
+      {
+        id: "OURS",
+        name: "Has A Colleague",
+        emails: ["andrea@vensure.com"],
+        domains: ["vensure.com"],
+      },
+    ];
+    const route = (to: string) =>
+      routeSentCopy({ from: "", to, cc: "", subject: "", sent: "", body: "" }, roster)
+        ?.id ?? null;
+    assert.equal(route("andrea@vensure.com"), null);
+    assert.equal(route("pat@vensure.com"), null);
+    assert.equal(route("andrea@vensure.com; cristina@engage.example"), "ENG");
+  });
+
+  test("the inbox relay reads as the message it carries, tagged apart from the sent relay", () => {
+    const html = [
+      "<p>From: Cristina Bell &lt;cristina@engage.example&gt;</p>",
+      "<p>Sent: 2026-10-19T15:02:00+00:00</p>",
+      "<p>To: antaeus.coe@vensure.com</p>",
+      "<p>Subject: RE: Your news on the 15th</p>",
+      "<p>Thursday works. Two clients are asking about Canada.</p>",
+    ].join("");
+    const r = relayedCopy({
+      Subject: `${RELAY_INBOX_TAG} RE: Your news on the 15th`,
+      HtmlBody: html,
+    });
+    assert.equal(r?.kind, "inbox");
+    assert.equal(r?.copy.from, "Cristina Bell <cristina@engage.example>");
+    assert.equal(relayedCopy({ Subject: "RE: Your news", HtmlBody: html }), null);
+    assert.equal(
+      relayedSentCopy({ Subject: `${RELAY_INBOX_TAG} x`, HtmlBody: html }),
+      null,
+    );
+  });
+
+  test("an inbox copy routes by its sender alone, never a role sender, never our side", () => {
+    const route = (from: string, to = "antaeus.coe@vensure.com") =>
+      routeInboxCopy({ from, to, cc: "", subject: "", sent: "", body: "" }, ROSTER)?.id ??
+      null;
+    assert.equal(route("Cristina Bell <cristina@engage.example>"), "ENG");
+    assert.equal(route("dana@armhr.example"), "ARM");
+    // A company's blast is machinery, never their voice.
+    for (const bulk of [
+      "noreply@armhr.example",
+      "newsletter@armhr.example",
+      "marketing@engage.example",
+      "info@engage.example",
+    ])
+      assert.equal(route(bulk), null, bulk);
+    assert.equal(route("pat@vensure.com"), null);
+    assert.equal(route("someone@gmail.com"), null);
+    // A colleague forwarding an account's mail routes by the colleague: nothing.
+    assert.equal(route("pat@prismhr.com", "cristina@engage.example"), null);
   });
 
   test("a post with no sent message in it is not one", () => {

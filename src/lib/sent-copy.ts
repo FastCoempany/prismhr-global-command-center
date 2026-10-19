@@ -94,16 +94,35 @@ export function forwardedOriginal(body: string): SentCopy | null {
 
 /** The subject tag a relayed sent copy carries. */
 export const RELAY_SENT_TAG = "[GW-SENT]";
+/** The subject tag a relayed inbox copy carries. */
+export const RELAY_INBOX_TAG = "[GW-IN]";
+
+/** Which relay a post is, read from its subject's tag, and the message it
+ *  carries. Null when the post is not a relay or carries no header block. */
+export function relayedCopy(
+  f: Fields,
+): { kind: "sent" | "inbox"; copy: SentCopy } | null {
+  const subject = text(get(f, "Subject", "subject"))
+    .trim()
+    .toUpperCase();
+  const kind = subject.startsWith(RELAY_SENT_TAG)
+    ? "sent"
+    : subject.startsWith(RELAY_INBOX_TAG)
+      ? "inbox"
+      : null;
+  if (!kind) return null;
+  const plain = text(get(f, "TextBody", "body-plain", "text", "plain", "stripped-text"));
+  const html = text(get(f, "HtmlBody", "body-html", "html", "Body", "body"));
+  const copy = forwardedOriginal(plain.trim() ? plain : htmlToText(html));
+  return copy ? { kind, copy } : null;
+}
 
 /** A relayed sent copy, read from the inbound service's post: the tagged
  *  subject, then the original's header block in the body. Null when the post
  *  is not one. */
 export function relayedSentCopy(f: Fields): SentCopy | null {
-  const subject = text(get(f, "Subject", "subject")).trim();
-  if (!subject.toUpperCase().startsWith(RELAY_SENT_TAG)) return null;
-  const plain = text(get(f, "TextBody", "body-plain", "text", "plain", "stripped-text"));
-  const html = text(get(f, "HtmlBody", "body-html", "html", "Body", "body"));
-  return forwardedOriginal(plain.trim() ? plain : htmlToText(html));
+  const r = relayedCopy(f);
+  return r?.kind === "sent" ? r.copy : null;
 }
 
 /** The post as the sent message it carries, or null when it carries none. */
@@ -137,9 +156,9 @@ export function sentCopyOf(f: Fields): SentCopy | null {
 
 /** The sent copy as the Outlook thread the paste pipeline reads: the head
  *  a dropped .eml becomes, over the message's own words. */
-export function sentCopyText(c: SentCopy): string {
+export function sentCopyText(c: SentCopy, label = "sent copy"): string {
   const head = [
-    "OUTLOOK THREAD — sent copy",
+    `OUTLOOK THREAD — ${label}`,
     c.from ? `From: ${c.from}` : "",
     c.to ? `To: ${c.to}` : "",
     c.cc ? `Cc: ${c.cc}` : "",
@@ -151,6 +170,20 @@ export function sentCopyText(c: SentCopy): string {
   return `${head}\n\n${c.body.trim()}`.trim();
 }
 
+/** Our own side's mail domains. A send to a colleague, or a colleague's
+ *  mail in the inbox, routes nothing, even when the book holds one of
+ *  ours as an account's contact. */
+export const OUR_DOMAINS: ReadonlySet<string> = new Set(["prismhr.com", "vensure.com"]);
+
+const ours = (addr: string): boolean => OUR_DOMAINS.has(addr.split("@")[1] ?? "");
+
+/** One address, routed by an exact address or a company domain alone. */
+function routeAddress(a: string, roster: readonly RouteAccount[]): RouteHit | null {
+  if (ours(a)) return null;
+  const { best } = routeCapture(a, [...roster]);
+  return best && (best.rung === "email" || best.rung === "domain") ? best : null;
+}
+
 /** The account the sent copy belongs to, read from its recipients alone and
  *  only by an address or a company domain: a body that mentions another
  *  company routes nothing, a send to our own side or a personal address
@@ -159,15 +192,36 @@ export function routeSentCopy(
   c: SentCopy,
   roster: readonly RouteAccount[],
 ): RouteHit | null {
-  const addrs = addressesIn(`${c.to}; ${c.cc}`);
   // Each address routes on its own: two accounts among the recipients is a
   // tie, whichever one an exact address would have favored.
   const hits = new Map<string, RouteHit>();
-  for (const a of addrs) {
-    const { best } = routeCapture(a, [...roster]);
-    if (!best || (best.rung !== "email" && best.rung !== "domain")) continue;
+  for (const a of addressesIn(`${c.to}; ${c.cc}`)) {
+    const best = routeAddress(a, roster);
+    if (!best) continue;
     const prior = hits.get(best.id);
     if (!prior || best.score > prior.score) hits.set(best.id, best);
   }
   return hits.size === 1 ? [...hits.values()][0] : null;
+}
+
+// ── The inbox copy (2026-10-19) ──────────────────────────────────────────
+// A second flow relays the inbox the same way, tagged [GW-IN]: mail from an
+// account's people files on that account, so replies owed, ↩ REPLIED and
+// the live-motion exclusion read it without a drag to the Chute. It routes
+// by the sender alone. A bulk or role sender (noreply, newsletters, the
+// marketing desk) is machinery and routes nothing: a company's blast is
+// never their voice, and it must not lift an account off the queue.
+
+const ROLE_SENDER =
+  /^(no-?reply|do-?not-?reply|donotreply|notifications?|notify|alerts?|news(letter)?s?|marketing|info|hello|team|support|help|billing|invoices?|accounts?|admin|mailer-daemon|postmaster|bounces?|updates|events?|webinars?|careers|jobs|hr|payroll|sales)([._+-].*)?$/i;
+
+/** The account an inbox copy belongs to: its sender's exact address or
+ *  company domain, never a role or bulk sender, never our own side. */
+export function routeInboxCopy(
+  c: SentCopy,
+  roster: readonly RouteAccount[],
+): RouteHit | null {
+  const from = addressesIn(c.from)[0];
+  if (!from || ROLE_SENDER.test(from.split("@")[0] ?? "")) return null;
+  return routeAddress(from, roster);
 }
