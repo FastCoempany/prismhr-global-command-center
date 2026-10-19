@@ -92,7 +92,7 @@ export function sentCopyOf(f: Fields): SentCopy | null {
   const subject = text(get(f, "Subject", "subject")).trim();
   const from = recipientsLine(get(f, "From", "from", "sender", "FromFull"));
   const sent = text(
-    get(f, "DateTimeSent", "sentDateTime", "sentAt", "Date", "date"),
+    get(f, "DateTimeSent", "sentDateTime", "receivedDateTime", "sentAt", "Date", "date"),
   ).trim();
   // A forward to an inbound mail service: the original is inside the body.
   if (/^\s*(fw|fwd):/i.test(subject) || !to) {

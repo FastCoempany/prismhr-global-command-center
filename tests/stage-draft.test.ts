@@ -325,6 +325,22 @@ describe("the sent copy", () => {
     );
   });
 
+  test("the flow's whole trigger body, as Outlook's V3 trigger hands it, reads as the sent message", () => {
+    const c = sentCopyOf({
+      from: "antaeus.coe@prismhr.com",
+      toRecipients: "cristina@engage.example",
+      ccRecipients: "",
+      subject: "Your news on the 15th",
+      body: "<html><body><p>Hi Cristina,</p></body></html>",
+      receivedDateTime: "2026-10-19T14:31:00+00:00",
+      isHtml: true,
+      hasAttachments: false,
+    });
+    assert.equal(c?.to, "cristina@engage.example");
+    assert.equal(c?.sent, "2026-10-19T14:31:00+00:00");
+    assert.equal(c?.body, "Hi Cristina,");
+  });
+
   test("Graph's recipient lists read as header lines", () => {
     const c = sentCopyOf({
       toRecipients: [

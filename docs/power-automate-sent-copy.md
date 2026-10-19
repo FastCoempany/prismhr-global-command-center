@@ -23,17 +23,7 @@ The route answers with counts and the routing rung only. It never sends anything
      - Method: `POST`
      - URI: `https://<the app>/inbound/sent`
      - Headers: `Authorization` = `Bearer <SENT_INBOUND_SECRET>`, `Content-Type` = `application/json`
-     - Body:
-       ```json
-       {
-         "From": "@{triggerOutputs()?['body/from']}",
-         "To": "@{triggerOutputs()?['body/toRecipients']}",
-         "Cc": "@{triggerOutputs()?['body/ccRecipients']}",
-         "Subject": "@{triggerOutputs()?['body/subject']}",
-         "DateTimeSent": "@{triggerOutputs()?['body/receivedDateTime']}",
-         "Body": "@{triggerOutputs()?['body/body']}"
-       }
-       ```
+     - Body: the trigger's whole output. Click in Body, choose the expression (fx) tab, type `triggerBody()` and press Add. The route reads Outlook's own field names (`from`, `toRecipients`, `ccRecipients`, `subject`, `body`, `receivedDateTime`), so nothing needs mapping.
 3. **Without the premium HTTP action**, use the flow's **Forward an email (V2)** action instead, sending to an inbound mail service address (the same kind of service the Sales Nav alerts use, see `docs/salesnav-inbound-setup.md`) whose webhook points at `https://<the app>/inbound/sent?key=<SENT_INBOUND_SECRET>`. The route finds the original's From, To and Subject inside the forward.
 4. **Test it.** Send one email to a contact at a book account. The flow's run history shows the route's answer: `filed` 1 and `rung` `email` or `domain`. Groundwork's left wing shows the stamp with its channel line.
 
