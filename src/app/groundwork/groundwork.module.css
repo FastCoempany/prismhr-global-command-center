@@ -1308,3 +1308,239 @@ a.wingItem:hover .wingNm {
     }
   }
 }
+
+/* ── The draft on the stage (ship order 2026-10-19) ─────────────────────── */
+.letterWrap {
+  max-width: 600px;
+  margin: 20px auto 0;
+  text-align: left;
+}
+.letter {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+}
+.letterRow {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  border-bottom: 1px solid var(--color-line);
+  align-items: center;
+}
+.letterLabel {
+  font: 600 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+  padding: 8px 12px;
+  border-right: 1px solid var(--color-line);
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+.letterTo {
+  padding: 7px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.letterTo small {
+  font-weight: 400;
+  color: var(--color-ink-disabled);
+  margin-left: 8px;
+}
+.letterSubject {
+  border: 0;
+  background: transparent;
+  font: 400 14px/1.4 var(--font-sans);
+  color: var(--color-ink);
+  padding: 8px 12px;
+  min-width: 0;
+  width: 100%;
+}
+.letterBody {
+  display: block;
+  width: 100%;
+  border: 0;
+  resize: vertical;
+  background: transparent;
+  font: 400 15px/1.6 var(--font-sans);
+  color: var(--color-ink);
+  padding: 14px 16px;
+}
+.letterSubject:focus,
+.letterBody:focus {
+  outline: none;
+  background: var(--color-surface-mist);
+}
+.letterFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 7px 12px;
+  border-top: 1px solid var(--color-line);
+  font: 600 9px/1.4 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+}
+.letterBy {
+  color: var(--ds-blue);
+}
+.letterFlag {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--color-ink-soft);
+}
+.letterFlag::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ds-amber);
+  transform: translateY(-1px);
+}
+.letterKey {
+  font: 600 9px/1 var(--font-mono);
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin-left: 8px;
+  opacity: 0.7;
+}
+.letterNote {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--color-ink-disabled);
+  margin: 10px 0 0;
+}
+.letterWrap .stgActs {
+  margin-top: 18px;
+}
+
+.runBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+.runKick,
+.runCount,
+.runToggle {
+  font: 600 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+}
+.runCount {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-soft);
+}
+.runToggle {
+  text-decoration: none;
+}
+.runToggle:hover {
+  color: var(--color-ink);
+}
+.runPips {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+.runPip {
+  flex: 1;
+  max-width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-line);
+}
+.pip_seen {
+  background: var(--ds-green);
+}
+.pip_sent {
+  background: var(--ds-amber);
+}
+.pip_now {
+  background: var(--color-ink);
+}
+
+.whyFold {
+  margin-top: 14px;
+}
+.whyFold > summary {
+  list-style: none;
+  cursor: pointer;
+  text-align: center;
+  font: 600 10px/1.4 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-disabled);
+}
+.whyFold > summary::-webkit-details-marker {
+  display: none;
+}
+.whyFold > summary:hover {
+  color: var(--color-ink);
+}
+.whyList {
+  border-top: 1px solid var(--color-line);
+  margin-top: 8px;
+  padding-top: 6px;
+}
+.whyLine {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--color-line);
+}
+.whyLabel {
+  font: 600 9.5px/1.7 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.whyMeaning {
+  color: var(--color-ink-soft);
+}
+.whyUse {
+  font: 600 9px/1.4 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-left: 6px;
+  color: var(--ds-green);
+}
+.whyUseOut {
+  color: var(--ds-ink-quiet);
+}
+.whyDoors {
+  margin-top: 10px;
+}
+
+@media (max-width: 560px) {
+  .whyLine {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .letterRow {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+  .letterTo small {
+    display: block;
+    margin-left: 0;
+  }
+}
+.wingDrafted {
+  font: 700 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ds-blue);
+}

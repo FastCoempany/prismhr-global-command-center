@@ -79,6 +79,20 @@ import {
 import styles from "./groundwork.module.css";
 
 import { loadGroundworkDay } from "@/lib/groundwork/load";
+import { recipientFor } from "@/lib/groundwork/draft-run";
+import { currentBand } from "@/lib/groundwork/bands";
+import {
+  STAGE_DRAFT_NS,
+  WAITING_ON_COPY,
+  collisionInstruction,
+  draftForMove,
+  draftedLine,
+  isEmailRule,
+  stageAction,
+  waitsToday,
+  whyLines,
+} from "@/lib/groundwork/stage-draft";
+import { StageLetter, type RunPip } from "./letter";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +112,7 @@ const monthDay = (iso: string): string => {
 export default async function GroundworkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ focus?: string; file?: string; wire?: string }>;
+  searchParams: Promise<{ focus?: string; file?: string; wire?: string; run?: string }>;
 }) {
   const access = await getAppAccess();
   if (access.status === "unauthenticated") {
@@ -241,6 +255,10 @@ export default async function GroundworkPage({
       : null;
   };
   const doneToday: DoneStamp[] = [];
+  // Send's markers today: a move Send stamped waits on its sent copy, and
+  // its line says so until the record holds today's send (the draft on the
+  // stage, ship order 2026-10-19).
+  const sendWaits = waitsToday(notesMap, dayKey);
   // The day's stamps, oldest first (todaysStamps): yesterday's never reach
   // today's wing.
   for (const st of todaysStamps(doneTimes, dayKey)) {
@@ -254,7 +272,10 @@ export default async function GroundworkPage({
       at: clockShort(st.at),
       // The channel line leads when a touch is filed, else the rule's
       // words (D27, ship order 2026-10-06): one choice, pinned (wingStamp).
-      sub: wingStamp(touch, st.ruleKey, facts),
+      sub:
+        sendWaits.get(st.accountId)?.has(st.mk) && !recordSendToday.has(st.accountId)
+          ? WAITING_ON_COPY
+          : wingStamp(touch, st.ruleKey, facts),
       mk: st.mk,
       accountId: st.accountId,
       // Every compression opens (the click-depth law): when the rule's words
@@ -290,13 +311,31 @@ export default async function GroundworkPage({
   // holds today answers the Channel Ask before it opens — the chip row never
   // shows for an account whose send is on file (recordSendToday, above).
 
-  const live = liveMoves(rankedAll, doneTimes, dayKey);
+  // The sent copy closes the loop (the draft on the stage): an email move
+  // whose account the record shows sent to today is worked, whether it went
+  // from the stage or straight from Outlook. The stamp is the record's, so
+  // it carries no take-back: a filed email is a fact, not a stamp.
+  const live = liveMoves(rankedAll, doneTimes, dayKey).filter((q) => {
+    if (!isEmailRule(q.ruleId) || !recordSendToday.has(q.accountId)) return true;
+    const touch = sendToday.get(q.accountId);
+    const name = getPeo(q.accountId)?.name;
+    if (name && touch)
+      doneToday.push({
+        name,
+        at: clockShort(touch.at),
+        sub: wingStamp(touch, q.ruleId, { ...ruleFacts(q.accountId), personName: "" }),
+        mk: "",
+        accountId: q.accountId,
+        opens: { lines: channelOpens(touch) ?? [] },
+      });
+    return false;
+  });
   const QUEUE_SHOW = 6;
   const liveTop = live.slice(0, QUEUE_SHOW);
   // The rest past the wing's six, opened by "And N more" (the click-depth law).
   const rest = live.slice(QUEUE_SHOW);
 
-  const { focus, file: fileParam, wire: wireParam } = await searchParams;
+  const { focus, file: fileParam, wire: wireParam, run: runParam } = await searchParams;
   const wireAll = wireParam === "all";
   const stageItem =
     (focus && liveTop.find((q) => q.accountId === focus)) || liveTop[0] || null;
@@ -482,7 +521,9 @@ export default async function GroundworkPage({
         });
   };
   const stageHref = (q: { accountId: string }, open?: boolean) =>
-    `/groundwork?focus=${encodeURIComponent(q.accountId)}${open ? "&file=1" : ""}`;
+    `/groundwork?focus=${encodeURIComponent(q.accountId)}${open ? "&file=1" : ""}${
+      runParam === "1" || runParam === "0" ? `&run=${runParam}` : ""
+    }`;
 
   // ── The Sales Nav spine (Concept C, ship order 2026-10-15) ──────────────
   // Every Sales Navigator alert on a book account in the last three months, read from
@@ -605,6 +646,213 @@ export default async function GroundworkPage({
     });
   }
 
+  // ── The draft on the stage (ship order 2026-10-19) ────────────────────
+  // An email move's stage is its letter: the draft written before the send
+  // band (or the rule's composed note until one lands), Send in Outlook as
+  // the one orange move, the chips folded under "Why this note" with their
+  // doors. During the send band the stage runs the drafts as a stack.
+  const chips =
+    stageItem && stageAccount
+      ? (() => {
+          const sr = stageSr;
+          const col = stageCollision;
+          // A colleague's thread in the operator's own record raises
+          // the flag with no export behind it (S-18), so the chip row
+          // can stand on the collision alone.
+          if (!sr && !col) return null;
+          const warm = sr ? intentWarm(sr, now) : null;
+          return (
+            <EvidenceChips
+              accountId={stageItem.accountId}
+              support={
+                sr?.support && sr.support.total > 0
+                  ? {
+                      total: sr.support.total,
+                      spikeDay: sr.support.spike?.day ?? "",
+                      spikeN: sr.support.spike?.n ?? 0,
+                      spikeCites: spikeCites(stageRows, sr.support.spike?.day ?? ""),
+                    }
+                  : null
+              }
+              intent={
+                sr?.intent
+                  ? {
+                      opens30: sr.intent.windows.w30.o,
+                      clicks30: sr.intent.windows.w30.c,
+                      lastOpen: sr.intent.windows.lastOpen,
+                      sends7: sr.intent.windows.w7?.s ?? 0,
+                    }
+                  : warm
+                    ? {
+                        opens30: warm.opens30,
+                        clicks30: warm.clicks30,
+                        lastOpen: warm.lastOpen,
+                        sends7: 0,
+                      }
+                    : null
+              }
+              collision={
+                col
+                  ? {
+                      mktgSends7: col.mktgSends7,
+                      // The record's entry opens to its own words; the
+                      // export's row opens from the staged slice.
+                      colleague: col.colleague
+                        ? {
+                            ...col.colleague,
+                            cite: col.colleague.noteId
+                              ? null
+                              : collisionCite(stageRows, col.colleague),
+                          }
+                        : null,
+                    }
+                  : null
+              }
+              // A colleague's gem produces nothing for the operator
+              // anywhere (C6 as amended; pass 8 G1).
+              gems={sr ? chipGems(sr.gems) : []}
+            />
+          );
+        })()
+      : null;
+  const stageMk = stageItem ? moveKey(stageItem) : "";
+  const isLetter = !!stageItem && !!stageAccount && isEmailRule(stageItem.ruleId);
+  const stageTo =
+    isLetter && stageAccount ? recipientFor({ readById }, stageAccount) : null;
+  const stageDraft = isLetter
+    ? draftForMove(
+        notesMap.get(`${STAGE_DRAFT_NS}${stageItem!.accountId}`)?.map((n) => ({
+          body: n.body,
+          createdAt: n.createdAt,
+        })),
+        stageMk,
+        now,
+      )
+    : null;
+  const runOn = runParam === "1" || (currentBand(now) === "now" && runParam !== "0");
+  const draftedIds = new Set(
+    liveTop
+      .filter(
+        (q) =>
+          isEmailRule(q.ruleId) &&
+          draftForMove(
+            notesMap.get(`${STAGE_DRAFT_NS}${q.accountId}`)?.map((n) => ({
+              body: n.body,
+              createdAt: n.createdAt,
+            })),
+            moveKey(q),
+            now,
+          ),
+      )
+      .map((q) => q.accountId),
+  );
+  const letter =
+    isLetter && stageItem && stageAccount && stageTo && file
+      ? (() => {
+          const template = splitPayload(file.composed.payload);
+          const subject = stageDraft?.subject || template.subject;
+          const body = stageDraft?.body || template.body;
+          const sr = stageSr;
+          const warm = sr ? intentWarm(sr, now) : null;
+          const gem = sr ? outreachGem(sr) : null;
+          const lines = whyLines(
+            {
+              gem: gem ? { term: gem.term, reason: gem.reason } : null,
+              support:
+                sr?.support && sr.support.total > 0
+                  ? {
+                      total: sr.support.total,
+                      spikeDay: sr.support.spike?.day ?? "",
+                      spikeN: sr.support.spike?.n ?? 0,
+                    }
+                  : null,
+              intent: sr?.intent
+                ? { opens30: sr.intent.windows.w30.o, clicks30: sr.intent.windows.w30.c }
+                : warm
+                  ? { opens30: warm.opens30, clicks30: warm.clicks30 }
+                  : null,
+              collision: stageCollision,
+            },
+            stageDraft?.uses ?? [],
+          );
+          const pips: RunPip[] = [
+            ...doneToday.map(
+              (d) => (d.sub === WAITING_ON_COPY ? "sent" : "seen") as RunPip,
+            ),
+            ...liveTop.map((q) => (q === stageItem ? "now" : "left") as RunPip),
+          ];
+          return (
+            <StageLetter
+              key={`${stageMk}:${stageDraft?.at ?? "template"}`}
+              accountId={stageItem.accountId}
+              mk={stageMk}
+              to={{
+                name: stageDraft?.to || stageTo.name,
+                title: stageTo.title,
+                email: stageDraft?.email || stageTo.email,
+              }}
+              subject={subject}
+              body={body}
+              drafted={draftedLine(
+                stageDraft,
+                stageDraft ? clockShort(stageDraft.at) : "",
+              )}
+              instruction={collisionInstruction(stageCollision)}
+              canWrite={canWrite}
+              nextHref={nextItem && nextItem !== stageItem ? stageHref(nextItem) : null}
+              run={{
+                on: runOn,
+                pips,
+                sent: doneToday.length,
+                toggleHref: `/groundwork?focus=${encodeURIComponent(stageItem.accountId)}&run=${runOn ? "0" : "1"}`,
+              }}
+              why={
+                lines.length > 0 || chips ? (
+                  <details className={styles.whyFold}>
+                    <summary>Why this note ▾</summary>
+                    {lines.length > 0 && (
+                      <div className={styles.whyList}>
+                        {lines.map((l, i) => (
+                          <div key={i} className={styles.whyLine}>
+                            <span className={styles.whyLabel}>{l.label}</span>
+                            <span className={styles.whyMeaning}>
+                              {l.meaning}
+                              {l.used !== null && (
+                                <span
+                                  className={`${styles.whyUse} ${l.used ? "" : styles.whyUseOut}`}
+                                >
+                                  {l.used ? "In the note" : "Left out"}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {chips && <div className={styles.whyDoors}>{chips}</div>}
+                  </details>
+                ) : null
+              }
+              other={
+                canWrite ? (
+                  <WorkedControl
+                    preAnswered={recordSendToday.has(stageItem.accountId)}
+                    mk={stageMk}
+                    accountId={stageItem.accountId}
+                    contacts={whoChipNames(
+                      readById.get(stageItem.accountId)?.people ?? [],
+                      contactsFor(stageItem.accountId),
+                    )}
+                    clause={stageItem.action}
+                    accent={false}
+                  />
+                ) : null
+              }
+            />
+          );
+        })()
+      : null;
+
   return (
     <>
       <AppWayfinder current="Groundwork" trail="Homeroom" />
@@ -624,133 +872,100 @@ export default async function GroundworkPage({
         stage={
           stageItem && stageAccount
             ? {
-                item: stageItem,
+                item: stageTo
+                  ? {
+                      ...stageItem,
+                      action: stageAction(stageItem, stageDraft?.to || stageTo.name),
+                    }
+                  : stageItem,
                 prox: proximityMark(stageAccount) ?? "",
                 body: (
                   <>
-                    {(() => {
-                      const sr = stageSr;
-                      const col = stageCollision;
-                      // A colleague's thread in the operator's own record raises
-                      // the flag with no export behind it (S-18), so the chip row
-                      // can stand on the collision alone.
-                      if (!sr && !col) return null;
-                      const warm = sr ? intentWarm(sr, now) : null;
-                      return (
-                        <EvidenceChips
-                          accountId={stageItem.accountId}
-                          support={
-                            sr?.support && sr.support.total > 0
-                              ? {
-                                  total: sr.support.total,
-                                  spikeDay: sr.support.spike?.day ?? "",
-                                  spikeN: sr.support.spike?.n ?? 0,
-                                  spikeCites: spikeCites(
-                                    stageRows,
-                                    sr.support.spike?.day ?? "",
-                                  ),
-                                }
-                              : null
-                          }
-                          intent={
-                            sr?.intent
-                              ? {
-                                  opens30: sr.intent.windows.w30.o,
-                                  clicks30: sr.intent.windows.w30.c,
-                                  lastOpen: sr.intent.windows.lastOpen,
-                                  sends7: sr.intent.windows.w7?.s ?? 0,
-                                }
-                              : warm
-                                ? {
-                                    opens30: warm.opens30,
-                                    clicks30: warm.clicks30,
-                                    lastOpen: warm.lastOpen,
-                                    sends7: 0,
-                                  }
-                                : null
-                          }
-                          collision={
-                            col
-                              ? {
-                                  mktgSends7: col.mktgSends7,
-                                  // The record's entry opens to its own words; the
-                                  // export's row opens from the staged slice.
-                                  colleague: col.colleague
-                                    ? {
-                                        ...col.colleague,
-                                        cite: col.colleague.noteId
-                                          ? null
-                                          : collisionCite(stageRows, col.colleague),
-                                      }
-                                    : null,
-                                }
-                              : null
-                          }
-                          // A colleague's gem produces nothing for the operator
-                          // anywhere (C6 as amended; pass 8 G1).
-                          gems={sr ? chipGems(sr.gems) : []}
-                        />
-                      );
-                    })()}
-                    <div className={styles.stgActs}>
-                      {canWrite && stageItem.ruleId === "stale-above-gate" && (
-                        <form
-                          action={runResearchNow.bind(
-                            null,
-                            moveKey(stageItem),
-                            stageItem.accountId,
-                          )}
-                        >
-                          <button
-                            className={styles.btnAccent}
-                            type="submit"
-                            title="Runs the deep pass on this account and stamps the move worked. Takes a minute."
+                    {letter ?? chips}
+                    {!letter && (
+                      <div className={styles.stgActs}>
+                        {canWrite && stageItem.ruleId === "stale-above-gate" && (
+                          <form
+                            action={runResearchNow.bind(
+                              null,
+                              moveKey(stageItem),
+                              stageItem.accountId,
+                            )}
                           >
-                            Run it now
-                          </button>
-                        </form>
-                      )}
-                      {canWrite && (
-                        <WorkedControl
-                          preAnswered={recordSendToday.has(stageItem.accountId)}
-                          mk={moveKey(stageItem)}
-                          accountId={stageItem.accountId}
-                          // The record's people merged with the book's contacts;
-                          // the row asks only when the merged set holds more
-                          // than one name (ruled 2026-09-25, C18).
-                          contacts={whoChipNames(
-                            readById.get(stageItem.accountId)?.people ?? [],
-                            contactsFor(stageItem.accountId),
-                          )}
-                          clause={stageItem.action}
-                          accent={stageItem.ruleId !== "stale-above-gate"}
-                        />
-                      )}
-                      {canWrite && stageItem.ruleId !== "stale-above-gate" && (
-                        <form
-                          action={runResearchNow.bind(null, null, stageItem.accountId)}
-                        >
-                          <button
-                            className={styles.btn2nd}
-                            type="submit"
-                            title="Runs the deep pass on this account. The move stays open. Takes a minute."
+                            <button
+                              className={styles.btnAccent}
+                              type="submit"
+                              title="Runs the deep pass on this account and stamps the move worked. Takes a minute."
+                            >
+                              Run it now
+                            </button>
+                          </form>
+                        )}
+                        {canWrite && (
+                          <WorkedControl
+                            preAnswered={recordSendToday.has(stageItem.accountId)}
+                            mk={moveKey(stageItem)}
+                            accountId={stageItem.accountId}
+                            // The record's people merged with the book's contacts;
+                            // the row asks only when the merged set holds more
+                            // than one name (ruled 2026-09-25, C18).
+                            contacts={whoChipNames(
+                              readById.get(stageItem.accountId)?.people ?? [],
+                              contactsFor(stageItem.accountId),
+                            )}
+                            clause={stageItem.action}
+                            accent={stageItem.ruleId !== "stale-above-gate"}
+                          />
+                        )}
+                        {canWrite && stageItem.ruleId !== "stale-above-gate" && (
+                          <form
+                            action={runResearchNow.bind(null, null, stageItem.accountId)}
                           >
-                            Run fresh research
-                          </button>
-                        </form>
-                      )}
-                      <Link
-                        className={styles.btn2nd}
-                        href={stageHref(stageItem, !fileOpen)}
-                      >
-                        {fileOpen ? "Close the file" : "Open the file ▾"}
-                      </Link>
-                      {nextItem && nextItem !== stageItem && (
-                        <Link className={styles.btnQuiet} href={stageHref(nextItem)}>
-                          Not now
+                            <button
+                              className={styles.btn2nd}
+                              type="submit"
+                              title="Runs the deep pass on this account. The move stays open. Takes a minute."
+                            >
+                              Run fresh research
+                            </button>
+                          </form>
+                        )}
+                        <Link
+                          className={styles.btn2nd}
+                          href={stageHref(stageItem, !fileOpen)}
+                        >
+                          {fileOpen ? "Close the file" : "Open the file ▾"}
                         </Link>
-                      )}
-                    </div>
+                        {nextItem && nextItem !== stageItem && (
+                          <Link className={styles.btnQuiet} href={stageHref(nextItem)}>
+                            Not now
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                    {letter && (
+                      <div className={styles.stgActs}>
+                        {canWrite && (
+                          <form
+                            action={runResearchNow.bind(null, null, stageItem.accountId)}
+                          >
+                            <button
+                              className={styles.btnQuiet}
+                              type="submit"
+                              title="Runs the deep pass on this account. The move stays open. Takes a minute."
+                            >
+                              Run fresh research
+                            </button>
+                          </form>
+                        )}
+                        <Link
+                          className={styles.btnQuiet}
+                          href={stageHref(stageItem, !fileOpen)}
+                        >
+                          {fileOpen ? "Close the file" : "Open the file ▾"}
+                        </Link>
+                      </div>
+                    )}
 
                     {fileOpen && file && (
                       <div className={styles.stgFile}>
@@ -881,6 +1096,7 @@ export default async function GroundworkPage({
             : null
         }
         waiting={waiting}
+        drafted={draftedIds}
         rest={rest}
         hrefOf={stageHref}
         deck={{
