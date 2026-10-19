@@ -56,11 +56,20 @@ export function isCallArchive(n: { body?: string; source?: string }): boolean {
   return speakers.size >= 2;
 }
 
+// A calendar event the relay filed (2026-10-19; src/lib/sent-copy.ts): its
+// head says "Meeting held" and nothing else, written only for an event that
+// started and was not cancelled, so it is a thing that happened by
+// construction, like a call archive. The event's own title rides on the
+// line beneath and can carry "Follow-up" or "Prep"; the veto below never
+// reads it for this head.
+const CALENDAR_HELD_RE = new RegExp(`^${GLYPHS.task} OL [^—\\n]*— Meeting held · `);
+
 export function isMeetingNote(n: { body?: string; source?: string }): boolean {
   const body = n.body ?? "";
   const src = n.source ?? "";
   if (isCall(src)) return true;
   if (isCallArchive(n)) return true;
+  if (CALENDAR_HELD_RE.test(body)) return true;
   const head = body.slice(0, 200);
   if (NOT_HELD_RE.test(head)) return false;
   return MEETING_RE.test(head) || LOGGED_ACTIVITY_RE.test(head);
