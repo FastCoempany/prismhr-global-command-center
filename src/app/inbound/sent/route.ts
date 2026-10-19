@@ -16,9 +16,8 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { secretOk, type Fields } from "@/lib/ingest/inbound-email";
-import { routeSentCopy, sentCopyOf, sentCopyText } from "@/lib/sent-copy";
-import { joinedRoster } from "@/lib/ingest/route";
-import { pasteCapture } from "@/lib/room/paste-core";
+import { sentCopyOf } from "@/lib/sent-copy";
+import { fileSentCopy } from "@/lib/sent-copy-file";
 import { hasDatabaseEnv } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -66,28 +65,8 @@ export async function POST(req: NextRequest) {
   // flow's test run reads the route as healthy.
   if (!copy)
     return NextResponse.json({ ok: true, filed: 0, reason: "No sent message in it." });
-  const hit = routeSentCopy(copy, await joinedRoster());
-  if (!hit)
-    return NextResponse.json({
-      ok: true,
-      filed: 0,
-      reason: "No book account by address or domain. Nothing filed.",
-    });
   try {
-    const r = await pasteCapture(
-      hit.id,
-      sentCopyText(copy),
-      { door: "inbound" },
-      async () => hasDatabaseEnv(),
-    );
-    return NextResponse.json({
-      ok: r.ok,
-      filed: r.filed,
-      rung: hit.rung,
-      ...(r.duplicate ? { duplicate: true } : {}),
-      ...(r.mismatch ? { held: true } : {}),
-      ...(!r.ok && r.reason ? { reason: r.reason } : {}),
-    });
+    return NextResponse.json(await fileSentCopy(copy));
   } catch {
     return NextResponse.json({ ok: false, reason: "Filing failed." }, { status: 500 });
   }

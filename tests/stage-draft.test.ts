@@ -30,8 +30,10 @@ import {
 } from "../src/lib/groundwork/drafter";
 import { cronOk } from "../src/lib/cron";
 import {
+  RELAY_SENT_TAG,
   addressesIn,
   forwardedOriginal,
+  relayedSentCopy,
   routeSentCopy,
   sentCopyOf,
   sentCopyText,
@@ -388,6 +390,37 @@ describe("the sent copy", () => {
     // Two accounts on one send tie and route nothing.
     assert.equal(route("cristina@engage.example", "dana@armhr.example"), null);
     assert.deepEqual(addressesIn("A <A@X.example>; a@x.example"), ["a@x.example"]);
+  });
+
+  test("a relayed copy, as the inbound service posts the flow's tagged email, reads as the original", () => {
+    // Outlook turns the flow's HTML body to text with a blank line between
+    // paragraphs; the header block reads through them.
+    const html = [
+      "<p>From: Antaeus Coe &lt;antaeus.coe@prismhr.com&gt;</p>",
+      "<p>Sent: 2026-10-19T14:31:00+00:00</p>",
+      "<p>To: cristina@engage.example</p>",
+      "<p>Cc: </p>",
+      "<p>Subject: Your news on the 15th</p>",
+      "<p>Hi Cristina,</p><p>Saw the announcement.</p>",
+    ].join("");
+    const c = relayedSentCopy({
+      From: "antaeus.coe@prismhr.com",
+      To: "inbound@service.example",
+      Subject: `${RELAY_SENT_TAG} Your news on the 15th`,
+      HtmlBody: html,
+    });
+    assert.equal(c?.to, "cristina@engage.example");
+    assert.equal(c?.subject, "Your news on the 15th");
+    assert.match(c?.body ?? "", /^Hi Cristina,\n+Saw the announcement\.$/);
+    // An untagged email is not a relay, whatever it carries.
+    assert.equal(relayedSentCopy({ Subject: "Your news", HtmlBody: html }), null);
+  });
+
+  test("the Sales Nav route hands a tagged email to the sent copy before it reads alerts", () => {
+    const src = readFileSync("src/app/inbound/salesnav/route.ts", "utf8");
+    const post = src.slice(src.indexOf("export async function POST"));
+    assert.ok(post.indexOf("relayedSentCopy(") > 0);
+    assert.ok(post.indexOf("relayedSentCopy(") < post.indexOf("grabsFromSalesNavEmail("));
   });
 
   test("a post with no sent message in it is not one", () => {

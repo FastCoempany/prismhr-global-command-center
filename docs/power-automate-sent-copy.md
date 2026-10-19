@@ -14,20 +14,28 @@ The route answers with counts and the routing rung only. It never sends anything
 
 ## Setting it up
 
-1. **Set the secrets in Vercel** under the project's environment variables, then redeploy:
-   - `SENT_INBOUND_SECRET`: a long random value (32+ characters). With it unset or shorter than 16 characters, the route refuses everything.
-   - `CRON_SECRET`: the same kind of value. Vercel sends it to the drafts job, which runs at 11:00 UTC on weekdays (6:00 in Chicago during daylight time, 5:00 in winter).
-2. **Build the flow** in Power Automate (make.powerautomate.com → Create → Automated cloud flow):
-   - **Trigger:** Office 365 Outlook, **When a new email arrives (V3)**, with **Folder** set to **Sent Items**. Leave the other filters empty.
-   - **Action:** **HTTP** (a premium connector):
-     - Method: `POST`
-     - URI: `https://<the app>/inbound/sent`
-     - Headers: `Authorization` = `Bearer <SENT_INBOUND_SECRET>`, `Content-Type` = `application/json`
-     - Body: the trigger's whole output. Click in Body, choose the expression (fx) tab, type `triggerBody()` and press Add. The route reads Outlook's own field names (`from`, `toRecipients`, `ccRecipients`, `subject`, `body`, `receivedDateTime`), so nothing needs mapping.
-3. **Without the premium HTTP action**, use the flow's **Forward an email (V2)** action instead, sending to an inbound mail service address (the same kind of service the Sales Nav alerts use, see `docs/salesnav-inbound-setup.md`) whose webhook points at `https://<the app>/inbound/sent?key=<SENT_INBOUND_SECRET>`. The route finds the original's From, To and Subject inside the forward.
-4. **Test it.** Send one email to a contact at a book account. The flow's run history shows the route's answer: `filed` 1 and `rung` `email` or `domain`. Groundwork's left wing shows the stamp with its channel line.
+Your Power Automate license has no Premium connectors, so the flow uses the relay. It mails a tagged copy of each sent email to the inbound address the Sales Nav alerts already use. The inbound service posts every message it receives to `/inbound/salesnav`, and that route hands a message tagged `[GW-SENT]` to the sent copy instead of reading it for alerts.
 
-Ask PrismHR IT before connecting a flow to your mailbox; it is usually covered by policy. With the HTTP action, the mail never leaves Microsoft 365 except as that one post to the app.
+1. **Merge the PR.** `/inbound/salesnav` learns the tag in #414, so the flow does nothing useful until #414 is live.
+2. **Find the inbound address.** Use the address your Sales Nav mail rule forwards to (Outlook → Settings → Mail → Rules → the Sales Nav rule → its "Forward to" address).
+3. **Build the flow** at make.powerautomate.com:
+   1. Left rail **+ Create** → **Automated cloud flow**. Name it `Sent copy to Groundwork`. In **Choose your flow's trigger**, search `When a new email arrives (V3)`, pick the **Office 365 Outlook** one, then **Create**.
+   2. Click the trigger card. Under **Advanced parameters** choose **Folder**, then pick **Sent Items** with the folder icon.
+   3. Under the trigger click **+** → **Add an action** → search `Condition` → **Condition** (Control). Left box: click it, choose the lightning icon, pick **Subject**. Middle: **does not start with**. Right box: `[GW-SENT]`. This keeps the relay's own copy from looping.
+   4. In the **True** branch click **+** → **Add an action** → search `Send an email (V2)` → the **Office 365 Outlook** one:
+      - **To:** the inbound address from step 2.
+      - **Subject:** type `[GW-SENT] `, then the lightning icon → **Subject**.
+      - **Body:** the box is a rich-text editor. Type each line below on its own line. Each `{…}` is the lightning icon → that field:
+        ```
+        From: {From}
+        Sent: {Received Time}
+        To: {To}
+        Cc: {CC}
+        Subject: {Subject}
+        {Body}
+        ```
+   5. **Save** (disk icon, top bar).
+4. **Test it.** Send one email to a contact at a book account. Open the flow, then **28-day run history** → the run → every step should show a green check. Within a minute, Groundwork's left wing shows the stamp with its channel line.
 
 ## When the copy never comes back
 

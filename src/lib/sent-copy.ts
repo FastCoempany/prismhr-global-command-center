@@ -56,15 +56,19 @@ function recipientsLine(v: unknown): string {
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
 
 /** The forwarded original's header block inside a forward's body: the first
- *  From line with a To line and a Subject line beneath it. */
+ *  From line with a To line and a Subject line beneath it. Blank lines
+ *  inside the block are skipped, because an HTML message turned to text puts
+ *  one between every paragraph. */
 export function forwardedOriginal(body: string): SentCopy | null {
   const lines = (body ?? "").replace(/\r/g, "").split("\n");
+  const HEAD = /^\s*\*?(From|Sent|Date|To|Cc|Subject):\*?\s*(.*)$/i;
   for (let i = 0; i < lines.length; i++) {
     if (!/^\s*\*?From:\*?\s/i.test(lines[i])) continue;
     const head: Record<string, string> = {};
     let j = i;
-    for (; j < Math.min(lines.length, i + 10); j++) {
-      const m = /^\s*\*?(From|Sent|Date|To|Cc|Subject):\*?\s*(.*)$/i.exec(lines[j]);
+    for (; j < Math.min(lines.length, i + 16); j++) {
+      if (!lines[j].trim()) continue;
+      const m = HEAD.exec(lines[j]);
       if (!m) break;
       head[m[1].toLowerCase()] = m[2].trim();
     }
@@ -79,6 +83,27 @@ export function forwardedOriginal(body: string): SentCopy | null {
     };
   }
   return null;
+}
+
+// ── The relay (2026-10-19) ───────────────────────────────────────────────
+// Without Power Automate's Premium HTTP step, a flow mails a copy instead:
+// the standard "Send an email (V2)" step to the inbound address the Sales
+// Nav alerts already use, subject tagged, body opening with the original's
+// header block. The inbound service posts it to /inbound/salesnav as it does
+// every message, and that route hands a tagged one here.
+
+/** The subject tag a relayed sent copy carries. */
+export const RELAY_SENT_TAG = "[GW-SENT]";
+
+/** A relayed sent copy, read from the inbound service's post: the tagged
+ *  subject, then the original's header block in the body. Null when the post
+ *  is not one. */
+export function relayedSentCopy(f: Fields): SentCopy | null {
+  const subject = text(get(f, "Subject", "subject")).trim();
+  if (!subject.toUpperCase().startsWith(RELAY_SENT_TAG)) return null;
+  const plain = text(get(f, "TextBody", "body-plain", "text", "plain", "stripped-text"));
+  const html = text(get(f, "HtmlBody", "body-html", "html", "Body", "body"));
+  return forwardedOriginal(plain.trim() ? plain : htmlToText(html));
 }
 
 /** The post as the sent message it carries, or null when it carries none. */
