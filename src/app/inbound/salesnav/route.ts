@@ -5,7 +5,8 @@
 // paste takes (src/lib/ingest/salesnav-email.ts, src/lib/ingest/grab.ts).
 //
 // The gate is a shared secret, because a mail server carries no session:
-// SALESNAV_INBOUND_SECRET, sent as `Authorization: Bearer <secret>`, an
+// SALESNAV_INBOUND_SECRET or the Power Automate flows' one secret,
+// SENT_INBOUND_SECRET, sent as `Authorization: Bearer <secret>`, an
 // `x-inbound-secret` header, or `?key=<secret>` for services that can only
 // call a URL. With the secret unset, or shorter than sixteen characters, the
 // route refuses everything. It is not a page: it renders nothing, and the
@@ -88,7 +89,7 @@ async function readEmails(type: string, bytes: Uint8Array): Promise<string[]> {
 }
 
 export async function POST(req: NextRequest) {
-  if (!secretOk(req))
+  if (!secretOk(req, ["SALESNAV_INBOUND_SECRET", "SENT_INBOUND_SECRET"]))
     return NextResponse.json({ ok: false, reason: "Not authorized." }, { status: 401 });
   const size = Number(req.headers.get("content-length") ?? "0");
   if (size > MAX_BYTES)
