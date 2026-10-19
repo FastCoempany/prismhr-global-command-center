@@ -65,14 +65,21 @@ export function StageLetter({
     start(() => saveStageDraft(accountId, mk, subject, body));
   };
 
+  // A save in flight never holds Send back; only a send already going does.
+  const sending = useRef(false);
   const send = () => {
-    if (pending) return;
+    if (sending.current) return;
+    sending.current = true;
     window.location.href = mailtoHref({ email: to.email, subject, body });
-    if (!canWrite) return;
+    if (!canWrite) {
+      sending.current = false;
+      return;
+    }
     saved.current = { subject, body };
     setNote("Opened in Outlook. The move stamps when your sent copy comes back.");
     start(async () => {
       await sendFromStage(accountId, mk, subject, body);
+      sending.current = false;
       router.refresh();
     });
   };
@@ -103,7 +110,9 @@ export function StageLetter({
         send();
       } else if (k === "e") {
         e.preventDefault();
-        bodyRef.current?.focus();
+        const el = bodyRef.current;
+        el?.focus();
+        el?.setSelectionRange(el.value.length, el.value.length);
       } else if (k === "n" && nextHref) {
         e.preventDefault();
         router.push(nextHref);

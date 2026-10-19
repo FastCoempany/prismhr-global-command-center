@@ -16,7 +16,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { secretOk, type Fields } from "@/lib/ingest/inbound-email";
-import { routeSentCopy, sentCopyOf, sentCopyText } from "@/lib/ingest/sent-copy";
+import { routeSentCopy, sentCopyOf, sentCopyText } from "@/lib/sent-copy";
 import { joinedRoster } from "@/lib/ingest/route";
 import { pasteCapture } from "@/lib/room/paste-core";
 import { hasDatabaseEnv } from "@/lib/db";

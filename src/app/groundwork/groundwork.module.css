@@ -1544,3 +1544,8 @@ a.wingItem:hover .wingNm {
   text-transform: uppercase;
   color: var(--ds-blue);
 }
+.wingPend {
+  color: var(--ds-amber);
+  font-weight: 700;
+  cursor: help;
+}

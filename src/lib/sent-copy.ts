@@ -8,7 +8,7 @@
 // email" action reaches an inbound mail service instead, which posts the
 // forward; the original's header block sits inside the forwarded body.
 
-import { htmlToText, type Fields } from "./inbound-email";
+import { htmlToText, type Fields } from "@/lib/ingest/inbound-email";
 import { routeCapture, type RouteAccount, type RouteHit } from "@/lib/route-capture";
 
 export type SentCopy = {
@@ -135,7 +135,14 @@ export function routeSentCopy(
   roster: readonly RouteAccount[],
 ): RouteHit | null {
   const addrs = addressesIn(`${c.to}; ${c.cc}`);
-  if (!addrs.length) return null;
-  const { best } = routeCapture(addrs.join("\n"), [...roster]);
-  return best && (best.rung === "email" || best.rung === "domain") ? best : null;
+  // Each address routes on its own: two accounts among the recipients is a
+  // tie, whichever one an exact address would have favored.
+  const hits = new Map<string, RouteHit>();
+  for (const a of addrs) {
+    const { best } = routeCapture(a, [...roster]);
+    if (!best || (best.rung !== "email" && best.rung !== "domain")) continue;
+    const prior = hits.get(best.id);
+    if (!prior || best.score > prior.score) hits.set(best.id, best);
+  }
+  return hits.size === 1 ? [...hits.values()][0] : null;
 }

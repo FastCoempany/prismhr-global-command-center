@@ -11,6 +11,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { heatOf, type QueueItem } from "@/lib/groundwork/day";
+import { WAITING_ON_COPY } from "@/lib/groundwork/stage-draft";
 import type { Institution } from "@/lib/groundwork/institutions";
 import type { WireItem } from "@/lib/groundwork/wire";
 import type { weekStats } from "@/lib/sendbook/read";
@@ -142,8 +143,17 @@ export function DoneWing({
       ) : (
         done.map((d, i) => (
           <span key={i} className={`${styles.wingItem} ${styles.wingDone}`}>
-            <span className={styles.wingTick}>✓</span> {d.name}{" "}
-            <span className={styles.wingTm}>{d.at}</span>
+            {d.sub === WAITING_ON_COPY ? (
+              <span
+                className={styles.wingPend}
+                title="Sent from the stage. It stamps when your sent copy comes back."
+              >
+                ◐
+              </span>
+            ) : (
+              <span className={styles.wingTick}>✓</span>
+            )}{" "}
+            {d.name} <span className={styles.wingTm}>{d.at}</span>
             {canWrite && d.mk && (
               <form
                 action={unWork.bind(null, d.mk, d.accountId)}
