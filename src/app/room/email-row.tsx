@@ -1,0 +1,251 @@
+"use client";
+
+// The email in the HomeRoom row (ship order 2026-10-20; CLAUDE.md, The email
+// in the row; docs/mockups/homeroom-email-row-2026-10-20.html, Concept A).
+// The left column carries the newest email whole under the meter, and never
+// makes the row taller than the right panel: past that height the email
+// fades, with one door to the rest. EARLIER's lines read who, when and the
+// subject, and each opens in place to what the account record history holds
+// for it. The data is the page's (src/lib/room/email-row.ts); this draws it.
+
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import type { LatestEmail, RecordLine } from "@/lib/room/email-row";
+import type { WholeMissing } from "@/lib/notes/email-text";
+import styles from "./room.module.css";
+
+export type RowLatestEmail = LatestEmail & {
+  whole?: string | null;
+  missing?: WholeMissing | "";
+};
+
+const MISSING: Record<WholeMissing, string> = {
+  before: "This one was filed before whole emails were kept.",
+  capture: "This filing didn't carry the email whole.",
+};
+
+/** Who wrote to whom, with the door to everyone else on it. */
+function WhoLine({ from, to, others }: { from: string; to: string; others: string[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <b>{from}</b>
+      {`${to ? ` → ${to}` : ""}${others.length > 0 ? " " : ""}`}
+      {others.length > 0 && (
+        <>
+          <button
+            type="button"
+            className={styles.entPlus}
+            aria-expanded={open}
+            title="Everyone else on it"
+            onClick={() => setOpen((v) => !v)}
+          >
+            {`+${others.length}`}
+          </button>
+          {open && <span className={styles.entOthers}>{others.join(", ")}</span>}
+        </>
+      )}
+    </>
+  );
+}
+
+/** The newest email, whole, under the meter. */
+export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [cap, setCap] = useState<number | null>(null);
+  const [whole, setWhole] = useState(false);
+  const body = email.whole || email.kept;
+
+  // The cap: the right panel's height, less what the column holds above the
+  // email. Measured, never guessed, and only where the two columns sit side
+  // by side; a column the browser has not laid out is never capped. The two
+  // columns are found from the pane's own node: a child's layout effect runs
+  // before its parent's refs attach.
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current;
+    const deal = wrap?.closest<HTMLElement>(`.${CSS.escape(styles.deal)}`);
+    const rec = deal?.parentElement?.querySelector<HTMLElement>(
+      `:scope > .${CSS.escape(styles.rec)}`,
+    );
+    if (!wrap || !deal || !rec || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const narrow = window.matchMedia?.("(max-width: 880px)").matches ?? false;
+      if (narrow || rec.offsetHeight === 0) return setCap(null);
+      // What the column holds above the email, read from where the email
+      // starts: the grid stretches the column to the row, so its own height
+      // is the row's, never its content's. Thirty pixels keep the door.
+      const above = wrap.getBoundingClientRect().top - deal.getBoundingClientRect().top;
+      // Never less than a few lines, and only an email taller than that
+      // fades: one that fits shows whole with no door.
+      const limit = Math.max(120, Math.round(rec.offsetHeight - above - 30));
+      const next = wrap.scrollHeight > limit ? limit : null;
+      setCap((c) =>
+        c === next || (c !== null && next !== null && Math.abs(c - next) < 2) ? c : next,
+      );
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(deal);
+    ro.observe(rec);
+    return () => ro.disconnect();
+  }, [email.id, body]);
+
+  const capped = cap !== null && !whole;
+  return (
+    <div className={styles.mail}>
+      <div className={styles.mailK}>
+        <span className={styles.lbl}>LATEST EMAIL</span>
+        <span className={styles.mailWho}>
+          {`${email.day}${email.time ? ` · ${email.time}` : ""} · `}
+          <WhoLine from={email.from} to={email.to} others={email.others} />
+        </span>
+      </div>
+      <p className={styles.mailSubj}>{email.subject}</p>
+      {!email.whole && (
+        <p className={styles.mailGist}>
+          <b>{email.read ? "WHAT THE READ KEPT" : "WHAT WAS FILED"}</b>
+          {MISSING[email.missing || "before"]}
+        </p>
+      )}
+      <div
+        ref={wrapRef}
+        className={capped ? styles.mailCapped : undefined}
+        style={capped ? { maxHeight: cap } : undefined}
+      >
+        <p className={styles.mailBody}>{body || "Nothing beyond the subject."}</p>
+      </div>
+      {(capped || whole) && (
+        <button
+          type="button"
+          className={styles.mailOpen}
+          onClick={() => setWhole((v) => !v)}
+        >
+          {whole ? "Show less" : "Show the whole email"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** What an EARLIER line opens to: the record history's content for it. */
+function Opened({ line }: { line: RecordLine }) {
+  const e = line.email;
+  if (!e)
+    return (
+      <div className={styles.kept}>
+        <p className={styles.keptB}>{line.body}</p>
+      </div>
+    );
+  if (e.closer)
+    return (
+      <div className={styles.kept}>
+        <div className={styles.keptK}>A SIGN-OFF</div>
+        <p className={styles.keptB}>It doesn&apos;t change the latest email.</p>
+      </div>
+    );
+  return (
+    <div className={styles.kept}>
+      <div className={styles.keptK}>
+        {e.read ? "WHAT THE READ KEPT" : "WHAT WAS FILED"}
+      </div>
+      <p className={styles.keptB}>{e.kept || "Nothing beyond the subject."}</p>
+      {e.owed.map((o, i) => (
+        <div key={i} className={styles.keptOwed}>
+          <b>
+            {o.closed
+              ? "CLOSED"
+              : o.mine
+                ? "YOU OWE"
+                : `${(o.who.split(/\s+/)[0] || "THEY").toUpperCase()} ${o.who ? "OWES" : "OWE"}`}
+          </b>
+          {o.closed ? `${o.text}. ${o.closed}` : `${o.text}.`}
+        </div>
+      ))}
+      {e.answered && (
+        <div className={styles.keptOwed}>
+          <b>CLOSED</b>Answered {e.answered}.
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** One EARLIER line: when and who in mono, the subject in the work, and the
+ *  hover rail the room already had. `shown` is the line as the operator
+ *  last edited it. */
+export function EarlierLine({
+  line,
+  shown,
+  open,
+  onToggle,
+  done,
+  note,
+  rail,
+}: {
+  line: RecordLine;
+  shown: string;
+  open: boolean;
+  onToggle: () => void;
+  done: boolean;
+  note?: ReactNode;
+  rail?: ReactNode;
+}) {
+  const e = line.email;
+  const opens = !!e || !!line.body;
+  const tone = e
+    ? e.closer
+      ? styles.entIcQuiet
+      : e.dir === "in"
+        ? styles.kSend
+        : ""
+    : line.glyph === "✓" || line.glyph === "✔"
+      ? styles.gDone
+      : line.glyph === "☎"
+        ? styles.gDly
+        : styles.gNote;
+  const subject = e?.closer ? `“${e.kept || shown}”` : shown;
+  return (
+    <div
+      className={`${styles.ent} ${done ? styles.entDid : ""} ${e?.closer ? styles.entQuiet : ""}`}
+    >
+      <div className={styles.entHead}>
+        <span className={`${styles.entIc} ${tone}`}>{line.glyph}</span>
+        <span className={styles.entMain}>
+          <span className={styles.entK}>
+            {`${line.day}${line.time ? ` · ${line.time}` : ""}${
+              e ? " · " : line.who ? ` · ${line.who}` : ""
+            }`}
+            {e && <WhoLine from={e.from} to={e.to} others={e.others} />}
+            {e?.closer && <span className={styles.entTag}>SIGN-OFF</span>}
+            {e?.twice && !e.closer && <span className={styles.entTag}>FILED TWICE</span>}
+          </span>
+          <button
+            type="button"
+            className={styles.entSubj}
+            aria-expanded={opens ? open : undefined}
+            disabled={!opens}
+            onClick={onToggle}
+            title={opens ? (open ? "Fold it back" : "Open it") : undefined}
+          >
+            {subject}
+            {note}
+          </button>
+        </span>
+        {opens ? (
+          <button
+            type="button"
+            className={styles.entCar}
+            aria-hidden="true"
+            tabIndex={-1}
+            onClick={onToggle}
+          >
+            {open ? "▾" : "▸"}
+          </button>
+        ) : (
+          <span />
+        )}
+        {rail}
+      </div>
+      {open && opens && <Opened line={line} />}
+    </div>
+  );
+}

@@ -49,4 +49,4 @@ Old alerts show in the Sales Nav column under their month. They don't put old mo
 
 ## What it never does
 
-It never reads any email that isn't a Sales Navigator alert. Those file nothing, and the route says so. It never sends anything, never touches LinkedIn, and never renders the email anywhere. The secret is the only key.
+It reads a Sales Navigator alert, and a message the relay tagged `[GW-SENT]`, `[GW-IN]` or `[GW-CAL]` (docs/power-automate-sent-copy.md). Any other email files nothing, and the route says so. It never sends anything and never touches LinkedIn. An alert never renders as an email. A relayed email files on its account's record, and the HomeRoom row shows the newest one whole (ship order 2026-10-20). The secret is the only key.

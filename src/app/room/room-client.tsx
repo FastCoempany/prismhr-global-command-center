@@ -85,6 +85,8 @@ import { researchChip, todayRegister } from "@/lib/room/springs";
 import { boardGroup } from "@/lib/room/low-signal";
 import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
+import { EarlierLine, LatestEmailPane, type RowLatestEmail } from "./email-row";
+import { withSubject, type RecordLine } from "@/lib/room/email-row";
 
 // The fold, remembered per browser. A no-op subscription is enough for
 // useSyncExternalStore's hydration probe: the server renders every row open,
@@ -191,7 +193,12 @@ export type RoomRow = {
    *  never instructed; each shows as one quiet line with its `why` ("Chassie
    *  released it 10/3.") so nothing leaves TODAY without a trace. */
   sheetReleased?: { id: string; body: string; edit?: string; why: string }[];
-  record: { id: string; t: string; text: string; struck: boolean }[];
+  /** EARLIER's lines (ship order 2026-10-20): who, when and the subject,
+   *  each opening to what the account record history holds for it. */
+  record: RecordLine[];
+  /** The newest email on the record, either direction, for the left
+   *  column; its whole text joins after the page's loop. */
+  latestEmail?: RowLatestEmail | null;
   recordTotal: number;
   backgroundTotal: number;
   loss: { noteId: string; phrase: string; date: string; status: "lost" | "won" } | null;
@@ -615,6 +622,8 @@ export function Row({
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
   const [recOpen, setRecOpen] = useState(false);
+  // One EARLIER line open at a time, as the Spring opens one register.
+  const [lineOpen, setLineOpen] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   // Every fresh line this row adds enters through here, and it springs
   // TODAY like the receipt doors above (H4).
@@ -776,11 +785,15 @@ export function Row({
       } else setNote(r.reason ?? "That didn't save.");
     });
   };
-  const saveEdit = (noteId: string) => {
+  // ✎ edits what the line shows: an entry head's subject goes back into its
+  // slot, so the stored head keeps the grammar its readers parse.
+  const saveEdit = (noteId: string, head: string) => {
     const text = editText.trim();
     if (!text || pending) return;
     start(async () => {
-      const r = took(await roomRecordEdit(row.accountId, noteId, text));
+      const r = took(
+        await roomRecordEdit(row.accountId, noteId, withSubject(head, text)),
+      );
       if (r.ok) {
         setEditedNotes((m) => new Map(m).set(noteId, text));
         setEditId(null);
@@ -1834,6 +1847,7 @@ export function Row({
             </div>
           )}
         </div>
+        {row.latestEmail && <LatestEmailPane email={row.latestEmail} />}
       </div>
 
       <div className={styles.rec}>
@@ -2662,21 +2676,19 @@ export function Row({
               .filter((e) => !deletedNotes.has(e.id))
               .map((e) => {
                 const promoted = promotedNotes.has(e.id);
-                const shown =
-                  editedNotes.get(e.id) ?? e.text.replace(/^[✉✓☰✎⚡▢✔☎]\s?/, "");
-                // The full paste alphabet — ✔ tasks and ☎ calls included, so
-                // filed activities never misrender as hand-typed notes.
-                const glyph = /^[✉✓☰✎✔☎]/.exec(e.text)?.[0] ?? "✎";
+                // An email line shows (and edits) its subject; any other line
+                // its first line with the glyph gone, as before.
+                const shown = editedNotes.get(e.id) ?? e.line;
                 if (editId === e.id)
                   return (
                     <div key={e.id} className={styles.it}>
-                      <span className={`${styles.ic} ${styles.gNote}`}>{glyph}</span>
+                      <span className={`${styles.ic} ${styles.gNote}`}>{e.glyph}</span>
                       <span className={styles.recEdit}>
                         <input
                           value={editText}
                           onChange={(ev) => setEditText(ev.target.value)}
                           onKeyDown={(ev) => {
-                            if (ev.key === "Enter") saveEdit(e.id);
+                            if (ev.key === "Enter") saveEdit(e.id, e.text);
                             if (ev.key === "Escape") setEditId(null);
                           }}
                           aria-label="edit this entry"
@@ -2684,7 +2696,7 @@ export function Row({
                         <button
                           type="button"
                           className={styles.sdTag}
-                          onClick={() => saveEdit(e.id)}
+                          onClick={() => saveEdit(e.id, e.text)}
                         >
                           save
                         </button>
@@ -2699,58 +2711,48 @@ export function Row({
                     </div>
                   );
                 return (
-                  <div
+                  <EarlierLine
                     key={e.id}
-                    className={`${styles.it} ${e.struck || promoted ? styles.itDid : ""}`}
-                  >
-                    <span
-                      className={`${styles.ic} ${
-                        glyph === "✉"
-                          ? styles.kSend
-                          : glyph === "✓" || glyph === "✔"
-                            ? styles.gDone
-                            : glyph === "☎"
-                              ? styles.gDly
-                              : styles.gNote
-                      }`}
-                    >
-                      {glyph}
-                    </span>
-                    <span className={styles.tx}>
-                      <span className={styles.t}>{e.t}</span>
-                      {shown}
-                      {promoted && (
+                    line={e}
+                    shown={shown}
+                    open={lineOpen === e.id}
+                    onToggle={() => setLineOpen((o) => (o === e.id ? null : e.id))}
+                    done={e.struck || promoted}
+                    note={
+                      promoted && (
                         <span className={styles.promoted}> · now open above</span>
-                      )}
-                    </span>
-                    {row.canWrite && (
-                      <span className={styles.rail}>
-                        {!e.struck && !promoted && glyph !== "✓" && (
+                      )
+                    }
+                    rail={
+                      row.canWrite && (
+                        <span className={styles.rail}>
+                          {!e.struck && !promoted && e.glyph !== "✓" && (
+                            <button
+                              onClick={() => promoteNote(e.id, shown)}
+                              title="Make it an action. It opens on this register."
+                            >
+                              ✸
+                            </button>
+                          )}
                           <button
-                            onClick={() => promoteNote(e.id, shown)}
-                            title="Make it an action. It opens on this register."
+                            onClick={() => {
+                              setEditId(e.id);
+                              setEditText(shown);
+                            }}
+                            title="edit this entry"
                           >
-                            ✸
+                            ✎
                           </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            setEditId(e.id);
-                            setEditText(shown);
-                          }}
-                          title="edit this entry"
-                        >
-                          ✎
-                        </button>
-                        <button
-                          onClick={() => deleteNote(e.id)}
-                          title="delete from the record"
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    )}
-                  </div>
+                          <button
+                            onClick={() => deleteNote(e.id)}
+                            title="delete from the record"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      )
+                    }
+                  />
                 );
               })}
             {row.record.length === 0 && (

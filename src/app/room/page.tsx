@@ -70,6 +70,8 @@ import { latestResearchAt, ownPassesFrom, researchNs } from "@/lib/intel/deep-re
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
+import { latestEmail, recordLines } from "@/lib/room/email-row";
+import { wholeEmailsFor } from "@/lib/notes/email-text";
 import { settledByRecord } from "@/lib/room/settled";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
 import { sfAccountUrl } from "@/lib/salesforce";
@@ -730,16 +732,21 @@ export default async function RoomPage() {
       // What their side released: closed, never counted, shown so nothing
       // vanishes without a trace (pass 8 H6; the pass 9 seam, S-2).
       sheetReleased: sheet.released,
-      record: mine.slice(0, 6).map((n) => ({
-        id: n.id,
-        t: new Date(Date.parse(n.createdAt)).toLocaleDateString("en-US", {
-          timeZone: "America/Chicago",
-          month: "numeric",
-          day: "numeric",
-        }),
-        text: n.body.split("\n")[0].slice(0, 160),
-        struck: n.body.startsWith("✓"),
-      })),
+      // EARLIER (ship order 2026-10-20; CLAUDE.md, The email in the row):
+      // each entry as a line a person reads, in the order the record
+      // happened, opening to what the account record history holds for it.
+      // The answers, the twins and the closed Owed lines read every visible
+      // row and the account's to-dos, not only the six shown.
+      record: recordLines({
+        notes: mine,
+        all: allNotes,
+        docs,
+        todos: todos.filter((t) => accountId && t.accountId === accountId),
+        limit: 6,
+      }),
+      // The newest email in either direction, sign-offs and machinery read
+      // past, for the left column. Its whole text joins after the loop.
+      latestEmail: latestEmail({ notes: allNotes, docs }),
       recordTotal: mine.length,
       backgroundTotal,
       loss,
@@ -770,6 +777,19 @@ export default async function RoomPage() {
     now,
   );
   for (const r of rows) r.todayFilings = filedToday.get(r.accountId) ?? [];
+  // The latest emails' whole text, one read for every row: the store's text,
+  // or why there is none, so the column says it rather than implying it.
+  const wholes = await wholeEmailsFor(
+    rows.flatMap((r) =>
+      r.latestEmail ? [{ id: r.latestEmail.id, filingId: r.latestEmail.filingId }] : [],
+    ),
+  );
+  for (const r of rows)
+    if (r.latestEmail)
+      Object.assign(
+        r.latestEmail,
+        wholes.get(r.latestEmail.id) ?? { whole: null, missing: "before" },
+      );
 
   // ── The pull-tab drawers' data ────────────────────────────────────────────
   // Roundups: the whole engine, distilled — per partner: cadence state, the

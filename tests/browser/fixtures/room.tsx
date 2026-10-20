@@ -49,7 +49,30 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
   sheetDelayed: [],
   sheetDoneToday: [],
   record: [
-    { id: "n1", t: "9/25", text: "✉ Chassie asked for the invoices.", struck: false },
+    {
+      id: "n1",
+      text: "✉ OL Sep 25 10:22 AM — RE: [EXTERNAL] Invoices · Chassie Smith → Antaeus Coe",
+      struck: false,
+      glyph: "✉",
+      day: "9/25",
+      time: "10:22 AM",
+      who: "",
+      line: "Invoices",
+      body: "",
+      email: {
+        dir: "in",
+        from: "Chassie Smith",
+        to: "you",
+        others: [],
+        subject: "Invoices",
+        kept: "Chassie asked for the invoices.",
+        read: true,
+        owed: [],
+        answered: "",
+        closer: false,
+        twice: false,
+      },
+    },
   ],
   recordTotal: 1,
   backgroundTotal: 0,
@@ -74,6 +97,22 @@ export { row as roomRow };
 const ROWS: RoomRow[] = [
   row({
     multiTone: "r",
+    // The newest email, whole, in the left column (ship order 2026-10-20).
+    latestEmail: {
+      id: "n1",
+      day: "9/25",
+      time: "10:22 AM",
+      filingId: "f1",
+      dir: "in",
+      from: "Chassie Smith",
+      to: "you",
+      others: ["Dana Reyes"],
+      subject: "Invoices",
+      kept: "Chassie asked for the invoices.",
+      read: true,
+      whole: "Hi Antaeus,\n\nI'll send the client's invoices over this week.\n\nChassie",
+      missing: "",
+    },
     theirs: {
       label: "ASKED ABOUT MEXICO · 9/30",
       gems: [

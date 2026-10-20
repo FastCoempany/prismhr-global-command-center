@@ -137,6 +137,128 @@ export function cleanExcerpt(raw: string, cap = 500): string {
   return `${cut.slice(0, lastSpace > cap * 0.6 ? lastSpace : cap).trimEnd()}…`;
 }
 
+// ── the whole email (ship order 2026-10-20) ────────────────────────────────
+// The HomeRoom row shows the newest email whole (CLAUDE.md, The email in the
+// row), so one message's own words are kept as the person wrote them: the
+// same junk goes as cleanExcerpt cuts, but the paragraphs stay paragraphs and
+// nothing trims to a cap. It reads one message at a time; the thread is split
+// into its messages before it gets here (src/lib/intel/email-whole.ts), and
+// the trail cut below is the backstop for a trail the split could not see.
+
+/** The external-sender tags and notices mail systems put above a message. */
+const EXTERNAL_LINES: RegExp[] = [
+  /^[ \t]*\[?\s*(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s*\]?[ \t]*:?[ \t]*$/i,
+  /^[ \t]*CAUTION:[^\n]{0,400}\boutside\b[^\n]{0,400}$/i,
+  /^[ \t]*(?:Sent from my [^\n]{1,40}|Get Outlook for (?:iOS|Android)[^\n]{0,20})[ \t]*$/i,
+];
+
+/** The quoted trail, as a mail client sets it on its own lines. */
+const TRAIL_LINES: RegExp[] = [
+  /^[ \t]*-{2,}\s*Original Message\s*-{2,}/im,
+  // Outlook's rule above the quoted header.
+  /^[ \t]*_{8,}[ \t]*$/m,
+  // Gmail's attribution, which wraps onto a second line when the address is
+  // long; never across a blank line.
+  /^[ \t]*On (?:[^\n]|\n(?!\s*\n)){4,250}?wrote:[ \t]*$/m,
+  // Two quoted lines in a row.
+  /^[ \t]*>[^\n]*\n[ \t]*>/m,
+];
+
+/** A header block inside the text: a From line with a Sent or Date line
+ *  within the next six lines, blank lines skipped, as Outlook quotes. */
+function headerBlockAt(s: string): number {
+  const lines = s.split("\n");
+  let offset = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^[ \t]*\*?From:\*?\s/i.test(lines[i])) {
+      for (let j = i + 1, seen = 0; j < lines.length && seen < 6; j++) {
+        if (!lines[j].trim()) continue;
+        seen++;
+        if (/^[ \t]*\*?(?:Sent|Date):\*?\s/i.test(lines[j])) return offset;
+      }
+    }
+    offset += lines[i].length + 1;
+  }
+  return -1;
+}
+
+/** The sign-off a person closes on, alone on its line. */
+const SIGN_OFF_LINE =
+  /^[ \t]*(?:best regards|kind regards|warm regards|warmest regards|best wishes|many thanks|thanks so much|thank you so much|thanks again|thanks in advance|all the best|regards|sincerely|respectfully|cheers|thanks|thank you|thx|talk soon|best)[ \t]*[,.!]*[ \t]*$/i;
+const PHONE = /\+?\d[\d\s().-]{7,}\d/;
+const LINK = /https?:\/\/|www\.|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
+
+/** The signature block under a sign-off: the name line stays, the title,
+ *  numbers, links and addresses beneath it go. Only a tail that reads as a
+ *  card is cut; a P.S. or a second paragraph after "Thanks," stays. */
+function cutSignatureBlock(s: string): string {
+  const lines = s.split("\n");
+  for (let i = 1; i < lines.length; i++) {
+    if (!SIGN_OFF_LINE.test(lines[i])) continue;
+    let j = i + 1;
+    while (j < lines.length && !lines[j].trim()) j++;
+    if (j >= lines.length) return s;
+    const name = lines[j].trim();
+    const keepTo =
+      name.length <= 60 &&
+      !/\d|@|https?:|www\./i.test(name) &&
+      name.split(/\s+/).length <= 5
+        ? j
+        : i;
+    const rest = lines
+      .slice(keepTo + 1)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (rest.length === 0) return s;
+    const card =
+      rest.length <= 14 &&
+      (rest.some((l) => PHONE.test(l) || LINK.test(l)) ||
+        rest.every((l) => l.length <= 70));
+    return card ? lines.slice(0, keepTo + 1).join("\n") : s;
+  }
+  return s;
+}
+
+/** One email's own words, whole, with its line breaks: the banners and
+ *  external-sender notices, the quoted trail, the signature block and the
+ *  legal tail go; nothing trims to a cap. "" when nothing of its own is left,
+ *  a forward with no note above it, say. Money is the store's to redact
+ *  (src/lib/notes/email-text.ts), as the note writer redacts the note. */
+export function cleanEmailWhole(raw: string): string {
+  let s = (raw ?? "").replace(/\r/g, "").replace(/ /g, " ").replace(/�/g, " ");
+  if (!s.trim()) return "";
+  s = s.replace(BANNER_SPAN, "\n").replace(BANNER_TOKEN, "");
+  for (const w of WARNING_LINES) s = s.replace(w, "");
+  s = s
+    .split("\n")
+    .filter((l) => !EXTERNAL_LINES.some((re) => re.test(l)))
+    .join("\n");
+
+  // The quoted trail: the earliest place another message begins.
+  const cuts = [headerBlockAt(s), ...TRAIL_LINES.map((re) => re.exec(s)?.index ?? -1)];
+  const run = QUOTE_TRAIL.exec(s);
+  if (run && run.index > 40) cuts.push(run.index);
+  const trail = Math.min(...cuts.filter((c) => c >= 0), Infinity);
+  if (trail !== Infinity) s = s.slice(0, trail);
+
+  // The legal tail.
+  let tail = -1;
+  for (const m of TAIL_MARKERS) {
+    const hit = m.exec(s);
+    if (hit && (tail === -1 || hit.index < tail)) tail = hit.index;
+  }
+  if (tail >= 0) s = s.slice(0, tail);
+
+  s = s.replace(CONTACT_CARD, "");
+  s = cutSignatureBlock(s.trim());
+  return s
+    .split("\n")
+    .map((l) => l.replace(/[ \t]+/g, " ").trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 // ── who WROTE it ────────────────────────────────────────────────────────────
 // Salesforce's comment scaffold carries To/CC/BCC and no From at all, so every
 // reader downstream fell back to the Assigned column — which on a captured

@@ -91,6 +91,26 @@ export const ADDITIVE: readonly AdditiveMigration[] = [
       `CREATE INDEX IF NOT EXISTS "VaultChunk_accountId_filename_idx" ON "VaultChunk"("accountId", "filename");`,
     ],
   },
+  {
+    // The whole email beside its note (ship order 2026-10-20; CLAUDE.md, The
+    // email in the row). One table, no column on any existing one, so a
+    // database without it loses the store alone.
+    migration: "20261020120000_email_text",
+    present: [{ table: "EmailText" }],
+    statements: [
+      `CREATE TABLE IF NOT EXISTS "EmailText" (
+    "noteId" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "filingId" TEXT,
+    "text" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "EmailText_pkey" PRIMARY KEY ("noteId")
+);`,
+      `CREATE INDEX IF NOT EXISTS "EmailText_accountId_idx" ON "EmailText"("accountId");`,
+      `CREATE INDEX IF NOT EXISTS "EmailText_filingId_idx" ON "EmailText"("filingId");`,
+    ],
+  },
 ];
 
 /** The two raw methods the migrator needs; PrismaClient has both. */

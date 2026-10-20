@@ -128,6 +128,10 @@ const LABELS: [RegExp, string][] = [
   [/kxSub/, "the band's name: the Klaxon's command"],
   [/room__lk\b/, "the record register's scope kicker, naming the account"],
   [
+    /room__mailK|room__mailGist/,
+    "the latest email's kickers: the column's name, and who wrote the text beside it",
+  ],
+  [
     /sendbook__(whMix|day|ch|step)/,
     "the register's column heads, its day divider, a touch's channel and ordinal",
   ],

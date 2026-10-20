@@ -142,6 +142,42 @@ const OWED_SEG_SPLIT = /;|\.\s+(?=[A-Z])/;
 const OWED_SEG_RE =
   /^\s*(.{3,140}?)\s*—\s*@?\s*([A-Z][\w'’-]*(?:\s[A-Z][\w'’-]*){0,3})\s*\.?\s*$/;
 
+/** An Owed block, segment by segment, as the record's own line holds it: the
+ *  thing, who owes it as the record names them ("" when the segment names
+ *  nobody), and whether that is our side. The HomeRoom's opened email reads
+ *  it (ship order 2026-10-20); the same scan and the same segments as the
+ *  court's, so the two never read a line two ways. */
+export function owedSegments(
+  text: string,
+): { text: string; who: string; mine: boolean }[] {
+  const out: { text: string; who: string; mine: boolean }[] = [];
+  OWED_BLOCK_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = OWED_BLOCK_RE.exec(text ?? ""))) {
+    for (const seg of m[1].split(OWED_SEG_SPLIT)) {
+      const s = OWED_SEG_RE.exec(seg);
+      const what = (s ? s[1] : seg)
+        .replace(/\s+/g, " ")
+        .replace(/[.,;:]+$/, "")
+        .trim();
+      if (what.length < 3) continue;
+      const who = s ? s[2].trim() : "";
+      out.push({ text: what, who, mine: MINE_RE.test(who) || /^(you|me)$/i.test(who) });
+    }
+  }
+  return out;
+}
+
+/** The text with its Owed blocks taken out, each line kept otherwise. */
+export function withoutOwed(text: string): string {
+  return (text ?? "")
+    .split("\n")
+    .map((l) => l.replace(/\s*\bOwed:\s*[^\n]*$/, "").trimEnd())
+    .filter((l, i, all) => l.trim() || (i > 0 && all[i - 1]?.trim()))
+    .join("\n")
+    .trim();
+}
+
 export function owedByThem(
   notes: readonly {
     id: string;

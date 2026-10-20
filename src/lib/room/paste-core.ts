@@ -53,6 +53,8 @@ import { pasteFingerprint, transcriptRecordedDay } from "@/lib/paste-files";
 import { redactMoney } from "@/lib/intel/lexicon";
 import { bindAccountId } from "@/lib/room/bind";
 import { createAccountNoteRow } from "@/lib/notes/write";
+import { keepEmailTexts, type NewEmailText } from "@/lib/notes/email-text";
+import { wholeEmails } from "@/lib/intel/email-whole";
 
 export type PasteResult = Awaited<ReturnType<typeof pasteCapture>>;
 
@@ -607,7 +609,18 @@ async function fileClaimed({
     }
     await writeFiling(how === "ai" ? "ai" : "rules");
     let filed = 0;
-    for (const e of entries.slice(0, ENTRY_CAP)) {
+    // The whole email beside each email entry (ship order 2026-10-20;
+    // CLAUDE.md, The email in the row): the read keeps a synopsis on the
+    // note, and the email's own words, read from the whole capture and never
+    // the read's window (D4), ride to their own store keyed by the note. A
+    // call or a chat holds no emails to keep.
+    const filedEntries = entries.slice(0, ENTRY_CAP);
+    const wholes =
+      liveDialect === "CT" || liveDialect === "TM"
+        ? filedEntries.map(() => null)
+        : wholeEmails(rawText, filedEntries, { outlook: liveDialect === "OL" });
+    const kept: NewEmailText[] = [];
+    for (const [k, e] of filedEntries.entries()) {
       const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
       // The whole receiving side, which `actors` deliberately does not carry.
       const recipients = joinRecipients(e.recipients);
@@ -635,7 +648,13 @@ async function fileClaimed({
       });
       noteIds.push(n.id);
       filed++;
+      const whole = wholes[k];
+      if (glyph === "✉" && whole)
+        kept.push({ noteId: n.id, accountId: acct.id, filingId, text: whole });
     }
+    // Fails open: a store that is down loses the whole emails, never the
+    // filing, and the row then shows the synopsis and says why.
+    if (kept.length) await keepEmailTexts(kept);
     // A call transcript keeps its whole conversation alongside the read's
     // entries — the entries are the judgment, the archive is the evidence.
     let archived = false;
