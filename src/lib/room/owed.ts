@@ -155,18 +155,29 @@ export function owedSegments(
   let m: RegExpExecArray | null;
   while ((m = OWED_BLOCK_RE.exec(text ?? ""))) {
     for (const seg of m[1].split(OWED_SEG_SPLIT)) {
-      const s = OWED_SEG_RE.exec(seg);
+      // The owner as the court's own line reads it (OWED_LINE_RE): any case,
+      // so "— @antaeus" and "— @me" are ours here as they are there.
+      const s = OWED_SEG_RE.exec(seg) ?? OWED_SEG_ANY_RE.exec(seg);
       const what = (s ? s[1] : seg)
         .replace(/\s+/g, " ")
         .replace(/[.,;:]+$/, "")
         .trim();
       if (what.length < 3) continue;
       const who = s ? s[2].trim() : "";
-      out.push({ text: what, who, mine: MINE_RE.test(who) || /^(you|me)$/i.test(who) });
+      // Ours as the court counts ours: the operator, or you, me, us or we
+      // (owedByThem skips the same set as never theirs).
+      out.push({
+        text: what,
+        who,
+        mine: MINE_RE.test(who) || /^(you|me|us|we)$/i.test(who),
+      });
     }
   }
   return out;
 }
+
+const OWED_SEG_ANY_RE =
+  /^\s*(.{3,140}?)\s*—\s*@?\s*([A-Za-z][\w'’-]*(?:\s[A-Za-z][\w'’-]*){0,3})\s*\.?\s*$/;
 
 /** The text with its Owed blocks taken out, each line kept otherwise. */
 export function withoutOwed(text: string): string {

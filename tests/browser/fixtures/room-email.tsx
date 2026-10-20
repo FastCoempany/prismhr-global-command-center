@@ -47,7 +47,9 @@ export const RECORD: RecordLine[] = [
     id: "e6",
     email: email({
       kept: "They chose the reseller model and want the agreement for their legal team to review. Asks for a Wednesday or Thursday afternoon to go over what comes next.",
-      owed: [{ mine: true, who: "Antaeus", text: "Send the reseller agreement", closed: "" }],
+      owed: [
+        { mine: true, who: "Antaeus", text: "Send the reseller agreement", closed: "" },
+      ],
     }),
   }),
   line({
@@ -94,6 +96,14 @@ export const RECORD: RecordLine[] = [
     day: "10/14",
     time: "4:02 PM",
     email: email({ closer: true, kept: "Thanks!", others: [] }),
+  }),
+  line({
+    id: "t1",
+    glyph: "✎",
+    day: "10/13",
+    time: "2:15 PM",
+    text: "✎ Dana said the client's finance lead wants to see the whole package, the agreement and the country guide together, before anyone on their side signs.",
+    line: "Dana said the client's finance lead wants to see the whole package, the agreement and the country guide together, before anyone on their side signs.",
   }),
 ];
 

@@ -11,7 +11,7 @@
 // loses the whole email, never the filing, the page or the undo.
 
 import { getPrisma } from "@/lib/db";
-import { redactMoney } from "@/lib/intel/lexicon";
+import { redactMoneyStrict } from "@/lib/intel/lexicon";
 import { scrubSecrets } from "@/lib/sf-timeline";
 
 export type NewEmailText = {
@@ -42,7 +42,10 @@ export type EmailTextClient = {
 
 const client = (): EmailTextClient => getPrisma() as unknown as EmailTextClient;
 
-/** Keep each entry's whole email; the count kept, 0 when the store is down. */
+/** Keep each entry's whole email; the count kept, 0 when the store is down.
+ *  An empty text is kept too: it marks an email the filing looked for and
+ *  could not pair with its message, so the row says that and never claims
+ *  the email predates the store. */
 export async function keepEmailTexts(
   rows: readonly NewEmailText[],
   db?: EmailTextClient,
@@ -52,9 +55,9 @@ export async function keepEmailTexts(
       noteId: r.noteId,
       accountId: r.accountId,
       ...(r.filingId ? { filingId: r.filingId } : {}),
-      text: scrubSecrets(redactMoney(r.text ?? "")).trim(),
+      text: scrubSecrets(redactMoneyStrict(r.text ?? "")).trim(),
     }))
-    .filter((r) => r.noteId && r.accountId && r.text);
+    .filter((r) => r.noteId && r.accountId);
   if (data.length === 0) return 0;
   try {
     return (await (db ?? client()).emailText.createMany({ data, skipDuplicates: true }))
@@ -79,59 +82,42 @@ export async function emailTextsFor(
     });
     // Redacted on the way in; redacted again on the way out, as the evidence
     // route does, so a row written before a lexicon change still renders clean.
-    return new Map(rows.map((r) => [r.noteId, redactMoney(r.text)]));
+    return new Map(rows.map((r) => [r.noteId, redactMoneyStrict(r.text)]));
   } catch {
     return new Map();
   }
 }
 
-/** Why an email has no whole text: filed before the store kept any, or filed
- *  since by a capture the matcher could not pair with its message (a
- *  Salesforce timeline, a body pasted without its header). */
-export type WholeMissing = "before" | "capture";
+/** Why an email has no whole text: filed before the store kept any (no row
+ *  at all), filed since by a capture the filing could not pair with its
+ *  message (an empty row), or written by the app itself with no capture to
+ *  keep (no filing: an Act Lane send). */
+export type WholeMissing = "before" | "capture" | "record";
 
 /** The latest emails' whole text for the page, one batch for every row: the
- *  store's text by note, and for a note without one, why. The store's own
- *  first row dates when it began, so a filing older than that, or one the
- *  page cannot date, was filed before whole emails were kept. */
+ *  store's text by note, and for a note without one, why. */
 export async function wholeEmailsFor(
   emails: readonly { id: string; filingId: string }[],
+  db?: EmailTextClient,
 ): Promise<Map<string, { whole: string | null; missing: WholeMissing | "" }>> {
-  const out = new Map<string, { whole: string | null; missing: WholeMissing | "" }>();
-  if (emails.length === 0) return out;
-  const texts = await emailTextsFor(emails.map((e) => e.id));
-  const bare = emails.filter((e) => !texts.has(e.id));
-  let since = Infinity;
-  const filedAt = new Map<string, number>();
-  if (bare.length) {
-    try {
-      const prisma = getPrisma();
-      const first = await prisma.emailText.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { createdAt: true },
-      });
-      if (first) since = first.createdAt.getTime();
-      const ids = [...new Set(bare.map((e) => e.filingId).filter(Boolean))];
-      if (ids.length && first) {
-        const rows = await prisma.filing.findMany({
-          where: { id: { in: ids } },
-          select: { id: true, createdAt: true },
-        });
-        for (const r of rows) filedAt.set(r.id, r.createdAt.getTime());
-      }
-    } catch {
-      // the store is down: every bare email reads as filed before it
-    }
-  }
-  for (const e of emails) {
-    const whole = texts.get(e.id) ?? null;
-    const at = filedAt.get(e.filingId);
-    out.set(e.id, {
-      whole,
-      missing: whole ? "" : at !== undefined && at >= since ? "capture" : "before",
-    });
-  }
-  return out;
+  const texts = await emailTextsFor(
+    emails.map((e) => e.id),
+    db,
+  );
+  return new Map(
+    emails.map((e) => {
+      const text = texts.get(e.id);
+      const whole = text ? text : null;
+      const missing: WholeMissing | "" = whole
+        ? ""
+        : text !== undefined
+          ? "capture"
+          : e.filingId
+            ? "before"
+            : "record";
+      return [e.id, { whole, missing }];
+    }),
+  );
 }
 
 /** Take back the whole emails of an undone filing: by its note ids, by its

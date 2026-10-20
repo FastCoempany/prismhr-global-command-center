@@ -145,41 +145,66 @@ export function cleanExcerpt(raw: string, cap = 500): string {
 // into its messages before it gets here (src/lib/intel/email-whole.ts), and
 // the trail cut below is the backstop for a trail the split could not see.
 
-/** The external-sender tags and notices mail systems put above a message. */
+/** The external-sender tags and notices mail systems put above a message,
+ *  read against each line trimmed, so no pattern runs whitespace against
+ *  whitespace (a long blank line must cost one pass, never its square). */
 const EXTERNAL_LINES: RegExp[] = [
-  /^[ \t]*\[?\s*(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s*\]?[ \t]*:?[ \t]*$/i,
-  /^[ \t]*CAUTION:[^\n]{0,400}\boutside\b[^\n]{0,400}$/i,
-  /^[ \t]*(?:Sent from my [^\n]{1,40}|Get Outlook for (?:iOS|Android)[^\n]{0,20})[ \t]*$/i,
+  /^\[?\s?(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s?\]?:?$/i,
+  /^CAUTION:[^\n]{0,400}\boutside\b/i,
+  /^(?:Sent from my .{1,40}|Get Outlook for (?:iOS|Android).{0,20})$/i,
 ];
 
 /** The quoted trail, as a mail client sets it on its own lines. */
-const TRAIL_LINES: RegExp[] = [
-  /^[ \t]*-{2,}\s*Original Message\s*-{2,}/im,
-  // Outlook's rule above the quoted header.
-  /^[ \t]*_{8,}[ \t]*$/m,
-  // Gmail's attribution, which wraps onto a second line when the address is
-  // long; never across a blank line.
-  /^[ \t]*On (?:[^\n]|\n(?!\s*\n)){4,250}?wrote:[ \t]*$/m,
-  // Two quoted lines in a row.
-  /^[ \t]*>[^\n]*\n[ \t]*>/m,
-];
+const ORIGINAL_MESSAGE = /^[ \t]*-{2,}\s*Original Message\s*-{2,}/im;
+// Gmail's attribution, which wraps onto a second line when the address is
+// long; never across a blank line.
+const GMAIL_WROTE = /^[ \t]*On (?:[^\n]|\n(?!\s*\n)){4,250}?wrote:[ \t]*$/m;
+const QUOTED = /^[ \t]*>/;
+const RULE = /^[ \t]*(?:_{8,}|-{8,})[ \t]*$/;
+const FROM_AT = /(^[ \t]*|[A-Za-z0-9])\*?From:\*?\s/;
 
-/** A header block inside the text: a From line with a Sent or Date line
- *  within the next six lines, blank lines skipped, as Outlook quotes. */
+/** A header block inside the text: a From line, at the start of a line or
+ *  glued onto the words before it ("Get Outlook for iOSFrom: …"), with a Sent
+ *  or Date line within the next six lines, blank lines skipped, as Outlook
+ *  quotes. The cut takes the rule Outlook draws above it, when there is one.
+ *  -1 when there is none. */
 function headerBlockAt(s: string): number {
   const lines = s.split("\n");
+  const starts: number[] = [];
   let offset = 0;
+  for (const l of lines) {
+    starts.push(offset);
+    offset += l.length + 1;
+  }
   for (let i = 0; i < lines.length; i++) {
-    if (/^[ \t]*\*?From:\*?\s/i.test(lines[i])) {
-      for (let j = i + 1, seen = 0; j < lines.length && seen < 6; j++) {
-        if (!lines[j].trim()) continue;
-        seen++;
-        if (/^[ \t]*\*?(?:Sent|Date):\*?\s/i.test(lines[j])) return offset;
-      }
+    const m = FROM_AT.exec(lines[i]);
+    if (!m) continue;
+    for (let j = i + 1, seen = 0; j < lines.length && seen < 6; j++) {
+      if (!lines[j].trim()) continue;
+      seen++;
+      if (!/^[ \t]*\*?(?:Sent|Date):\*?\s/i.test(lines[j])) continue;
+      // Glued onto the words before it: the cut falls where "From:" begins.
+      if (/[A-Za-z0-9]$/.test(m[1])) return starts[i] + m.index + m[1].length;
+      let k = i - 1;
+      while (k >= 0 && !lines[k].trim()) k--;
+      return k >= 0 && RULE.test(lines[k]) ? starts[k] : starts[i];
     }
-    offset += lines[i].length + 1;
   }
   return -1;
+}
+
+/** Gmail's attribution cuts the trail only when what follows it is the quote
+ *  alone. An inline reply answers between the quoted lines, and those answers
+ *  are the person's words: the attribution goes, the quoted lines go, the
+ *  answers stay. */
+function gmailTrail(s: string): { cut: number; text: string } {
+  const m = GMAIL_WROTE.exec(s);
+  if (!m) return { cut: -1, text: s };
+  const after = s.slice(m.index + m[0].length).split("\n");
+  const answers = after.some((l) => l.trim() && !QUOTED.test(l));
+  const quotes = after.some((l) => QUOTED.test(l));
+  if (!(answers && quotes)) return { cut: m.index, text: s };
+  return { cut: -1, text: s.slice(0, m.index) + after.join("\n") };
 }
 
 /** The sign-off a person closes on, alone on its line. */
@@ -188,9 +213,23 @@ const SIGN_OFF_LINE =
 const PHONE = /\+?\d[\d\s().-]{7,}\d/;
 const LINK = /https?:\/\/|www\.|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
 
-/** The signature block under a sign-off: the name line stays, the title,
- *  numbers, links and addresses beneath it go. Only a tail that reads as a
- *  card is cut; a P.S. or a second paragraph after "Thanks," stays. */
+/** A name under a sign-off: a few words, no sentence. */
+const isNameLine = (l: string): boolean => {
+  const t = l.trim();
+  return (
+    t.length > 0 &&
+    t.length <= 60 &&
+    t.split(/\s+/).length <= 5 &&
+    !/[.?!:;]$/.test(t) &&
+    !/\d|@|https?:|www\./i.test(t)
+  );
+};
+
+/** The signature block under a sign-off: the name line stays, the card
+ *  beneath it goes. A sign-off counts only when a name follows it, so a
+ *  "Thank you!" opening a paragraph never ends the email, and the tail goes
+ *  only when it reads as a card: a phone number, a link or an address on a
+ *  short run of lines. A P.S. or a second paragraph after "Thanks," stays. */
 function cutSignatureBlock(s: string): string {
   const lines = s.split("\n");
   for (let i = 1; i < lines.length; i++) {
@@ -198,48 +237,50 @@ function cutSignatureBlock(s: string): string {
     let j = i + 1;
     while (j < lines.length && !lines[j].trim()) j++;
     if (j >= lines.length) return s;
-    const name = lines[j].trim();
-    const keepTo =
-      name.length <= 60 &&
-      !/\d|@|https?:|www\./i.test(name) &&
-      name.split(/\s+/).length <= 5
-        ? j
-        : i;
+    if (!isNameLine(lines[j])) continue;
     const rest = lines
-      .slice(keepTo + 1)
+      .slice(j + 1)
       .map((l) => l.trim())
       .filter(Boolean);
     if (rest.length === 0) return s;
-    const card =
-      rest.length <= 14 &&
-      (rest.some((l) => PHONE.test(l) || LINK.test(l)) ||
-        rest.every((l) => l.length <= 70));
-    return card ? lines.slice(0, keepTo + 1).join("\n") : s;
+    const card = rest.length <= 14 && rest.some((l) => PHONE.test(l) || LINK.test(l));
+    return card ? lines.slice(0, j + 1).join("\n") : s;
   }
   return s;
 }
 
 /** One email's own words, whole, with its line breaks: the banners and
- *  external-sender notices, the quoted trail, the signature block and the
+ *  external-sender notices, the quoted trail, the signature card and the
  *  legal tail go; nothing trims to a cap. "" when nothing of its own is left,
  *  a forward with no note above it, say. Money is the store's to redact
  *  (src/lib/notes/email-text.ts), as the note writer redacts the note. */
 export function cleanEmailWhole(raw: string): string {
-  let s = (raw ?? "").replace(/\r/g, "").replace(/ /g, " ").replace(/�/g, " ");
+  let s = (raw ?? "")
+    .replace(/\r/g, "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\uFFFD/g, " ");
   if (!s.trim()) return "";
   s = s.replace(BANNER_SPAN, "\n").replace(BANNER_TOKEN, "");
   for (const w of WARNING_LINES) s = s.replace(w, "");
   s = s
     .split("\n")
-    .filter((l) => !EXTERNAL_LINES.some((re) => re.test(l)))
+    .filter((l) => !EXTERNAL_LINES.some((re) => re.test(l.trim())))
     .join("\n");
 
   // The quoted trail: the earliest place another message begins.
-  const cuts = [headerBlockAt(s), ...TRAIL_LINES.map((re) => re.exec(s)?.index ?? -1)];
+  const gmail = gmailTrail(s);
+  s = gmail.text;
+  const cuts = [headerBlockAt(s), gmail.cut, ORIGINAL_MESSAGE.exec(s)?.index ?? -1];
   const run = QUOTE_TRAIL.exec(s);
   if (run && run.index > 40) cuts.push(run.index);
   const trail = Math.min(...cuts.filter((c) => c >= 0), Infinity);
   if (trail !== Infinity) s = s.slice(0, trail);
+  // What the reply quotes and the rule a trail leaves standing are not its words.
+  s = s
+    .split("\n")
+    .filter((l) => !QUOTED.test(l))
+    .join("\n")
+    .replace(/(?:\n[ \t]*(?:_{8,}|-{8,})[ \t]*)+\s*$/, "");
 
   // The legal tail.
   let tail = -1;

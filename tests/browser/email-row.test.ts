@@ -148,7 +148,7 @@ describe("EARLIER: who, when and the subject, each opening in place", () => {
   test("the lines carry no format code, no frozen Today and no reply prefixes", async () => {
     const page = await open();
     const lines = await earlier(page);
-    assert.equal(await lines.count(), 6);
+    assert.equal(await lines.count(), 7);
     const text = await lines.allInnerTexts();
     assert.ok(
       !text.some((t) => /\bOL\b|Today|RE:|\[EXTERNAL\]/.test(t)),
@@ -195,6 +195,43 @@ describe("EARLIER: who, when and the subject, each opening in place", () => {
       await lines.nth(2).locator($("kept")).innerText(),
       /Marked done from the HomeRoom/,
     );
+    await page.close();
+  });
+
+  test("their mail draws in the system's blue, our own in the soft ink", async () => {
+    const page = await open();
+    const lines = await earlier(page);
+    const ink = (i: number) =>
+      lines
+        .nth(i)
+        .locator($("entIc"))
+        .evaluate((el) => getComputedStyle(el).color);
+    assert.equal(await ink(0), "rgb(37, 99, 235)", "an inbound line is not blue");
+    assert.equal(await ink(1), "rgba(10, 28, 64, 0.66)", "our send is not the soft ink");
+    await page.close();
+  });
+
+  test("a line that trails off opens to its whole text", async () => {
+    const page = await open();
+    const lines = await earlier(page);
+    const note = lines.nth(6).locator($("entSubj"));
+    const cut = () => note.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+    assert.ok(await cut(), "the long note does not trail off at rest");
+    await note.click();
+    assert.ok(!(await cut()), "the opened note still trails off");
+    assert.match(await note.innerText(), /before anyone on their side signs\.$/);
+    await page.close();
+  });
+
+  test("✕ on the latest email's line takes it out of the column at once", async () => {
+    const page = await mount(browser, FIX, {
+      returns: { chuteBook: [], roomRecordDelete: { ok: true } },
+    });
+    const lines = await earlier(page);
+    await lines.nth(0).hover();
+    await lines.nth(0).getByTitle("delete from the record").click();
+    await page.waitForTimeout(100);
+    assert.equal(await firstRow(page).locator($("mail")).count(), 0);
     await page.close();
   });
 

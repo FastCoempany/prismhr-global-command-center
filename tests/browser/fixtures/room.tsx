@@ -97,7 +97,10 @@ export { row as roomRow };
 const ROWS: RoomRow[] = [
   row({
     multiTone: "r",
-    // The newest email, whole, in the left column (ship order 2026-10-20).
+    // The newest email in the left column (ship order 2026-10-20), as most
+    // rows show it on launch day and the most a row can arrive with: filed
+    // before whole emails were kept, so the read's line says so, and its
+    // synopsis long enough to meet the right panel and take the door.
     latestEmail: {
       id: "n1",
       day: "9/25",
@@ -108,10 +111,10 @@ const ROWS: RoomRow[] = [
       to: "you",
       others: ["Dana Reyes"],
       subject: "Invoices",
-      kept: "Chassie asked for the invoices.",
+      kept: "Chassie asked for the invoices from the moving company's current provider, so the team can see what the client pays for its India admin workers today and where the separate site and its billing come from. She wants the reseller route with their own markup, and says the client asked whether everything could sit in one place. The client is on a month-to-month term as far as she knows, and she will confirm it with them this week. She is open to a slight premium for consolidation and says there is no rush.",
       read: true,
-      whole: "Hi Antaeus,\n\nI'll send the client's invoices over this week.\n\nChassie",
-      missing: "",
+      whole: null,
+      missing: "before",
     },
     theirs: {
       label: "ASKED ABOUT MEXICO · 9/30",

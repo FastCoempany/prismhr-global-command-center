@@ -406,8 +406,11 @@ Concept A of docs/mockups/homeroom-email-row-2026-10-20.html won and shipped
 on the founder's order ("we're going with A", then "yup ship it"). The
 HomeRoom row's left column carries the newest email on the record whole,
 under the meter: either direction, read past sign-offs, calendar acceptances
-and machinery by the doc read's own flags, and past a line whose direction the
-doc read cannot name (a colleague's coordination mail, an unattributed entry).
+and machinery by the doc read's own flags, past a line whose direction the doc
+read cannot name (a colleague's coordination mail, an unattributed entry),
+past a send of ours that reached only our own side, past their mail that
+never reached the operator (another lane, the operator on no line of it), and
+past a chat or call line.
 It never makes the row taller than the right panel: past that height it fades,
 with one door, "Show the whole email", and a few lines always show. Its
 kicker, LATEST EMAIL, names the column and carries no orange; the one move
@@ -415,38 +418,50 @@ stays Mark it done.
 
 - **The founder's order amends the click-depth law for this one surface:** the
   latest email arrives whole, and the HomeRoom row's arrival budget rose to
-  hold it (tests/browser/budgets.json, 39 to 46, the email's own seven
-  pieces). Everything else on the row stays one click down.
+  hold it (tests/browser/budgets.json, 39 to 49, measured on the most a row
+  arrives with: the email's own seven pieces, the read's two-piece line when
+  the email has no whole text, and the door). Everything else on the row stays
+  one click down.
 - **The whole email is kept at filing.** The read files each email as a
   synopsis; the filing now also keeps the email's own words, read from the
-  whole capture and never the read's window (D4): the capture splits into
-  its messages by their header blocks, each email entry is matched to its
-  message by sender and subject, the day and the clock breaking a tie, and
-  that message is cleaned of banners, external-sender notices, the quoted
-  trail, the signature block and the legal tail, paragraphs kept
+  whole capture and never the read's window (D4). Only a capture that leads
+  with its own header is split (the relay's copies, a dropped .eml or .msg):
+  a reading-pane grab or a hand-pasted reply carries the newest message with
+  no header, and its blocks are only what it quotes. Each email entry is
+  matched to its message by sender and subject; a day both sides name must
+  agree, the clock breaks a tie, and a tie left standing keeps nothing. The
+  message is cleaned of banners, external-sender notices, the quoted trail,
+  a signature card and the legal tail, paragraphs and inline answers kept
   (cleanEmailWhole, src/lib/activity/excerpt.ts). It lands in the EmailText
-  table keyed by the note, money-redacted on the way in and out
-  (src/lib/notes/email-text.ts); an entry with no sure message keeps none.
-  The undo takes it back with the filing. An email without one shows the
-  read's synopsis and says why: "This one was filed before whole emails were
-  kept." or "This filing didn't carry the email whole."
+  table keyed by the note, redacted on the way in and out by the strict rule
+  an email's own words take (redactMoneyStrict: a currency code before the
+  figure, a figure with k or M, a rate per head or per month;
+  src/lib/notes/email-text.ts). An entry with no sure message keeps an empty
+  row, so the row can say the filing looked. The undo takes it back after the
+  notes. An email without its words shows the read's synopsis and says why,
+  each reason true: "This one was filed before whole emails were kept." (no
+  row), "This filing didn't carry the email whole." (an empty row), or "This
+  send was logged from the app." (no filing: an Act Lane send).
 - **EARLIER is rebuilt.** Each line reads the day and the clock from the note
   itself, who wrote to whom ("you" for the operator), and the subject with the
   format code, the frozen "Today", the reply prefixes and the external tags
   gone. The stored head keeps its grammar, because the clock, the meeting read
   and the promote regex parse it; ✎ on a filed activity edits the subject in
-  its slot. The lines run in the order the record happened, an email at its
-  head's clock read as Chicago's. +N opens everyone else the recipients column
-  names, and shows only when it can.
+  its slot. The lines run in the order the record happened, an entry at its
+  head's clock in any dialect read as Chicago's. +N opens everyone else the
+  recipients column names, and shows only when it can.
 - **Each line opens in place, one at a time**, to what the account record
   history holds for it: WHAT THE READ KEPT (WHAT WAS FILED when the rules
-  filed it) and its Owed lines, YOU OWE or the owner by name, CLOSED with
-  "Done M/D." only once every to-do or loop the filing opened for that side is
-  done (the closer rule: delivery closes a promise, a later message never
-  does), and CLOSED "Answered M/D." on an inbound a later send of ours
-  answered. A sign-off says A SIGN-OFF and that it doesn't change the latest
-  email; the same email filed twice says FILED TWICE; any other line opens to
-  its note's own body.
+  filed it) and its Owed lines, YOU OWE, the owner by name, or OWED when the
+  line names nobody, CLOSED with "Done M/D." only once every to-do or loop the
+  filing opened for that side is done, on the day its done tag holds (the
+  closer rule: delivery closes a promise, a later message never does), and
+  CLOSED "Answered M/D." on an inbound a later send of ours to the account
+  answered; a sign-off, machinery or a note to a colleague answers nothing. A
+  sign-off says A SIGN-OFF and that it doesn't change the latest email; the
+  same email filed twice (one sender, recipient, subject and moment) says
+  FILED TWICE; any other line opens to its note's own body, and every line,
+  opened, shows its whole text where it rested trailing off.
 
 ## The Ted doctrine (founder-decreed 2026-08-14)
 

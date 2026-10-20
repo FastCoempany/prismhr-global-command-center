@@ -6,14 +6,19 @@
 // filed is matched to the message it came from, and that message's own words,
 // cleaned (src/lib/activity/excerpt.ts), ride to the store beside its note.
 //
-// Matching is strict, never a guess: the sender and the subject must agree,
-// and the day and the clock break a tie. An entry with no sure message keeps
-// no whole text, and the row then says so and shows the synopsis. Pure.
+// Matching is strict, never a guess. Only a capture that leads with its own
+// header block is split (the relay's copies, a dropped .eml or .msg): a
+// reading-pane grab or a hand-pasted reply carries the newest message with no
+// header of its own, and its only blocks are what it quotes. The sender and
+// the subject must agree, a day both sides name must be the same day, and the
+// clock breaks a tie; a tie left standing keeps nothing. An entry with no sure
+// message keeps no whole text, and the row then says so and shows the
+// synopsis. Pure.
 
 import { cleanEmailWhole } from "@/lib/activity/excerpt";
-import { HEADS } from "@/lib/ingest/dialect";
 import { MINE_RE } from "@/lib/intel/provenance";
-import { chicagoDay } from "@/lib/tz";
+import { sentClockLabel } from "@/lib/intel/rules-read";
+import { USER_TZ, chicagoDay } from "@/lib/tz";
 
 export type EmailMessage = {
   from: string;
@@ -42,6 +47,14 @@ const FROM_LINE = /^[ \t]*\*?From:\*?\s/i;
  *  recipients line joins the line above it. A block without those lines is
  *  not a message and stays inside the body above it. */
 export function emailMessages(raw: string): EmailMessage[] {
+  return blocksOf(raw).messages;
+}
+
+/** The capture's own first line, the head a door writes ("OUTLOOK THREAD —
+ *  inbox copy", "OUTLOOK THREAD — dropped file …"), which is not a message. */
+const CAPTURE_HEAD = /^[A-Z][A-Z ]{3,40}—/;
+
+function blocksOf(raw: string): { messages: EmailMessage[]; leads: boolean } {
   const lines = (raw ?? "").replace(/\r/g, "").split("\n");
   const blocks: { start: number; bodyAt: number; head: Record<string, string> }[] = [];
   for (let i = 0; i < lines.length; i++) {
@@ -74,13 +87,22 @@ export function emailMessages(raw: string): EmailMessage[] {
     blocks.push({ start: i, bodyAt: j, head });
     i = j - 1;
   }
-  return blocks.map((b, k) => ({
-    from: b.head.from ?? "",
-    to: b.head.to ?? "",
-    subject: b.head.subject ?? "",
-    sent: b.head.sent ?? "",
-    body: lines.slice(b.bodyAt, blocks[k + 1]?.start ?? lines.length).join("\n"),
-  }));
+  // The capture leads with its own header when its first line of substance,
+  // past the door's head, opens the first block.
+  let first = 0;
+  while (first < lines.length && !lines[first].trim()) first++;
+  if (first < lines.length && CAPTURE_HEAD.test(lines[first].trim())) first++;
+  while (first < lines.length && !lines[first].trim()) first++;
+  return {
+    leads: blocks.length > 0 && blocks[0].start === first,
+    messages: blocks.map((b, k) => ({
+      from: b.head.from ?? "",
+      to: b.head.to ?? "",
+      subject: b.head.subject ?? "",
+      sent: b.head.sent ?? "",
+      body: lines.slice(b.bodyAt, blocks[k + 1]?.start ?? lines.length).join("\n"),
+    })),
+  };
 }
 
 /** A subject as a thread knows it: reply and forward prefixes, external tags
@@ -126,15 +148,45 @@ function sameSender(entryFrom: string, msgFrom: string): boolean {
   return want.length > 0 && want.every((w) => have.has(w));
 }
 
-/** The Chicago day a Sent line names: an ISO stamp with its offset is a
- *  moment, a written date is the day it says. "" when it names none. */
-function sentDay(sent: string): string {
+/** The days a Sent line can mean: an ISO stamp with its offset is a moment,
+ *  read as its Chicago day and as its UTC day, because the read may have
+ *  dated it either way; a written date is the day it says. Empty when it
+ *  names none. */
+function sentDays(sent: string): string[] {
   const s = (sent ?? "").trim();
-  if (!s) return "";
   if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
     const t = Date.parse(s);
-    return Number.isNaN(t) ? "" : chicagoDay(new Date(t));
+    return Number.isNaN(t)
+      ? []
+      : [chicagoDay(new Date(t)), new Date(t).toISOString().slice(0, 10)];
   }
+  const day = writtenDay(s);
+  return day ? [day] : [];
+}
+
+/** The clocks a Sent line can mean, as the head writes them ("2:10 PM"):
+ *  a stamp's Chicago clock and its UTC clock, a written clock in either
+ *  idiom (src/lib/intel/rules-read.ts reads the 24-hour one). */
+function sentClocks(sent: string): string[] {
+  const s = (sent ?? "").trim();
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    const t = Date.parse(s);
+    if (Number.isNaN(t)) return [];
+    const chi = new Date(t).toLocaleTimeString("en-US", {
+      timeZone: USER_TZ,
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return [chi, sentClockLabel(new Date(t).toISOString().slice(11, 16))];
+  }
+  const clock = sentClockLabel(s);
+  return clock ? [clock] : [];
+}
+
+/** The day a written date names, "" when it names none. */
+function writtenDay(sent: string): string {
+  const s = (sent ?? "").trim();
+  if (!s) return "";
   const dateOnly = s
     .replace(/^[A-Za-z]+,\s*/, "")
     .replace(/\d{1,2}:\d{2}.*$/, "")
@@ -144,64 +196,56 @@ function sentDay(sent: string): string {
   return Number.isNaN(t) ? "" : new Date(t).toISOString().slice(0, 10);
 }
 
-const clockOf = (s: string): string =>
-  /(\d{1,2}):(\d{2})\s*(AM|PM)/i
-    .exec(s ?? "")
-    ?.slice(1, 4)
-    .join(":")
-    .toUpperCase() ?? "";
-
 /** Each entry's whole email, by index: the cleaned words of the message it
- *  came from, or null when no message surely matches, the entry is not an
- *  email, or the message has no words of its own. `outlook` says the capture
- *  is an Outlook thread, the only shape where a capture with no header block
- *  and one email entry is that email. */
+ *  came from, or null when the capture does not lead with its own header,
+ *  no message surely matches, the entry is not an email, or the message has
+ *  no words of its own. */
 export function wholeEmails(
   raw: string,
   entries: readonly WholeEntry[],
-  opts: { outlook: boolean },
 ): (string | null)[] {
   const out: (string | null)[] = entries.map(() => null);
   const emails = entries
     .map((e, i) => ({ e, i }))
     .filter(({ e }) => (e.kind ?? "email") === "email");
   if (emails.length === 0) return out;
-  const msgs = emailMessages(raw);
+  const { messages: msgs, leads } = blocksOf(raw);
+  if (!leads) return out;
 
-  if (msgs.length === 0) {
-    if (!opts.outlook || emails.length !== 1) return out;
-    const lines = (raw ?? "").replace(/\r/g, "").split("\n");
-    const body = lines[0]?.startsWith(HEADS.outlook) ? lines.slice(1).join("\n") : raw;
-    out[emails[0].i] = cleanEmailWhole(body) || null;
-    return out;
-  }
-
+  // A day both sides name must agree; a side that names none never vetoes.
+  const dayFits = (e: WholeEntry, m: EmailMessage): boolean => {
+    const days = sentDays(m.sent);
+    return !e.dayIso || days.length === 0 || days.includes(e.dayIso);
+  };
   const taken = new Set<number>();
   for (const { e, i } of emails) {
     const subject = threadSubject(e.subject ?? "");
-    let picks = msgs
+    const free = msgs
       .map((m, k) => ({ m, k }))
-      .filter(
+      .filter(({ m, k }) => !taken.has(k) && dayFits(e, m));
+    let picks = free.filter(
+      ({ m }) => sameSender(e.from ?? "", m.from) && threadSubject(m.subject) === subject,
+    );
+    // One email read from a capture: the capture's own message, when the
+    // sender or the subject still agrees and the read only wrote the other
+    // its own way.
+    if (picks.length === 0 && emails.length === 1)
+      picks = free.filter(
         ({ m, k }) =>
-          !taken.has(k) &&
-          sameSender(e.from ?? "", m.from) &&
-          threadSubject(m.subject) === subject,
+          k === 0 &&
+          (sameSender(e.from ?? "", m.from) || threadSubject(m.subject) === subject),
       );
-    if (picks.length === 0 && emails.length === 1 && msgs.length === 1)
-      picks = [{ m: msgs[0], k: 0 }];
-    if (picks.length > 1 && e.dayIso) {
-      const sameDay = picks.filter(({ m }) => sentDay(m.sent) === e.dayIso);
-      if (sameDay.length) picks = sameDay;
-    }
     if (picks.length > 1 && e.timeLabel) {
-      const clock = clockOf(e.timeLabel);
-      const sameClock = picks.filter(({ m }) => clock && clockOf(m.sent) === clock);
+      const clock = sentClockLabel(e.timeLabel);
+      const sameClock = picks.filter(
+        ({ m }) => !!clock && sentClocks(m.sent).includes(clock),
+      );
       if (sameClock.length) picks = sameClock;
     }
-    const pick = picks[0];
-    if (!pick) continue;
-    taken.add(pick.k);
-    out[i] = cleanEmailWhole(pick.m.body) || null;
+    // A tie left standing is a guess, and a guess is never kept.
+    if (picks.length !== 1) continue;
+    taken.add(picks[0].k);
+    out[i] = cleanEmailWhole(picks[0].m.body) || null;
   }
   return out;
 }

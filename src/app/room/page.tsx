@@ -742,11 +742,12 @@ export default async function RoomPage() {
         all: allNotes,
         docs,
         todos: todos.filter((t) => accountId && t.accountId === accountId),
+        homeSide: ourSide,
         limit: 6,
       }),
       // The newest email in either direction, sign-offs and machinery read
       // past, for the left column. Its whole text joins after the loop.
-      latestEmail: latestEmail({ notes: allNotes, docs }),
+      latestEmail: latestEmail({ notes: allNotes, docs, homeSide: ourSide }),
       recordTotal: mine.length,
       backgroundTotal,
       loss,

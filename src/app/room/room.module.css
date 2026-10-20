@@ -3133,6 +3133,11 @@ button.sdRadio:hover {
   text-align: center;
   color: var(--soft);
 }
+/* Their mail in the system's blue, as the register draws a send; our own in
+   the soft ink. Declared after .entIc so the tone wins. */
+.entIcIn {
+  color: var(--blue);
+}
 .entIcQuiet {
   color: var(--quiet);
 }
@@ -3189,9 +3194,10 @@ button.sdRadio:hover {
   text-overflow: ellipsis;
   cursor: pointer;
 }
-.entSubj:disabled {
-  cursor: default;
-  color: var(--ink);
+/* Open, the line shows whole: a subject that trailed off reads in full. */
+.entOpen .entSubj {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .entCar {
   border: 0;

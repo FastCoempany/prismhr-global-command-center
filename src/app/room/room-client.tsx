@@ -1847,7 +1847,18 @@ export function Row({
             </div>
           )}
         </div>
-        {row.latestEmail && <LatestEmailPane email={row.latestEmail} />}
+        {/* The newest email, whole (ship order 2026-10-20). A line ✕-parked
+            below leaves it at once, and a subject edited there reads here,
+            before the page re-derives. */}
+        {row.latestEmail && !deletedNotes.has(row.latestEmail.id) && (
+          <LatestEmailPane
+            key={row.latestEmail.id}
+            email={{
+              ...row.latestEmail,
+              subject: editedNotes.get(row.latestEmail.id) ?? row.latestEmail.subject,
+            }}
+          />
+        )}
       </div>
 
       <div className={styles.rec}>

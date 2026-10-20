@@ -21,11 +21,13 @@ export type RowLatestEmail = LatestEmail & {
 const MISSING: Record<WholeMissing, string> = {
   before: "This one was filed before whole emails were kept.",
   capture: "This filing didn't carry the email whole.",
+  record: "This send was logged from the app.",
 };
 
 /** Who wrote to whom, with the door to everyone else on it. */
 function WhoLine({ from, to, others }: { from: string; to: string; others: string[] }) {
   const [open, setOpen] = useState(false);
+  if (!from) return null;
   return (
     <>
       <b>{from}</b>
@@ -117,6 +119,7 @@ export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
         <button
           type="button"
           className={styles.mailOpen}
+          aria-expanded={whole}
           onClick={() => setWhole((v) => !v)}
         >
           {whole ? "Show less" : "Show the whole email"}
@@ -130,11 +133,11 @@ export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
 function Opened({ line }: { line: RecordLine }) {
   const e = line.email;
   if (!e)
-    return (
+    return line.body ? (
       <div className={styles.kept}>
         <p className={styles.keptB}>{line.body}</p>
       </div>
-    );
+    ) : null;
   if (e.closer)
     return (
       <div className={styles.kept}>
@@ -155,7 +158,9 @@ function Opened({ line }: { line: RecordLine }) {
               ? "CLOSED"
               : o.mine
                 ? "YOU OWE"
-                : `${(o.who.split(/\s+/)[0] || "THEY").toUpperCase()} ${o.who ? "OWES" : "OWE"}`}
+                : o.who
+                  ? `${(o.who.split(/\s+/)[0] ?? "").toUpperCase()} OWES`
+                  : "OWED"}
           </b>
           {o.closed ? `${o.text}. ${o.closed}` : `${o.text}.`}
         </div>
@@ -171,7 +176,9 @@ function Opened({ line }: { line: RecordLine }) {
 
 /** One EARLIER line: when and who in mono, the subject in the work, and the
  *  hover rail the room already had. `shown` is the line as the operator
- *  last edited it. */
+ *  last edited it. Every line opens: an email to what the read kept, a note
+ *  to its body, and any line to its whole text, which rests on one line and
+ *  trails off (the click-depth law: nothing compressed is a dead end). */
 export function EarlierLine({
   line,
   shown,
@@ -190,12 +197,11 @@ export function EarlierLine({
   rail?: ReactNode;
 }) {
   const e = line.email;
-  const opens = !!e || !!line.body;
   const tone = e
     ? e.closer
       ? styles.entIcQuiet
       : e.dir === "in"
-        ? styles.kSend
+        ? styles.entIcIn
         : ""
     : line.glyph === "✓" || line.glyph === "✔"
       ? styles.gDone
@@ -205,14 +211,14 @@ export function EarlierLine({
   const subject = e?.closer ? `“${e.kept || shown}”` : shown;
   return (
     <div
-      className={`${styles.ent} ${done ? styles.entDid : ""} ${e?.closer ? styles.entQuiet : ""}`}
+      className={`${styles.ent} ${open ? styles.entOpen : ""} ${done ? styles.entDid : ""} ${e?.closer ? styles.entQuiet : ""}`}
     >
       <div className={styles.entHead}>
         <span className={`${styles.entIc} ${tone}`}>{line.glyph}</span>
         <span className={styles.entMain}>
           <span className={styles.entK}>
             {`${line.day}${line.time ? ` · ${line.time}` : ""}${
-              e ? " · " : line.who ? ` · ${line.who}` : ""
+              e ? (e.from ? " · " : "") : line.who ? ` · ${line.who}` : ""
             }`}
             {e && <WhoLine from={e.from} to={e.to} others={e.others} />}
             {e?.closer && <span className={styles.entTag}>SIGN-OFF</span>}
@@ -221,31 +227,26 @@ export function EarlierLine({
           <button
             type="button"
             className={styles.entSubj}
-            aria-expanded={opens ? open : undefined}
-            disabled={!opens}
+            aria-expanded={open}
             onClick={onToggle}
-            title={opens ? (open ? "Fold it back" : "Open it") : undefined}
+            title={open ? "Fold it back" : "Open it"}
           >
             {subject}
             {note}
           </button>
         </span>
-        {opens ? (
-          <button
-            type="button"
-            className={styles.entCar}
-            aria-hidden="true"
-            tabIndex={-1}
-            onClick={onToggle}
-          >
-            {open ? "▾" : "▸"}
-          </button>
-        ) : (
-          <span />
-        )}
+        <button
+          type="button"
+          className={styles.entCar}
+          aria-hidden="true"
+          tabIndex={-1}
+          onClick={onToggle}
+        >
+          {open ? "▾" : "▸"}
+        </button>
         {rail}
       </div>
-      {open && opens && <Opened line={line} />}
+      {open && <Opened line={line} />}
     </div>
   );
 }

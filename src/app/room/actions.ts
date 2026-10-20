@@ -402,10 +402,6 @@ export async function roomPasteUndo(
           .then((f) => (f && f.accountId === acct.id ? f.fingerprint : ""))
           .catch(() => "")
       : "";
-    // The whole emails the filing kept beside its entries (ship order
-    // 2026-10-20), by the note ids and by the Filing row, on this account
-    // alone. Not counted: each rode on a row the count already holds.
-    await dropEmailTexts({ accountId: acct.id, noteIds: ids, filingId: filing });
     // The account's own rows and its asks.
     const r = ids.length
       ? await prisma.accountNote.deleteMany({
@@ -455,6 +451,11 @@ export async function roomPasteUndo(
       await prisma.accountDisposition
         .deleteMany({ where: { accountId: pasteKeyOf(acct.id, fingerprint) } })
         .catch(() => undefined);
+    // The whole emails the filing kept beside its entries (ship order
+    // 2026-10-20), by the note ids and by the Filing row, on this account
+    // alone, once the notes they ride on are gone, so an undo that fails
+    // first leaves both. Not counted: each rode on a row the count holds.
+    await dropEmailTexts({ accountId: acct.id, noteIds: ids, filingId: filing });
     // A completion line filed when the operator closed an opened todo before
     // undoing goes with its todo (the defects doc's open item).
     const completions = await undoCompletions(acct.id, [...todos, ...filingTodos]);

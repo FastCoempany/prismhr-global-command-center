@@ -269,3 +269,31 @@ export function redactMoney(s: string): string {
       "[—]",
     );
 }
+
+const COUNTED =
+  "employees?|EEs?|workers?|contractors?|people|staff|seats?|hires?|heads?|headcount|clients?|locations?|worksites?|users?|countries";
+
+/** The money rule where a person's own words render: an email kept whole
+ *  (ship order 2026-10-20; CLAUDE.md, The email in the row) talks prices the
+ *  way people write them, so beyond redactMoney a currency code before the
+ *  figure ("USD 900"), a figure with a k, M or a word for thousands ("1.5k",
+ *  "2 million") unless it counts people or places, and a rate ("650 per
+ *  employee per month") all go. A 401k is a plan, never a figure. */
+export function redactMoneyStrict(s: string): string {
+  return redactMoney(s ?? "")
+    .replace(
+      /\b(?:USD|EUR|GBP|CAD|AUD|NZD|MXN|INR|BRL|COP|PHP|JPY|CHF|SGD|ZAR)\s?\d[\d,.]*(?:\s?(?:k|K|M|MM)\b)?/g,
+      "[—]",
+    )
+    .replace(
+      new RegExp(
+        `\\b\\d[\\d,.]*\\s?(?:k|K|M|MM|million|thousand|grand)\\b(?!\\s?(?:${COUNTED})\\b)`,
+        "g",
+      ),
+      (m) => (/^40[13]\s?k$/i.test(m) ? m : "[—]"),
+    )
+    .replace(
+      /\b\d[\d,.]*(?=\s?(?:per|\/|an?)\s?(?:employee|EE|worker|head|hire|person|seat|user|contractor|month|mo|year|yr|week|hour|hr|pay period)\b)/gi,
+      "[—]",
+    );
+}

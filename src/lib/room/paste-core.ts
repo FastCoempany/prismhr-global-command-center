@@ -613,12 +613,14 @@ async function fileClaimed({
     // CLAUDE.md, The email in the row): the read keeps a synopsis on the
     // note, and the email's own words, read from the whole capture and never
     // the read's window (D4), ride to their own store keyed by the note. A
-    // call or a chat holds no emails to keep.
+    // call or a chat holds no emails to keep. An email the capture could not
+    // pair with its message keeps an empty row, so the row can say the
+    // filing looked and found none, never that it predates the store.
     const filedEntries = entries.slice(0, ENTRY_CAP);
-    const wholes =
-      liveDialect === "CT" || liveDialect === "TM"
-        ? filedEntries.map(() => null)
-        : wholeEmails(rawText, filedEntries, { outlook: liveDialect === "OL" });
+    const chat = liveDialect === "CT" || liveDialect === "TM";
+    const wholes = chat
+      ? filedEntries.map(() => null)
+      : wholeEmails(rawText, filedEntries);
     const kept: NewEmailText[] = [];
     for (const [k, e] of filedEntries.entries()) {
       const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
@@ -648,9 +650,8 @@ async function fileClaimed({
       });
       noteIds.push(n.id);
       filed++;
-      const whole = wholes[k];
-      if (glyph === "✉" && whole)
-        kept.push({ noteId: n.id, accountId: acct.id, filingId, text: whole });
+      if (glyph === "✉" && !chat)
+        kept.push({ noteId: n.id, accountId: acct.id, filingId, text: wholes[k] ?? "" });
     }
     // Fails open: a store that is down loses the whole emails, never the
     // filing, and the row then shows the synopsis and says why.
