@@ -118,6 +118,7 @@ export function roomRow(over: Partial<RoomRow> = {}): RoomRow {
       {
         id: "n1",
         text: "✉ OL Sep 25 10:22 AM — RE: [EXTERNAL] Invoices · Chassie Smith → Antaeus Coe",
+        edit: "RE: [EXTERNAL] Invoices",
         struck: false,
         glyph: "✉",
         day: "9/25",

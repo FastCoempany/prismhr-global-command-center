@@ -363,10 +363,12 @@ describe("the store: redacted on the way in, marking what it looked for, failing
     );
     const r = await wholeEmailsFor(
       [
-        { id: "kept", filingId: "f" },
-        { id: "looked", filingId: "f" },
-        { id: "old", filingId: "g" },
-        { id: "sent", filingId: "" },
+        { id: "kept", logged: false },
+        { id: "looked", logged: false },
+        // Filed before the store, and before the Filing column existed too:
+        // a pasted inbound with no filing is still "before", never ours.
+        { id: "old", logged: false },
+        { id: "sent", logged: true },
       ],
       db,
     );
@@ -374,6 +376,44 @@ describe("the store: redacted on the way in, marking what it looked for, failing
     assert.deepEqual(r.get("looked"), { whole: null, missing: "capture" });
     assert.deepEqual(r.get("old"), { whole: null, missing: "before" });
     assert.deepEqual(r.get("sent"), { whole: null, missing: "record" });
+  });
+
+  test("a store that cannot be read claims nothing about why", async () => {
+    const down: EmailTextClient = {
+      emailText: {
+        createMany: async () => Promise.reject(new Error("down")),
+        findMany: async () => Promise.reject(new Error("down")),
+        deleteMany: async () => Promise.reject(new Error("down")),
+      },
+    };
+    const r = await wholeEmailsFor([{ id: "x", logged: false }], down);
+    assert.deepEqual(r.get("x"), { whole: null, missing: "unread" });
+  });
+
+  test("one text the table refuses never takes the others down", async () => {
+    const rows: string[] = [];
+    const picky: EmailTextClient = {
+      emailText: {
+        async createMany(a) {
+          if (a.data.length > 1) throw new Error("batch refused");
+          if (a.data[0].text === "bad") throw new Error("row refused");
+          rows.push(a.data[0].noteId);
+          return { count: 1 };
+        },
+        findMany: async () => [],
+        deleteMany: async () => ({ count: 0 }),
+      },
+    };
+    const n = await keepEmailTexts(
+      [
+        { noteId: "a", accountId: "x", text: "good" },
+        { noteId: "b", accountId: "x", text: "bad" },
+        { noteId: "c", accountId: "x", text: "fine\u0000" },
+      ],
+      picky,
+    );
+    assert.equal(n, 2);
+    assert.deepEqual(rows, ["a", "c"]);
   });
 
   test("a store that is down loses the whole email, never the caller", async () => {
@@ -771,5 +811,387 @@ describe("EARLIER: who, when and the subject, each opening in place", () => {
       actors: "Dana Reyes → Antaeus Coe",
     });
     assert.ok(!/900/.test(lines([priced])[0].email?.kept ?? ""));
+  });
+});
+
+// ── the verification's cases (the five-lens review of 2026-10-20) ──────────
+
+describe("the matcher never hands one person's words to another", () => {
+  const relay = (
+    top: string,
+    body: string,
+    quoted: string,
+  ) => `OUTLOOK THREAD — inbox copy
+From: ${top}
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: 2026-10-20T19:30:00+00:00
+Subject: FW: Pricing for Mexico
+
+${body}
+
+________________________________
+From: Dana <dreyes@regis.example>
+Sent: Tuesday, October 20, 2026 9:00 AM
+To: Anika Steenstra <anika@prismhr.com>
+Subject: Pricing for Mexico
+
+${quoted}`;
+
+  test("a colleague's forward over the client's ask never becomes the client's email", () => {
+    const raw = relay(
+      "Anika Steenstra <anika@prismhr.com>",
+      "Antaeus, can you take this one? I told her you'd call today.\nAnika",
+      "Do you have a census template?",
+    );
+    assert.deepEqual(
+      wholeEmails(raw, [
+        {
+          kind: "email",
+          from: "Dana Reyes",
+          subject: "Pricing for Mexico",
+          dayIso: "2026-10-20",
+        },
+      ]),
+      [null],
+    );
+  });
+
+  test("a bare address in the relay's From reads as the name the thread pairs it with", () => {
+    const raw = `OUTLOOK THREAD — inbox copy
+From: dreyes@regis.example
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: 2026-10-20T14:10:00+00:00
+Subject: RE: Demo
+
+Thursday works.
+
+From: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: Monday, October 19, 2026 4:00 PM
+To: Dana Reyes <dreyes@regis.example>
+Subject: Demo
+
+Can we meet this week?`;
+    assert.deepEqual(
+      wholeEmails(raw, [
+        {
+          kind: "email",
+          from: "Dana Reyes",
+          subject: "RE: Demo",
+          dayIso: "2026-10-20",
+          timeLabel: "9:10 AM",
+        },
+      ]),
+      ["Thursday works."],
+    );
+  });
+
+  test("a lone candidate whose clock disagrees is never kept, and a Mac date is a date", () => {
+    const raw = (top: string) => `OUTLOOK THREAD — inbox copy
+From: ${top}
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: 2026-10-20T21:40:00+00:00
+Subject: RE: Reseller
+
+We're going with the reseller model.
+
+From: Dana Reyes <dreyes@regis.example>
+Date: Tuesday, October 13, 2026 at 9:00 AM
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Subject: Reseller
+
+We are not ready to decide anything yet.`;
+    const entry = {
+      kind: "email",
+      from: "Dana Reyes",
+      subject: "RE: Reseller",
+      dayIso: "2026-10-20",
+      timeLabel: "4:40 PM",
+    };
+    assert.deepEqual(
+      wholeEmails(raw("d.r@mobile.example"), [entry]),
+      [null],
+      "last week's quoted answer never stands in for today's",
+    );
+    assert.deepEqual(
+      wholeEmails(raw("dreyes@regis.example"), [entry]),
+      ["We're going with the reseller model."],
+      "her own bare address is hers",
+    );
+  });
+
+  test("a forwarded block's first body line never folds into its To line", () => {
+    const raw = `OUTLOOK THREAD — dropped file fw.eml
+From: Dana Reyes <dreyes@regis.example>
+Sent: Tuesday, October 20, 2026 9:00 AM
+Subject: Payroll
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+
+Sam (sam@regis.example) owns payroll; loop him in on everything
+Thanks`;
+    assert.deepEqual(
+      wholeEmails(raw, [
+        { kind: "email", from: "Dana Reyes", subject: "Payroll", dayIso: "2026-10-20" },
+      ]),
+      ["Sam (sam@regis.example) owns payroll; loop him in on everything\nThanks"],
+    );
+  });
+
+  test("a partner's Spanish Outlook header splits like an English one", () => {
+    const raw = `OUTLOOK THREAD — dropped file re.eml
+From: Ana Rivera <ana@pr.example>
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: Tuesday, October 20, 2026 9:00 AM
+Subject: RE: Demo
+
+Funciona para mí.
+
+De: Antaeus Coe <antaeus.coe@prismhr.com>
+Enviado el: lunes, 19 de octubre de 2026 10:00
+Para: Ana Rivera <ana@pr.example>
+Asunto: Demo
+
+Our price list is attached.`;
+    assert.deepEqual(
+      wholeEmails(raw, [
+        { kind: "email", from: "Ana Rivera", subject: "RE: Demo", dayIso: "2026-10-20" },
+      ]),
+      ["Funciona para mí."],
+    );
+    assert.equal(emailMessages(raw).length, 2);
+  });
+});
+
+describe("the cleaner keeps what a person wrote after a sign-off, and every sentence that only looks like a trail", () => {
+  const cases: [string, string, string][] = [
+    [
+      "a P.S. with a link",
+      "Here it is.\n\nThanks,\nDana\n\nP.S. The signed order form is here: https://docs.example.com/order",
+      "Here it is.\n\nThanks,\nDana\n\nP.S. The signed order form is here: https://docs.example.com/order",
+    ],
+    [
+      "an introduction with an address",
+      "Here it is.\n\nThanks,\nDana\n\nLooping in Sam Ortiz (sam@regis.example), who runs payroll and will own the onboarding.",
+      "Here it is.\n\nThanks,\nDana\n\nLooping in Sam Ortiz (sam@regis.example), who runs payroll and will own the onboarding.",
+    ],
+    [
+      "a mobile email with no full stops",
+      "Hi Antaeus,\n\nThank you!\n\nHere's the census file\nhttps://drive.example.com/x\nLet me know if you need anything else\n\nDana",
+      "Hi Antaeus,\n\nThank you!\n\nHere's the census file\nhttps://drive.example.com/x\nLet me know if you need anything else\n\nDana",
+    ],
+    [
+      "a sentence ending in wrote:",
+      "Hi Antaeus,\n\nOn the pricing question, our CFO had one concern. Here is what she wrote:\n\nWe need the deposit waived.\n\nDana",
+      "Hi Antaeus,\n\nOn the pricing question, our CFO had one concern. Here is what she wrote:\n\nWe need the deposit waived.\n\nDana",
+    ],
+    [
+      "bullets set with >",
+      "Hi Antaeus,\n\n> Mexico: two hires in January\n> Canada: one in March\n\nDana",
+      "Hi Antaeus,\n\n> Mexico: two hires in January\n> Canada: one in March\n\nDana",
+    ],
+    [
+      "a request to book a meeting",
+      "Hi Antaeus,\n\nCould you book a meeting with me and our CFO next week?\n\nThanks,\nDana",
+      "Hi Antaeus,\n\nCould you book a meeting with me and our CFO next week?\n\nThanks,\nDana",
+    ],
+    [
+      "a German quoted header",
+      "Passt.\n\nVon: Antaeus Coe\nGesendet: Montag, 19. Oktober 2026 10:00\nAn: Jonas\nBetreff: Demo\n\nquoted",
+      "Passt.",
+    ],
+    [
+      "Outlook's one-line header after a short reply",
+      "Works for me.\nFrom: Dana Reyes Sent: Monday, October 19, 2026 10:00 AM To: Antaeus Subject: Demo\nquoted",
+      "Works for me.",
+    ],
+    ["a NUL", "Hi\u0000 there.", "Hi there."],
+  ];
+  for (const [name, raw, want] of cases)
+    test(name, () => assert.equal(cleanEmailWhole(raw), want));
+});
+
+describe("the strict money rule takes every form the review wrote prices in", () => {
+  const gone: [string, string][] = [
+    ["599-649 PEPM", "[—]-[—]"],
+    ["$599-649", "[—]-[—]"],
+    ["PEPM: 549", "PEPM: [—]"],
+    ["3.200 € gross", "[—] gross"],
+    ["45000 MXN a month", "[—] a month"],
+    ["Rs. 50000", "[—]"],
+    ["650 bucks a head", "[—] a head"],
+    ["twelve hundred dollars a month", "[—] a month"],
+    ["EOR 599 / contractor 49", "EOR [—] / contractor [—]"],
+    ["Your EOR fee of 499 euros per employee", "Your EOR fee of [—] per employee"],
+    ["the one-time setup fee is 1500.", "the one-time setup fee is [—]."],
+  ];
+  for (const [raw, want] of gone)
+    test(raw, () => assert.equal(redactMoneyStrict(raw), want));
+  test("a headcount, a 401k, a clock and a phone stay", () => {
+    for (const keep of [
+      "a total of 12 employees",
+      "their 401k plan",
+      "at 3:30 on 10/20",
+      "312 555 0199",
+    ])
+      assert.equal(redactMoneyStrict(keep), keep);
+  });
+});
+
+describe("the row claims a moment only as far as the record holds it", () => {
+  test("entries a filing wrote with no day show no day, keep capture order, and are never twins of each other", () => {
+    const at = (
+      id: string,
+      sec: number,
+      clock: string,
+      from: string,
+      to: string,
+      words: string,
+    ) =>
+      note({
+        id,
+        filingId: "fx",
+        createdAt: new Date(
+          Date.parse("2026-10-20T21:05:00.000Z") + sec * 10,
+        ).toISOString(),
+        body: `✉ OL ${clock} — Agreement · ${from} → ${to}\n${words}`,
+        actors: `${from} → ${to}`,
+      });
+    // Filed newest message first, so the oldest carries the latest stamp.
+    const newest = at("d1", 0, "4:00 PM", "Dana Reyes", "Antaeus Coe", "We signed it.");
+    const reply = at("d2", 1, "11:00 AM", "Antaeus Coe", "Dana Reyes", "Here it is.");
+    const oldest = at(
+      "d3",
+      2,
+      "9:10 AM",
+      "Dana Reyes",
+      "Antaeus Coe",
+      "Can you send the agreement?",
+    );
+    const notes = [newest, reply, oldest];
+    const l = lines(notes);
+    assert.deepEqual(
+      l.map((x) => x.id),
+      ["d1", "d2", "d3"],
+    );
+    assert.ok(l.every((x) => x.day === "" && !x.email?.twice));
+    assert.equal(latest(notes)?.id, "d1");
+  });
+
+  test("a day with no clock answers nothing on its own day", () => {
+    const sent = note({
+      id: "a1",
+      body: "✉ Reseller agreement — sent to Dana Reyes.",
+      actors: "Antaeus Coe → Dana Reyes",
+      recipients: "Dana Reyes",
+      source: "act-lane",
+      createdAt: "2026-10-19T15:00:00.000Z",
+    });
+    const reply = note({
+      id: "r1",
+      createdAt: "2026-10-19T12:00:00.000Z",
+      body: "✉ SF Oct 19 — RE: Reseller agreement · Dana Reyes → Antaeus Coe\nGot it.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const byId = new Map(lines([sent, reply]).map((x) => [x.id, x]));
+    assert.equal(byId.get("r1")?.email?.answered, "");
+    assert.equal(
+      latest([sent, reply])?.logged,
+      true,
+      "an Act Lane send says it was logged",
+    );
+  });
+
+  test("the paste pipeline's placeholders never render as words", () => {
+    const blank = note({
+      id: "u1",
+      body: "✉ OL Oct 19 2:00 PM — (no subject) · (unattributed)\nA note.",
+      actors: "",
+    });
+    const l = lines([blank])[0];
+    assert.equal(l.line, "No subject");
+    assert.equal(l.email?.from, "");
+  });
+
+  test("✎ starts from what is stored, and a typed note renders as written", () => {
+    const typed = note({
+      id: "t1",
+      createdAt: "2026-10-20T15:00:00.000Z",
+      body: "✎ Plans to hire 5 a month in Brazil",
+      source: "room",
+    });
+    const l = lines([typed, IN]);
+    const t1 = l.find((x) => x.id === "t1")!;
+    assert.equal(t1.line, "Plans to hire 5 a month in Brazil");
+    assert.equal(t1.edit, "Plans to hire 5 a month in Brazil");
+    const e6 = l.find((x) => x.id === "e6")!;
+    assert.equal(
+      e6.edit,
+      "RE: Re: [EXTERNAL] Re: Intro to your Global Business Consultant",
+    );
+  });
+
+  test("each Owed line closes by its own promise, across filings, released or done", () => {
+    const later = note({
+      id: "e7",
+      filingId: "f7",
+      createdAt: "2026-10-21T12:00:00.000Z",
+      body: "✉ OL Oct 21 9:00 AM — Re: Agreement · Dana Reyes → Antaeus Coe\nStill waiting. Owed: send the reseller agreement — @Antaeus Coe; book the demo — @Antaeus Coe; send the intro deck — @Lesha Cyphers.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const todos = [
+      {
+        id: "t1",
+        body: "Send the reseller agreement · from 10/20 paste",
+        done: false,
+        filingId: "f6",
+      },
+      {
+        id: "t2",
+        body: withTags("Book the demo", {
+          ...NO_TAGS,
+          kind: "action",
+          doneAt: String(Date.parse("2026-10-22T15:00:00Z")),
+        }),
+        done: true,
+        filingId: "f7",
+      },
+    ];
+    const owed = recordLines({
+      notes: [later],
+      docs: docsFor([later]),
+      todos,
+      homeSide: HOME,
+      limit: 6,
+    })[0].email?.owed;
+    assert.deepEqual(
+      owed?.map((o) => [o.text, o.closed]),
+      [
+        ["send the reseller agreement", ""],
+        ["book the demo", "Done 10/22."],
+        ["send the intro deck", ""],
+      ],
+    );
+    const released = recordLines({
+      notes: [later],
+      docs: docsFor([later]),
+      todos,
+      released: new Set(["t1"]),
+      homeSide: HOME,
+      limit: 6,
+    })[0].email?.owed;
+    assert.equal(released?.[0].closed, "Released.");
+  });
+
+  test("a twin on the other lane still says FILED TWICE", () => {
+    const bg = note({ ...TWIN, id: "bg", lane: "background", filingId: "fb" });
+    const shown = note({ ...ASKED, filingId: "fa" });
+    const l = recordLines({
+      notes: [shown],
+      all: [shown, bg],
+      docs: docsFor([shown, bg]),
+      todos: [],
+      homeSide: HOME,
+      limit: 6,
+    });
+    assert.equal(l[0].email?.twice, true);
   });
 });

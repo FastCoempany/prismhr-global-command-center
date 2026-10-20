@@ -37,9 +37,49 @@ export type WholeEntry = {
   timeLabel?: string;
 };
 
-const HEAD_LINE = /^[ \t]*\*?(From|Sent|Date|To|Cc|Subject):\*?[ \t]*(.*)$/i;
-const FROM_LINE = /^[ \t]*\*?From:\*?\s/i;
-
+// The header keys a mail client writes, in the languages the book's partners
+// write in (a Puerto Rico partner's Outlook quotes "De: / Enviado el: / Para:
+// / Asunto:"), each read as the English key it stands for.
+const KEY: Record<string, string> = {
+  from: "from",
+  de: "from",
+  von: "from",
+  da: "from",
+  van: "from",
+  sent: "sent",
+  date: "sent",
+  enviado: "sent",
+  "enviado el": "sent",
+  fecha: "sent",
+  envoyé: "sent",
+  "envoyé le": "sent",
+  gesendet: "sent",
+  datum: "sent",
+  inviato: "sent",
+  verzonden: "sent",
+  to: "to",
+  para: "to",
+  an: "to",
+  à: "to",
+  a: "to",
+  aan: "to",
+  cc: "cc",
+  subject: "subject",
+  asunto: "subject",
+  betreff: "subject",
+  objet: "subject",
+  oggetto: "subject",
+  onderwerp: "subject",
+};
+const KEYS = Object.keys(KEY)
+  .sort((x, y) => y.length - x.length)
+  .join("|");
+const HEAD_LINE = new RegExp(`^[ \\t]*\\*?(${KEYS})\\s?:\\*?[ \\t]*(.*)$`, "i");
+const FROM_LINE = /^[ \t]*\*?(?:From|De|Von|Da|Van)\s?:\*?\s/i;
+/** A wrapped recipients line: names and addresses and their separators,
+ *  nothing a sentence would carry. */
+const RCPT_LIST =
+  /^\s*(?:(?:"?[^"<>;,@\n]{0,60}"?\s*<[^<>\s]+@[^<>\s]+>|[^\s<>;,]+@[^\s<>;,]+)\s*[;,]?\s*)+$/;
 /** The capture's messages, in the order the text holds them (newest first in
  *  a reply chain). A header block is a From line with a Subject beneath it
  *  and a Sent, Date or To line, blank lines between them skipped, because an
@@ -67,16 +107,18 @@ function blocksOf(raw: string): { messages: EmailMessage[]; leads: boolean } {
       if (!line.trim()) continue;
       const m = HEAD_LINE.exec(line);
       if (m) {
-        const key = m[1].toLowerCase() === "date" ? "sent" : m[1].toLowerCase();
-        if (head[key] !== undefined) break;
+        const key = KEY[m[1].toLowerCase()] ?? "";
+        if (!key || head[key] !== undefined) break;
         head[key] = m[2].trim();
         last = key;
         continue;
       }
+      // A recipients line wraps onto the very next line and reads as a list;
+      // past a blank line, or reading as words, it is the body.
       if (
         (last === "to" || last === "cc") &&
-        /@|;/.test(line) &&
-        !/[.!?]\s*$/.test(line)
+        lines[j - 1]?.trim() &&
+        RCPT_LIST.test(line)
       ) {
         head[last] = `${head[last]} ${line.trim()}`;
         continue;
@@ -120,32 +162,69 @@ export function threadSubject(s: string): string {
   return t.replace(/[❗]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
-/** The name words of a sender: "Leilani Gonzalez <l@x.com>", "Gonzalez,
- *  Leilani" and "leilani.gonzalez@x.com" all read as leilani, gonzalez. */
-function nameWords(s: string): string[] {
+/** A sender's display name and address: "Leilani Gonzalez <l@x.com>",
+ *  "Gonzalez, Leilani" or a bare "l@x.com". */
+function senderOf(s: string): { name: string; address: string } {
   const raw = (s ?? "").trim();
   const angle = /^(.*?)<([^>]+)>/.exec(raw);
-  let name = (angle ? angle[1] : raw).replace(/["']/g, "").trim();
-  if (!name || /@/.test(name)) {
-    const addr = angle ? angle[2] : raw;
-    name = (addr.split("@")[0] ?? "").replace(/[._-]+/g, " ");
-  }
+  const address = (angle ? angle[2] : /@/.test(raw) ? raw : "").trim().toLowerCase();
+  let name = (angle ? angle[1] : /@/.test(raw) ? "" : raw).replace(/["']/g, "").trim();
   const lastFirst = /^([^,]+),\s*(.+)$/.exec(name);
   if (lastFirst) name = `${lastFirst[2]} ${lastFirst[1]}`;
-  return name
+  return { name, address };
+}
+
+const words = (name: string): string[] =>
+  name
     .toLowerCase()
     .split(/[^a-z'’]+/)
     .filter((w) => w.length > 1);
+
+const OUR_MAIL = /@(?:prismhr|vensure)\.com\b/i;
+const isOurs = (s: string): boolean => MINE_RE.test(s) || OUR_MAIL.test(s);
+
+/** Every address the capture's headers pair with a display name, so a bare
+ *  address in one header (Power Automate writes the relay's From that way)
+ *  reads as the name another header gives it. */
+function aliasesOf(msgs: readonly EmailMessage[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const m of msgs)
+    for (const field of [m.from, ...m.to.split(/[;,]/)]) {
+      const { name, address } = senderOf(field);
+      if (name && address && !out.has(address)) out.set(address, name);
+    }
+  return out;
 }
 
-/** Does the read's sender name the message's sender? Every word the read
- *  wrote is in the header's name, or the operator wrote both. */
-function sameSender(entryFrom: string, msgFrom: string): boolean {
-  if (MINE_RE.test(entryFrom) || /^(you|me)$/i.test(entryFrom.trim()))
-    return MINE_RE.test(msgFrom);
-  const want = nameWords(entryFrom);
-  const have = new Set(nameWords(msgFrom));
-  return want.length > 0 && want.every((w) => have.has(w));
+/** Does the read's sender name the message's sender? Never across sides
+ *  (ours against theirs). By name, every word the read wrote is in the
+ *  header's name; by a bare address with no name anywhere in the capture,
+ *  the address spells the read's name (its surname, or initial and surname). */
+function sameSender(
+  entryFrom: string,
+  msgFrom: string,
+  aliases: ReadonlyMap<string, string>,
+): boolean {
+  const mineEntry = MINE_RE.test(entryFrom) || /^(you|me)$/i.test(entryFrom.trim());
+  if (mineEntry !== isOurs(msgFrom)) return false;
+  if (mineEntry) return true;
+  const want = words(entryFrom);
+  if (want.length === 0) return false;
+  const { name, address } = senderOf(msgFrom);
+  const shown = name || aliases.get(address) || "";
+  if (shown) {
+    const have = new Set(words(shown));
+    return want.every((w) => have.has(w));
+  }
+  const local = (address.split("@")[0] ?? "").replace(/[^a-z]/g, "");
+  const first = want[0];
+  const last = want[want.length - 1];
+  if (!local) return false;
+  return want.length === 1
+    ? local === first
+    : (last.length >= 3 && local.includes(last)) ||
+        local === `${first[0]}${last}` ||
+        local === `${first}${last[0]}`;
 }
 
 /** The days a Sent line can mean: an ISO stamp with its offset is a moment,
@@ -183,12 +262,25 @@ function sentClocks(sent: string): string[] {
   return clock ? [clock] : [];
 }
 
-/** The day a written date names, "" when it names none. */
+/** The day a written date names, "" when it names none: "Tuesday, October
+ *  13, 2026 at 9:00 AM" (Outlook for Mac, a Gmail forward), "Oct 13, 2026,
+ *  at 9:00 AM" (Apple), an RFC date, and the numeric forms, day first when
+ *  the first number cannot be a month or the separator is a dot. */
 function writtenDay(sent: string): string {
   const s = (sent ?? "").trim();
   if (!s) return "";
+  const num = /^(?:[A-Za-z]+,?\s*)?(\d{1,2})([/.-])(\d{1,2})\2(\d{2,4})\b/.exec(s);
+  if (num) {
+    const [a, b] = [Number(num[1]), Number(num[3])];
+    const dayFirst = num[2] === "." || a > 12;
+    const [mo, d] = dayFirst ? [b, a] : [a, b];
+    const y = Number(num[4].length === 2 ? `20${num[4]}` : num[4]);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return "";
+    return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
   const dateOnly = s
     .replace(/^[A-Za-z]+,\s*/, "")
+    .replace(/,?\s+at\s+\d{1,2}:\d{2}.*$/i, "")
     .replace(/\d{1,2}:\d{2}.*$/, "")
     .trim()
     .replace(/,\s*$/, "");
@@ -212,36 +304,35 @@ export function wholeEmails(
   const { messages: msgs, leads } = blocksOf(raw);
   if (!leads) return out;
 
-  // A day both sides name must agree; a side that names none never vetoes.
+  const aliases = aliasesOf(msgs);
+  // A day the entry names must be the message's: a Sent line that names
+  // none says nothing, and one that names a day the reader cannot read is
+  // never taken on trust.
   const dayFits = (e: WholeEntry, m: EmailMessage): boolean => {
+    if (!e.dayIso || !m.sent.trim()) return true;
     const days = sentDays(m.sent);
-    return !e.dayIso || days.length === 0 || days.includes(e.dayIso);
+    return days.length > 0 && days.includes(e.dayIso);
+  };
+  // A clock both sides name must agree too, a single candidate included.
+  const clockFits = (e: WholeEntry, m: EmailMessage): boolean => {
+    const clock = sentClockLabel(e.timeLabel ?? "");
+    const clocks = sentClocks(m.sent);
+    return !clock || clocks.length === 0 || clocks.includes(clock);
   };
   const taken = new Set<number>();
   for (const { e, i } of emails) {
     const subject = threadSubject(e.subject ?? "");
     const free = msgs
       .map((m, k) => ({ m, k }))
-      .filter(({ m, k }) => !taken.has(k) && dayFits(e, m));
-    let picks = free.filter(
-      ({ m }) => sameSender(e.from ?? "", m.from) && threadSubject(m.subject) === subject,
-    );
-    // One email read from a capture: the capture's own message, when the
-    // sender or the subject still agrees and the read only wrote the other
-    // its own way.
+      .filter(({ m, k }) => !taken.has(k) && dayFits(e, m) && clockFits(e, m));
+    const sender = ({ m }: { m: EmailMessage }) =>
+      sameSender(e.from ?? "", m.from, aliases);
+    let picks = free.filter((x) => sender(x) && threadSubject(x.m.subject) === subject);
+    // One email read from a capture: the capture's own message, when its
+    // sender is the read's and the read wrote the subject its own way. The
+    // subject alone never pairs: every message of a thread shares it.
     if (picks.length === 0 && emails.length === 1)
-      picks = free.filter(
-        ({ m, k }) =>
-          k === 0 &&
-          (sameSender(e.from ?? "", m.from) || threadSubject(m.subject) === subject),
-      );
-    if (picks.length > 1 && e.timeLabel) {
-      const clock = sentClockLabel(e.timeLabel);
-      const sameClock = picks.filter(
-        ({ m }) => !!clock && sentClocks(m.sent).includes(clock),
-      );
-      if (sameClock.length) picks = sameClock;
-    }
+      picks = free.filter((x) => x.k === 0 && sender(x));
     // A tie left standing is a guess, and a guess is never kept.
     if (picks.length !== 1) continue;
     taken.add(picks[0].k);

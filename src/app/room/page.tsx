@@ -70,7 +70,7 @@ import { latestResearchAt, ownPassesFrom, researchNs } from "@/lib/intel/deep-re
 import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
-import { latestEmail, recordLines } from "@/lib/room/email-row";
+import { emailRow } from "@/lib/room/email-row";
 import { wholeEmailsFor } from "@/lib/notes/email-text";
 import { settledByRecord } from "@/lib/room/settled";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
@@ -653,6 +653,22 @@ export default async function RoomPage() {
     // no seat on the line or the row.
     const theirs = theirsLine(acct.secondRecord);
 
+    // The email in the row (ship order 2026-10-20; CLAUDE.md, The email in
+    // the row): EARLIER's lines and the newest email for the left column,
+    // every moment read once. The answers, the twins and the closed Owed
+    // lines read every visible row and the account's to-dos, not only the
+    // six shown; a promise their side released reads as released, as the
+    // sheet reads it. The newest email's whole text joins after the loop.
+    const mail = emailRow({
+      notes: mine,
+      all: allNotes,
+      docs,
+      todos: todos.filter((t) => accountId && t.accountId === accountId),
+      released: new Set(sheet.released.map((x) => x.id)),
+      homeSide: ourSide,
+      limit: 6,
+    });
+
     rows.push({
       accountId,
       theirs,
@@ -732,22 +748,8 @@ export default async function RoomPage() {
       // What their side released: closed, never counted, shown so nothing
       // vanishes without a trace (pass 8 H6; the pass 9 seam, S-2).
       sheetReleased: sheet.released,
-      // EARLIER (ship order 2026-10-20; CLAUDE.md, The email in the row):
-      // each entry as a line a person reads, in the order the record
-      // happened, opening to what the account record history holds for it.
-      // The answers, the twins and the closed Owed lines read every visible
-      // row and the account's to-dos, not only the six shown.
-      record: recordLines({
-        notes: mine,
-        all: allNotes,
-        docs,
-        todos: todos.filter((t) => accountId && t.accountId === accountId),
-        homeSide: ourSide,
-        limit: 6,
-      }),
-      // The newest email in either direction, sign-offs and machinery read
-      // past, for the left column. Its whole text joins after the loop.
-      latestEmail: latestEmail({ notes: allNotes, docs, homeSide: ourSide }),
+      record: mail.record,
+      latestEmail: mail.latest,
       recordTotal: mine.length,
       backgroundTotal,
       loss,
@@ -782,7 +784,7 @@ export default async function RoomPage() {
   // or why there is none, so the column says it rather than implying it.
   const wholes = await wholeEmailsFor(
     rows.flatMap((r) =>
-      r.latestEmail ? [{ id: r.latestEmail.id, filingId: r.latestEmail.filingId }] : [],
+      r.latestEmail ? [{ id: r.latestEmail.id, logged: r.latestEmail.logged }] : [],
     ),
   );
   for (const r of rows)

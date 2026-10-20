@@ -3042,6 +3042,8 @@ button.sdRadio:hover {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .mailWho b,
 .entK b {
@@ -3125,7 +3127,8 @@ button.sdRadio:hover {
 .ent:hover .entHead {
   background: rgba(10, 28, 64, 0.025);
 }
-.ent:hover .rail {
+.ent:hover .rail,
+.ent:focus-within .rail {
   opacity: 1;
 }
 .entIc {
@@ -3153,6 +3156,7 @@ button.sdRadio:hover {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
+  overflow-wrap: anywhere;
 }
 .entPlus {
   border: 0;
@@ -3177,6 +3181,7 @@ button.sdRadio:hover {
   letter-spacing: 0;
   text-transform: none;
   color: var(--soft);
+  overflow-wrap: anywhere;
 }
 .entSubj {
   display: block;

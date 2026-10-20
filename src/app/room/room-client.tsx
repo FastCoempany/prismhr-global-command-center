@@ -86,7 +86,9 @@ import { boardGroup } from "@/lib/room/low-signal";
 import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 import { EarlierLine, LatestEmailPane, type RowLatestEmail } from "./email-row";
-import { withSubject, type RecordLine } from "@/lib/room/email-row";
+import type { RecordLine } from "@/lib/room/email-row";
+import { cleanSubject, withSubject } from "@/lib/room/subject";
+import { redactMoney, redactMoneyStrict } from "@/lib/intel/lexicon";
 
 // The fold, remembered per browser. A no-op subscription is enough for
 // useSyncExternalStore's hydration probe: the server renders every row open,
@@ -795,7 +797,14 @@ export function Row({
         await roomRecordEdit(row.accountId, noteId, withSubject(head, text)),
       );
       if (r.ok) {
-        setEditedNotes((m) => new Map(m).set(noteId, text));
+        // The echo shows what the page will show once it re-derives: the
+        // subject read as the page reads it, money redacted as it renders.
+        setEditedNotes((m) =>
+          new Map(m).set(
+            noteId,
+            /^✉ /.test(head) ? redactMoneyStrict(cleanSubject(text)) : redactMoney(text),
+          ),
+        );
         setEditId(null);
       } else setNote(r.reason ?? "The edit didn't save.");
     });
@@ -2745,15 +2754,20 @@ export function Row({
                               ✸
                             </button>
                           )}
-                          <button
-                            onClick={() => {
-                              setEditId(e.id);
-                              setEditText(shown);
-                            }}
-                            title="edit this entry"
-                          >
-                            ✎
-                          </button>
+                          {/* A sign-off line shows the sign-off, which ✎
+                              cannot edit, so it carries no ✎. ✎ starts from
+                              what is stored, never the display's copy. */}
+                          {!e.email?.closer && (
+                            <button
+                              onClick={() => {
+                                setEditId(e.id);
+                                setEditText(e.edit);
+                              }}
+                              title="edit this entry"
+                            >
+                              ✎
+                            </button>
+                          )}
                           <button
                             onClick={() => deleteNote(e.id)}
                             title="delete from the record"

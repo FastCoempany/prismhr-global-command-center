@@ -122,6 +122,40 @@ describe("the latest email: whole under the meter, never taller than the right p
     await page.close();
   });
 
+  test("a drawer that closes above the email gives it its room back", async () => {
+    const page = await open();
+    await firstRow(page)
+      .getByRole("button", { name: /EARLIER/ })
+      .click();
+    await page.waitForTimeout(100);
+    const cap = () =>
+      firstRow(page)
+        .locator($("mailCapped"))
+        .evaluate((el) => (el as HTMLElement).getBoundingClientRect().height);
+    const before = await cap();
+    await firstRow(page).getByTitle("First meeting. Open its checklist.").click();
+    await page.waitForTimeout(100);
+    assert.ok((await cap()) < before - 20, "the drawer did not take room from the email");
+    await firstRow(page).locator($("sdClose")).click();
+    await page.waitForTimeout(150);
+    assert.ok(Math.abs((await cap()) - before) <= 2, "the email stayed cut short");
+    await page.close();
+  });
+
+  test("a long address in the who line wraps inside its column at phone width", async () => {
+    const page = await mount(browser, FIX, {
+      returns: { chuteBook: [] },
+      viewport: { width: 390, height: 900 },
+    });
+    const who = page.locator($("row")).nth(1).locator($("mailWho"));
+    const fits = await who.evaluate((el) => {
+      const col = el.closest("[class*='deal']")!.getBoundingClientRect();
+      return el.getBoundingClientRect().right <= col.right + 1;
+    });
+    assert.ok(fits, "the address runs out of the column");
+    await page.close();
+  });
+
   test("no orange in the email: the one move stays Mark it done", async () => {
     const page = await open();
     const colors = await firstRow(page)
@@ -232,6 +266,28 @@ describe("EARLIER: who, when and the subject, each opening in place", () => {
     await lines.nth(0).getByTitle("delete from the record").click();
     await page.waitForTimeout(100);
     assert.equal(await firstRow(page).locator($("mail")).count(), 0);
+    await page.close();
+  });
+
+  test("a sign-off line carries no ✎, and the rail shows to the keyboard", async () => {
+    const page = await open();
+    const lines = await earlier(page);
+    await lines.nth(5).hover();
+    assert.equal(await lines.nth(5).getByTitle("edit this entry").count(), 0);
+    await page.mouse.move(0, 0);
+    await lines.nth(1).locator($("entSubj")).focus();
+    await page.keyboard.press("Tab");
+    // The rail fades in over its transition.
+    await page.waitForTimeout(300);
+    const focused = await page.evaluate(() => ({
+      title: (document.activeElement as HTMLElement).title,
+      opacity: getComputedStyle(document.activeElement!.parentElement!).opacity,
+    }));
+    assert.match(
+      focused.title,
+      /Make it an action|edit this entry|delete from the record/,
+    );
+    assert.equal(focused.opacity, "1", "the focused rail button is invisible");
     await page.close();
   });
 

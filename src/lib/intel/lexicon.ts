@@ -273,27 +273,85 @@ export function redactMoney(s: string): string {
 const COUNTED =
   "employees?|EEs?|workers?|contractors?|people|staff|seats?|hires?|heads?|headcount|clients?|locations?|worksites?|users?|countries";
 
+/** The currencies people write by code or by word, after or before the
+ *  figure, and the symbols that stand before or after it. */
+const CODES =
+  "USD|EUR|GBP|CAD|AUD|NZD|MXN|INR|BRL|COP|PHP|JPY|CHF|SGD|ZAR|ARS|CLP|PEN|DOP|CNY|HKD|SEK|NOK|DKK|PLN";
+const WORDS = "dollars?|euros?|pesos?|pounds?|reais|rupees?|bucks|francs?|yen";
+// A figure: digits with their separators, never ending on one, and never cut
+// short by a backtrack (the guard after each use keeps it whole).
+const FIG = "\\d(?:[\\d,.]*\\d)?(?!\\d)";
+const UNITS =
+  "employee|EE|worker|head|hire|person|seat|user|contractor|month|mo|year|yr|week|hour|hr|pay period";
+
 /** The money rule where a person's own words render: an email kept whole
  *  (ship order 2026-10-20; CLAUDE.md, The email in the row) talks prices the
- *  way people write them, so beyond redactMoney a currency code before the
- *  figure ("USD 900"), a figure with a k, M or a word for thousands ("1.5k",
- *  "2 million") unless it counts people or places, and a rate ("650 per
- *  employee per month") all go. A 401k is a plan, never a figure. */
+ *  way people write them. Beyond redactMoney, these go: a figure with a
+ *  currency code, word or symbol on either side ("USD 900", "499 euros",
+ *  "1200€", "Rs. 40000"); a figure after a price word ("PEPM: 549", "the fee
+ *  is 1500", "rate of 650"); a figure with a k, M or a word for thousands
+ *  ("1.5k", "2 million"); a rate ("650 per employee per month", "599
+ *  monthly"); a spelled-out amount ("twelve hundred dollars"); and both ends
+ *  of a range once either end went ("599-649 PEPM"). A figure that counts
+ *  people or places stays, and a 401k is a plan, never a figure. The
+ *  stricter passes run first, so redactMoney's own pass never joins two
+ *  lines before they read them. */
 export function redactMoneyStrict(s: string): string {
-  return redactMoney(s ?? "")
-    .replace(
-      /\b(?:USD|EUR|GBP|CAD|AUD|NZD|MXN|INR|BRL|COP|PHP|JPY|CHF|SGD|ZAR)\s?\d[\d,.]*(?:\s?(?:k|K|M|MM)\b)?/g,
-      "[—]",
-    )
+  const counted = `(?!\\s?(?:${COUNTED})\\b)`;
+  let t = (s ?? "")
+    // A currency before the figure, by code or symbol.
     .replace(
       new RegExp(
-        `\\b\\d[\\d,.]*\\s?(?:k|K|M|MM|million|thousand|grand)\\b(?!\\s?(?:${COUNTED})\\b)`,
+        `(?:\\b(?:${CODES})|Rs\\.?|R\\$|C\\$|A\\$|NZ\\$|S\\$|[$€£¥₹₱₩])\\s?${FIG}(?:\\s?(?:k|K|M|MM)\\b)?`,
         "g",
       ),
+      "[—]",
+    )
+    // A currency after the figure, by code, word or symbol.
+    .replace(new RegExp(`\\b${FIG}\\s?(?:(?:${CODES}|${WORDS})\\b|[€£¥₹$])`, "gi"), "[—]")
+    // A figure after a price word.
+    .replace(
+      new RegExp(
+        `\\b(PEPM|PEPY|PEPW|PMPM|fees?|price[sd]?|pricing|rates?|costs?|quoted?|deposit|total|setup|salary|markup|margin)\\b([^\\d\\n]{0,24})${FIG}${counted}`,
+        "gi",
+      ),
+      (_m, word: string, gap: string) => `${word}${gap}[—]`,
+    )
+    // A figure right after a product a price is quoted for ("EOR 599",
+    // "contractor: 49"), unless it counts people.
+    .replace(
+      new RegExp(
+        `\\b(EOR|COR|contractors?|payroll|GP)\\b([:\\s]{1,3})${FIG}${counted}`,
+        "gi",
+      ),
+      (_m, word: string, gap: string) => `${word}${gap}[—]`,
+    )
+    // A spelled-out amount.
+    .replace(
+      new RegExp(
+        `\\b(?:[a-z]+[\\s-]){0,4}(?:hundred|thousand|million)\\s(?:${WORDS})\\b`,
+        "gi",
+      ),
+      "[—]",
+    )
+    // A figure with a k, M or a word for thousands.
+    .replace(
+      new RegExp(`\\b${FIG}\\s?(?:k|K|M|MM|million|thousand|grand)\\b${counted}`, "g"),
       (m) => (/^40[13]\s?k$/i.test(m) ? m : "[—]"),
     )
+    // A rate: a figure per unit, monthly or yearly.
     .replace(
-      /\b\d[\d,.]*(?=\s?(?:per|\/|an?)\s?(?:employee|EE|worker|head|hire|person|seat|user|contractor|month|mo|year|yr|week|hour|hr|pay period)\b)/gi,
+      new RegExp(
+        `\\b${FIG}(?=\\s?(?:(?:per|\\/|an?|each)\\s?(?:${UNITS})|monthly|annually|yearly|weekly)\\b)`,
+        "gi",
+      ),
       "[—]",
     );
+  t = redactMoney(t);
+  // Both ends of a range go once either end went.
+  for (let i = 0; i < 2; i++)
+    t = t
+      .replace(new RegExp(`\\b${FIG}(\\s?(?:-|–|to|and)\\s?)\\[—\\]`, "g"), "[—]$1[—]")
+      .replace(new RegExp(`\\[—\\](\\s?(?:-|–|to)\\s?)${FIG}`, "g"), "[—]$1[—]");
+  return t;
 }

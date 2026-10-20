@@ -42,10 +42,14 @@ export type EmailTextClient = {
 
 const client = (): EmailTextClient => getPrisma() as unknown as EmailTextClient;
 
+/** Control characters the table refuses (a NUL an HTML entity decoded to). */
+const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+
 /** Keep each entry's whole email; the count kept, 0 when the store is down.
  *  An empty text is kept too: it marks an email the filing looked for and
  *  could not pair with its message, so the row says that and never claims
- *  the email predates the store. */
+ *  the email predates the store. One batch, and row by row when the batch
+ *  is refused, so one text the table rejects never takes the others down. */
 export async function keepEmailTexts(
   rows: readonly NewEmailText[],
   db?: EmailTextClient,
@@ -55,24 +59,36 @@ export async function keepEmailTexts(
       noteId: r.noteId,
       accountId: r.accountId,
       ...(r.filingId ? { filingId: r.filingId } : {}),
-      text: scrubSecrets(redactMoneyStrict(r.text ?? "")).trim(),
+      text: scrubSecrets(redactMoneyStrict((r.text ?? "").replace(CONTROL, ""))).trim(),
     }))
     .filter((r) => r.noteId && r.accountId);
   if (data.length === 0) return 0;
+  let c: EmailTextClient;
   try {
-    return (await (db ?? client()).emailText.createMany({ data, skipDuplicates: true }))
-      .count;
+    c = db ?? client();
+    return (await c.emailText.createMany({ data, skipDuplicates: true })).count;
   } catch {
-    return 0;
+    // the batch was refused; each row on its own below
   }
+  let kept = 0;
+  for (const row of data) {
+    try {
+      kept += (
+        await (db ?? client()).emailText.createMany({ data: [row], skipDuplicates: true })
+      ).count;
+    } catch {
+      // this one row is lost; the row says the filing looked and found none
+    }
+  }
+  return kept;
 }
 
-/** The whole emails the store holds for these notes, by note id. Empty when
- *  the store is down; the row then shows the synopsis and says why. */
-export async function emailTextsFor(
+/** The whole emails the store holds for these notes, by note id; null when
+ *  the store could not be read, which is not the same as holding nothing. */
+async function readEmailTexts(
   noteIds: readonly string[],
   db?: EmailTextClient,
-): Promise<Map<string, string>> {
+): Promise<Map<string, string> | null> {
   const ids = [...new Set(noteIds.filter(Boolean))];
   if (ids.length === 0) return new Map();
   try {
@@ -84,37 +100,52 @@ export async function emailTextsFor(
     // route does, so a row written before a lexicon change still renders clean.
     return new Map(rows.map((r) => [r.noteId, redactMoneyStrict(r.text)]));
   } catch {
-    return new Map();
+    return null;
   }
 }
 
-/** Why an email has no whole text: filed before the store kept any (no row
- *  at all), filed since by a capture the filing could not pair with its
- *  message (an empty row), or written by the app itself with no capture to
- *  keep (no filing: an Act Lane send). */
-export type WholeMissing = "before" | "capture" | "record";
+/** The whole emails the store holds for these notes, by note id. Empty when
+ *  the store is down. */
+export async function emailTextsFor(
+  noteIds: readonly string[],
+  db?: EmailTextClient,
+): Promise<Map<string, string>> {
+  return (await readEmailTexts(noteIds, db)) ?? new Map();
+}
+
+/** Why an email has no whole text, each reason true: filed before the store
+ *  kept any (no row), filed since by a capture the filing could not pair
+ *  with its message (an empty row), logged by the app itself with no
+ *  capture to keep (an Act Lane send), or unread because the store could
+ *  not be reached, which claims nothing. */
+export type WholeMissing = "before" | "capture" | "record" | "unread";
 
 /** The latest emails' whole text for the page, one batch for every row: the
- *  store's text by note, and for a note without one, why. */
+ *  store's text by note, and for a note without one, why. `logged` marks an
+ *  email the app wrote itself (src/lib/room/email-row.ts reads it off the
+ *  note), never a missing filing, which every row filed before 2026-10-05
+ *  lacks. */
 export async function wholeEmailsFor(
-  emails: readonly { id: string; filingId: string }[],
+  emails: readonly { id: string; logged: boolean }[],
   db?: EmailTextClient,
 ): Promise<Map<string, { whole: string | null; missing: WholeMissing | "" }>> {
-  const texts = await emailTextsFor(
+  const texts = await readEmailTexts(
     emails.map((e) => e.id),
     db,
   );
   return new Map(
     emails.map((e) => {
-      const text = texts.get(e.id);
+      const text = texts?.get(e.id);
       const whole = text ? text : null;
       const missing: WholeMissing | "" = whole
         ? ""
-        : text !== undefined
-          ? "capture"
-          : e.filingId
-            ? "before"
-            : "record";
+        : e.logged
+          ? "record"
+          : texts === null
+            ? "unread"
+            : text !== undefined
+              ? "capture"
+              : "before";
       return [e.id, { whole, missing }];
     }),
   );

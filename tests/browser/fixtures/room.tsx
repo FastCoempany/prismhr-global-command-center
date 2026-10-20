@@ -52,6 +52,7 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
     {
       id: "n1",
       text: "✉ OL Sep 25 10:22 AM — RE: [EXTERNAL] Invoices · Chassie Smith → Antaeus Coe",
+      edit: "RE: [EXTERNAL] Invoices",
       struck: false,
       glyph: "✉",
       day: "9/25",
@@ -105,7 +106,7 @@ const ROWS: RoomRow[] = [
       id: "n1",
       day: "9/25",
       time: "10:22 AM",
-      filingId: "f1",
+      logged: false,
       dir: "in",
       from: "Chassie Smith",
       to: "you",

@@ -22,6 +22,8 @@ const MISSING: Record<WholeMissing, string> = {
   before: "This one was filed before whole emails were kept.",
   capture: "This filing didn't carry the email whole.",
   record: "This send was logged from the app.",
+  // The store could not be read: the line claims nothing.
+  unread: "",
 };
 
 /** Who wrote to whom, with the door to everyone else on it. */
@@ -69,6 +71,22 @@ export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
       `:scope > .${CSS.escape(styles.rec)}`,
     );
     if (!wrap || !deal || !rec || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => measure());
+    // Everything above the email moves its top, so each is watched: a drawer
+    // that closes above it gives the email its room back at once. Children
+    // that come and go are picked up as they arrive.
+    const watch = () => {
+      ro.observe(deal);
+      ro.observe(rec);
+      for (const el of Array.from(deal.children)) ro.observe(el);
+    };
+    const mo =
+      typeof MutationObserver === "undefined"
+        ? null
+        : new MutationObserver(() => {
+            watch();
+            measure();
+          });
     const measure = () => {
       const narrow = window.matchMedia?.("(max-width: 880px)").matches ?? false;
       if (narrow || rec.offsetHeight === 0) return setCap(null);
@@ -84,11 +102,13 @@ export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
         c === next || (c !== null && next !== null && Math.abs(c - next) < 2) ? c : next,
       );
     };
+    watch();
+    mo?.observe(deal, { childList: true });
     measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(deal);
-    ro.observe(rec);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      mo?.disconnect();
+    };
   }, [email.id, body]);
 
   const capped = cap !== null && !whole;
@@ -162,7 +182,7 @@ function Opened({ line }: { line: RecordLine }) {
                   ? `${(o.who.split(/\s+/)[0] ?? "").toUpperCase()} OWES`
                   : "OWED"}
           </b>
-          {o.closed ? `${o.text}. ${o.closed}` : `${o.text}.`}
+          {`${o.text}${/[.?!]$/.test(o.text) ? "" : "."}${o.closed ? ` ${o.closed}` : ""}`}
         </div>
       ))}
       {e.answered && (

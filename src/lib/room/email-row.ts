@@ -18,17 +18,30 @@
 // "Ours" is the declared roster the read hands in (csms ∪ homeSideFrom, E2):
 // an email the operator sent only to our own side is coordination, never a
 // send to the account, so it neither takes the column nor answers anything,
-// as a colleague's mail never does. What renders is money-redacted again on
-// the way out, by the rule an email's own words take.
+// as a colleague's mail never does. An email's own words render under the
+// strict money rule; any other note renders as the record wrote it.
+//
+// A moment is claimed only as far as the record holds it. A filed email's
+// day is its own and its clock is its head's, read on Chicago's wall clock.
+// An email whose head names a day and no clock sits at that day's Chicago
+// noon and answers nothing on its own day. An entry filed with no day at all
+// carries the filing's moment, which is never its own: it shows no day, the
+// entries of one filing keep their capture order, and no two of them are
+// twins.
 
-import { LEGACY_HEAD_START_RE, LEGACY_SUBJECT_RE } from "@/lib/ingest/dialect";
-import { redactMoneyStrict } from "@/lib/intel/lexicon";
+import { LEGACY_HEAD_START_RE } from "@/lib/ingest/dialect";
+import { commitmentKey } from "@/lib/ingest/fanout";
+import { redactMoney, redactMoneyStrict } from "@/lib/intel/lexicon";
 import { MINE_RE, isHomeSideName, splitRecipients } from "@/lib/intel/provenance";
 import { threadSubject } from "@/lib/intel/email-whole";
+import { knowledgeKey } from "@/lib/playbook/store";
 import { owedSegments, theirLoopOf, withoutOwed } from "@/lib/room/owed";
+import { cleanSubject, headParts, withSubject } from "@/lib/room/subject";
 import type { RecordDoc } from "@/lib/record/docs";
 import { splitMarker, splitTags } from "@/lib/today/route-notes";
 import { USER_TZ, chicagoWallToUtc } from "@/lib/tz";
+
+export { cleanSubject, withSubject };
 
 /** A record row as the room's loader hands it (src/lib/today/overlay.ts). */
 export type RowNote = {
@@ -42,10 +55,7 @@ export type RowNote = {
   lane?: string;
 };
 
-type Doc = Pick<
-  RecordDoc,
-  "noteId" | "direction" | "closer" | "machinery" | "at" | "text"
->;
+type Doc = Pick<RecordDoc, "noteId" | "direction" | "closer" | "machinery">;
 
 type Todo = {
   id: string;
@@ -62,15 +72,16 @@ export type OwedLine = {
   /** Who owes it as the record names them; "" when the line names nobody. */
   who: string;
   text: string;
-  /** "Done 10/16." once every to-do or loop the filing opened for that side
-   *  is done; "" while any is open or the filing opened none. */
+  /** "Done 10/16." once the to-do or loop that tracks this promise is done,
+   *  "Released." once their side released ours; "" while it is open or
+   *  nothing tracks it. */
   closed: string;
 };
 
 /** The email facts a line or the latest email carries. */
 export type EmailFacts = {
   dir: "in" | "out" | "";
-  /** "you" for the operator. */
+  /** "you" for the operator; "" when the record names nobody. */
   from: string;
   to: string;
   /** Everyone else the recipients column names, the door +N opens. */
@@ -85,8 +96,11 @@ export type EmailFacts = {
 
 export type RecordLine = {
   id: string;
-  /** The stored first line, the ✎ edit's source. */
+  /** The stored first line, the ✎ edit's head. */
   text: string;
+  /** What ✎ starts from: the stored subject, or the stored line, as the
+   *  record holds it, never the display's redaction of it. */
+  edit: string;
   struck: boolean;
   glyph: string;
   day: string;
@@ -113,7 +127,8 @@ export type LatestEmail = EmailFacts & {
   id: string;
   day: string;
   time: string;
-  filingId: string;
+  /** The app logged this send itself (the Act Lane), so no email was filed. */
+  logged: boolean;
 };
 
 // The full paste alphabet, as the room drew it: ✔ tasks and ☎ calls
@@ -123,6 +138,30 @@ const GLYPH_STRIP = /^[✉✓☰✎⚡▢✔☎]\s?/;
 /** The most of a note's own body one line ships; the account's record keeps
  *  the rest, one click on. */
 export const BODY_CAP = 1500;
+/** The Act Lane's send (src/lib/act/lane.ts): "✉ <subject> — sent to <to>." */
+const ACT_SENT = /^✉ (.*?) — sent to (.+?)\.?$/;
+/** The placeholder the paste pipeline writes when the read names nobody. */
+const UNATTRIBUTED = /^\(unattributed\)$/i;
+
+// One formatter each, built once: the room reads a moment for every line of
+// every row, and building one costs far more than using it.
+const DAY_FMT = new Intl.DateTimeFormat("en-US", {
+  timeZone: USER_TZ,
+  month: "numeric",
+  day: "numeric",
+});
+const TIME_FMT = new Intl.DateTimeFormat("en-US", {
+  timeZone: USER_TZ,
+  hour: "numeric",
+  minute: "2-digit",
+});
+const KEY_FMT = new Intl.DateTimeFormat("en-CA", { timeZone: USER_TZ });
+const MIN_FMT = new Intl.DateTimeFormat("en-US", {
+  timeZone: USER_TZ,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
 
 /** The noon-UTC day anchor the email path files at (src/lib/intel/clock.ts). */
 function isNoonAnchor(ms: number): boolean {
@@ -152,105 +191,117 @@ export function headMinutes(body: string): number | null {
   return ((h % 12) + (m[3].toUpperCase() === "PM" ? 12 : 0)) * 60 + min;
 }
 
-/** The day and the clock a person reads: a filed entry's own day and the
- *  clock its head wrote, never the noon anchor's hour; a note filed with a
- *  real moment reads that moment in Chicago. */
-export function whenOf(createdAt: string, body: string): { day: string; time: string } {
+const clockLabel = (mins: number): string => {
+  const h = Math.floor(mins / 60);
+  return `${h % 12 || 12}:${String(mins % 60).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+};
+
+/** A row's moment as far as the record holds it. */
+type When = {
+  day: string;
+  time: string;
+  /** For ordering one row's lines. */
+  at: number;
+  /** The Chicago day, yyyy-mm-dd; "" when the record holds none. */
+  dayKey: string;
+  /** The clock is the row's own. */
+  clocked: boolean;
+  /** Filed with no day: the stamp is the filing's moment. */
+  dateless: boolean;
+};
+
+function whenOfRow(createdAt: string, body: string): When {
   const ms = Date.parse(createdAt);
-  if (Number.isNaN(ms)) return { day: "", time: "" };
-  const d = new Date(ms);
+  const none = {
+    day: "",
+    time: "",
+    at: NaN,
+    dayKey: "",
+    clocked: false,
+    dateless: false,
+  };
+  if (Number.isNaN(ms)) return none;
+  const mins = headMinutes(body);
   if (isNoonAnchor(ms)) {
-    const mins = headMinutes(body);
-    const day = `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
-    if (mins == null) return { day, time: "" };
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return {
-      day,
-      time: `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`,
-    };
+    const d = new Date(ms);
+    const [y, mo, dd] = [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
+    const dayKey = `${y}-${String(mo).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+    return mins == null
+      ? {
+          day: `${mo}/${dd}`,
+          time: "",
+          at: chicagoWallToUtc(y, mo, dd, 12, 0),
+          dayKey,
+          clocked: false,
+          dateless: false,
+        }
+      : {
+          day: `${mo}/${dd}`,
+          time: clockLabel(mins),
+          at: chicagoWallToUtc(y, mo, dd, Math.floor(mins / 60), mins % 60),
+          dayKey,
+          clocked: true,
+          dateless: false,
+        };
+  }
+  // An entry head stamped at a real moment its own clock does not name was
+  // filed with no day: the stamp is when it was filed. The calendar relay
+  // stamps the meeting's own start, which its head names, so it stays.
+  const head = (body ?? "").split("\n")[0] ?? "";
+  if (LEGACY_HEAD_START_RE.test(head)) {
+    const [hh = "0", mm = "0"] = MIN_FMT.format(ms).split(":");
+    if (mins == null || mins !== (Number(hh) % 24) * 60 + Number(mm))
+      return {
+        day: "",
+        time: mins == null ? "" : clockLabel(mins),
+        at: ms,
+        dayKey: "",
+        clocked: false,
+        dateless: true,
+      };
   }
   return {
-    day: d.toLocaleDateString("en-US", {
-      timeZone: USER_TZ,
-      month: "numeric",
-      day: "numeric",
-    }),
-    time: d.toLocaleTimeString("en-US", {
-      timeZone: USER_TZ,
-      hour: "numeric",
-      minute: "2-digit",
-    }),
+    day: DAY_FMT.format(ms),
+    time: TIME_FMT.format(ms),
+    at: ms,
+    dayKey: KEY_FMT.format(ms),
+    clocked: true,
+    dateless: false,
   };
 }
 
-/** The moment a line happened, for ordering one row's lines: a filed email
- *  at its head's clock on its own day, read as Chicago's wall clock, and any
- *  other note at its stamp. The read's effective moment shifts around the
- *  noon anchor (src/lib/intel/clock.ts), which orders emails among
- *  themselves but not against a stamp made at a real moment, and EARLIER
- *  holds both: a 3 PM email sorted above an 11 AM worked move. */
+/** The day and the clock a person reads: a filed entry's own day and the
+ *  clock its head wrote, never the noon anchor's hour; a note filed with a
+ *  real moment reads that moment in Chicago; an entry filed with no day
+ *  shows no day. */
+export function whenOf(createdAt: string, body: string): { day: string; time: string } {
+  const w = whenOfRow(createdAt, body);
+  return { day: w.day, time: w.time };
+}
+
+/** The moment a line happened, for ordering one row's lines. */
 export function momentOf(createdAt: string, body: string): number {
-  const ms = Date.parse(createdAt);
-  if (Number.isNaN(ms) || !isNoonAnchor(ms)) return ms;
-  const mins = headMinutes(body);
-  if (mins == null) return ms;
-  const d = new Date(ms);
-  return chicagoWallToUtc(
-    d.getUTCFullYear(),
-    d.getUTCMonth() + 1,
-    d.getUTCDate(),
-    Math.floor(mins / 60),
-    mins % 60,
-  );
+  return whenOfRow(createdAt, body).at;
 }
 
-/** A subject as a person reads it: the external tags, the marks and the reply
- *  and forward prefixes gone, the words as written. */
-export function cleanSubject(s: string): string {
-  let t = (s ?? "")
-    .replace(/\[\s*(?:EXTERNAL|EXT|External Email)\s*\]/gi, " ")
-    .replace(/❗/g, " ");
-  for (;;) {
-    const next = t.replace(
-      /^[\s!*:|-]*(?:re|fw|fwd|aw|sv|wg|external)\s*(?:\[\d+\])?\s*:\s*/i,
-      "",
-    );
-    if (next === t) break;
-    t = next;
+/** Every row's moment, read once, with the entries a filing wrote with no
+ *  day kept in their capture order: the pipeline files them newest first,
+ *  so the later stamp is the older message. */
+function whensOf(notes: readonly RowNote[]): Map<string, When> {
+  const out = new Map<string, When>();
+  const firstOf = new Map<string, number>();
+  for (const n of notes) {
+    const w = whenOfRow(n.createdAt, n.body);
+    out.set(n.id, w);
+    if (w.dateless && n.filingId)
+      firstOf.set(n.filingId, Math.min(firstOf.get(n.filingId) ?? Infinity, w.at));
   }
-  return t.replace(/\s+/g, " ").trim() || "No subject";
-}
-
-/** The entry head's subject and who, when the line is one. */
-function headParts(head: string): { subject: string; who: string } | null {
-  // The Act Lane's send (src/lib/act/lane.ts): "✉ <subject> — sent to <to>."
-  const sent = /^✉ (.*?) — sent to (.+?)\.?$/.exec(head);
-  if (sent) return { subject: sent[1], who: "" };
-  if (!LEGACY_HEAD_START_RE.test(head)) return null;
-  const m = LEGACY_SUBJECT_RE.exec(head);
-  if (m) {
-    const dot = head.lastIndexOf(" · ");
-    return { subject: m[1], who: dot >= 0 ? head.slice(dot + 3).trim() : "" };
+  for (const n of notes) {
+    const w = out.get(n.id)!;
+    const first = n.filingId ? firstOf.get(n.filingId) : undefined;
+    if (w.dateless && first !== undefined) w.at = 2 * first - w.at;
   }
-  const dash = head.indexOf("— ");
-  return dash >= 0 ? { subject: head.slice(dash + 2), who: "" } : null;
-}
-
-/** The stored first line with a new subject in its slot: ✎ on a filed
- *  activity edits the subject a person reads, and the head keeps its
- *  glyph, format code, clock and who, which the readers parse. A line that
- *  is not an entry head is the edit itself. */
-export function withSubject(head: string, subject: string): string {
-  const s = subject.replace(/\s+/g, " ").trim();
-  const sent = /^✉ .*?( — sent to .+)$/.exec(head);
-  if (sent) return `✉ ${s}${sent[1]}`;
-  if (!headParts(head)) return s;
-  const dash = head.indexOf("— ");
-  const dot = head.lastIndexOf(" · ");
-  return dot > dash
-    ? `${head.slice(0, dash + 2)}${s}${head.slice(dot)}`
-    : `${head.slice(0, dash + 2)}${s}`;
+  return out;
 }
 
 const isMe = (name: string) => MINE_RE.test(name) || /^(you|me)$/i.test(name.trim());
@@ -293,6 +344,7 @@ function reachedMe(n: RowNote): boolean {
 
 /** The dialects whose ✉ is an email; a chat line or a call's entry is not. */
 const MAIL_HEAD = /^✉ (?!TM |CT )/;
+const isEmail = (body: string) => body.startsWith("✉ ");
 
 /** From, to and everyone else, from the actors column with the head as its
  *  fallback, and the recipients column for the rest. */
@@ -302,7 +354,7 @@ function peopleOf(
 ): { from: string; to: string; others: string[] } {
   const actors = (n.actors || headWho).replace(/\s*\+\d+\s*$/, "");
   const [rawFrom = "", rawTo = ""] = actors.split("→").map((s) => s.trim());
-  const from = rawFrom ? person(rawFrom) : "";
+  const from = rawFrom && !UNATTRIBUTED.test(rawFrom) ? person(rawFrom) : "";
   const to = rawTo ? person(rawTo.split(/[;,]/)[0] ?? "") : "";
   const named = new Set([nameKey(rawFrom), nameKey(rawTo.split(/[;,]/)[0] ?? "")]);
   const others: string[] = [];
@@ -315,62 +367,277 @@ function peopleOf(
   return { from, to, others };
 }
 
+/** The head's own parts, before any redaction: what ✎ starts from. */
+function partsOf(n: RowNote): {
+  head: string;
+  rest: string;
+  parts: { subject: string; who: string } | null;
+} {
+  const [head = "", ...rest] = n.body.split("\n");
+  return { head, rest: rest.join("\n"), parts: headParts(head) };
+}
+
 /** The email facts of a filed email note. */
 function factsOf(n: RowNote, doc: Doc | undefined): EmailFacts {
-  const [head = "", ...rest] = n.body.split("\n");
-  const parts = headParts(head) ?? { subject: head.replace(GLYPH_STRIP, ""), who: "" };
-  const { from, to, others } = peopleOf(n, parts.who);
+  const { head, rest, parts } = partsOf(n);
+  const p = parts ?? { subject: head.replace(GLYPH_STRIP, ""), who: "" };
+  const { from, to, others } = peopleOf(n, p.who);
   return {
     dir: doc?.direction ?? "",
     from,
     to,
     others,
-    subject: redactMoneyStrict(cleanSubject(parts.subject)),
-    kept: redactMoneyStrict(withoutOwed(rest.join("\n"))),
+    subject: redactMoneyStrict(cleanSubject(p.subject)),
+    kept: redactMoneyStrict(withoutOwed(rest)),
     read: (n.source ?? "").endsWith("-ai"),
   };
 }
 
-const isEmail = (body: string) => body.startsWith("✉ ");
+/** M/D of a moment, Chicago. */
+const dayOf = (ms: number): string => (Number.isNaN(ms) ? "" : DAY_FMT.format(ms));
 
-/** M/D of a todo's last change, Chicago. */
-const changedDay = (iso?: string): string => {
-  const t = Date.parse(iso ?? "");
-  if (Number.isNaN(t)) return "";
-  return new Date(t).toLocaleDateString("en-US", {
-    timeZone: USER_TZ,
-    month: "numeric",
-    day: "numeric",
+/** The day a to-do was done: its own done tag, else its last change. */
+function doneDay(t: Todo): string {
+  const tag = splitTags(splitMarker(t.body ?? "").text).tags.doneAt;
+  return dayOf(tag ? Number(tag) : Date.parse(t.updatedAt ?? ""));
+}
+
+/** Each Owed segment with its state, closed by its own commitment: the
+ *  to-do or loop whose key is the segment's (the fan-out's own keys, so one
+ *  promise filed twice is one promise), done, on the day its done tag
+ *  holds, or released by their side. A colleague's promise is tracked by
+ *  nothing here, and stays as the record wrote it. */
+function owedOf(
+  n: RowNote,
+  todos: readonly Todo[],
+  released: ReadonlySet<string>,
+  homeSide: readonly string[],
+): OwedLine[] {
+  const segs = owedSegments(partsOf(n).rest);
+  if (segs.length === 0) return [];
+  return segs.map((s) => {
+    const key = knowledgeKey(s.text);
+    const colleague = !s.mine && !!s.who && isHomeSideName(s.who, homeSide);
+    const tracking = colleague
+      ? []
+      : todos.filter((t) => {
+          const loop = theirLoopOf(t.body);
+          return s.mine
+            ? !loop && commitmentKey(t.body) === key
+            : !!loop && knowledgeKey(loop.text) === key;
+        });
+    const open = tracking.filter((t) => !t.done);
+    const closed =
+      tracking.length === 0
+        ? ""
+        : open.length === 0
+          ? `Done ${doneDay(tracking[tracking.length - 1]!)}.`
+          : open.every((t) => released.has(t.id))
+            ? "Released."
+            : "";
+    return {
+      ...s,
+      text: redactMoneyStrict(s.text),
+      closed: closed.replace(/^Done \.$/, "Done."),
+    };
   });
+}
+
+type Shared = {
+  docById: Map<string, Doc>;
+  whens: Map<string, When>;
 };
 
-/** Each Owed segment with its state: closed only when the filing opened
- *  work for that side and every piece of it is done (the closer rule: a
- *  promise closes by delivery, never by a later message). */
-function owedOf(n: RowNote, todos: readonly Todo[]): OwedLine[] {
-  const segs = owedSegments(n.body.split("\n").slice(1).join("\n"));
-  if (segs.length === 0) return [];
-  const filed = n.filingId ? todos.filter((t) => t.filingId === n.filingId) : [];
-  const closedFor = (mine: boolean): string => {
-    const side = filed.filter((t) => (theirLoopOf(t.body) ? !mine : mine));
-    if (side.length === 0 || side.some((t) => !t.done)) return "";
-    // The day it was done, from the row's own done tag; the row's last
-    // change only when the tag is absent, because an edit moves that.
-    const last = side
-      .map((t) => {
-        const tag = splitTags(splitMarker(t.body ?? "").text).tags.doneAt;
-        return tag ? new Date(Number(tag)).toISOString() : (t.updatedAt ?? "");
-      })
-      .sort()
-      .pop();
-    const day = changedDay(last);
-    return day ? `Done ${day}.` : "Done.";
+function share(all: readonly RowNote[], docs: readonly Doc[]): Shared {
+  return {
+    docById: new Map(docs.filter((d) => d.noteId).map((d) => [d.noteId, d])),
+    whens: whensOf(all),
   };
-  return segs.map((s) => ({
-    ...s,
-    text: redactMoneyStrict(s.text),
-    closed: closedFor(s.mine),
-  }));
+}
+
+/** The latest email, from what share() read once. */
+function pickLatest(
+  notes: readonly RowNote[],
+  homeSide: readonly string[],
+  { docById, whens }: Shared,
+): LatestEmail | null {
+  let best: { n: RowNote; at: number } | null = null;
+  for (const n of notes) {
+    const d = docById.get(n.id);
+    if (!d || !MAIL_HEAD.test(n.body) || d.closer || d.machinery) continue;
+    const ok =
+      d.direction === "out"
+        ? reachesAccount(n, homeSide)
+        : d.direction === "in" && reachedMe(n);
+    if (!ok) continue;
+    const at = whens.get(n.id)?.at ?? NaN;
+    if (Number.isNaN(at)) continue;
+    if (!best || at > best.at) best = { n, at };
+  }
+  if (!best) return null;
+  const n = best.n;
+  const w = whens.get(n.id)!;
+  return {
+    id: n.id,
+    day: w.day,
+    time: w.time,
+    logged: ACT_SENT.test(n.body.split("\n")[0] ?? "") || n.source === "act-lane",
+    ...factsOf(n, docById.get(n.id)),
+  };
+}
+
+/** The record's lines, from what share() read once. */
+function pickLines(
+  input: {
+    notes: readonly RowNote[];
+    all: readonly RowNote[];
+    todos: readonly Todo[];
+    released: ReadonlySet<string>;
+    homeSide: readonly string[];
+    limit: number;
+  },
+  { docById, whens }: Shared,
+): RecordLine[] {
+  const when = (n: RowNote): When => whens.get(n.id) ?? whenOfRow(n.createdAt, n.body);
+  const byAt = (a: RowNote, b: RowNote) => when(b).at - when(a).at;
+  const ordered = [...input.notes].sort(byAt);
+  const shown = ordered.slice(0, input.limit);
+
+  // The operator's sends that reached the account, for "answered": a
+  // sign-off answers nothing and machinery never replies (the closer rule;
+  // C5).
+  const sends = input.all
+    .filter((n) => {
+      const d = docById.get(n.id);
+      return (
+        MAIL_HEAD.test(n.body) &&
+        d?.direction === "out" &&
+        !d.closer &&
+        !d.machinery &&
+        reachesAccount(n, input.homeSide)
+      );
+    })
+    .map(when);
+  // A send answers an inbound only when the record says it came after: both
+  // clocks their own and the send's later, or the send on a later day. A day
+  // with no clock answers nothing on its own day.
+  const answeredBy = (w: When): string => {
+    const after = sends
+      .filter((s) =>
+        s.clocked && w.clocked
+          ? s.at > w.at
+          : !!s.dayKey && !!w.dayKey && s.dayKey > w.dayKey,
+      )
+      .sort((a, b) => a.at - b.at)[0];
+    return after ? after.day || dayOf(after.at) : "";
+  };
+
+  // The same email filed twice, on either lane: one sender, one recipient,
+  // one subject, one moment, and the same words when the head carried no
+  // clock. One filing never holds a twin of its own (the read never writes
+  // a message twice). When both copies show, the first stays clean and the
+  // second says so; a copy whose twin sits on the other lane, or past the
+  // shown few, says so alone. The keys read the head alone, so only a
+  // clockless pair costs a read of the words.
+  const keyOf = (n: RowNote): string => {
+    const { parts } = partsOf(n);
+    const p = peopleOf(n, parts?.who ?? "");
+    const w = when(n);
+    return [
+      nameKey(p.from),
+      nameKey(p.to),
+      threadSubject(cleanSubject(parts?.subject ?? "")),
+      w.dayKey,
+      w.time,
+    ].join("|");
+  };
+  const words = (n: RowNote) =>
+    withoutOwed(partsOf(n).rest).toLowerCase().replace(/\s+/g, " ");
+  const twins = (n: RowNote, q: RowNote): boolean =>
+    n.id !== q.id &&
+    !(n.filingId && q.filingId === n.filingId) &&
+    (when(n).time !== "" || (words(n) !== "" && words(n) === words(q)));
+  const groups = new Map<string, RowNote[]>();
+  for (const n of input.all)
+    if (isEmail(n.body)) groups.set(keyOf(n), [...(groups.get(keyOf(n)) ?? []), n]);
+  const shownAt = new Map(shown.map((n, i) => [n.id, i]));
+  const twice = new Set<string>();
+  for (const n of shown) {
+    if (!isEmail(n.body)) continue;
+    const partners = (groups.get(keyOf(n)) ?? []).filter((q) => twins(n, q));
+    if (partners.length === 0) continue;
+    const shownPartners = partners.filter((q) => shownAt.has(q.id));
+    const first = shownPartners.every((q) => shownAt.get(q.id)! > shownAt.get(n.id)!);
+    if (!(shownPartners.length > 0 && first)) twice.add(n.id);
+  }
+
+  return shown.map((n): RecordLine => {
+    const { head, rest, parts } = partsOf(n);
+    const glyph = GLYPH_AT.exec(n.body)?.[0] ?? "✎";
+    const w = when(n);
+    const struck = n.body.startsWith("✓");
+    const edit = parts ? parts.subject.trim() : head.replace(GLYPH_STRIP, "").trim();
+    if (isEmail(n.body)) {
+      const doc = docById.get(n.id);
+      const f = factsOf(n, doc);
+      return {
+        id: n.id,
+        text: head.slice(0, 500),
+        edit,
+        struck,
+        glyph,
+        day: w.day,
+        time: w.time,
+        who: "",
+        line: f.subject,
+        body: "",
+        email: {
+          ...f,
+          owed: owedOf(n, input.todos, input.released, input.homeSide),
+          answered:
+            f.dir === "in" && !doc?.closer && !doc?.machinery ? answeredBy(w) : "",
+          closer: !!doc?.closer,
+          twice: twice.has(n.id),
+        },
+      };
+    }
+    const body = redactMoney(rest.trim());
+    const people = parts ? peopleOf(n, parts.who) : null;
+    return {
+      id: n.id,
+      text: head.slice(0, 500),
+      edit,
+      struck,
+      glyph,
+      day: w.day,
+      time: w.time,
+      who: people?.from ? `${people.from}${people.to ? ` → ${people.to}` : ""}` : "",
+      line: redactMoney(edit),
+      body: body.length > BODY_CAP ? `${body.slice(0, BODY_CAP).trimEnd()}…` : body,
+      email: null,
+    };
+  });
+}
+
+/** Both reads for one row, every moment read once (the page's call). */
+export function emailRow(input: {
+  /** The lane the row shows (EARLIER). */
+  notes: readonly RowNote[];
+  /** Every visible row, both lanes. */
+  all: readonly RowNote[];
+  docs: readonly Doc[];
+  todos: readonly Todo[];
+  /** The to-dos their side released (the sheet's own read). */
+  released?: ReadonlySet<string>;
+  /** Our side, declared (csms ∪ homeSideFrom). */
+  homeSide: readonly string[];
+  limit: number;
+}): { record: RecordLine[]; latest: LatestEmail | null } {
+  const shared = share(input.all, input.docs);
+  return {
+    record: pickLines({ ...input, released: input.released ?? new Set() }, shared),
+    latest: pickLatest(input.all, input.homeSide, shared),
+  };
 }
 
 /** The record's lines for the row: the newest `limit` entries of the lane
@@ -382,107 +649,16 @@ export function recordLines(input: {
   all?: readonly RowNote[];
   docs: readonly Doc[];
   todos: readonly Todo[];
+  released?: ReadonlySet<string>;
   /** Our side, declared (csms ∪ homeSideFrom). */
   homeSide: readonly string[];
   limit: number;
 }): RecordLine[] {
-  const docById = new Map(input.docs.filter((d) => d.noteId).map((d) => [d.noteId, d]));
   const all = input.all ?? input.notes;
-  // Each row's moment, read once: the sort compares them many times over.
-  const moment = new Map(all.map((n) => [n.id, momentOf(n.createdAt, n.body)]));
-  for (const n of input.notes)
-    if (!moment.has(n.id)) moment.set(n.id, momentOf(n.createdAt, n.body));
-  const at = (n: RowNote) => moment.get(n.id) ?? Date.parse(n.createdAt);
-  const ordered = [...input.notes].sort((a, b) => at(b) - at(a));
-  // The operator's sends that reached the account, oldest first, for
-  // "answered": a sign-off answers nothing and machinery never replies (the
-  // closer rule; C5).
-  const sends = all
-    .filter((n) => {
-      const d = docById.get(n.id);
-      return (
-        MAIL_HEAD.test(n.body) &&
-        d?.direction === "out" &&
-        !d.closer &&
-        !d.machinery &&
-        reachesAccount(n, input.homeSide)
-      );
-    })
-    .map(at)
-    .sort((a, b) => a - b);
-  // The same email filed twice: one sender, one recipient, one subject, one
-  // moment, and the same words when the head carried no clock. The newest
-  // copy leads.
-  const seen = new Map<string, string>();
-  const twice = new Set<string>();
-  for (const n of ordered) {
-    if (!isEmail(n.body)) continue;
-    const f = factsOf(n, docById.get(n.id));
-    const w = whenOf(n.createdAt, n.body);
-    const key = [
-      nameKey(f.from),
-      nameKey(f.to),
-      threadSubject(f.subject),
-      w.day,
-      w.time,
-    ].join("|");
-    const words = f.kept.toLowerCase().replace(/\s+/g, " ");
-    const prior = seen.get(key);
-    if (prior === undefined) seen.set(key, words);
-    else if (w.time || (words && prior === words)) twice.add(n.id);
-  }
-
-  return ordered.slice(0, input.limit).map((n): RecordLine => {
-    const [head = "", ...rest] = n.body.split("\n");
-    const glyph = GLYPH_AT.exec(n.body)?.[0] ?? "✎";
-    const { day, time } = whenOf(n.createdAt, n.body);
-    const struck = n.body.startsWith("✓");
-    if (isEmail(n.body)) {
-      const doc = docById.get(n.id);
-      const f = factsOf(n, doc);
-      const when = at(n);
-      const answer =
-        f.dir === "in" && !doc?.closer && !doc?.machinery
-          ? sends.find((x) => x > when)
-          : undefined;
-      return {
-        id: n.id,
-        text: head.slice(0, 500),
-        struck,
-        glyph,
-        day,
-        time,
-        who: "",
-        line: f.subject,
-        body: "",
-        email: {
-          ...f,
-          owed: owedOf(n, input.todos),
-          answered:
-            answer !== undefined ? changedDay(new Date(answer).toISOString()) : "",
-          closer: !!doc?.closer,
-          twice: twice.has(n.id),
-        },
-      };
-    }
-    const parts = headParts(head);
-    const body = redactMoneyStrict(rest.join("\n").trim());
-    const people = parts ? peopleOf(n, parts.who) : null;
-    return {
-      id: n.id,
-      text: head.slice(0, 500),
-      struck,
-      glyph,
-      day,
-      time,
-      who: people?.from ? `${people.from}${people.to ? ` → ${people.to}` : ""}` : "",
-      line: redactMoneyStrict(
-        parts ? parts.subject.trim() : head.replace(GLYPH_STRIP, "").trim(),
-      ),
-      body: body.length > BODY_CAP ? `${body.slice(0, BODY_CAP).trimEnd()}…` : body,
-      email: null,
-    };
-  });
+  return pickLines(
+    { ...input, all, released: input.released ?? new Set() },
+    share(all, input.docs),
+  );
 }
 
 /** The newest email on the record, either direction: a sign-off, a calendar
@@ -497,27 +673,5 @@ export function latestEmail(input: {
   /** Our side, declared (csms ∪ homeSideFrom). */
   homeSide: readonly string[];
 }): LatestEmail | null {
-  const docById = new Map(input.docs.filter((d) => d.noteId).map((d) => [d.noteId, d]));
-  let best: { n: RowNote; at: number } | null = null;
-  for (const n of input.notes) {
-    const d = docById.get(n.id);
-    if (!d || !MAIL_HEAD.test(n.body) || d.closer || d.machinery) continue;
-    const ok =
-      d.direction === "out"
-        ? reachesAccount(n, input.homeSide)
-        : d.direction === "in" && reachedMe(n);
-    if (!ok) continue;
-    const at = momentOf(n.createdAt, n.body);
-    if (!best || at > best.at) best = { n, at };
-  }
-  if (!best) return null;
-  const n = best.n;
-  const { day, time } = whenOf(n.createdAt, n.body);
-  return {
-    id: n.id,
-    day,
-    time,
-    filingId: n.filingId ?? "",
-    ...factsOf(n, docById.get(n.id)),
-  };
+  return pickLatest(input.notes, input.homeSide, share(input.notes, input.docs));
 }
