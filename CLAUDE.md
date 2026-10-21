@@ -408,7 +408,8 @@ HomeRoom row's left column carries the newest email on the record whole,
 under the meter: either direction, read past sign-offs, calendar acceptances
 and machinery by the doc read's own flags, past a line whose direction the doc
 read cannot name (a colleague's coordination mail, an unattributed entry),
-past a send of ours that reached only our own side, past their mail that
+past a send of ours that reached only our own side (a colleague named by
+first name alone included), past their mail that
 never reached the operator (another lane, the operator on no line of it), and
 past a chat or call line.
 It never makes the row taller than the right panel: past that height it fades,
@@ -442,27 +443,38 @@ stays Mark it done.
   notices and first-contact tips, mail-app taglines, the quoted trail (a
   header block, an attribution in any of those languages, Apple's quoted
   one and Zoho's dashed one included, a forward marker, a closing block of
-  quoted lines, and a footer below the quote), a signature card (only when a name follows the
+  quoted lines, and a footer below the quote; an attribution carries an
+  address, or a date with its year and a clock, so a person quoting someone
+  "on Monday at 10:30" keeps their words), a signature card (only when a name follows the
   sign-off and every line after it reads as a card with a phone, link or
   address) and a legal notice that opens its own line below the first
-  paragraph; paragraphs, inline answers, a P.S. and a sentence that only
-  looks like a trail are kept (cleanEmailWhole, src/lib/activity/excerpt.ts).
+  paragraph; paragraphs, inline answers (a line of their own between quoted
+  lines or straight under one), a P.S. and a sentence that only looks like a
+  trail are kept (cleanEmailWhole, src/lib/activity/excerpt.ts).
   It lands in the EmailText table keyed by the note, redacted on the way in
   and out by the strict rule an email's own words take (redactMoneyStrict,
   src/lib/intel/lexicon.ts; src/lib/notes/email-text.ts). An email talks
   prices in more ways than a list of price forms can name, so the rule names
-  what is not money and takes every other figure: a date, a time, a year, a
-  phone number, an ordinal, a numbered label or form, a share that prices
-  nothing, and a count, stay. A count is a figure followed on its own line
-  by a word from the list of what a figure can count, in prose's lowercase
-  ("45 employees", "3 open roles", the partners' "35 empleados"), time in
-  the plural or one of it ("3 months", "1 month", "12-month"), or set after
-  a headcount, a team of so many, or a hire straight on ("we hire 5 a
-  month"); a word the list does not name never keeps a figure. A share
-  prices something when a price word stands before it in its sentence or
-  just after it ("a 12% markup"). A figure with a currency on either side,
-  spelled out as an amount or set as a rate always goes. What decides reads
-  words, never digits, so running it twice changes nothing. An entry with no sure message keeps an empty
+  what is not money and takes every other figure: a date, a time, a year
+  said as one, a phone number, an ordinal, a numbered label or form, a share
+  that prices nothing, and a count, stay. A year is said as one after a word
+  that sets a year ("in 2009", "Q3 2026"), beside another year or a month,
+  or before a word a year leads ("the 2026 renewal"); a round figure in a
+  price's place ("a fee of 2000", "2000 net") is a figure like any other. A
+  count is a figure followed on its own line by a word from the list of
+  what a figure can count, in prose's lowercase ("45 employees", "3 open
+  roles", the partners' "35 empleados"), with no slash or price word after
+  it ("499 partner cost", "599 employee/month"); a singular count word keeps
+  a figure only for one of it or when it describes the word after it ("a 50
+  person company"). Time counts in the plural or one of it ("3 months", "1
+  month", "12-month"), and a headcount or a team of so many counts with
+  nothing after the figure. A word the list does not name never keeps a
+  figure, and a pace of hiring goes like a price. A share prices something
+  when a price word, singular or plural, stands before it in its sentence
+  (a decimal point or an abbreviation ends no sentence) or just after it ("a
+  12% markup"). A figure with a currency on either side, spelled out as an
+  amount or set as a rate always goes. What decides reads words, never
+  digits, so running it twice changes nothing. An entry with no sure message keeps an empty
   row, so the row can say the filing looked. The undo takes it back after the
   notes. An email without its words shows the read's synopsis and says why,
   each reason true: "This one was filed before whole emails were kept." (no
@@ -492,9 +504,9 @@ stays Mark it done.
   shows only when it can.
 - **Each line opens in place, one at a time**, to what the account record
   history holds for it: WHAT THE READ KEPT (WHAT WAS FILED when the rules
-  filed it) and its Owed lines, YOU OWE, the owner by first name, a group
-  as the read wrote it ("THEIR LEGAL TEAM OWES"), or OWED when the line
-  names nobody. An Owed line closes by its own promise, the one to-do
+  filed it) and its Owed lines, YOU OWE, the owner by first name, accents
+  and all, a group as the read wrote it ("THEIR LEGAL TEAM OWES"), or OWED
+  when the line names nobody. An Owed line closes by its own promise, the one to-do
   or loop that tracks it among those the fan-out's own key ties to it: the
   row the note's own filing opened, else the one opened nearest at or after
   the note, an earlier one only when none is newer, so a later promise in

@@ -359,7 +359,20 @@ function targetsOf(n: RowNote): { names: string[]; dropped: boolean } {
 function reachesAccount(n: RowNote, homeSide: readonly string[]): boolean {
   const { names, dropped } = targetsOf(n);
   if (dropped) return true;
-  return names.some((x) => !isMe(x) && !OUR_MAIL.test(x) && !isHomeSideName(x, homeSide));
+  return names.some((x) => !ourSide(x, homeSide));
+}
+
+/** One of ours: the operator, our domain, a name on the roster, or a
+ *  roster name's first name alone, the way the record often names a
+ *  colleague ("Lesha"). A send counts as ours only when every target is,
+ *  so the first-name allowance can only read past coordination mail. */
+function ourSide(x: string, homeSide: readonly string[]): boolean {
+  if (isMe(x) || OUR_MAIL.test(x) || isHomeSideName(x, homeSide)) return true;
+  const one = x.trim().toLowerCase();
+  return (
+    !/\s/.test(one) &&
+    homeSide.some((h) => (h.trim().split(/\s+/)[0] ?? "").toLowerCase() === one)
+  );
 }
 
 /** Their email reached the operator: on the operator's own lane, or naming
@@ -409,7 +422,13 @@ function peopleOf(
   const named = new Set([nameKey(rawFrom), nameKey(firstTo)]);
   const shown = [rawFrom, firstTo].filter(Boolean);
   const others: string[] = [];
-  for (const r of splitRecipients(n.recipients)) {
+  // The Act Lane joins addresses with ";", so each entry splits on it too.
+  for (const r of splitRecipients(n.recipients).flatMap((x) =>
+    x
+      .split(";")
+      .map((y) => y.trim())
+      .filter(Boolean),
+  )) {
     const k = nameKey(r);
     if (!k || named.has(k)) continue;
     // The operator already on the line, in any form, is not someone else;

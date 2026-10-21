@@ -1081,6 +1081,8 @@ describe("the strict money rule takes every figure that is not plainly something
     ["599 plus tax", "[—] plus tax"],
     ["EOR at 599, COR at 299", "EOR at [—], COR at [—]"],
     ["2 million", "[—]"],
+    // A pace of hiring reads like a price, so it goes too.
+    ["We hire 5 a month", "We hire [—] a month"],
     // The round-3 review's leaks: a word that counts before a price, any
     // plural or foreign word after one, and priced shares.
     ["Contractors: 49\nEmployees: 599", "Contractors: [—]\nEmployees: [—]"],
@@ -1116,6 +1118,42 @@ describe("the strict money rule takes every figure that is not plainly something
       "The admin fee on the [—] salary is [—].",
     ],
     ["Margin: 599 base, 12% on top", "Margin: [—] base, [—] on top"],
+    // The round-4 review's leaks: a round figure read as a year, a count
+    // word that labels a price, a price after a hire, plural price words,
+    // and a decimal or an abbreviation cutting a share's sentence.
+    ["The setup fee is 2000.", "The setup fee is [—]."],
+    ["Her salary is 2000 net.", "Her salary is [—] net."],
+    ["We'd do it for 1999.", "We'd do it for [—]."],
+    ["Un sueldo de 2000 al mes.", "Un sueldo de [—] al mes."],
+    ["Mexico\t599\t2000", "Mexico\t[—]\t[—]"],
+    [
+      "EOR is 499 partner cost and 699 client price.",
+      "EOR is [—] partner cost and [—] client price.",
+    ],
+    ["Cost is 599 employee/month.", "Cost is [—] employee/month."],
+    [
+      "Social contributions: 320 employee, 680 employer.",
+      "Social contributions: [—] employee, [—] employer.",
+    ],
+    [
+      "INSS is 908 employee side and 1800 employer side.",
+      "INSS is [—] employee side and [—] employer side.",
+    ],
+    ["Recruiting fee per hire 5000.", "Recruiting fee per hire [—]."],
+    ["We pay each hire 4000 a month.", "We pay each hire [—] a month."],
+    [
+      "Our markups are 12% in Mexico and 14% in Brazil.",
+      "Our markups are [—] in Mexico and [—] in Brazil.",
+    ],
+    ["Their commissions run 10%.", "Their commissions run [—]."],
+    [
+      "Markup is 12.5% for Mexico and 14% for Brazil.",
+      "Markup is [—] for Mexico and [—] for Brazil.",
+    ],
+    [
+      "Our markup in the U.S. is 12%, and approx. 14% in Mexico.",
+      "Our markup in the U.S. is [—], and approx. [—] in Mexico.",
+    ],
   ];
   for (const [raw, want] of gone)
     test(raw, () => {
@@ -1136,7 +1174,6 @@ describe("the strict money rule takes every figure that is not plainly something
       "2026-10-22 and 22 October",
       "We're planning for 2027.",
       "headcount 45",
-      "We hire 5 a month",
       "4-5 India admin workers",
       "It takes 3 weeks to onboard.",
       "a 2-week trial and 1 month notice",
@@ -1152,6 +1189,10 @@ describe("the strict money rule takes every figure that is not plainly something
       "They want 6 months of runway and 3 open roles.",
       "Tenemos 35 empleados en 3 países.",
       "a 12-month term",
+      "We were founded in 2009 and planning for 2027, Q3 2026, October 2026, the 2025-2026 plan.",
+      "© 2026 Regis HR",
+      "a 50 person company and a 200 employee PEO",
+      "headcount: 45.",
     ])
       assert.equal(redactMoneyStrict(keep), keep);
   });
@@ -1790,5 +1831,76 @@ Can you send the census?`;
       recipients: "sortiz@integra.example, Elise Munoz",
     });
     assert.deepEqual(latest([toSam])?.others, ["Elise Munoz"]);
+  });
+});
+
+describe("the round-5 review: attributions, one answer, first names and accents", () => {
+  test("a sentence shaped like an attribution never hides the real one, and a quote by day and clock stays", () => {
+    assert.equal(
+      cleanEmailWhole(
+        'Hola Antaeus,\n\nEl cliente nos escribió:\n\n"Necesitamos dos personas en México."\n\nGracias,\nAna\n\nEl jue, 15 oct 2026 a las 14:00, Antaeus Coe (<antaeus.coe@prismhr.com>) escribió:\nHola Ana, ¿alguna novedad?\nSaludos,\nAntaeus',
+      ),
+      'Hola Antaeus,\n\nEl cliente nos escribió:\n\n"Necesitamos dos personas en México."\n\nGracias,\nAna',
+    );
+    const relay =
+      'Hi Antaeus,\n\nOur client got back to us this morning.\n\nOn Monday at 10:30 she wrote:\n"We need two people in Mexico by January."\n\nCan we get a quote together this week?\n\nThanks,\nDana';
+    assert.equal(cleanEmailWhole(relay), relay);
+    assert.equal(
+      cleanEmailWhole(
+        "Sounds good.\n\nOn Oct 20, 2026, at 9:10 AM, Antaeus Coe wrote:\n\n> Hi Dana",
+      ),
+      "Sounds good.",
+      "a date with its year and a clock is an attribution",
+    );
+  });
+
+  test("one answer straight under one quoted question is an inline answer", () => {
+    assert.equal(
+      cleanEmailWhole(
+        "See my answer below.\n\nOn Mon, Oct 19, 2026 at 2:00 PM Antaeus Coe <antaeus.coe@prismhr.com> wrote:\n> When do your Mexico hires start?\nJanuary 15, both of them.\n\nThanks,\nDana",
+      ),
+      "See my answer below.\n\nJanuary 15, both of them.\n\nThanks,\nDana",
+    );
+  });
+
+  test("a send to a colleague named by first name is coordination: no latest email, no answer", () => {
+    const toLesha = note({
+      id: "c1",
+      body: "✉ OL Oct 20 4:00 PM — Regis next steps · Antaeus Coe → Lesha\nQuick update.",
+      actors: "Antaeus Coe → Lesha",
+      recipients: "Lesha",
+    });
+    const fromDana = note({
+      id: "i1",
+      body: "✉ OL Oct 20 9:10 AM — Census · Dana Reyes → Antaeus Coe\nCan you send the census template?",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    assert.equal(latest([toLesha, fromDana])?.id, "i1");
+    const dana = lines([toLesha, fromDana]).find((x) => x.id === "i1");
+    assert.equal(dana?.email?.answered, "");
+  });
+
+  test("an accented owner parses, names the owner, and closes by their loop", () => {
+    const n = note({
+      id: "j1",
+      filingId: "fj",
+      createdAt: "2026-10-16T12:00:00.000Z",
+      body: "✉ OL Oct 16 9:00 AM — Census · José Ramírez → Antaeus Coe\nHe will pull the census. Owed: send the census file — @José Ramírez.",
+      actors: "José Ramírez → Antaeus Coe",
+    });
+    const owed = lines([n])[0].email?.owed[0];
+    assert.equal(owed?.who, "José Ramírez");
+    assert.equal(owed?.text, "send the census file");
+  });
+
+  test("an Act Lane send to two addresses joined by ';' shows the second behind +1, never the first again", () => {
+    const sent = note({
+      id: "a9",
+      body: "✉ Census template — sent to dana@regis.example; elise@regis.example.",
+      actors: "Antaeus Coe → dana@regis.example; elise@regis.example",
+      recipients: "dana@regis.example; elise@regis.example",
+      source: "act-lane",
+    });
+    assert.deepEqual(latest([sent])?.others, ["elise@regis.example"]);
   });
 });

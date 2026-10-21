@@ -326,17 +326,71 @@ const NUMBER_WORDS =
 /** The plurals that make a spelled amount a count ("two hundred employees"). */
 const COUNTED_AFTER =
   "employees|people|workers|hires|staff|contractors|clients|users|seats|heads|countries|locations";
-/** Words just before a figure that say it counts people: a headcount, a
- *  team of so many, and a pace of hiring said straight on ("we hire 5 a
- *  month"). "Contractors: 49" and "hiring at 75000" are prices. */
+/** Words just before a figure that say it counts people: a headcount, or a
+ *  team of so many, with nothing after the figure. "Contractors: 49" and
+ *  "per hire 5000" are prices. */
 const COUNTED_BEFORE =
-  /(?:\bheadcount\s*(?:[:=]|of|is|at|around|about)?|\b(?:team|staff) of|\b(?:hire|hires|hiring))\s*$/i;
-/** The words that make a percentage our price, not a share: before it in
- *  its sentence ("our markup is 12%") or just after it ("a 12% markup"). */
+  /(?:\bheadcount\s*(?:[:=]|of|is|at|around|about)?|\b(?:team|staff) of)\s*$/i;
+/** Count words that are plural without an s. */
+const PLURAL_ALWAYS = new Set(["people", "staff", "headcount", "folks", "personnel"]);
+/** What turns a count word into a price label: a slash or a price word
+ *  right after it ("599 employee/month", "499 partner cost", "908 employee
+ *  side"). */
+const PRICE_AFTER_NOUN =
+  /^(?:[^\S\n]*\/|[^\S\n]*-?(?:facing|side|level)\b|[^\S\n]+(?:costs?|prices?|pricing|rates?|fees?|side|contributions?|wholesale|retail|salary|salaries|pay|wages?|bonus(?:es)?|budget|total|each|apiece|per|a|an|monthly|annually|yearly|weekly|level|tier|cut|margin|markup)\b)/i;
+/** The words that make a percentage our price, not a share, singular or
+ *  plural: before it in its sentence ("our markups are 12%") or just after
+ *  it ("a 12% markup"). */
 const PRICED_SHARE_BEFORE =
-  /\b(?:markup|mark-up|margin|discount|commission|fees?|rates?|premium|surcharge|admin|charge[sd]?|charging|price[sd]?|pricing|takes?|adds?|uplift|on top)\b/i;
+  /\b(?:mark-?ups?|margins?|discounts?|commissions?|fees?|rates?|premiums?|surcharges?|admin|charge[sd]?|charging|prices?|priced|pricing|takes?|adds?|uplifts?|on top)\b/i;
 const PRICED_SHARE_AFTER =
-  /^(?:[ \t]+[A-Za-z][\w'’-]*){0,2}?[ \t]+(?:markup|mark-up|margin|discount|commission|fees?|cut|surcharge|premium|uplift|rate|admin|on top)\b/i;
+  /^(?:[ \t]+[A-Za-z][\w'’-]*){0,2}?[ \t]+(?:mark-?ups?|margins?|discounts?|commissions?|fees?|cut|surcharges?|premiums?|uplifts?|rates?|admin|on top)\b/i;
+/** Does a price word stand before a position in its own sentence? A
+ *  sentence starts after a ; or a line break, or after a stop that a space
+ *  and a capital follow; a decimal point, "U.S." or "approx." ends nothing,
+ *  so the same sentence reads the same on a second pass. One replace pass
+ *  asks about one text many times, so the sentence starts and the price
+ *  words are found once and kept for the next ask. */
+let pricedOf: { text: string; starts: number[]; hits: number[] } = {
+  text: "",
+  starts: [0],
+  hits: [],
+};
+function lastAtOrBefore(list: readonly number[], at: number): number {
+  let lo = -1;
+  let hi = list.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (list[mid] <= at) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo < 0 ? -1 : list[lo];
+}
+function pricedBefore(text: string, at: number): boolean {
+  if (pricedOf.text !== text) {
+    const starts = [0];
+    for (const hit of text.matchAll(/[!?](?=\s)|\.(?=\s+[A-Z(])|[;\n]/g))
+      starts.push(hit.index + 1);
+    const hits: number[] = [];
+    for (const hit of text.matchAll(new RegExp(PRICED_SHARE_BEFORE.source, "gi")))
+      hits.push(hit.index + hit[0].length);
+    pricedOf = { text, starts, hits };
+  }
+  const hit = lastAtOrBefore(pricedOf.hits, at);
+  return hit >= 0 && hit >= lastAtOrBefore(pricedOf.starts, at);
+}
+/** A figure from 1900 to 2099 is a year only where it is said as one:
+ *  after a word that sets a year, beside another year, or before a word a
+ *  year leads. A round figure in a price's place ("a fee of 2000", "2000
+ *  net", "2000 al mes") is a figure like any other. */
+const YEAR_BEFORE =
+  /(?:\b(?:in|since|by|until|till|through|thru|during|early|late|mid|end of|start of|beginning of|middle of|as of|back in|spring|summer|fall|autumn|winter|planning for|plans? for|ready for|in time for|starting|FY|fiscal(?: year)?|year|class of|en|desde|hasta|em|até|depuis|année|año|ano|Q[1-4]|H[12])|©|\(c\)|copyright|\b(?:19|20)\d{2}[^\S\n]*(?:-|–|to|and|or|\/))[^\S\n-]*-?[^\S\n]*$/i;
+const YEAR_AFTER =
+  /^(?:[^\S\n]*(?:-|–|to|and|or|\/)[^\S\n]*(?:19|20)\d{2}\b|[^\S\n-]*[-\s][^\S\n]*(?:plan|plans|planning|renewals?|rollout|launch|season|cycle|roadmap|onwards?|enrollment|open enrollment|tax year|filings?|calendar|goals?|forecast|hiring|census|fiscal|Q[1-4]|H[12])\b|,?[^\S\n]*(?:Q[1-4]|H[12])\b)/i;
+const YEAR_RATE = new RegExp(
+  `^\\s?(?:k\\b|K\\b|M\\b|MM\\b|PEPM|PEPY|PMPM|PEPW|PEPA|PUPM|monthly|annually|yearly|weekly|per\\b|a\\s(?:month|year|week|head)|an\\s(?:hour|employee)|\\/|al mes|por mes|por mês|par mois|mensual|mensuales|mensais|mensuel|net\\b|gross\\b|bruto|brutos|brut|each\\b|apiece)`,
+  "i",
+);
 /** The price units a figure is set in: always money. */
 const RATE_UNITS = "PEPM|PEPY|PMPM|PEPW|PEPA|PUPM";
 
@@ -411,6 +465,17 @@ export function redactMoneyStrict(input: string): string {
       ),
       hold,
     )
+    // A month and its year ("October 2026").
+    .replace(new RegExp(`\\b(?:${MONTHS})\\.?,?\\s(?:19|20)\\d{2}\\b`, "g"), hold)
+    // A year said as one, never one set as a rate.
+    .replace(/\b(?:19|20)\d{2}\b/g, (m: string, at: number, whole: string) => {
+      const after = whole.slice(at + m.length, at + m.length + 48);
+      if (YEAR_RATE.test(after)) return m;
+      return YEAR_BEFORE.test(whole.slice(Math.max(0, at - 32), at)) ||
+        YEAR_AFTER.test(after)
+        ? hold(m)
+        : m;
+    })
     // A day and month: by slash with or without its year, by dot or dash
     // only with it, since "4.5 per head" is a price.
     .replace(
@@ -448,15 +513,7 @@ export function redactMoneyStrict(input: string): string {
       /\b(?:No\.?|Number|Unit|Line|Item|Case|Ref|PO|Group|Batch|Q)\s?#?\d[\d.]*\b/g,
       hold,
     )
-    .replace(/#\d+\b/g, hold)
-    // A year, unless it is set as a rate or a price.
-    .replace(
-      new RegExp(
-        `\\b(?:19|20)\\d{2}\\b(?!\\s?(?:k|K|M|MM|${RATE_UNITS}|monthly|annually|yearly|weekly|per\\b|a\\s(?:month|year|week|head)|an\\shour|\\/))`,
-        "g",
-      ),
-      hold,
-    );
+    .replace(/#\d+\b/g, hold);
 
   // Every figure left: kept when it counts or is a share that prices
   // nothing; taken otherwise. What decides reads words, never digits, so a
@@ -466,40 +523,48 @@ export function redactMoneyStrict(input: string): string {
     (m: string, n: string, mult: string, pct: string, at: number, whole: string) => {
       let after = whole.slice(at + m.length);
       if (pct) {
-        const sentence =
-          whole
-            .slice(0, at)
-            .split(/[.!?;\n]/)
-            .pop() ?? "";
-        return PRICED_SHARE_BEFORE.test(sentence) || PRICED_SHARE_AFTER.test(after)
-          ? "[—]"
-          : m;
+        return pricedBefore(whole, at) || PRICED_SHARE_AFTER.test(after) ? "[—]" : m;
       }
-      if (!mult && COUNTED_BEFORE.test(whole.slice(Math.max(0, at - 40), at))) return m;
       // A range reads as one figure: what follows its far end decides.
       const range = /^[ \t]?(?:-|–|to)[ \t]?\d(?:[\d,.]*\d)?/.exec(after);
       if (range) after = after.slice(range[0].length);
       if (/^\s?(?:\/\s?[a-z]|monthly|annually|yearly|weekly)/i.test(after)) return "[—]";
+      // A headcount or a team of so many, with nothing after the figure.
+      if (
+        !mult &&
+        COUNTED_BEFORE.test(whole.slice(Math.max(0, at - 40), at)) &&
+        /^[^\S\n]*(?:[.,;:!?)]|\n|$)/.test(after)
+      )
+        return m;
       // What it counts stands on its own line, after a couple of words that
       // describe it at most ("45 full-time employees", "4-5 India admin
-      // workers"), hyphen-joined or spaced.
+      // workers"), hyphen-joined or spaced, and no price follows it ("499
+      // partner cost", "599 employee/month", "320 employee, 680 employer").
       const joined = /^-[a-z]/.test(after);
-      const words =
-        after
-          .match(
-            /^(?:(?:[ \t\u00A0]+|-)[A-Za-z\u00C0-\u024F][\w'’\u00C0-\u024F]*){1,3}/,
-          )?.[0]
-          .replace(/^-/, "")
-          .trim()
-          .split(/[ \t\u00A0-]+/)
-          .filter(Boolean) ?? [];
-      for (const [i, w] of words.entries()) {
+      const word = /(?:[^\S\n]+|-)([\p{L}][\p{L}\p{M}\w'’]*)/uy;
+      let pos = 0;
+      for (let i = 0; i < 3; i++) {
+        word.lastIndex = pos;
+        const hit = word.exec(after);
+        if (!hit) break;
+        pos = word.lastIndex;
+        const w = hit[1];
         const lw = w.toLowerCase();
         if (STOPS.has(lw)) return "[—]";
         const prose = w === lw || /^[A-Z]{2,4}s?$/.test(w);
         if (!prose) continue;
-        if (COUNT_NOUNS.has(lw) || TIME_PLURALS.has(lw)) return m;
-        if (TIME_SINGULARS.has(lw) && (n === "1" || (i === 0 && joined))) return m;
+        const tail = after.slice(pos);
+        if (TIME_PLURALS.has(lw)) return m;
+        if (TIME_SINGULARS.has(lw)) return n === "1" || (i === 0 && joined) ? m : "[—]";
+        if (COUNT_NOUNS.has(lw)) {
+          if (PRICE_AFTER_NOUN.test(tail)) return "[—]";
+          if (lw.endsWith("s") || PLURAL_ALWAYS.has(lw) || n === "1") return m;
+          // A singular count describes what follows it ("a 50 person
+          // company"); alone, it labels a price ("320 employee, 680
+          // employer").
+          const next = /^[^\S\n]+([\p{L}][\p{L}\p{M}\w'’-]*)/u.exec(tail)?.[1] ?? "";
+          return next && !STOPS.has(next.toLowerCase()) ? m : "[—]";
+        }
         // One of a thing takes the singular: "1 designer".
         if (i === 0 && n === "1" && !mult) return m;
       }

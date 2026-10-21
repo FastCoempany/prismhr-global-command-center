@@ -140,7 +140,7 @@ export function chicagoDaysSince(iso: string, now: Date): number | null {
 const OWED_BLOCK_RE = /\bOwed:\s*([^\n]+)/g;
 const OWED_SEG_SPLIT = /;|\.\s+(?=[A-Z])/;
 const OWED_SEG_RE =
-  /^\s*(.{3,140}?)\s*—\s*@?\s*([A-Z][\w'’-]*(?:\s[A-Z][\w'’-]*){0,3})\s*\.?\s*$/;
+  /^\s*(.{3,140}?)\s*—\s*@?\s*(\p{Lu}[\p{L}\p{M}\w'’-]*(?:\s\p{Lu}[\p{L}\p{M}\w'’-]*){0,3})\s*\.?\s*$/u;
 
 /** An Owed block, segment by segment, as the record's own line holds it: the
  *  thing, who owes it as the record names them ("" when the segment names
@@ -177,7 +177,7 @@ export function owedSegments(
 }
 
 const OWED_SEG_ANY_RE =
-  /^\s*(.{3,140}?)\s*—\s*@?\s*([A-Za-z][\w'’-]*(?:\s[A-Za-z][\w'’-]*){0,3})\s*\.?\s*$/;
+  /^\s*(.{3,140}?)\s*—\s*@?\s*(\p{L}[\p{L}\p{M}\w'’-]*(?:\s\p{L}[\p{L}\p{M}\w'’-]*){0,3})\s*\.?\s*$/u;
 
 /** The text with its Owed blocks taken out, each line kept otherwise. */
 export function withoutOwed(text: string): string {

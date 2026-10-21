@@ -177,7 +177,11 @@ const FORWARDED =
 // person's own words.
 const GMAIL_WROTE =
   /^[ \t]*(?:>[ \t]?)*(?:-{2,}[ \t]*)?(?:On|El|Le|Am|Il|Op) (?:[^\n]|\n(?!\s*\n)){4,250}?(?:(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef)\s?(?::|[ \t]*-{2,})|(?:schrieb|schreef) [^\n]{1,200}:)[ \t]*$/m;
-const ATTRIBUTION = /\d[\s\S]*(?:[<@]|\d:\d\d)/;
+// What a mail client's attribution always carries before the verb: an
+// address, or a date with its four-digit year and a clock. "On Monday at
+// 10:30 she wrote:" is a person quoting someone, and stays.
+const ATTRIBUTION =
+  /[<@]|\b(?:19|20)\d{2}\b[\s\S]*\d{1,2}[:.h]\d{2}|\d{1,2}[:.]\d{2}[\s\S]*\b(?:19|20)\d{2}\b/;
 const QUOTED = /^[ \t]*>/;
 const RULE = /^[ \t]*(?:_{8,}|-{8,})[ \t]*$/;
 const FROM_AT = /(^[ \t]*|[A-Za-z0-9])\*?(?:From|De|Von|Da|Van)\s?:\*?\s/;
@@ -247,17 +251,28 @@ function quotedTailAt(s: string): number {
  *  answers stay. A ">" line above the attribution is the person's own (a
  *  bullet), and stays. */
 function gmailTrail(s: string): { cut: number; text: string } {
-  const m = GMAIL_WROTE.exec(s);
-  if (!m || !ATTRIBUTION.test(m[0])) return { cut: -1, text: s };
+  // The first line shaped like an attribution that carries what one always
+  // carries; a sentence of the person's own above it never hides it.
+  const all = new RegExp(GMAIL_WROTE.source, "gm");
+  let m: RegExpExecArray | null = null;
+  for (let hit = all.exec(s); hit; hit = all.exec(s))
+    if (ATTRIBUTION.test(hit[0])) {
+      m = hit;
+      break;
+    }
+  if (!m) return { cut: -1, text: s };
   const after = s.slice(m.index + m[0].length).split("\n");
-  // An answer sits between quoted lines; lines after the last quoted one are
-  // a footer or a signature below the quote, never an answer on their own.
+  // An answer is a line of their own between quoted lines, or straight
+  // under a quoted line with no blank between; a footer or a signature
+  // below the quote comes after a blank line, and is never an answer.
   let lastQuote = -1;
   after.forEach((l, i) => {
     if (QUOTED.test(l)) lastQuote = i;
   });
-  const answers =
-    lastQuote > 0 && after.slice(0, lastQuote).some((l) => l.trim() && !QUOTED.test(l));
+  const own = (l: string) => !!l.trim() && !QUOTED.test(l);
+  const answers = after.some(
+    (l, i) => own(l) && (i < lastQuote || (i > 0 && QUOTED.test(after[i - 1]))),
+  );
   if (!answers) return { cut: m.index, text: s };
   return {
     cut: -1,

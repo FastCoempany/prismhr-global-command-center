@@ -35,7 +35,7 @@ function owedLabel(o: OwedLine): string {
   const who = o.who.trim();
   const [first = ""] = who.split(/\s+/);
   if (
-    /^[A-Z][a-z]+$/.test(first) &&
+    /^\p{Lu}[\p{Ll}\p{M}]+$/u.test(first) &&
     !/^(?:The|Their|Our|His|Her|My|Your|Its)$/.test(first)
   )
     return `${first.toUpperCase()} OWES`;
