@@ -409,7 +409,8 @@ under the meter: either direction, read past sign-offs, calendar acceptances
 and machinery by the doc read's own flags, past a line whose direction the doc
 read cannot name (a colleague's coordination mail, an unattributed entry),
 past a send of ours that reached only our own side (a colleague named by
-first name alone included), past their mail that
+first name alone included, unless someone on the account's side shares that
+first name), past their mail that
 never reached the operator (another lane, the operator on no line of it), and
 past a chat or call line.
 It never makes the row taller than the right panel: past that height it fades,
@@ -447,9 +448,10 @@ stays Mark it done.
   an address, a subject or a dated clock; an attribution carries a date
   with its year and a clock, so a person quoting someone "on Monday at
   10:30", or naming an address in their own sentence, keeps their words),
-  a banner only in banner words (what to click or open), a signature card
-  (only when a name follows the sign-off and every line after it reads as a
-  card with a phone, link or address) and a legal notice that opens its own
+  a banner only in banner words (what not to click or open, or that it
+  originated outside) and never a line that asks or speaks for the person,
+  a signature card (only when a name sits straight under the sign-off and
+  every line after it reads as a card with a phone, link or address) and a legal notice that opens its own
   line below the first paragraph, or the first line of a one-paragraph
   email, with nothing of the person's own after it (no sign-off, question
   or promise); paragraphs, inline answers (a line of their own between quoted
@@ -461,7 +463,16 @@ stays Mark it done.
   prices in more ways than a list of price forms can name, so the rule names
   what is not money and takes every other figure: a date, a time, a year
   said as one, a phone number, an ordinal, a numbered label or form, a share
-  that prices nothing, and a count, stay. A year is said as one after a word
+  that prices nothing, and a count, stay. Each keeps only its own shape: a
+  time is an hour of 1 to 12 with its minutes, meridiem or zone, a range or
+  an alternative of them ("2-3pm", "10:30 or 11"), or a bare hour in a
+  sentence about meeting, never in price talk ("49 pm" is per month); a
+  date or a clock may be the partners' ("15 de enero de 2027", "14h", "a las
+  10"); a phone is dashed, dotted, in parentheses or with its country code,
+  or joined by spaces only alone on its line or after a phone word, so a
+  price grid is no phone; a label is capitalized with a short number ("Day
+  1", "Tier 2", "Ticket 4471"); a form number is a form only said as one
+  ("Form 940", "1099 contractors"). A year is said as one after a word
   that only ever sets a year ("in 2009", "since 2019", "Q3 2026", "the fall
   of 2026"), beside a month, as a run of consecutive years ("2025-2026",
   "2026/27"), or before a word a year leads ("the 2026 renewal"), and never
@@ -472,9 +483,14 @@ stays Mark it done.
   roles", the partners' "35 empleados"), with no slash or price word after
   it ("499 partner cost", "599 employee/month"); a singular count word keeps
   a figure only for one of it or when it describes the word after it ("a 50
-  person company"). Time counts in the plural or one of it ("3 months", "1
-  month", "12-month"), and a headcount or a team of so many counts with
-  nothing after the figure. A number word, a determiner or a quantifier
+  person company"). Time counts in the plural, one of it, or describing
+  what follows ("3 months", "1 month", "12-month", "a 90 day notice
+  period"), and a headcount or a team of so many counts with
+  nothing after the figure and no price in its sentence. A range or an
+  alternative of two figures gets one verdict ("45-50", "2 or 3 hires"),
+  "50+" counts as 50 does, a held form or a dotted abbreviation describes
+  what follows ("45 W-2 employees", "12 U.S. employees"), and the book's own
+  words count ("120 companies", "3 PEOs"). A number word, a determiner or a quantifier
   between a figure and what follows ends the count ("599 six months ago",
   "3500 these days", "tous les mois"). A word the list does not name never
   keeps a figure, and a pace of hiring goes like a price. A share prices
@@ -492,8 +508,8 @@ stays Mark it done.
   each reason true: "This one was filed before whole emails were kept." (no
   row), "This filing didn't include the whole email." (an empty row), "This
   send was logged from the app." (an Act Lane send, read off the note, which
-  gives way to the relay's filed copy of the same email within half an
-  hour), or
+  gives way to the relay's filed copy of the same email, to the same
+  person, sent in its minute or within half an hour after), or
   nothing when the store could not be read.
 - **EARLIER is rebuilt.** Each line reads the day and the clock from the note
   itself, who wrote to whom ("you" for the operator), and the subject with the
@@ -527,8 +543,9 @@ stays Mark it done.
   sentence after the last owner goes back to what the read kept. An Owed line closes by its own promise, the one to-do
   or loop that tracks it among those the fan-out's own key ties to it: the
   row the note's own filing opened, else the one opened nearest at or after
-  the note, an earlier one only when none is newer, so a later promise in
-  the same words never reopens a kept one. It reads CLOSED "Done M/D." once
+  the note, an earlier one only when none is newer and only one still open
+  when the promise was made, so a later promise in the same words never
+  reopens a kept one and a delivery before the promise never closes it. It reads CLOSED "Done M/D." once
   that row is done, on the day its own done tag holds, and "Released." once
   their side released it (the closer rule: delivery or release closes a promise, a
   later message never does); a colleague's promise is tracked by nothing here

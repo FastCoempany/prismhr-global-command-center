@@ -356,23 +356,56 @@ function targetsOf(n: RowNote): { names: string[]; dropped: boolean } {
 
 /** A send of ours reached the account: someone on it is not our side. A
  *  send only to colleagues is coordination (C6, C16). */
-function reachesAccount(n: RowNote, homeSide: readonly string[]): boolean {
+function reachesAccount(
+  n: RowNote,
+  homeSide: readonly string[],
+  clientFirsts: ReadonlySet<string>,
+): boolean {
   const { names, dropped } = targetsOf(n);
   if (dropped) return true;
-  return names.some((x) => !ourSide(x, homeSide));
+  return names.some((x) => !ourSide(x, homeSide, clientFirsts));
 }
 
 /** One of ours: the operator, our domain, a name on the roster, or a
  *  roster name's first name alone, the way the record often names a
- *  colleague ("Lesha"). A send counts as ours only when every target is,
- *  so the first-name allowance can only read past coordination mail. */
-function ourSide(x: string, homeSide: readonly string[]): boolean {
+ *  colleague ("Lesha"), unless someone on the account's side of the record
+ *  shares that first name ("Chris" for Chris Alvarez). A send counts as ours
+ *  only when every target is, so the first-name allowance can only read
+ *  past coordination mail. */
+function ourSide(
+  x: string,
+  homeSide: readonly string[],
+  clientFirsts: ReadonlySet<string> = new Set(),
+): boolean {
   if (isMe(x) || OUR_MAIL.test(x) || isHomeSideName(x, homeSide)) return true;
   const one = x.trim().toLowerCase();
   return (
     !/\s/.test(one) &&
+    !clientFirsts.has(one) &&
     homeSide.some((h) => (h.trim().split(/\s+/)[0] ?? "").toLowerCase() === one)
   );
+}
+
+/** The first names of the account's own people on the record: every full
+ *  name an actors or recipients column holds that is not ours. */
+function clientFirstsOf(
+  all: readonly RowNote[],
+  homeSide: readonly string[],
+): Set<string> {
+  const out = new Set<string>();
+  for (const n of all) {
+    const names = [
+      ...(n.actors ?? "").replace(/\s*\+\d+\s*$/, "").split(/→|[;,]/),
+      ...splitRecipients(n.recipients),
+    ];
+    for (const raw of names) {
+      const x = raw.trim();
+      const parts = x.split(/\s+/);
+      if (parts.length < 2 || /@/.test(x) || ourSide(x, homeSide)) continue;
+      out.add(parts[0].toLowerCase());
+    }
+  }
+  return out;
 }
 
 /** Their email reached the operator: on the operator's own lane, or naming
@@ -472,8 +505,13 @@ const dayOf = (ms: number): string => (Number.isNaN(ms) ? "" : DAY_FMT.format(ms
 
 /** The day a to-do was done: its own done tag, else its last change. */
 function doneDay(t: Todo): string {
+  return dayOf(doneAt(t));
+}
+
+/** The moment a to-do was done: its own done tag, else its last change. */
+function doneAt(t: Todo): number {
   const tag = splitTags(splitMarker(t.body ?? "").text).tags.doneAt;
-  return dayOf(tag ? Number(tag) : Date.parse(t.updatedAt ?? ""));
+  return tag ? Number(tag) : Date.parse(t.updatedAt ?? "");
 }
 
 /** Each Owed segment with its state, closed by its own commitment: the one
@@ -511,7 +549,9 @@ function owedOf(
       (n.filingId ? same.find((t) => t.filingId === n.filingId) : undefined) ??
       same.filter((t) => opened(t) >= at).sort((a, b) => opened(a) - opened(b))[0] ??
       same
-        .filter((t) => !(opened(t) >= at))
+        // An earlier row tracks this promise only if it was still open when
+        // the promise was made: a delivery before it cannot be its delivery.
+        .filter((t) => !(opened(t) >= at) && (!t.done || doneAt(t) >= at))
         .sort((a, b) => (opened(b) || 0) - (opened(a) || 0))[0];
     const closed = !tracking
       ? ""
@@ -531,12 +571,18 @@ function owedOf(
 type Shared = {
   docById: Map<string, Doc>;
   whens: Map<string, When>;
+  clientFirsts: Set<string>;
 };
 
-function share(all: readonly RowNote[], docs: readonly Doc[]): Shared {
+function share(
+  all: readonly RowNote[],
+  docs: readonly Doc[],
+  homeSide: readonly string[],
+): Shared {
   return {
     docById: new Map(docs.filter((d) => d.noteId).map((d) => [d.noteId, d])),
     whens: whensOf(all),
+    clientFirsts: clientFirstsOf(all, homeSide),
   };
 }
 
@@ -544,7 +590,7 @@ function share(all: readonly RowNote[], docs: readonly Doc[]): Shared {
 function pickLatest(
   notes: readonly RowNote[],
   homeSide: readonly string[],
-  { docById, whens }: Shared,
+  { docById, whens, clientFirsts }: Shared,
 ): LatestEmail | null {
   // An entry filed with no day is a candidate only when no dated email is.
   let best: { n: RowNote; at: number; dateless: boolean } | null = null;
@@ -554,7 +600,7 @@ function pickLatest(
     if (!d || !MAIL_HEAD.test(n.body) || d.closer || d.machinery) continue;
     const ok =
       d.direction === "out"
-        ? reachesAccount(n, homeSide)
+        ? reachesAccount(n, homeSide, clientFirsts)
         : d.direction === "in" && reachedMe(n);
     if (!ok) continue;
     const w = whens.get(n.id);
@@ -575,14 +621,23 @@ function pickLatest(
   if (logged(best.n)) {
     const subject = threadSubject(cleanSubject(partsOf(best.n).parts?.subject ?? ""));
     const at = best.at;
-    const copy = candidates.find(
-      (c) =>
-        !logged(c.n) &&
-        !c.dateless &&
-        docById.get(c.n.id)?.direction === "out" &&
-        Math.abs(c.at - at) <= 30 * 60_000 &&
-        threadSubject(cleanSubject(partsOf(c.n).parts?.subject ?? "")) === subject,
-    );
+    // The same email: one subject, one recipient, sent in the stub's minute
+    // or within half an hour after it, the nearest first.
+    const sent = targetsOf(best.n).names;
+    const copy = candidates
+      .filter(
+        (c) =>
+          !logged(c.n) &&
+          !c.dateless &&
+          docById.get(c.n.id)?.direction === "out" &&
+          c.at >= at - 60_000 &&
+          c.at <= at + 30 * 60_000 &&
+          threadSubject(cleanSubject(partsOf(c.n).parts?.subject ?? "")) === subject &&
+          targetsOf(c.n).names.some((x) =>
+            sent.some((y) => nameKey(x) === nameKey(y) || spells(x, y) || spells(y, x)),
+          ),
+      )
+      .sort((a, b) => Math.abs(a.at - at) - Math.abs(b.at - at))[0];
     if (copy) best = copy;
   }
   const n = best.n;
@@ -610,7 +665,7 @@ function pickLines(
     homeSide: readonly string[];
     limit: number;
   },
-  { docById, whens }: Shared,
+  { docById, whens, clientFirsts }: Shared,
 ): RecordLine[] {
   const when = (n: RowNote): When => whens.get(n.id) ?? whenOfRow(n.createdAt, n.body);
   const byAt = (a: RowNote, b: RowNote) => when(b).at - when(a).at;
@@ -628,7 +683,7 @@ function pickLines(
         d?.direction === "out" &&
         !d.closer &&
         !d.machinery &&
-        reachesAccount(n, input.homeSide)
+        reachesAccount(n, input.homeSide, clientFirsts)
       );
     })
     .map(when);
@@ -763,7 +818,7 @@ export function emailRow(input: {
   homeSide: readonly string[];
   limit: number;
 }): { record: RecordLine[]; latest: LatestEmail | null } {
-  const shared = share(input.all, input.docs);
+  const shared = share(input.all, input.docs, input.homeSide);
   return {
     record: pickLines({ ...input, released: input.released ?? new Set() }, shared),
     latest: pickLatest(input.all, input.homeSide, shared),
@@ -787,7 +842,7 @@ export function recordLines(input: {
   const all = input.all ?? input.notes;
   return pickLines(
     { ...input, all, released: input.released ?? new Set() },
-    share(all, input.docs),
+    share(all, input.docs, input.homeSide),
   );
 }
 
@@ -803,5 +858,9 @@ export function latestEmail(input: {
   /** Our side, declared (csms ∪ homeSideFrom). */
   homeSide: readonly string[];
 }): LatestEmail | null {
-  return pickLatest(input.notes, input.homeSide, share(input.notes, input.docs));
+  return pickLatest(
+    input.notes,
+    input.homeSide,
+    share(input.notes, input.docs, input.homeSide),
+  );
 }

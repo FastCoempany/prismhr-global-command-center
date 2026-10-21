@@ -152,20 +152,20 @@ const EXTERNAL_LINES: RegExp[] = [
   /^\[?\s?(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s?\]?:?$/i,
   // A caution banner says what to click or open; "Caution: the hires work
   // outside the office" is the person's own line.
-  /^CAUTION:(?=[^\n]{0,400}\b(?:click|links?|attachments?|organi[sz]ation|sender)\b)[^\n]{0,400}\b(?:outside|external)\b/i,
+  /^CAUTION:(?![^\n]*\?\s*$)(?=[^\n]{0,400}(?:\b(?:do not|don['’]t|never)\s(?:click|open)|\bunless you (?:recognize|trust|know)|\b(?:use|exercise) (?:extra )?caution|\boriginated\b))[^\n]{0,400}\b(?:outside|external)\b/i,
   /^(?:Sent from my .{1,40}|Get Outlook for (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?.{0,20})$/i,
   // The "originated from outside" banner, with or without a tag before it,
   // and "External email. Do not click…" in any of its prefixes.
-  /^(?:\[?\s?(?:EXTERNAL(?: EMAIL| SENDER)?|External(?: Email| Sender)?|CAUTION|WARNING|NOTICE|ATTENTION)\s?\]?\s?[:!-]?\s*)?(?:This (?:e-?mail|message) (?:originated|came|was sent|is) (?:from )?(?:outside|an? external sender)\b|External (?:e-?mail|sender)\b)(?=[^\n]{0,400}\b(?:click|links?|attachments?|organi[sz]ation|sender|safe|caution)\b)[^\n]{0,400}$/i,
+  /^(?:\[?\s?(?:EXTERNAL(?: EMAIL| SENDER)?|External(?: Email| Sender)?|CAUTION|WARNING|NOTICE|ATTENTION)\s?\]?\s?[:!-]?\s*)?(?:This (?:e-?mail|message) (?:originated|came|was sent|is) (?:from )?(?:outside|an? external sender)\b|External (?:e-?mail|sender)\b)(?![^\n]*\?\s*$)(?![^\n]*\b(?:we|I|could you|can you|my)\b)(?=[^\n]{0,400}(?:\b(?:do not|don['’]t|never)\s(?:click|open)|\bunless you (?:recognize|trust|know)|\b(?:use|exercise) (?:extra )?caution|\bbe cautious|\boriginated\b))[^\n]{0,400}$/i,
   // The second line of a two-line banner.
   /^(?:Please )?(?:do not|don['’]t) click (?:on )?links or open attachments unless[^\n]{0,200}$/i,
-  /^Sent from (?:Mail for Windows(?: 1[01])?|Outlook(?: for (?:Mac|Windows|iOS|Android))?|Yahoo Mail(?: (?:for|on) \w+)?|AOL Mobile Mail|the all new AOL app[^\n]{0,40}|my [^.!?\n]{1,40})$/i,
+  /^Sent from (?:Mail(?:\s?<[^>\s]{1,300}>)? for Windows(?: 1[01])?|Outlook(?: for (?:Mac|Windows|iOS|Android))?|Yahoo Mail(?: (?:for|on) \w+)?|AOL Mobile Mail|the all new AOL app[^\n]{0,40}|my [^.!?\n<]{1,40})(?:\s?<[^>\s]{1,300}>)?$/i,
   // The same taglines in the partners' languages.
   /^(?:Enviado desde mi|Enviado do meu|Envoyé de mon|Von meinem|Inviato dal mio|Verzonden vanaf mijn) [^.!?\n]{1,40}$/i,
   /^(?:Obtener|Obtenga|Obtenha|Obtenez|Holen Sie sich) Outlook (?:para|pour|für|for) (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?$/i,
   /^(?:Enviado desde|Enviado do|Envoyé depuis|Gesendet von) (?:Outlook|Correo|Yahoo|Mail)[^.!?\n]{0,40}$/i,
   // Exchange's first-contact tip, above a new sender's first reply.
-  /^(?:Some people who received this message )?(?:You )?don['’]t often get email from \S{1,200}\s?Learn why this is important\.?$/i,
+  /^\[?\s?(?:Some people who received this message )?(?:You )?don['’]t often get email from \S{1,200}\s?Learn why this is important(?:\s?<https?:\/\/[^>\s]{1,300}>|\s+at\s+https?:\/\/\S{1,300})?\.?\s?\]?$/i,
 ];
 
 /** The quoted trail, as a mail client sets it on its own lines, in the
@@ -334,10 +334,10 @@ function cutSignatureBlock(s: string): string {
   const lines = s.split("\n");
   for (let i = 1; i < lines.length; i++) {
     if (!SIGN_OFF_LINE.test(lines[i])) continue;
-    let j = i + 1;
-    while (j < lines.length && !lines[j].trim()) j++;
-    if (j >= lines.length) return s;
-    if (!isNameLine(lines[j])) continue;
+    // The name sits straight under the sign-off, as every card does; a
+    // "Thank you!" set off by a blank line opens a paragraph.
+    const j = i + 1;
+    if (j >= lines.length || !lines[j].trim() || !isNameLine(lines[j])) continue;
     const rest = lines
       .slice(j + 1)
       .map((l) => l.trim())

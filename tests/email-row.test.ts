@@ -1106,6 +1106,41 @@ describe("the strict money rule takes every figure that is not plainly something
     ["Their fee is between 1900 and 2000.", "Their fee is between [—] and [—]."],
     ["O salário fica em 2000.", "O salário fica em [—]."],
     ["For June, 2000 per month.", "For June, [—] per month."],
+    // The round-6 review's leaks: a grid read as a phone, prose labels and
+    // bare form numbers, "pm" for per month, and a bare price after "at".
+    [
+      "Country\tEOR\tSetup\tDeposit\nMexico\t599\t500\t2000",
+      "Country\tEOR\tSetup\tDeposit\nMexico\t[—]\t[—]\t[—]",
+    ],
+    ["EOR fee, setup, deposit: 599 500 2000", "EOR fee, setup, deposit: [—] [—] [—]"],
+    [
+      "Salaries for devs: entry level 3500, mid level 5000.",
+      "Salaries for devs: entry level [—], mid level [—].",
+    ],
+    [
+      "Our basic option 499 covers payroll only.",
+      "Our basic option [—] covers payroll only.",
+    ],
+    ["Their fee is 941.", "Their fee is [—]."],
+    ["They charge 940 per month", "They charge [—] per month"],
+    [
+      "The client's cost per headcount is 650.",
+      "The client's cost per headcount is [—].",
+    ],
+    [
+      "Our current provider charges contractor management 49 pm and payroll 25 pm.",
+      "Our current provider charges contractor management [—] pm and payroll [—] pm.",
+    ],
+    ["Remote prices global payroll at 12.", "Remote prices global payroll at [—]."],
+    [
+      "Contractor management runs 49 pm with them.",
+      "Contractor management runs [—] pm with them.",
+    ],
+    ["Per headcount: 650.", "Per headcount: [—]."],
+    [
+      "The client pays them around 8 or 9 an hour.",
+      "The client pays them around [—] or [—] an hour.",
+    ],
     // Price talk keeps a year-shaped figure a figure, even after "since".
     [
       "Her salary has been the same since 2000.",
@@ -1225,6 +1260,20 @@ describe("the strict money rule takes every figure that is not plainly something
       "Q3, B2B, SOC2, M365, W2, H1B, 24x7, COVID-19",
       "Record 001F000000w38OHIAY",
       "We want to launch in the first quarter of 2027.",
+      // The round-6 review's keeps: times, the partners' dates and clocks,
+      // ranges said as one, and counts in everyday phrasing.
+      "I'm free Tuesday 2-3pm CT, or 10:30 or 11, or between 1 and 3 pm, or 4 ET.",
+      "Thursday at 10 or 11 works.",
+      "La fecha de inicio es el 15 de enero de 2027.",
+      "¿Nos vemos el 3 de noviembre a las 10?",
+      "On peut se voir le 3 novembre à 14h ? Reunião às 10h30",
+      "Their headcount is 45-50, a team of 10 to 12.",
+      "It's usually a 1-2 week process with a 90 day notice period and a 3 year term.",
+      "They have 45 W-2 employees and 12 1099 contractors.",
+      "12 U.S. employees, 50+ employees, 2 or 3 hires, between 10 and 15 employees.",
+      "We have 120 companies and work with 3 PEOs.",
+      "Form 940 and 1099-NEC, PrismHR v1.38, case 00123456.",
+      "(312) 555-0199 and 312.555.0100 x204",
     ])
       assert.equal(redactMoneyStrict(keep), keep);
   });
@@ -2040,5 +2089,102 @@ describe("the round-6 review: trails that look like a person's words, and the ro
     ])
       assert.equal(cleanSubject(raw), "Nómina de México", raw);
     assert.equal(threadSubject("RV: Nómina"), threadSubject("FW: Nómina"));
+  });
+});
+
+describe("the round-7 review: banners in a person's words, a label under a thank-you, and the row's pairings", () => {
+  test("a person's line about external email or a caution stays, and a label under a thank-you is no name", () => {
+    for (const keep of [
+      "Hi Antaeus,\n\nExternal email links get blocked by our IT team, so could you send the agreement as a PDF instead?\n\nThanks,\nDana",
+      "Hi Antaeus,\n\nCaution: our sender domain changed, so links from the old domain are dead. External replies should go to the new one.\n\nThanks,\nDana",
+      "Hi Antaeus,\n\nThank you!\n\nSigned Order Form\nhttps://docs.regis.example/order-form-signed\n\nDana",
+    ])
+      assert.equal(cleanEmailWhole(keep), keep);
+  });
+
+  test("Exchange's tip and Mail for Windows go with their links", () => {
+    const body = "Hi Antaeus,\n\nThursday works for the demo.\n\nThanks,\nDana";
+    for (const top of [
+      "You don't often get email from dana@regis.example. Learn why this is important<https://aka.ms/LearnAboutSenderIdentification>",
+      "[You don't often get email from dana@regis.example. Learn why this is important at https://aka.ms/LearnAboutSenderIdentification ]",
+    ])
+      assert.equal(cleanEmailWhole(`${top}\n\n${body}`), body, top);
+    assert.equal(
+      cleanEmailWhole(
+        `${body}\n\nSent from Mail<https://go.microsoft.com/fwlink/?LinkId=550986> for Windows`,
+      ),
+      body,
+    );
+  });
+
+  test("an Act Lane send gives way only to a copy sent to the same person", () => {
+    const stub = note({
+      id: "act",
+      createdAt: "2026-10-20T15:01:37.000Z",
+      body: "✉ Census template — sent to Dana Reyes.",
+      actors: "Antaeus Coe → Dana Reyes",
+      recipients: "Dana Reyes",
+      source: "act-lane",
+    });
+    const toElise = note({
+      id: "r-elise",
+      body: "✉ OL Oct 20 9:40 AM — RE: Census template · Antaeus Coe → Elise Munoz\nAnswers Elise.",
+      actors: "Antaeus Coe → Elise Munoz",
+    });
+    assert.equal(latest([toElise, stub])?.id, "act");
+    const toDana = note({
+      id: "r-dana",
+      body: "✉ OL Oct 20 10:01 AM — Census template · Antaeus Coe → Dana Reyes\nSends the template.",
+      actors: "Antaeus Coe → Dana Reyes",
+    });
+    assert.equal(latest([toElise, stub, toDana])?.id, "r-dana");
+  });
+
+  test("a client who shares a colleague's first name is the client", () => {
+    const ask = note({
+      id: "i1",
+      createdAt: "2026-10-19T12:00:00.000Z",
+      body: "✉ OL Oct 19 4:00 PM — Mexico quote · Chris Alvarez → Antaeus Coe\nCan you send the Mexico quote?",
+      actors: "Chris Alvarez → Antaeus Coe",
+    });
+    const reply = note({
+      id: "o1",
+      body: "✉ OL Oct 20 10:00 AM — Mexico quote · Antaeus Coe → Chris\nHere is the quote.",
+      actors: "Antaeus Coe → Chris",
+      recipients: "Chris",
+    });
+    const home = ["Lesha Cyphers", "Chris Taylor"];
+    const docs = docsFor([ask, reply]);
+    assert.equal(latestEmail({ notes: [ask, reply], docs, homeSide: home })?.id, "o1");
+    const l = recordLines({
+      notes: [ask, reply],
+      docs,
+      todos: [],
+      homeSide: home,
+      limit: 6,
+    });
+    assert.equal(l.find((x) => x.id === "i1")?.email?.answered, "10/20");
+  });
+
+  test("a to-do done before the promise was made never closes it", () => {
+    const ask = note({
+      id: "c1",
+      filingId: "f2",
+      createdAt: "2026-10-15T12:00:00.000Z",
+      body: "✉ OL Oct 15 9:38 AM — Canada hires · Dana Reyes → Antaeus Coe\nAsks again. Owed: send pricing — @Antaeus Coe.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const september = {
+      id: "t1",
+      body: withTags("Send pricing", {
+        ...NO_TAGS,
+        kind: "action",
+        doneAt: String(Date.parse("2026-09-10T15:00:00Z")),
+      }),
+      done: true,
+      createdAt: "2026-09-08T15:00:00Z",
+      filingId: "f1",
+    };
+    assert.equal(lines([ask], [september])[0].email?.owed[0]?.closed, "");
   });
 });

@@ -260,7 +260,7 @@ export const COUNTRY_NAME: Record<string, string> = {
 export function redactMoney(s: string): string {
   return s
     .replace(/[$€£]\s?\d[\d,.]*\s?[kKmM]?\b/g, "[—]")
-    .replace(/\b\d[\d,.]*\s?(USD|EUR|GBP|CAD|dollars?|PEPM)\b/gi, "[—]")
+    .replace(/(?<!\d[,.]?)\b\d[\d,.]*\s?(USD|EUR|GBP|CAD|dollars?|PEPM)\b/gi, "[—]")
     .replace(
       // Bare comma-grouped numbers are money UNLESS they're plainly a
       // quantity of people/things — "1,200 employees" is sizing intel the
@@ -299,7 +299,8 @@ const COUNT_NOUNS = new Set(
     "empleado empleados trabajador trabajadores persona personas colaborador colaboradores contratista contratistas " +
     "cliente clientes funcionario funcionarios funcionário funcionários pessoa pessoas employé employés salarié salariés " +
     "país países pais paises entidad entidades oficina oficinas " +
-    "personne personnes"
+    "personne personnes company companies business businesses employer employers peo peos dependent dependents " +
+    "applicant applicants req reqs store stores franchise franchises group groups brand brands vendor vendors carrier carriers"
   ).split(" "),
 );
 /** Time a figure counts: in the plural it counts ("3 months", "30 days"); in
@@ -355,12 +356,7 @@ const PRICED_SHARE_AFTER =
  *  so the same sentence reads the same on a second pass. One replace pass
  *  asks about one text many times, so the sentence starts and the price
  *  words are found once and kept for the next ask. */
-let pricedOf: { text: string; re: RegExp; starts: number[]; hits: number[] } = {
-  text: "",
-  re: /$^/,
-  starts: [0],
-  hits: [],
-};
+const pricedOf = new Map<RegExp, { text: string; starts: number[]; hits: number[] }>();
 function lastAtOrBefore(list: readonly number[], at: number): number {
   let lo = -1;
   let hi = list.length - 1;
@@ -376,17 +372,19 @@ function pricedBefore(
   at: number,
   re: RegExp = PRICED_SHARE_BEFORE,
 ): boolean {
-  if (pricedOf.text !== text || pricedOf.re !== re) {
+  let index = pricedOf.get(re);
+  if (index?.text !== text) {
     const starts = [0];
     for (const hit of text.matchAll(/[!?](?=\s)|\.(?=\s+[A-Z(])|[;\n]/g))
       starts.push(hit.index + 1);
     const hits: number[] = [];
     for (const hit of text.matchAll(new RegExp(re.source, "gi")))
       hits.push(hit.index + hit[0].length);
-    pricedOf = { text, re, starts, hits };
+    index = { text, starts, hits };
+    pricedOf.set(re, index);
   }
-  const hit = lastAtOrBefore(pricedOf.hits, at);
-  return hit >= 0 && hit >= lastAtOrBefore(pricedOf.starts, at);
+  const hit = lastAtOrBefore(index.hits, at);
+  return hit >= 0 && hit >= lastAtOrBefore(index.starts, at);
 }
 /** A figure from 1900 to 2099 is a year only where it is said as one:
  *  after a word that only ever sets a year ("in 2009", "since 2019", "Q3
@@ -408,10 +406,35 @@ const YEAR_RATE = new RegExp(
 );
 /** A run of digits with letters glued to it, at most three on a side. */
 const GLUED =
-  /(?<![\p{L}\p{N}_])(?:\p{L}{1,3}\d(?:[\d,.]*\d)?(?: \d{3})*(?:\p{L}{1,3}\d*)?|\d(?:[\d,.]*\d)?(?: \d{3})*\p{L}{1,3}\d*)(?![\p{L}\p{N}_])/gu;
+  /(?<![\p{L}\p{N}_,.])(?:\p{L}{1,3}\d(?:[\d,.]*\d)?(?: \d{3})*(?:\p{L}{1,3}\d*)?|\d(?:[\d,.]*\d)?(?: \d{3})*\p{L}{1,3}\d*)(?![\p{L}\p{N}_])/gu;
 /** Names with a digit in them, which carry no money. */
 const GLUED_NAMES =
   /^(?:Q[1-4]|H[12]|W-?[2489]s?|I-?9s?|H-?1B|[LOE]-?[123]|B2[BC]|P2P|SOC-?[12]|ISO\d+|[2-9]FA|24x7|[MO]365|Office365|[2-9][DGK]|COVID-?19|Y2K|FY\d{2,4}|v\d+(?:\.\d+)*|mp[34]|1099s|401ks)$/i;
+/** An hour of the clock, the meridiem and the zones a time is said in. */
+const HOUR = "(?:1[0-2]|0?[1-9])";
+const MERIDIEM = "[AaPp]\\.?[Mm]\\.?";
+const ZONES =
+  "ET|CT|PT|MT|EST|EDT|CST|CDT|PST|PDT|MST|MDT|CET|CEST|GMT|UTC|BST|AST|central|eastern|pacific|mountain";
+/** Words that make a sentence about meeting, where a bare hour is a time. */
+const MEETING =
+  /\b(?:meet|meeting|call|chat|talk|sync|demo|free|available|works?|catch up|zoom|teams|today|tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|morning|afternoon|evening|lunch)\b/i;
+/** The words that lead a phone number on its line. */
+const PHONE_CUE =
+  /(?:\b(?:call|cell|mobile|phone|tel|telephone|office|direct|fax|whatsapp|text)\b[^\n]{0,30}|(?:^|\s)[MTPCDOF]:\s*)$/i;
+/** The partners' month names: Spanish, Portuguese and French. */
+const MONTHS_X =
+  "enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre|janeiro|fevereiro|março|maio|junho|julho|setembro|outubro|novembro|dezembro|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre";
+/** A figure, or a range or an alternative of two read as one. */
+const FIGURE = new RegExp(
+  `(?<![\\w${String.fromCharCode(0xe001)}])(\\d(?:[\\d,.]*\\d)?)(?:[ \\t]?(?:-|–|to|or|and)[ \\t]?(\\d(?:[\\d,.]*\\d)?))?(\\s?(?:k|K|M|MM)\\b)?(%)?(?![\\w${String.fromCharCode(0xe000)}])`,
+  "g",
+);
+/** A word after a figure, or a held form or a dotted abbreviation that
+ *  describes the word after it ("45 W-2 employees", "12 U.S. employees"). */
+const WORD = new RegExp(
+  `(?:[^\\S\\n]+|-)(?:${String.fromCharCode(0xe000)}[a-z]+${String.fromCharCode(0xe001)}|(?:[A-Z]\\.){2,}|([\\p{L}][\\p{L}\\p{M}\\w'’]*))`,
+  "uy",
+);
 /** The price units a figure is set in: always money. */
 const RATE_UNITS = "PEPM|PEPY|PMPM|PEPW|PEPA|PUPM";
 
@@ -439,7 +462,8 @@ export function redactMoneyStrict(input: string): string {
     } while (i >= 0);
     return `\uE000${tag}\uE001`;
   };
-  const AMOUNT = "(?:\\d{1,3}(?:[ \\u00A0\\u202F]\\d{3})+|\\d(?:[\\d,.]*\\d)?)";
+  const AMOUNT =
+    "(?<!\\d[,.]?)(?:\\d{1,3}(?:[ \\u00A0\\u202F]\\d{3})+|\\d(?:[\\d,.]*\\d)?)";
   let s = redactMoney((input ?? "").replace(/[\uE000\uE001]/g, ""))
     // A figure with a currency on either side, by code, word or symbol.
     .replace(
@@ -462,7 +486,7 @@ export function redactMoneyStrict(input: string): string {
     // hundred employees", "2 million users").
     .replace(
       new RegExp(
-        `\\b(?:(?:\\d(?:[\\d,.]*\\d)?|${NUMBER_WORDS})[\\s-]+){0,5}(?:hundred|thousand|million|billion|grand|lakhs?|lacs?|crores?)\\b(?:\\s(?:${CURRENCY_WORDS}))?(?!\\s(?:[\\w-]+\\s){0,2}?(?:${COUNTED_AFTER})\\b)`,
+        `(?<!\\d[,.]?)\\b(?:(?:\\d(?:[\\d,.]*\\d)?|${NUMBER_WORDS})[\\s-]+){0,5}(?:hundred|thousand|million|billion|grand|lakhs?|lacs?|crores?)\\b(?:\\s(?:${CURRENCY_WORDS}))?(?!\\s(?:[\\w-]+\\s){0,2}?(?:${COUNTED_AFTER})\\b)`,
         "gi",
       ),
       "[—]",
@@ -523,32 +547,108 @@ export function redactMoneyStrict(input: string): string {
         return date ? hold(m) : m;
       },
     )
+    // A time range or alternative said as one ("2-3pm", "10:30 or 11",
+    // "between 1 and 3 pm").
+    .replace(
+      new RegExp(
+        `\\b${HOUR}(?::[0-5]\\d)?[^\\S\\n]?(?:-|–|to|or|and)[^\\S\\n]?${HOUR}(?::[0-5]\\d)?[^\\S\\n]?(?:${MERIDIEM}|${ZONES})(?![a-z])`,
+        "gi",
+      ),
+      hold,
+    )
+    .replace(
+      new RegExp(
+        `\\b${HOUR}(?::[0-5]\\d)?[^\\S\\n]?(?:-|–|or|and)[^\\S\\n]?${HOUR}:[0-5]\\d\\b|\\b${HOUR}:[0-5]\\d[^\\S\\n]?(?:-|–|or|and)[^\\S\\n]?${HOUR}\\b(?!:)`,
+        "g",
+      ),
+      hold,
+    )
     .replace(/\b\d{1,2}:\d{2}(?::\d{2})?(?:\s?[AaPp]\.?[Mm]\.?)?/g, hold)
-    .replace(/\b\d{1,2}\s?[AaPp]\.?[Mm]\.?(?![a-z])/g, hold)
-    // An hour said bare after the word that sets it ("meet at 2?").
+    // An hour before am or pm, never "49 pm" for per month, and never in
+    // price talk.
     .replace(
-      /\b(?:at|by|around|before|after|until|till)\s(?:1[0-2]|[1-9])(?=[ \t]?(?:[.,;!?)]|$)|\s(?:or|today|tomorrow|tonight|on|o'clock|ET|CT|CST|CDT|EST|EDT|PT|PST|PDT|MT|central|eastern|pacific)\b)/gim,
+      new RegExp(`\\b${HOUR}[^\\S\\n]?${MERIDIEM}(?![a-z])`, "g"),
+      (m: string, at: number, whole: string) =>
+        pricedBefore(whole, at, YEAR_PRICE_WORDS) ||
+        /^\s?(?:per|each|a head)\b/i.test(whole.slice(at + m.length))
+          ? m
+          : hold(m),
+    )
+    // A bare hour before a zone ("4 ET").
+    .replace(new RegExp(`\\b${HOUR}[^\\S\\n]?(?:${ZONES})\\b`, "g"), hold)
+    // An hour said bare after the word that sets it ("meet at 2?"), only in
+    // a sentence about meeting and never in one about price.
+    .replace(
+      /\b(?:at|by|around|before|after|until|till)\s(?:1[0-2]|[1-9])(?:\s?(?:or|and|to|-|–)\s?(?:1[0-2]|[1-9]))?(?=[ \t]?(?:[.,;!?)]|$)|\s(?:or|today|tomorrow|tonight|on|o'clock|works?|would|is)\b)/gim,
+      (m: string, at: number, whole: string) => {
+        const sentence =
+          whole
+            .slice(Math.max(0, at - 200), at)
+            .split(/[.!?;\n]/)
+            .pop() ?? "";
+        return MEETING.test(`${sentence}${m}`) &&
+          !pricedBefore(whole, at, YEAR_PRICE_WORDS)
+          ? hold(m)
+          : m;
+      },
+    )
+    // The partners' dates and clocks ("15 de enero de 2027", "3 novembre",
+    // "14h", "a las 10", "às 10h30").
+    .replace(
+      new RegExp(
+        `\\b\\d{1,2}(?:º|er)?\\s(?:de\\s)?(?:${MONTHS_X})\\b(?:\\s(?:de\\s)?(?:19|20)\\d{2}\\b)?`,
+        "gi",
+      ),
       hold,
     )
+    .replace(/\b(?:[01]?\d|2[0-3])h(?:[0-5]\d)?\b/g, hold)
+    .replace(/(?:\ba las|\bàs|\bà)\s(?:[01]?\d|2[0-3])(?:[:h][0-5]\d)?\b/gi, hold)
+    // A phone: dashed, dotted, in parentheses or with its country code, its
+    // extension with it. One joined by spaces stays only alone on its line
+    // or after a phone word; a price grid ("599 500 2000") is no phone.
     .replace(
-      /\+\d[\d\s().-]{7,}\d|(?:\b1[\s.-])?\(?\b\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b/g,
+      /(?:\+\d[\d ().-]{7,}\d|(?:\b1[.-])?\(\d{3}\)[ .-]?\d{3}[ .-]\d{4}\b|(?:\b1[.-])?\b\d{3}[.-]\d{3}[.-]\d{4}\b)(?:[ ]?(?:x|ext\.?)[ ]?\d{1,5}\b)?/g,
       hold,
     )
+    .replace(/\b\d{3} \d{3} \d{4}\b/g, (m: string, at: number, whole: string) => {
+      // The line around it, read no further than a line could run.
+      const back = whole.slice(Math.max(0, at - 160), at);
+      const cut = back.lastIndexOf("\n");
+      const lead = cut >= 0 ? back.slice(cut + 1) : back;
+      const fwd = whole.slice(at + m.length, at + m.length + 160);
+      const alone =
+        (cut >= 0 || at <= 160) &&
+        !lead.trim() &&
+        !fwd.split("\n")[0].trim() &&
+        (fwd.includes("\n") || at + m.length + 160 >= whole.length);
+      return alone || PHONE_CUE.test(lead) ? hold(m) : m;
+    })
     .replace(/\b\d+(?:st|nd|rd|th)\b/g, hold)
     .replace(
-      /\b(?:401\s?\(?k\)?|403\s?\(?b\)?|457\s?\(?b\)?|1099(?:-[A-Z]{1,4})?|1095-?[A-C]|94[01]|Section\s125)(?![\w])/gi,
+      /\b(?:401\s?\(?k\)?|403\s?\(?b\)?|457\s?\(?b\)?|Section\s125)(?![\w])/gi,
+      hold,
+    )
+    // A form number is a form only said as one ("1099-NEC", "1099
+    // contractors", "Form 940"); "Their fee is 941" is a price.
+    .replace(
+      /\b(?:1099|1095|94[01])(?:-[A-Z]{1,4}\b|(?=\s(?:forms?|filings?|contractors?|workers?|employees?|status|reporting|returns?|income)\b))/gi,
       hold,
     )
     .replace(/\b[A-Z]-\d{1,3}[A-Z]{0,3}\b/g, hold)
+    // A numbered label, capitalized, its number short ("Day 1", "Tier 2",
+    // "Ticket 4471"); "entry level 3500" is a salary.
     .replace(
-      /\b(?:Day|Week|Phase|Step|Option|Tier|Level|Section|Form|Version|Room|Suite|Floor|Apt|Ext\.?|Article|Chapter|Page|Wave|Ticket)\s?#?\d[\d.]*\b/gi,
+      /\b(?:Day|Week|Phase|Step|Option|Tier|Level|Floor|Wave|Chapter|Version)\s?#?\d{1,2}(?:\.\d{1,2})?\b(?![,.]?\d)/g,
       hold,
     )
     .replace(
-      /\b(?:No\.?|Number|Unit|Line|Item|Case|Ref|PO|Group|Batch|Q)\s?#?\d[\d.]*\b/g,
+      /\b(?:Section|Article|Page|Room|Suite|Apt|Ext\.?|Ticket|Form|Case|Item|No\.?|Number|Unit|Line|Ref|PO|Group|Batch)\s?#?\d{1,8}\b/g,
       hold,
     )
+    .replace(/\b(?:case|ticket)\s(?:number\s|#\s?)?\d{5,}\b/gi, hold)
+    .replace(/\bQ[1-4]\b/g, hold)
     .replace(/#\d+\b/g, hold)
+    .replace(/\bv\d+(?:\.\d+)+\b/gi, hold)
     .replace(/\bCOVID-19\b/gi, hold);
 
   // A figure glued to letters: a currency or a unit run into it
@@ -566,60 +666,83 @@ export function redactMoneyStrict(input: string): string {
     return digits.length >= 2 || /^[kKmM]$/.test(unit) ? "[—]" : m;
   });
 
-  // Every figure left: kept when it counts or is a share that prices
-  // nothing; taken otherwise. What decides reads words, never digits, so a
-  // figure taken on the first pass changes nothing on the second.
+  // Every figure left, a range or an alternative read as one ("45-50",
+  // "2 or 3"): kept when it counts or is a share that prices nothing; taken
+  // otherwise. What decides reads words, never digits, and a range gets one
+  // verdict, so a figure taken on the first pass changes nothing on the
+  // second.
   s = s.replace(
-    /(?<![\w\uE001])(\d(?:[\d,.]*\d)?)(\s?(?:k|K|M|MM)\b)?(%)?(?![\w\uE000])/g,
-    (m: string, n: string, mult: string, pct: string, at: number, whole: string) => {
+    FIGURE,
+    (
+      m: string,
+      n: string,
+      end: string | undefined,
+      mult: string,
+      pct: string,
+      at: number,
+      whole: string,
+    ) => {
+      const take = () => m.replace(/\d(?:[\d,.]*\d)?(?:\s?(?:k|K|M|MM)\b)?%?/g, "[—]");
+      const far = end ?? n;
       let after = whole.slice(at + m.length);
-      if (pct) {
-        return pricedBefore(whole, at) || PRICED_SHARE_AFTER.test(after) ? "[—]" : m;
-      }
-      // A range reads as one figure: what follows its far end decides.
-      const range = /^[ \t]?(?:-|–|to)[ \t]?\d(?:[\d,.]*\d)?/.exec(after);
-      if (range) after = after.slice(range[0].length);
-      if (/^\s?(?:\/\s?[a-z]|monthly|annually|yearly|weekly)/i.test(after)) return "[—]";
-      // A headcount or a team of so many, with nothing after the figure.
+      if (pct)
+        return pricedBefore(whole, at) || PRICED_SHARE_AFTER.test(after) ? take() : m;
+      if (/^\s?(?:\/\s?[a-z]|monthly|annually|yearly|weekly)/i.test(after)) return take();
+      // A headcount or a team of so many, with nothing after the figure and no
+      // price in its sentence ("cost per headcount is 650" is a price).
+      const before = whole.slice(Math.max(0, at - 40), at);
       if (
         !mult &&
-        COUNTED_BEFORE.test(whole.slice(Math.max(0, at - 40), at)) &&
+        COUNTED_BEFORE.test(before) &&
+        !/\bper\s+headcount\b/i.test(before) &&
+        !pricedBefore(whole, at, YEAR_PRICE_WORDS) &&
         /^[^\S\n]*(?:[.,;:!?)]|\n|$)/.test(after)
       )
         return m;
+      // "50+ employees" counts as 50 does.
+      after = after.replace(/^\+/, "");
       // What it counts stands on its own line, after a couple of words that
       // describe it at most ("45 full-time employees", "4-5 India admin
-      // workers"), hyphen-joined or spaced, and no price follows it ("499
-      // partner cost", "599 employee/month", "320 employee, 680 employer").
+      // workers", "45 W-2 employees", "12 U.S. employees"), hyphen-joined or
+      // spaced, and no price follows it ("499 partner cost", "599
+      // employee/month", "320 employee, 680 employer").
       const joined = /^-[a-z]/.test(after);
-      const word = /(?:[^\S\n]+|-)([\p{L}][\p{L}\p{M}\w'’]*)/uy;
       let pos = 0;
       for (let i = 0; i < 3; i++) {
-        word.lastIndex = pos;
-        const hit = word.exec(after);
+        WORD.lastIndex = pos;
+        const hit = WORD.exec(after);
         if (!hit) break;
-        pos = word.lastIndex;
+        pos = WORD.lastIndex;
         const w = hit[1];
+        // A held form or a dotted abbreviation describes what follows.
+        if (!w) continue;
         const lw = w.toLowerCase();
-        if (STOPS.has(lw)) return "[—]";
+        if (STOPS.has(lw)) return take();
         const prose = w === lw || /^[A-Z]{2,4}s?$/.test(w);
         if (!prose) continue;
         const tail = after.slice(pos);
         if (TIME_PLURALS.has(lw)) return m;
-        if (TIME_SINGULARS.has(lw)) return n === "1" || (i === 0 && joined) ? m : "[—]";
+        const describes = () => {
+          const next = /^[^\S\n]+([\p{L}][\p{L}\p{M}\w'’-]*)/u.exec(tail)?.[1] ?? "";
+          return !!next && !STOPS.has(next.toLowerCase()) && !PRICE_AFTER_NOUN.test(tail);
+        };
+        // Time in the singular counts for one of it, joined by a hyphen, or
+        // describing what follows ("a 90 day notice period"); "599 month to
+        // month" and "649 year one" are prices.
+        if (TIME_SINGULARS.has(lw))
+          return far === "1" || (i === 0 && joined) || describes() ? m : take();
         if (COUNT_NOUNS.has(lw)) {
-          if (PRICE_AFTER_NOUN.test(tail)) return "[—]";
-          if (lw.endsWith("s") || PLURAL_ALWAYS.has(lw) || n === "1") return m;
+          if (PRICE_AFTER_NOUN.test(tail)) return take();
+          if (lw.endsWith("s") || PLURAL_ALWAYS.has(lw) || far === "1") return m;
           // A singular count describes what follows it ("a 50 person
           // company"); alone, it labels a price ("320 employee, 680
           // employer").
-          const next = /^[^\S\n]+([\p{L}][\p{L}\p{M}\w'’-]*)/u.exec(tail)?.[1] ?? "";
-          return next && !STOPS.has(next.toLowerCase()) ? m : "[—]";
+          return describes() ? m : take();
         }
         // One of a thing takes the singular: "1 designer".
-        if (i === 0 && n === "1" && !mult) return m;
+        if (i === 0 && far === "1" && !mult) return m;
       }
-      return "[—]";
+      return take();
     },
   );
   return s
