@@ -61,6 +61,7 @@ type Todo = {
   id: string;
   body: string;
   done: boolean;
+  createdAt?: string;
   updatedAt?: string;
   filingId?: string;
 };
@@ -206,7 +207,8 @@ type When = {
   dayKey: string;
   /** The clock is the row's own. */
   clocked: boolean;
-  /** Filed with no day: the stamp is the filing's moment. */
+  /** Filed with no day: the stamp is the filing's moment, and `at` only
+   *  places it (whensOf). */
   dateless: boolean;
 };
 
@@ -284,22 +286,41 @@ export function momentOf(createdAt: string, body: string): number {
   return whenOfRow(createdAt, body).at;
 }
 
-/** Every row's moment, read once, with the entries a filing wrote with no
- *  day kept in their capture order: the pipeline files them newest first,
- *  so the later stamp is the older message. */
+/** How far below every dated moment a filing's undated entries sit when
+ *  it dated none of them: past any moment the record can hold. */
+const UNDATED_DROP = 4e12;
+
+/** Every row's moment, read once. An entry a filing wrote with no day has
+ *  only the filing's stamp, which is when it was filed, never when it was
+ *  sent, so it never outranks a dated entry: it sits just below its own
+ *  filing's oldest dated entry, or below every dated entry when its filing
+ *  dated none, and the filing's undated entries keep their capture order
+ *  (the pipeline files them newest first, so the later stamp is the older
+ *  message). */
 function whensOf(notes: readonly RowNote[]): Map<string, When> {
   const out = new Map<string, When>();
-  const firstOf = new Map<string, number>();
+  const undated = new Map<string, { n: RowNote; ms: number }[]>();
+  const oldestDated = new Map<string, number>();
   for (const n of notes) {
     const w = whenOfRow(n.createdAt, n.body);
     out.set(n.id, w);
-    if (w.dateless && n.filingId)
-      firstOf.set(n.filingId, Math.min(firstOf.get(n.filingId) ?? Infinity, w.at));
+    const filing = n.filingId || `note:${n.id}`;
+    if (w.dateless)
+      undated.set(filing, [...(undated.get(filing) ?? []), { n, ms: w.at }]);
+    else if (n.filingId && !Number.isNaN(w.at))
+      oldestDated.set(
+        n.filingId,
+        Math.min(oldestDated.get(n.filingId) ?? Infinity, w.at),
+      );
   }
-  for (const n of notes) {
-    const w = out.get(n.id)!;
-    const first = n.filingId ? firstOf.get(n.filingId) : undefined;
-    if (w.dateless && first !== undefined) w.at = 2 * first - w.at;
+  for (const [filing, rows] of undated) {
+    rows.sort((a, b) => a.ms - b.ms);
+    const below = oldestDated.get(filing);
+    const first = rows[0]!.ms;
+    rows.forEach(({ n }, k) => {
+      out.get(n.id)!.at =
+        below !== undefined ? below - (k + 1) : first - UNDATED_DROP - k;
+    });
   }
   return out;
 }
@@ -402,13 +423,18 @@ function doneDay(t: Todo): string {
   return dayOf(tag ? Number(tag) : Date.parse(t.updatedAt ?? ""));
 }
 
-/** Each Owed segment with its state, closed by its own commitment: the
- *  to-do or loop whose key is the segment's (the fan-out's own keys, so one
- *  promise filed twice is one promise), done, on the day its done tag
- *  holds, or released by their side. A colleague's promise is tracked by
- *  nothing here, and stays as the record wrote it. */
+/** Each Owed segment with its state, closed by its own commitment: the one
+ *  to-do or loop that tracks this promise, among those whose key is the
+ *  segment's (the fan-out's own keys, so one promise filed twice is one
+ *  promise). The row the note's own filing opened tracks it; failing that,
+ *  the same-key row opened nearest at or after the note's moment, and an
+ *  earlier one only when nothing newer exists, so a later promise in the
+ *  same words never reopens one that was kept. It closes done, on the day
+ *  that row's done tag holds, or released by their side. A colleague's
+ *  promise is tracked by nothing here, and stays as the record wrote it. */
 function owedOf(
   n: RowNote,
+  moment: number,
   todos: readonly Todo[],
   released: ReadonlySet<string>,
   homeSide: readonly string[],
@@ -418,7 +444,7 @@ function owedOf(
   return segs.map((s) => {
     const key = knowledgeKey(s.text);
     const colleague = !s.mine && !!s.who && isHomeSideName(s.who, homeSide);
-    const tracking = colleague
+    const same = colleague
       ? []
       : todos.filter((t) => {
           const loop = theirLoopOf(t.body);
@@ -426,15 +452,21 @@ function owedOf(
             ? !loop && commitmentKey(t.body) === key
             : !!loop && knowledgeKey(loop.text) === key;
         });
-    const open = tracking.filter((t) => !t.done);
-    const closed =
-      tracking.length === 0
-        ? ""
-        : open.length === 0
-          ? `Done ${doneDay(tracking[tracking.length - 1]!)}.`
-          : open.every((t) => released.has(t.id))
-            ? "Released."
-            : "";
+    const opened = (t: Todo) => Date.parse(t.createdAt ?? "");
+    const at = Number.isNaN(moment) ? Date.parse(n.createdAt) : moment;
+    const tracking =
+      (n.filingId ? same.find((t) => t.filingId === n.filingId) : undefined) ??
+      same.filter((t) => opened(t) >= at).sort((a, b) => opened(a) - opened(b))[0] ??
+      same
+        .filter((t) => !(opened(t) >= at))
+        .sort((a, b) => (opened(b) || 0) - (opened(a) || 0))[0];
+    const closed = !tracking
+      ? ""
+      : tracking.done
+        ? `Done ${doneDay(tracking)}.`
+        : released.has(tracking.id)
+          ? "Released."
+          : "";
     return {
       ...s,
       text: redactMoneyStrict(s.text),
@@ -461,7 +493,8 @@ function pickLatest(
   homeSide: readonly string[],
   { docById, whens }: Shared,
 ): LatestEmail | null {
-  let best: { n: RowNote; at: number } | null = null;
+  // An entry filed with no day is a candidate only when no dated email is.
+  let best: { n: RowNote; at: number; dateless: boolean } | null = null;
   for (const n of notes) {
     const d = docById.get(n.id);
     if (!d || !MAIL_HEAD.test(n.body) || d.closer || d.machinery) continue;
@@ -470,9 +503,15 @@ function pickLatest(
         ? reachesAccount(n, homeSide)
         : d.direction === "in" && reachedMe(n);
     if (!ok) continue;
-    const at = whens.get(n.id)?.at ?? NaN;
-    if (Number.isNaN(at)) continue;
-    if (!best || at > best.at) best = { n, at };
+    const w = whens.get(n.id);
+    const at = w?.at ?? NaN;
+    if (!w || Number.isNaN(at)) continue;
+    const better = !best
+      ? true
+      : best.dateless !== w.dateless
+        ? best.dateless
+        : at > best.at;
+    if (better) best = { n, at, dateless: w.dateless };
   }
   if (!best) return null;
   const n = best.n;
@@ -576,7 +615,10 @@ function pickLines(
     const glyph = GLYPH_AT.exec(n.body)?.[0] ?? "✎";
     const w = when(n);
     const struck = n.body.startsWith("✓");
-    const edit = parts ? parts.subject.trim() : head.replace(GLYPH_STRIP, "").trim();
+    const stored = parts ? parts.subject.trim() : head.replace(GLYPH_STRIP, "").trim();
+    // ✎ starts from what is stored, with the figures the line hides hidden
+    // in the box too, by the rule the line renders by.
+    const edit = isEmail(n.body) ? redactMoneyStrict(stored) : redactMoney(stored);
     if (isEmail(n.body)) {
       const doc = docById.get(n.id);
       const f = factsOf(n, doc);
@@ -593,7 +635,13 @@ function pickLines(
         body: "",
         email: {
           ...f,
-          owed: owedOf(n, input.todos, input.released, input.homeSide),
+          owed: owedOf(
+            n,
+            w.dateless ? Date.parse(n.createdAt) : w.at,
+            input.todos,
+            input.released,
+            input.homeSide,
+          ),
           answered:
             f.dir === "in" && !doc?.closer && !doc?.machinery ? answeredBy(w) : "",
           closer: !!doc?.closer,
@@ -603,6 +651,9 @@ function pickLines(
     }
     const body = redactMoney(rest.trim());
     const people = parts ? peopleOf(n, parts.who) : null;
+    // A call's or a task's entry head carries the pipeline's subject, so it
+    // reads clean as an email's does.
+    const line = parts ? cleanSubject(parts.subject) : stored;
     return {
       id: n.id,
       text: head.slice(0, 500),
@@ -612,7 +663,7 @@ function pickLines(
       day: w.day,
       time: w.time,
       who: people?.from ? `${people.from}${people.to ? ` → ${people.to}` : ""}` : "",
-      line: redactMoney(edit),
+      line: redactMoney(line),
       body: body.length > BODY_CAP ? `${body.slice(0, BODY_CAP).trimEnd()}…` : body,
       email: null,
     };

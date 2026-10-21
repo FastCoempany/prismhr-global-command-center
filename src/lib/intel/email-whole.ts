@@ -174,8 +174,11 @@ function senderOf(s: string): { name: string; address: string } {
   return { name, address };
 }
 
+/** A name's words, accents folded ("José Peña" reads as jose, pena). */
 const words = (name: string): string[] =>
   name
+    .normalize("NFD")
+    .replace(/\p{M}+/gu, "")
     .toLowerCase()
     .split(/[^a-z'’]+/)
     .filter((w) => w.length > 1);
@@ -185,21 +188,29 @@ const isOurs = (s: string): boolean => MINE_RE.test(s) || OUR_MAIL.test(s);
 
 /** Every address the capture's headers pair with a display name, so a bare
  *  address in one header (Power Automate writes the relay's From that way)
- *  reads as the name another header gives it. */
+ *  reads as the name another header gives it. A list splits at each
+ *  address's close, so "Reyes, Dana <d@x.com>" stays one person; a display
+ *  that is itself an address names no one. */
 function aliasesOf(msgs: readonly EmailMessage[]): Map<string, string> {
   const out = new Map<string, string>();
+  const pair = /([^<>;]*)<([^<>]+)>/g;
   for (const m of msgs)
-    for (const field of [m.from, ...m.to.split(/[;,]/)]) {
-      const { name, address } = senderOf(field);
-      if (name && address && !out.has(address)) out.set(address, name);
-    }
+    for (const field of [m.from, m.to])
+      for (const [, shown, addr] of field.matchAll(pair)) {
+        const display = shown.replace(/^[\s,;]+/, "");
+        if (/@/.test(display)) continue;
+        const { name, address } = senderOf(`${display} <${addr}>`);
+        if (name && address && !out.has(address)) out.set(address, name);
+      }
   return out;
 }
 
 /** Does the read's sender name the message's sender? Never across sides
- *  (ours against theirs). By name, every word the read wrote is in the
- *  header's name; by a bare address with no name anywhere in the capture,
- *  the address spells the read's name (its surname, or initial and surname). */
+ *  (ours against theirs). The same address is the same sender. By name,
+ *  every word the read wrote is in the header's name, or in the name the
+ *  capture pairs the address with elsewhere; failing a name the header
+ *  shows itself, the address spells the read's name (its surname, its
+ *  first name alone, or initial and surname). */
 function sameSender(
   entryFrom: string,
   msgFrom: string,
@@ -208,21 +219,29 @@ function sameSender(
   const mineEntry = MINE_RE.test(entryFrom) || /^(you|me)$/i.test(entryFrom.trim());
   if (mineEntry !== isOurs(msgFrom)) return false;
   if (mineEntry) return true;
-  const want = words(entryFrom);
-  if (want.length === 0) return false;
   const { name, address } = senderOf(msgFrom);
+  const from = senderOf(entryFrom);
+  if (from.address && from.address === address) return true;
+  const want = words(from.name || aliases.get(from.address) || "");
+  if (want.length === 0) return false;
   const shown = name || aliases.get(address) || "";
   if (shown) {
     const have = new Set(words(shown));
-    return want.every((w) => have.has(w));
+    if (want.every((w) => have.has(w))) return true;
+    if (name) return false;
   }
-  const local = (address.split("@")[0] ?? "").replace(/[^a-z]/g, "");
+  const local = (address.split("@")[0] ?? "")
+    .normalize("NFD")
+    .replace(/\p{M}+/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
   const first = want[0];
   const last = want[want.length - 1];
   if (!local) return false;
   return want.length === 1
     ? local === first
     : (last.length >= 3 && local.includes(last)) ||
+        (first.length >= 3 && local === first) ||
         local === `${first[0]}${last}` ||
         local === `${first}${last[0]}`;
 }

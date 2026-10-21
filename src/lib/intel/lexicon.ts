@@ -270,88 +270,209 @@ export function redactMoney(s: string): string {
     );
 }
 
-const COUNTED =
-  "employees?|EEs?|workers?|contractors?|people|staff|seats?|hires?|heads?|headcount|clients?|locations?|worksites?|users?|countries";
-
 /** The currencies people write by code or by word, after or before the
  *  figure, and the symbols that stand before or after it. */
 const CODES =
   "USD|EUR|GBP|CAD|AUD|NZD|MXN|INR|BRL|COP|PHP|JPY|CHF|SGD|ZAR|ARS|CLP|PEN|DOP|CNY|HKD|SEK|NOK|DKK|PLN";
-const WORDS = "dollars?|euros?|pesos?|pounds?|reais|rupees?|bucks|francs?|yen";
-// A figure: digits with their separators, never ending on one, and never cut
-// short by a backtrack (the guard after each use keeps it whole).
-const FIG = "\\d(?:[\\d,.]*\\d)?(?!\\d)";
-const UNITS =
-  "employee|EE|worker|head|hire|person|seat|user|contractor|month|mo|year|yr|week|hour|hr|pay period";
+const CURRENCY_WORDS =
+  "dollars?|euros?|pesos?|pounds?|reais|rupees?|bucks|francs?|yen|cents?";
+const MONTHS =
+  "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?";
+/** What a count counts, in the singular: a figure before one of these, or
+ *  before any plural that is not a currency or a verb, counts something. */
+const COUNT_NOUNS = new Set(
+  "employee ee worker hire person people staff headcount contractor client country entity seat user location worksite option team week day month year hour minute yr yrs mo mos wk wks hr hrs min mins time round state province site office role position".split(
+    " ",
+  ),
+);
+/** Words ending in s that count nothing: currencies, and the verbs and small
+ *  words a price runs into ("599 includes payroll", "599 plus tax"). */
+const NOT_PLURALS = new Set(
+  "dollars euros pesos pounds rupees bucks francs cents reais pepms includes covers works goes comes sounds looks seems means makes gets stays applies runs holds needs does plus minus thanks always perhaps unless this whereas besides".split(
+    " ",
+  ),
+);
+/** Words that end a count's reach: a figure before them is a price or a rate
+ *  ("599 a month", "649 in Brazil"). */
+const STOPS = new Set(
+  "a an the per each to for in at on of by from with and or is was are be as than over under across into via vs plus".split(
+    " ",
+  ),
+);
+/** The words for numbers that spell an amount out ("sixty thousand"). */
+const NUMBER_WORDS =
+  "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|and";
+/** The plurals that make a spelled amount a count ("two hundred employees"). */
+const COUNTED_AFTER =
+  "employees|people|workers|hires|staff|contractors|clients|users|seats|heads|countries|locations";
+/** A word just before a figure that says the figure counts people. */
+const COUNTED_BEFORE =
+  /\b(?:headcount|employees|workers|hires|people|staff|contractors|seats|team of|staff of|hire|hiring|onboard|onboarding)\s*(?:[:=]|of|is|are|was|at|about|around)?\s*$/i;
+/** The words that make a percentage our price, not a share. */
+const PRICED_SHARE =
+  /\b(?:markup|mark-up|margin|discount|commission|fee|fees|rate|premium|surcharge|admin)\b[^\d\n]{0,30}$/i;
+/** The price units a figure is set in: always money. */
+const RATE_UNITS = "PEPM|PEPY|PMPM|PEPW|PEPA|PUPM";
 
 /** The money rule where a person's own words render: an email kept whole
- *  (ship order 2026-10-20; CLAUDE.md, The email in the row) talks prices the
- *  way people write them. Beyond redactMoney, these go: a figure with a
- *  currency code, word or symbol on either side ("USD 900", "499 euros",
- *  "1200€", "Rs. 40000"); a figure after a price word ("PEPM: 549", "the fee
- *  is 1500", "rate of 650"); a figure with a k, M or a word for thousands
- *  ("1.5k", "2 million"); a rate ("650 per employee per month", "599
- *  monthly"); a spelled-out amount ("twelve hundred dollars"); and both ends
- *  of a range once either end went ("599-649 PEPM"). A figure that counts
- *  people or places stays, and a 401k is a plan, never a figure. The
- *  stricter passes run first, so redactMoney's own pass never joins two
- *  lines before they read them. */
-export function redactMoneyStrict(s: string): string {
-  const counted = `(?!\\s?(?:${COUNTED})\\b)`;
-  let t = (s ?? "")
-    // A currency before the figure, by code or symbol.
+ *  (ship order 2026-10-20; CLAUDE.md, The email in the row) talks prices in
+ *  more ways than any list of price forms can name, so this rule names what
+ *  is not money and takes the rest. Every figure goes except a date, a time,
+ *  a year, a phone number, an ordinal, a numbered label or form ("Day 1",
+ *  "Tier 2", "W-2", "401k", "#4471"), a share that prices nothing, and a
+ *  count, which is a figure followed on its own line by what it counts ("45
+ *  employees", "3 weeks", "4-5 India admin workers", "a 2-week trial") or
+ *  set after a word that counts ("headcount 45", "we hire 5 a month"). A
+ *  figure with a currency on either side, spelled out as an amount, or set
+ *  as a rate ("599 a month", "599 PEPM") always goes. Running it twice
+ *  changes nothing. */
+export function redactMoneyStrict(input: string): string {
+  const held: string[] = [];
+  const hold = (m: string): string => {
+    let i = held.push(m) - 1;
+    let tag = "";
+    do {
+      tag = String.fromCharCode(97 + (i % 26)) + tag;
+      i = Math.floor(i / 26) - 1;
+    } while (i >= 0);
+    return `${tag}`;
+  };
+  const AMOUNT = "(?:\\d{1,3}(?:[ \\u00A0\\u202F]\\d{3})+|\\d(?:[\\d,.]*\\d)?)";
+  let s = redactMoney((input ?? "").replace(/[]/g, ""))
+    // A figure with a currency on either side, by code, word or symbol.
     .replace(
       new RegExp(
-        `(?:\\b(?:${CODES})|Rs\\.?|R\\$|C\\$|A\\$|NZ\\$|S\\$|[$€£¥₹₱₩])\\s?${FIG}(?:\\s?(?:k|K|M|MM)\\b)?`,
+        `(?:\\b(?:${CODES})|Rs\\.?|R\\$|C\\$|A\\$|NZ\\$|S\\$|[$€£¥₹₱₩])\\s?${AMOUNT}(?:\\s?(?:k|K|M|MM)\\b)?`,
         "g",
       ),
       "[—]",
     )
-    // A currency after the figure, by code, word or symbol.
-    .replace(new RegExp(`\\b${FIG}\\s?(?:(?:${CODES}|${WORDS})\\b|[€£¥₹$])`, "gi"), "[—]")
-    // A figure after a price word.
     .replace(
       new RegExp(
-        `\\b(PEPM|PEPY|PEPW|PMPM|fees?|price[sd]?|pricing|rates?|costs?|quoted?|deposit|total|setup|salary|markup|margin)\\b([^\\d\\n]{0,24})${FIG}${counted}`,
-        "gi",
-      ),
-      (_m, word: string, gap: string) => `${word}${gap}[—]`,
-    )
-    // A figure right after a product a price is quoted for ("EOR 599",
-    // "contractor: 49"), unless it counts people.
-    .replace(
-      new RegExp(
-        `\\b(EOR|COR|contractors?|payroll|GP)\\b([:\\s]{1,3})${FIG}${counted}`,
-        "gi",
-      ),
-      (_m, word: string, gap: string) => `${word}${gap}[—]`,
-    )
-    // A spelled-out amount.
-    .replace(
-      new RegExp(
-        `\\b(?:[a-z]+[\\s-]){0,4}(?:hundred|thousand|million)\\s(?:${WORDS})\\b`,
+        `\\b${AMOUNT}(?:\\s?(?:k|K|M|MM))?\\s?(?:(?:${CODES}|${CURRENCY_WORDS})\\b|[€£¥₹$])`,
         "gi",
       ),
       "[—]",
     )
-    // A figure with a k, M or a word for thousands.
-    .replace(
-      new RegExp(`\\b${FIG}\\s?(?:k|K|M|MM|million|thousand|grand)\\b${counted}`, "g"),
-      (m) => (/^40[13]\s?k$/i.test(m) ? m : "[—]"),
-    )
-    // A rate: a figure per unit, monthly or yearly.
+    // A figure set in a price unit, written apart or run together.
+    .replace(new RegExp(`\\b${AMOUNT}\\s?(?:${RATE_UNITS})\\b`, "gi"), "[—]")
+    // An amount spelled out, in words or in part, unless it counts ("two
+    // hundred employees", "2 million users").
     .replace(
       new RegExp(
-        `\\b${FIG}(?=\\s?(?:(?:per|\\/|an?|each)\\s?(?:${UNITS})|monthly|annually|yearly|weekly)\\b)`,
+        `\\b(?:(?:\\d(?:[\\d,.]*\\d)?|${NUMBER_WORDS})[\\s-]+){0,5}(?:hundred|thousand|million|billion|grand)\\b(?:\\s(?:${CURRENCY_WORDS}))?(?!\\s(?:[\\w-]+\\s){0,2}?(?:${COUNTED_AFTER})\\b)`,
         "gi",
       ),
       "[—]",
     );
-  t = redactMoney(t);
-  // Both ends of a range go once either end went.
-  for (let i = 0; i < 2; i++)
-    t = t
-      .replace(new RegExp(`\\b${FIG}(\\s?(?:-|–|to|and)\\s?)\\[—\\]`, "g"), "[—]$1[—]")
-      .replace(new RegExp(`\\[—\\](\\s?(?:-|–|to)\\s?)${FIG}`, "g"), "[—]$1[—]");
-  return t;
+
+  // What is never money, held aside whole.
+  s = s
+    .replace(/https?:\/\/\S+|www\.\S+|[\w.%+-]+@[\w-]+(?:\.[\w-]+)+/g, hold)
+    .replace(/\b\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z?)?\b/g, hold)
+    .replace(
+      new RegExp(
+        `\\b(?:${MONTHS})\\.?\\s\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s\\d{4})?\\b`,
+        "g",
+      ),
+      hold,
+    )
+    .replace(
+      new RegExp(
+        `\\b\\d{1,2}(?:st|nd|rd|th)?\\s(?:of\\s)?(?:${MONTHS})\\b\\.?(?:,?\\s\\d{4})?`,
+        "g",
+      ),
+      hold,
+    )
+    // A day and month: by slash with or without its year, by dot or dash
+    // only with it, since "4.5 per head" is a price.
+    .replace(
+      /\b(\d{1,2})(?:\/(\d{1,2})(?:\/\d{2,4})?|([.-])(\d{1,2})\3\d{2,4})\b/g,
+      (m, a: string, b?: string, _sep?: string, c?: string) => {
+        const [x, y] = [Number(a), Number(b ?? c)];
+        const date =
+          (x >= 1 && x <= 12 && y >= 1 && y <= 31) ||
+          (y >= 1 && y <= 12 && x >= 1 && x <= 31);
+        return date ? hold(m) : m;
+      },
+    )
+    .replace(/\b\d{1,2}:\d{2}(?::\d{2})?(?:\s?[AaPp]\.?[Mm]\.?)?/g, hold)
+    .replace(/\b\d{1,2}\s?[AaPp]\.?[Mm]\.?(?![a-z])/g, hold)
+    // An hour said bare after the word that sets it ("meet at 2?").
+    .replace(
+      /\b(?:at|by|around|before|after|until|till)\s(?:1[0-2]|[1-9])(?=[ \t]?(?:[.,;!?)]|$)|\s(?:or|today|tomorrow|tonight|on|o'clock|ET|CT|CST|CDT|EST|EDT|PT|PST|PDT|MT|central|eastern|pacific)\b)/gim,
+      hold,
+    )
+    .replace(
+      /\+\d[\d\s().-]{7,}\d|(?:\b1[\s.-])?\(?\b\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b/g,
+      hold,
+    )
+    .replace(/\b\d+(?:st|nd|rd|th)\b/g, hold)
+    .replace(
+      /\b(?:401\s?\(?k\)?|403\s?\(?b\)?|457\s?\(?b\)?|1099(?:-[A-Z]{1,4})?|1095-?[A-C]|94[01]|Section\s125)(?![\w])/gi,
+      hold,
+    )
+    .replace(/\b[A-Z]-\d{1,3}[A-Z]{0,3}\b/g, hold)
+    .replace(
+      /\b(?:Day|Week|Phase|Step|Option|Tier|Level|Section|Form|Version|Room|Suite|Floor|Apt|Ext\.?|Article|Chapter|Page|Wave|Ticket)\s?#?\d[\d.]*\b/gi,
+      hold,
+    )
+    .replace(
+      /\b(?:No\.?|Number|Unit|Line|Item|Case|Ref|PO|Group|Batch|Q)\s?#?\d[\d.]*\b/g,
+      hold,
+    )
+    .replace(/#\d+\b/g, hold)
+    // A year, unless it is set as a rate or a price.
+    .replace(
+      new RegExp(
+        `\\b(?:19|20)\\d{2}\\b(?!\\s?(?:k|K|M|MM|${RATE_UNITS}|monthly|annually|yearly|weekly|per\\b|a\\s(?:month|year|week|head)|an\\shour|\\/))`,
+        "g",
+      ),
+      hold,
+    );
+
+  // Every figure left: kept when it counts or is a share that prices
+  // nothing; taken otherwise.
+  s = s.replace(
+    /(?<![\w])(\d(?:[\d,.]*\d)?)(\s?(?:k|K|M|MM)\b)?(%)?(?![\w])/g,
+    (m: string, n: string, _x: string, pct: string, at: number, whole: string) => {
+      const before = whole.slice(Math.max(0, at - 60), at);
+      if (pct) return PRICED_SHARE.test(before) ? "[—]" : m;
+      if (COUNTED_BEFORE.test(before)) return m;
+      let after = whole.slice(at + m.length);
+      // A range reads as one figure: what follows its far end decides.
+      const range = /^[ \t]?(?:-|–|to)[ \t]?\d(?:[\d,.]*\d)?/.exec(after);
+      if (range) after = after.slice(range[0].length);
+      if (/^\s?(?:\/\s?[a-z]|monthly|annually|yearly|weekly)/i.test(after)) return "[—]";
+      // What it counts stands on its own line, a few words on at most.
+      const words =
+        after
+          .match(/^(?:(?:[ \t ]+|-)[A-Za-z][\w'’]*){1,3}/)?.[0]
+          .trim()
+          .split(/[ \t -]+/)
+          .filter(Boolean) ?? [];
+      for (const [i, w] of words.entries()) {
+        const lw = w.toLowerCase();
+        if (STOPS.has(lw)) return "[—]";
+        if (
+          COUNT_NOUNS.has(lw) ||
+          (lw.length > 3 &&
+            lw.endsWith("s") &&
+            !lw.endsWith("ss") &&
+            !NOT_PLURALS.has(lw))
+        )
+          return m;
+        // One of a thing takes the singular: "1 designer".
+        if (i === 0 && n === "1" && !_x) return m;
+      }
+      return "[—]";
+    },
+  );
+  return s
+    .replace(/([a-z]+)/g, (_m, tag: string) => {
+      let i = 0;
+      for (const c of tag) i = i * 26 + (c.charCodeAt(0) - 96);
+      return held[i - 1] ?? "";
+    })
+    .replace(/\[—\](?:[ \t]?(?:-|–)[ \t]?\[—\])+/g, "[—]");
 }

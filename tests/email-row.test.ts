@@ -1009,10 +1009,10 @@ describe("the cleaner keeps what a person wrote after a sign-off, and every sent
     test(name, () => assert.equal(cleanEmailWhole(raw), want));
 });
 
-describe("the strict money rule takes every form the review wrote prices in", () => {
+describe("the strict money rule takes every figure that is not plainly something else", () => {
   const gone: [string, string][] = [
-    ["599-649 PEPM", "[—]-[—]"],
-    ["$599-649", "[—]-[—]"],
+    ["599-649 PEPM", "[—]"],
+    ["$599-649", "[—]"],
     ["PEPM: 549", "PEPM: [—]"],
     ["3.200 € gross", "[—] gross"],
     ["45000 MXN a month", "[—] a month"],
@@ -1022,15 +1022,83 @@ describe("the strict money rule takes every form the review wrote prices in", ()
     ["EOR 599 / contractor 49", "EOR [—] / contractor [—]"],
     ["Your EOR fee of 499 euros per employee", "Your EOR fee of [—] per employee"],
     ["the one-time setup fee is 1500.", "the one-time setup fee is [—]."],
+    // The round-2 review's leaks: price lists, units after the figure,
+    // second and third prices, spelled salaries, what a client pays.
+    [
+      "Here's our pricing:\nEOR - 599\nContractor management - 49\nGlobal payroll - 25",
+      "Here's our pricing:\nEOR - [—]\nContractor management - [—]\nGlobal payroll - [—]",
+    ],
+    ["EOR is 599 PEPY if you prepay the year.", "EOR is [—] if you prepay the year."],
+    ["599PMPM", "[—]"],
+    [
+      "Our fees are 549 in Mexico and 649 in Brazil.",
+      "Our fees are [—] in Mexico and [—] in Brazil.",
+    ],
+    [
+      "Quoted 549 for MX and 649 for BR and 699 for PE.",
+      "Quoted [—] for MX and [—] for BR and [—] for PE.",
+    ],
+    ["Rates: 549/649/699", "Rates: [—]/[—]/[—]"],
+    ["The salary is about sixty thousand a year.", "The salary is about [—] a year."],
+    [
+      "The client is paying 650 now with Remote, and Deel came in at 549. Can you get under 500?",
+      "The client is paying [—] now with Remote, and Deel came in at [—]. Can you get under [—]?",
+    ],
+    [
+      "Mexico: 599\nBrazil: 649\nColombia: 549",
+      "Mexico: [—]\nBrazil: [—]\nColombia: [—]",
+    ],
+    [
+      "We charge 599 for EOR in Mexico either way",
+      "We charge [—] for EOR in Mexico either way",
+    ],
+    ["PEPM for MX: 599 / BR: 649", "PEPM for MX: [—] / BR: [—]"],
+    [
+      "Our EOR fee for Mexico is 599; Brazil is 649.",
+      "Our EOR fee for Mexico is [—]; Brazil is [—].",
+    ],
+    ["Le salaire est de 3 200 € brut", "Le salaire est de [—] brut"],
+    ["45 000 MXN par mois", "[—] par mois"],
+    ["We pay 2025 a month for that.", "We pay [—] a month for that."],
+    ["Margin is 12% on top.", "Margin is [—] on top."],
+    ["They pay 4.5 per head today.", "They pay [—] per head today."],
+    ["599 includes payroll", "[—] includes payroll"],
+    ["599 plus tax", "[—] plus tax"],
+    ["EOR at 599, COR at 299", "EOR at [—], COR at [—]"],
+    ["2 million", "[—]"],
   ];
   for (const [raw, want] of gone)
-    test(raw, () => assert.equal(redactMoneyStrict(raw), want));
-  test("a headcount, a 401k, a clock and a phone stay", () => {
+    test(raw, () => {
+      assert.equal(redactMoneyStrict(raw), want);
+      assert.equal(redactMoneyStrict(want), want, "a second pass changed it");
+    });
+  test("dates, years, times, phones, labels, forms, shares and counts stay", () => {
     for (const keep of [
       "a total of 12 employees",
       "their 401k plan",
       "at 3:30 on 10/20",
       "312 555 0199",
+      "Call me at (312) 555-0199 ext. 4",
+      "+52 55 1234 5678",
+      "Can we do 10/22 at 2pm?",
+      "Can we meet at 2? Or 3:30 works.",
+      "Start date is October 22, 2026.",
+      "2026-10-22 and 22 October",
+      "We're planning for 2027.",
+      "headcount 45",
+      "We hire 5 a month",
+      "4-5 India admin workers",
+      "It takes 3 weeks to onboard.",
+      "a 2-week trial and 1 month notice",
+      "We'd hire 2 developers and 1 designer.",
+      "1,200 employees and 1.5k contractors",
+      "3 clients in 2 countries",
+      "two hundred employees",
+      "a W-2 and an I-9, 1099 contractors, a Section 125 plan",
+      "the 2nd client on Day 1 in Tier 2, Q3 2026, Ticket #4471",
+      "About 80% of their clients are in Texas.",
+      "see https://example.com/a/599 or dana@ex123.com",
+      "24/7 support",
     ])
       assert.equal(redactMoneyStrict(keep), keep);
   });
@@ -1076,28 +1144,48 @@ describe("the row claims a moment only as far as the record holds it", () => {
     assert.equal(latest(notes)?.id, "d1");
   });
 
-  test("a day with no clock answers nothing on its own day", () => {
-    const sent = note({
-      id: "a1",
-      body: "✉ Reseller agreement — sent to Dana Reyes.",
-      actors: "Antaeus Coe → Dana Reyes",
-      recipients: "Dana Reyes",
-      source: "act-lane",
-      createdAt: "2026-10-19T15:00:00.000Z",
-    });
+  test("a day with no clock answers nothing on its own day, and a later day answers it", () => {
+    // A send late that afternoon, Chicago, after the anchor's noon.
+    const sent = (id: string, createdAt: string) =>
+      note({
+        id,
+        body: "✉ Reseller agreement — sent to Dana Reyes.",
+        actors: "Antaeus Coe → Dana Reyes",
+        recipients: "Dana Reyes",
+        source: "act-lane",
+        createdAt,
+      });
     const reply = note({
       id: "r1",
       createdAt: "2026-10-19T12:00:00.000Z",
-      body: "✉ SF Oct 19 — RE: Reseller agreement · Dana Reyes → Antaeus Coe\nGot it.",
+      body: "✉ SF Oct 19 — RE: Reseller agreement · Dana Reyes → Antaeus Coe\nWe'll take the reseller model. Who signs on your side?",
       actors: "Dana Reyes → Antaeus Coe",
     });
-    const byId = new Map(lines([sent, reply]).map((x) => [x.id, x]));
-    assert.equal(byId.get("r1")?.email?.answered, "");
+    const sameDay = sent("a1", "2026-10-19T21:00:00.000Z");
+    const byId = new Map(lines([sameDay, reply]).map((x) => [x.id, x]));
+    assert.equal(byId.get("r1")?.email?.answered, "", "a same-day send answers nothing");
+    const nextDay = sent("a2", "2026-10-20T15:00:00.000Z");
+    const next = new Map(lines([nextDay, reply]).map((x) => [x.id, x]));
+    assert.equal(next.get("r1")?.email?.answered, "10/20");
     assert.equal(
-      latest([sent, reply])?.logged,
+      latest([sameDay, reply])?.logged,
       true,
       "an Act Lane send says it was logged",
     );
+  });
+
+  test("an inbound filed before filings were kept is no send from the app", () => {
+    const legacy = note({
+      id: "old",
+      createdAt: "2026-09-02T12:00:00.000Z",
+      body: "✉ OL Sep 2 10:00 AM — Census · Dana Reyes → Antaeus Coe\nSends the census.",
+      actors: "Dana Reyes → Antaeus Coe",
+      filingId: null,
+      source: "outlook-ai",
+    });
+    const l = latest([legacy]);
+    assert.equal(l?.id, "old");
+    assert.equal(l?.logged, false);
   });
 
   test("the paste pipeline's placeholders never render as words", () => {
@@ -1109,6 +1197,20 @@ describe("the row claims a moment only as far as the record holds it", () => {
     const l = lines([blank])[0];
     assert.equal(l.line, "No subject");
     assert.equal(l.email?.from, "");
+    const call = note({
+      id: "u2",
+      body: "☎ SF Oct 19 2:00 PM — (no subject) · Dana Reyes → Antaeus Coe\nTalked through the timeline.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const task = note({
+      id: "u3",
+      createdAt: "2026-10-18T12:00:00.000Z",
+      body: "✔ SF Oct 18 — RE: [EXTERNAL] FW: Pricing for Mexico · Antaeus Coe → Dana Reyes\nFollow up.",
+      actors: "Antaeus Coe → Dana Reyes",
+    });
+    const [c, t] = lines([call, task]);
+    assert.equal(c.line, "No subject", "a call's placeholder reads as words");
+    assert.equal(t.line, "Pricing for Mexico", "a task's prefixes and tags go");
   });
 
   test("✎ starts from what is stored, and a typed note renders as written", () => {
@@ -1127,6 +1229,14 @@ describe("the row claims a moment only as far as the record holds it", () => {
       e6.edit,
       "RE: Re: [EXTERNAL] Re: Intro to your Global Business Consultant",
     );
+    const priced = note({
+      id: "p1",
+      body: "✉ OL Oct 20 1:00 PM — RE: Mexico at 599 PEPM · Dana Reyes → Antaeus Coe\nAsks about Mexico.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const p1 = lines([priced])[0];
+    assert.equal(p1.line, "Mexico at [—]");
+    assert.equal(p1.edit, "RE: Mexico at [—]", "the edit box hides what the line hides");
   });
 
   test("each Owed line closes by its own promise, across filings, released or done", () => {
@@ -1193,5 +1303,262 @@ describe("the row claims a moment only as far as the record holds it", () => {
       limit: 6,
     });
     assert.equal(l[0].email?.twice, true);
+  });
+});
+
+describe("the round-3 review: who sent it, where the trail starts, and when", () => {
+  const thread = (top: string, quotedTo: string, sent = "2026-10-20T14:10:00+00:00") =>
+    `OUTLOOK THREAD — inbox copy
+From: ${top}
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: ${sent}
+Subject: RE: Reseller
+
+We're going with the reseller model.
+
+From: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: Monday, October 19, 2026 2:00 PM
+To: ${quotedTo}
+Subject: Reseller
+
+Which model do you want?`;
+  const entry = (from: string) => [
+    {
+      kind: "email",
+      from,
+      subject: "RE: Reseller",
+      dayIso: "2026-10-20",
+      timeLabel: "9:10 AM",
+    },
+  ];
+  const KEPT = ["We're going with the reseller model."];
+
+  test("the same address is the same sender, the address the rules reader writes included", () => {
+    assert.deepEqual(
+      wholeEmails(
+        thread("dreyes@regis.example", "dreyes@regis.example"),
+        entry("dreyes@regis.example"),
+      ),
+      KEPT,
+    );
+  });
+
+  test("accents fold, and a first-name address is the person's", () => {
+    assert.deepEqual(
+      wholeEmails(
+        thread("José Peña <jpena@isla.example>", "José Peña <jpena@isla.example>"),
+        entry("Jose Pena"),
+      ),
+      KEPT,
+    );
+    assert.deepEqual(
+      wholeEmails(
+        thread("dana@regis.example", "dana@regis.example"),
+        entry("Dana Reyes"),
+      ),
+      KEPT,
+    );
+  });
+
+  test("the name the thread pairs with a bare address is read whole, Last, First included", () => {
+    // The local part spells nothing, so only the pairing can name her.
+    const top = "d.r.7@regis.example";
+    assert.deepEqual(
+      wholeEmails(thread(top, "Reyes, Dana <d.r.7@regis.example>"), entry("Dana Reyes")),
+      KEPT,
+    );
+    assert.deepEqual(
+      wholeEmails(thread(top, "d.r.7@regis.example"), entry("Dana Reyes")),
+      [null],
+      "with no pairing, nothing names her",
+    );
+    assert.deepEqual(
+      wholeEmails(
+        thread(top, "'d.r.7@regis.example' <d.r.7@regis.example>"),
+        entry("Dana Reyes"),
+      ),
+      [null],
+      "a display that is the address names no one",
+    );
+  });
+
+  test("never across sides, and an unreadable Sent day is never trusted", () => {
+    assert.deepEqual(
+      wholeEmails(
+        thread(
+          "Dana Reyes <dana.reyes@prismhr.com>",
+          "Dana Reyes <dreyes@regis.example>",
+        ),
+        entry("Dana Reyes"),
+      ),
+      [null],
+      "a colleague who shares her name is not her",
+    );
+    assert.deepEqual(
+      wholeEmails(
+        thread(
+          "Dana Reyes <dreyes@regis.example>",
+          "Dana Reyes <dreyes@regis.example>",
+          "sometime last week",
+        ),
+        entry("Dana Reyes"),
+      ),
+      [null],
+    );
+  });
+
+  test("Apple's quoted trail, the French space, the German and Dutch verb, forwards and tips are cut", () => {
+    const cases: [string, string][] = [
+      [
+        "Sounds good.\n\nSent from my iPhone\n\n> On Oct 20, 2026, at 9:10 AM, Antaeus Coe <antaeus.coe@prismhr.com> wrote:\n> \n> Hi Dana,\n> Our quote is attached.",
+        "Sounds good.",
+      ],
+      [
+        "Parfait, merci.\n\nLe mar. 20 oct. 2026 à 09:10, Antaeus Coe <antaeus.coe@prismhr.com> a écrit :\n> Bonjour",
+        "Parfait, merci.",
+      ],
+      [
+        "Passt, danke.\n\nAm Di., 20. Okt. 2026 um 09:10 Uhr schrieb Antaeus Coe <antaeus.coe@prismhr.com>:\n> Hallo",
+        "Passt, danke.",
+      ],
+      [
+        "Prima.\n\nOp di 20 okt. 2026 om 09:10 schreef Antaeus Coe <antaeus.coe@prismhr.com>:\n> Hoi",
+        "Prima.",
+      ],
+      [
+        "You don't often get email from dreyes@regis.example. Learn why this is important\n\nHi Antaeus,\n\nThursday works.",
+        "Hi Antaeus,\n\nThursday works.",
+      ],
+      ["Works for me.\n\nGet Outlook for iOS<https://aka.ms/o0ukef>", "Works for me."],
+      [
+        "See below.\n\n---------- Forwarded message ---------\nFrom: Sam <s@x.example>\nDate: Mon\n\nBody",
+        "See below.",
+      ],
+      ["FYI\n\nBegin forwarded message:\n\nFrom: Sam <s@x.example>", "FYI"],
+      ["________________________________", ""],
+      ["Agreed.\n\n> line one\n> line two", "Agreed."],
+      [
+        "Two things:\n> the census\n> the country list\nThanks",
+        "Two things:\n> the census\n> the country list\nThanks",
+      ],
+    ];
+    for (const [raw, want] of cases) assert.equal(cleanEmailWhole(raw), want, raw);
+  });
+
+  test("an entry filed with no day never outranks a dated one", () => {
+    // One filing: Dana's dated reply on top, the operator's quoted message
+    // below it with a date the reader could not read.
+    const dated = note({
+      id: "d1",
+      filingId: "fz",
+      createdAt: "2026-10-20T12:00:00.000Z",
+      body: "✉ OL Oct 20 9:10 AM — RE: Reseller · Dana Reyes → Antaeus Coe\nPlease send the agreement.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const quoted = note({
+      id: "d2",
+      filingId: "fz",
+      createdAt: "2026-10-21T21:05:00.000Z",
+      body: "✉ OL 3:00 PM — Reseller · Antaeus Coe → Dana Reyes\nWhich model do you want?",
+      actors: "Antaeus Coe → Dana Reyes",
+    });
+    assert.equal(latest([quoted, dated])?.id, "d1");
+    assert.deepEqual(
+      lines([quoted, dated]).map((x) => x.id),
+      ["d1", "d2"],
+    );
+    // A whole filing with no days, against an older dated email of the record.
+    const record = note({
+      id: "r9",
+      filingId: "fr",
+      createdAt: "2026-10-19T12:00:00.000Z",
+      body: "✉ OL Oct 19 4:00 PM — Signed · Dana Reyes → Antaeus Coe\nWe signed. Send the countersigned copy.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const old = note({
+      id: "o1",
+      filingId: "fo",
+      createdAt: "2026-10-21T21:05:00.000Z",
+      body: "✉ OL 9:10 AM — Draft · Dana Reyes → Antaeus Coe\nCan you resend the draft?",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    assert.equal(latest([old, record])?.id, "r9");
+    assert.deepEqual(
+      lines([old, record]).map((x) => x.id),
+      ["r9", "o1"],
+    );
+    assert.equal(latest([old])?.id, "o1", "with no dated email, the undated one stands");
+    // Its filing's one dated email a sign-off: the undated message below it
+    // still never outranks the record's older dated email.
+    const thanks = note({
+      ...dated,
+      id: "d3",
+      body: "✉ OL Oct 20 9:10 AM — RE: Reseller · Dana Reyes → Antaeus Coe\nThanks!",
+    });
+    const quotedIn = note({
+      ...quoted,
+      id: "d4",
+      body: "✉ OL 3:00 PM — Reseller · Dana Reyes → Antaeus Coe\nWhich model do you want?",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    assert.equal(latest([thanks, quotedIn, record])?.id, "r9");
+  });
+
+  test("a later promise in the same words never reopens a kept one, and each reads its own done day", () => {
+    const ask = (id: string, filingId: string | null, day: string, md: string) =>
+      note({
+        id,
+        filingId,
+        createdAt: `${day}T12:00:00.000Z`,
+        body: `✉ OL ${md} 9:00 AM — Census · Dana Reyes → Antaeus Coe\nAsks for the template. Owed: send the census template — @Antaeus Coe.`,
+        actors: "Dana Reyes → Antaeus Coe",
+      });
+    const done = (
+      id: string,
+      filingId: string | undefined,
+      opened: string,
+      at: string,
+    ) => ({
+      id,
+      body: withTags("Send the census template", {
+        ...NO_TAGS,
+        kind: "action",
+        doneAt: String(Date.parse(at)),
+      }),
+      done: true,
+      createdAt: opened,
+      filingId,
+    });
+    const open = (id: string, filingId: string | undefined, opened: string) => ({
+      id,
+      body: "Send the census template",
+      done: false,
+      createdAt: opened,
+      filingId,
+    });
+    const owed = (n: RowNote, todos: Parameters<typeof recordLines>[0]["todos"]) =>
+      lines([n], todos)[0].email?.owed[0]?.closed;
+    const aug = ask("a1", "f1", "2026-08-01", "Aug 1");
+    const oct = ask("a2", "f2", "2026-10-16", "Oct 16");
+    const t1 = done("t1", "f1", "2026-08-01T17:00:00Z", "2026-08-05T15:00:00Z");
+    // loadTodos lists done rows oldest first, so list position names nothing.
+    assert.equal(owed(aug, [t1, open("t2", "f2", "2026-10-16T17:00:00Z")]), "Done 8/5.");
+    assert.equal(owed(oct, [t1, open("t2", "f2", "2026-10-16T17:00:00Z")]), "");
+    const t2 = done("t2", "f2", "2026-10-16T17:00:00Z", "2026-10-17T15:00:00Z");
+    assert.equal(owed(oct, [t1, t2]), "Done 10/17.");
+    assert.equal(owed(aug, [t2, t1]), "Done 8/5.");
+    // A row typed by hand between the ask and its filing's own row never
+    // stands in for the row the filing opened.
+    const typed = open("t5", undefined, "2026-10-16T15:00:00Z");
+    assert.equal(owed(oct, [t1, typed, t2]), "Done 10/17.");
+    // Filed before filings were kept: the row opened nearest after the ask.
+    const augLegacy = ask("a3", null, "2026-08-01", "Aug 1");
+    const octLegacy = ask("a4", null, "2026-10-16", "Oct 16");
+    const legacy = [
+      done("t3", undefined, "2026-08-01T17:00:00Z", "2026-08-05T15:00:00Z"),
+      open("t4", undefined, "2026-10-16T17:00:00Z"),
+    ];
+    assert.equal(owed(augLegacy, legacy), "Done 8/5.");
+    assert.equal(owed(octLegacy, legacy), "");
   });
 });

@@ -151,19 +151,28 @@ export function cleanExcerpt(raw: string, cap = 500): string {
 const EXTERNAL_LINES: RegExp[] = [
   /^\[?\s?(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s?\]?:?$/i,
   /^CAUTION:[^\n]{0,400}\boutside\b/i,
-  /^(?:Sent from my .{1,40}|Get Outlook for (?:iOS|Android).{0,20})$/i,
+  /^(?:Sent from my .{1,40}|Get Outlook for (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?.{0,20})$/i,
+  // Exchange's first-contact tip, above a new sender's first reply.
+  /^(?:Some people who received this message )?(?:You )?don['’]t often get email from \S{1,200}\s?Learn why this is important\.?$/i,
 ];
 
 /** The quoted trail, as a mail client sets it on its own lines, in the
  *  languages the book's partners write in. */
 const ORIGINAL_MESSAGE =
   /^[ \t]*-{2,}\s*(?:Original Message|Mensaje original|Message d'origine|Ursprüngliche Nachricht|Messaggio originale|Oorspronkelijk bericht)\s*-{2,}/im;
-// Gmail's attribution, which wraps onto a second line when the address is
-// long, never across a blank line, and always names a moment and a person:
-// a digit, and an address or a clock, before "wrote:" or its translation.
-// "Here is what she wrote:" in a sentence is the person's own words.
+/** The forward marker Gmail and Apple Mail set above a forwarded message:
+ *  what follows it is someone else's email. */
+const FORWARDED =
+  /^[ \t]*(?:-{3,}\s*(?:Forwarded message|Mensaje reenviado|Message transféré|Weitergeleitete Nachricht|Messaggio inoltrato|Doorgestuurd bericht)\s*-{3,}|(?:Begin forwarded message|Inicio del mensaje reenviado|Début du message réexpédié)\s?:)/im;
+// Gmail's and Apple Mail's attribution, which wraps onto a second line when
+// the address is long, never across a blank line, and always names a moment
+// and a person: a digit, and an address or a clock, before "wrote:" or its
+// translation, or, in German and Dutch, before the verb and the name
+// ("Am … um 09:10 Uhr schrieb Dana <…>:"). Apple quotes it with the rest
+// ("> On … wrote:"). "Here is what she wrote:" in a sentence is the
+// person's own words.
 const GMAIL_WROTE =
-  /^[ \t]*(?:On|El|Le|Am|Il|Op) (?:[^\n]|\n(?!\s*\n)){4,250}?(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef):[ \t]*$/m;
+  /^[ \t]*(?:>[ \t]?)*(?:On|El|Le|Am|Il|Op) (?:[^\n]|\n(?!\s*\n)){4,250}?(?:(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef)\s?:|(?:schrieb|schreef) [^\n]{1,200}:)[ \t]*$/m;
 const ATTRIBUTION = /\d[\s\S]*(?:[<@]|\d:\d\d)/;
 const QUOTED = /^[ \t]*>/;
 const RULE = /^[ \t]*(?:_{8,}|-{8,})[ \t]*$/;
@@ -206,6 +215,26 @@ function headerBlockAt(s: string): number {
     }
   }
   return -1;
+}
+
+/** A quoted block that ends the email with no attribution above it: two or
+ *  more ">" lines, set off by a blank line or opening the text, and nothing
+ *  of the person's own after them. -1 when there is none. */
+function quotedTailAt(s: string): number {
+  const lines = s.split("\n");
+  let k = lines.length - 1;
+  while (k >= 0 && !lines[k].trim()) k--;
+  let quoted = 0;
+  while (k >= 0 && (QUOTED.test(lines[k]) || !lines[k].trim())) {
+    if (lines[k].trim()) quoted++;
+    k--;
+  }
+  if (quoted < 2) return -1;
+  // The block begins after the last line of the person's own.
+  let start = k + 1;
+  while (start < lines.length && !lines[start].trim()) start++;
+  if (k >= 0 && lines[k + 1]?.trim()) return -1;
+  return lines.slice(0, start).reduce((n, l) => n + l.length + 1, 0);
 }
 
 /** Gmail's attribution cuts the trail only when what follows it is the quote
@@ -324,7 +353,13 @@ export function cleanEmailWhole(raw: string): string {
   // The quoted trail: the earliest place another message begins.
   const gmail = gmailTrail(s);
   s = gmail.text;
-  const cuts = [headerBlockAt(s), gmail.cut, ORIGINAL_MESSAGE.exec(s)?.index ?? -1];
+  const cuts = [
+    headerBlockAt(s),
+    gmail.cut,
+    ORIGINAL_MESSAGE.exec(s)?.index ?? -1,
+    FORWARDED.exec(s)?.index ?? -1,
+    quotedTailAt(s),
+  ];
   // Outlook's run-on header after a short reply ("Works for me.From: …");
   // cleanExcerpt's floor guards Salesforce scaffolds, which never come here.
   const run = QUOTE_TRAIL.exec(s);
@@ -332,19 +367,21 @@ export function cleanEmailWhole(raw: string): string {
   const trail = Math.min(...cuts.filter((c) => c >= 0), Infinity);
   if (trail !== Infinity) s = s.slice(0, trail);
   // The rule a trail leaves standing is not the person's words.
-  s = s.replace(/(?:\n[ \t]*(?:_{8,}|-{8,})[ \t]*)+\s*$/, "");
+  s = s.replace(/(?:(?:^|\n)[ \t]*(?:_{8,}|-{8,})[ \t]*)+\s*$/, "");
 
   const tail = tailAt(s);
   if (tail >= 0) s = s.slice(0, tail);
 
   s = s.replace(CONTACT_CARD, "");
   s = cutSignatureBlock(s.trim());
-  return s
+  const out = s
     .split("\n")
     .map((l) => l.replace(/[ \t]+/g, " ").trimEnd())
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  // Rules and marks with no word in them are nothing of the person's own.
+  return /[\p{L}\p{N}]/u.test(out) ? out : "";
 }
 
 // ── who WROTE it ────────────────────────────────────────────────────────────

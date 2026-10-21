@@ -112,12 +112,13 @@ export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
   }, [email.id, body]);
 
   const capped = cap !== null && !whole;
+  const when = [email.day, email.time].filter(Boolean).join(" · ");
   return (
     <div className={styles.mail}>
       <div className={styles.mailK}>
         <span className={styles.lbl}>LATEST EMAIL</span>
         <span className={styles.mailWho}>
-          {`${email.day}${email.time ? ` · ${email.time}` : ""} · `}
+          {when && `${when}${email.from ? " · " : ""}`}
           <WhoLine from={email.from} to={email.to} others={email.others} />
         </span>
       </div>
@@ -229,6 +230,8 @@ export function EarlierLine({
         ? styles.gDly
         : styles.gNote;
   const subject = e?.closer ? `“${e.kept || shown}”` : shown;
+  // An entry filed with no day shows no day, and no separator for it.
+  const when = [line.day, line.time].filter(Boolean).join(" · ");
   return (
     <div
       className={`${styles.ent} ${open ? styles.entOpen : ""} ${done ? styles.entDid : ""} ${e?.closer ? styles.entQuiet : ""}`}
@@ -237,9 +240,8 @@ export function EarlierLine({
         <span className={`${styles.entIc} ${tone}`}>{line.glyph}</span>
         <span className={styles.entMain}>
           <span className={styles.entK}>
-            {`${line.day}${line.time ? ` · ${line.time}` : ""}${
-              e ? (e.from ? " · " : "") : line.who ? ` · ${line.who}` : ""
-            }`}
+            {[when, e ? "" : line.who].filter(Boolean).join(" · ")}
+            {e?.from && when ? " · " : ""}
             {e && <WhoLine from={e.from} to={e.to} others={e.others} />}
             {e?.closer && <span className={styles.entTag}>SIGN-OFF</span>}
             {e?.twice && !e.closer && <span className={styles.entTag}>FILED TWICE</span>}

@@ -92,10 +92,11 @@ export const RECORD: RecordLine[] = [
       twice: true,
     }),
   }),
+  // Filed with no day the reader could read: no day, no clock, no separator.
   line({
     id: "e1",
-    day: "10/14",
-    time: "4:02 PM",
+    day: "",
+    time: "",
     email: email({ closer: true, kept: "Thanks!", others: [] }),
   }),
   line({
@@ -148,7 +149,8 @@ const ROW: RoomRow = roomRow({
   },
 });
 
-/** The same row whose latest email was filed before the store. */
+/** The same row whose latest email was filed before the store, and with no
+ *  day the reader could read. */
 const OLD: RoomRow = roomRow({
   accountId: "001F000000w38ZZIAY",
   name: "Axcet HR",
@@ -157,8 +159,8 @@ const OLD: RoomRow = roomRow({
   recordTotal: 0,
   latestEmail: {
     id: "o1",
-    day: "10/6",
-    time: "",
+    day: "",
+    time: "3:00 PM",
     logged: false,
     dir: "out",
     from: "you",

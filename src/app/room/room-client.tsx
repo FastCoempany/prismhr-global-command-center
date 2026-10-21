@@ -87,7 +87,7 @@ import styles from "./room.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 import { EarlierLine, LatestEmailPane, type RowLatestEmail } from "./email-row";
 import type { RecordLine } from "@/lib/room/email-row";
-import { cleanSubject, withSubject } from "@/lib/room/subject";
+import { cleanSubject, headParts, withSubject } from "@/lib/room/subject";
 import { redactMoney, redactMoneyStrict } from "@/lib/intel/lexicon";
 
 // The fold, remembered per browser. A no-op subscription is enough for
@@ -802,7 +802,11 @@ export function Row({
         setEditedNotes((m) =>
           new Map(m).set(
             noteId,
-            /^✉ /.test(head) ? redactMoneyStrict(cleanSubject(text)) : redactMoney(text),
+            /^✉ /.test(head)
+              ? redactMoneyStrict(cleanSubject(text))
+              : headParts(head)
+                ? redactMoney(cleanSubject(text))
+                : redactMoney(text),
           ),
         );
         setEditId(null);

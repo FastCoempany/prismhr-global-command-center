@@ -428,23 +428,32 @@ stays Mark it done.
   with its own header is split (the relay's copies, a dropped .eml or .msg):
   a reading-pane grab or a hand-pasted reply carries the newest message with
   no header, and its blocks are only what it quotes. Each email entry is
-  matched to its message by sender and subject, the sender read through a
-  bare address to the name the thread pairs it with, and never across sides;
+  matched to its message by sender and subject: the same address is the
+  same sender, accents fold, a bare address reads as the name the thread
+  pairs it with anywhere in the capture ("Reyes, Dana" included), and never
+  across sides;
   a day and a clock both sides name must agree, and a tie left standing keeps
   nothing. When the read files one email, the capture's own message pairs on
   its sender alone, never on the subject alone, which every message of a
   thread shares. Headers read in English and in the languages the book's
   partners write in. The message is cleaned of banners, external-sender
-  notices, the quoted trail, a signature card (only when a name follows the
+  notices and first-contact tips, the quoted trail (a header block, an
+  attribution in any of those languages, Apple's quoted one included, a
+  forward marker, a closing block of quoted lines), a signature card (only when a name follows the
   sign-off and every line after it reads as a card with a phone, link or
   address) and a legal notice that opens its own line below the first
   paragraph; paragraphs, inline answers, a P.S. and a sentence that only
   looks like a trail are kept (cleanEmailWhole, src/lib/activity/excerpt.ts).
   It lands in the EmailText table keyed by the note, redacted on the way in
-  and out by the strict rule an email's own words take (redactMoneyStrict: a
-  figure with a currency code, word or symbol on either side, after a price
-  word, with k or M, as a rate, spelled out, and both ends of a range;
-  src/lib/notes/email-text.ts). An entry with no sure message keeps an empty
+  and out by the strict rule an email's own words take (redactMoneyStrict,
+  src/lib/intel/lexicon.ts; src/lib/notes/email-text.ts). An email talks
+  prices in more ways than a list of price forms can name, so the rule names
+  what is not money and takes every other figure: a date, a time, a year, a
+  phone number, an ordinal, a numbered label or form, a share that prices
+  nothing, and a count, a figure followed on its own line by what it counts
+  or set after a word that counts, stay; a figure with a currency on either
+  side, spelled out as an amount or set as a rate always goes. Running it
+  twice changes nothing. An entry with no sure message keeps an empty
   row, so the row can say the filing looked. The undo takes it back after the
   notes. An email without its words shows the read's synopsis and says why,
   each reason true: "This one was filed before whole emails were kept." (no
@@ -455,22 +464,30 @@ stays Mark it done.
   itself, who wrote to whom ("you" for the operator), and the subject with the
   format code, the frozen "Today", the reply prefixes, the external tags and
   the pipeline's placeholders gone. The stored head keeps its grammar, because
-  the clock, the meeting read and the promote regex parse it; ✎ on a filed
-  activity edits the subject in its slot and starts from what is stored,
-  never the display's copy, and a sign-off line carries no ✎. The lines run in
+  the clock, the meeting read and the promote regex parse it; a call's and a
+  task's entry head reads as clean as an email's. ✎ on a filed activity
+  edits the subject in its slot and starts from what is stored, never the
+  display's copy, with the figures the line hides hidden in the box too; a
+  sign-off line carries no ✎. The lines run in
   the order the record happened, an entry at its head's clock in any dialect
   read as Chicago's. A moment is claimed only as far as the record holds it:
   a day with no clock sits at that day's Chicago noon and answers nothing on
-  its own day, and an entry filed with no day shows none and keeps its
-  filing's capture order. +N opens everyone else the recipients column names,
+  its own day. An entry filed with no day shows none, and never outranks a
+  dated entry, because its stamp is when it was filed: it sits just below its
+  filing's oldest dated entry, or below every dated entry when its filing
+  dated none, keeps its filing's capture order, and takes the latest email
+  only when no dated email can. +N opens everyone else the recipients column names,
   and shows only when it can.
 - **Each line opens in place, one at a time**, to what the account record
   history holds for it: WHAT THE READ KEPT (WHAT WAS FILED when the rules
   filed it) and its Owed lines, YOU OWE, the owner by name, or OWED when the
-  line names nobody. An Owed line closes by its own promise: the to-do or
-  loop the fan-out's own key ties to it, on any filing, reads CLOSED "Done
-  M/D." once done, on the day its done tag holds, and "Released." once their
-  side released it (the closer rule: delivery or release closes a promise, a
+  line names nobody. An Owed line closes by its own promise, the one to-do
+  or loop that tracks it among those the fan-out's own key ties to it: the
+  row the note's own filing opened, else the one opened nearest at or after
+  the note, an earlier one only when none is newer, so a later promise in
+  the same words never reopens a kept one. It reads CLOSED "Done M/D." once
+  that row is done, on the day its own done tag holds, and "Released." once
+  their side released it (the closer rule: delivery or release closes a promise, a
   later message never does); a colleague's promise is tracked by nothing here
   and stays as written. CLOSED "Answered M/D." marks an inbound a later send
   of ours to the account answered; a sign-off, machinery or a note to a

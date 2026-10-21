@@ -107,6 +107,11 @@ describe("the latest email: whole under the meter, never taller than the right p
       await old.innerText(),
       /WHAT THE READ KEPT\s*This one was filed before whole emails were kept\.\s*Follows up on the September package\./,
     );
+    assert.match(
+      await old.locator($("mailWho")).innerText(),
+      /^3:00 PM · YOU → /,
+      "an email with no day leads with no separator",
+    );
     await page.close();
   });
 
@@ -191,6 +196,11 @@ describe("EARLIER: who, when and the subject, each opening in place", () => {
     assert.match(text[0], /10\/20 · 9:10 AM · DANA REYES → YOU \+3/);
     assert.match(text[4], /FILED TWICE/);
     assert.match(text[5], /SIGN-OFF/);
+    assert.match(
+      text[5],
+      /^✉\s*DANA REYES → YOU/,
+      "a line with no day leads with no separator",
+    );
     await page.close();
   });
 
