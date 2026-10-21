@@ -88,7 +88,7 @@ import TheirsLine, { type TheirsGem } from "./theirs-line";
 import { EarlierLine, LatestEmailPane, type RowLatestEmail } from "./email-row";
 import type { RecordLine } from "@/lib/room/email-row";
 import { cleanSubject, headParts, withSubject } from "@/lib/room/subject";
-import { redactMoney, redactMoneyStrict } from "@/lib/intel/lexicon";
+import { redactMoneyStrict } from "@/lib/intel/lexicon";
 
 // The fold, remembered per browser. A no-op subscription is enough for
 // useSyncExternalStore's hydration probe: the server renders every row open,
@@ -802,11 +802,7 @@ export function Row({
         setEditedNotes((m) =>
           new Map(m).set(
             noteId,
-            /^✉ /.test(head)
-              ? redactMoneyStrict(cleanSubject(text))
-              : headParts(head)
-                ? redactMoney(cleanSubject(text))
-                : redactMoney(text),
+            redactMoneyStrict(headParts(head) ? cleanSubject(text) : text),
           ),
         );
         setEditId(null);

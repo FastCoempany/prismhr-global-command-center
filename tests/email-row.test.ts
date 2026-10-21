@@ -1083,6 +1083,34 @@ describe("the strict money rule takes every figure that is not plainly something
     ["2 million", "[—]"],
     // A pace of hiring reads like a price, so it goes too.
     ["We hire 5 a month", "We hire [—] a month"],
+    // The round-5 review's leaks: a time word behind a number word or a
+    // determiner, more words that price a share, a currency or a unit glued
+    // to the figure, and year-shaped prices.
+    ["Deel quoted 599 six months ago.", "Deel quoted [—] six months ago."],
+    [
+      "Senior devs in Mexico go for 3500 these days.",
+      "Senior devs in Mexico go for [—] these days.",
+    ],
+    ["Cobran 599 todos los meses.", "Cobran [—] todos los meses."],
+    ["Ils paient 3200 tous les mois.", "Ils paient [—] tous les mois."],
+    ["We bill 12% of gross payroll.", "We bill [—] of gross payroll."],
+    ["Remote does 15% of gross.", "Remote does [—] of gross."],
+    ["They'd get a 20% rev share.", "They'd get a [—] rev share."],
+    ["Our spread is 8%.", "Our spread is [—]."],
+    ["She's on P25000 a month.", "She's on [—] a month."],
+    ["RM5000 monthly", "[—] monthly"],
+    ["Pensja 9000zł brutto.", "Pensja [—] brutto."],
+    ["Contractors 49ea, EOR 599ea.", "Contractors [—], EOR [—]."],
+    ["The candidate expects 1 lakh a month.", "The candidate expects [—] a month."],
+    ["Deel quoted 1950-2050 for Mexico.", "Deel quoted [—] for Mexico."],
+    ["Their fee is between 1900 and 2000.", "Their fee is between [—] and [—]."],
+    ["O salário fica em 2000.", "O salário fica em [—]."],
+    ["For June, 2000 per month.", "For June, [—] per month."],
+    // Price talk keeps a year-shaped figure a figure, even after "since".
+    [
+      "Her salary has been the same since 2000.",
+      "Her salary has been the same since [—].",
+    ],
     // The round-3 review's leaks: a word that counts before a price, any
     // plural or foreign word after one, and priced shares.
     ["Contractors: 49\nEmployees: 599", "Contractors: [—]\nEmployees: [—]"],
@@ -1172,7 +1200,7 @@ describe("the strict money rule takes every figure that is not plainly something
       "Can we meet at 2? Or 3:30 works.",
       "Start date is October 22, 2026.",
       "2026-10-22 and 22 October",
-      "We're planning for 2027.",
+      "We launch in 2027.",
       "headcount 45",
       "4-5 India admin workers",
       "It takes 3 weeks to onboard.",
@@ -1189,10 +1217,14 @@ describe("the strict money rule takes every figure that is not plainly something
       "They want 6 months of runway and 3 open roles.",
       "Tenemos 35 empleados en 3 países.",
       "a 12-month term",
-      "We were founded in 2009 and planning for 2027, Q3 2026, October 2026, the 2025-2026 plan.",
+      "We were founded in 2009, live since 2015, launching in the fall of 2027, Q3 2026, October 2026, the 2025-2026 plan and the 2026/27 plan year.",
       "© 2026 Regis HR",
       "a 50 person company and a 200 employee PEO",
       "headcount: 45.",
+      "3 business days and 6 calendar months",
+      "Q3, B2B, SOC2, M365, W2, H1B, 24x7, COVID-19",
+      "Record 001F000000w38OHIAY",
+      "We want to launch in the first quarter of 2027.",
     ])
       assert.equal(redactMoneyStrict(keep), keep);
   });
@@ -1307,17 +1339,17 @@ describe("the row claims a moment only as far as the record holds it", () => {
     assert.equal(t.line, "Pricing for Mexico", "a task's prefixes and tags go");
   });
 
-  test("✎ starts from what is stored, and a typed note renders as written", () => {
+  test("✎ starts from what is stored, and a typed note renders as written, its prices hidden", () => {
     const typed = note({
       id: "t1",
       createdAt: "2026-10-20T15:00:00.000Z",
-      body: "✎ Plans to hire 5 a month in Brazil",
+      body: "✎ Plans to hire 5 people in Brazil at 599 a head",
       source: "room",
     });
     const l = lines([typed, IN]);
     const t1 = l.find((x) => x.id === "t1")!;
-    assert.equal(t1.line, "Plans to hire 5 a month in Brazil");
-    assert.equal(t1.edit, "Plans to hire 5 a month in Brazil");
+    assert.equal(t1.line, "Plans to hire 5 people in Brazil at [—] a head");
+    assert.equal(t1.edit, "Plans to hire 5 people in Brazil at [—] a head");
     const e6 = l.find((x) => x.id === "e6")!;
     assert.equal(
       e6.edit,
@@ -1902,5 +1934,111 @@ describe("the round-5 review: attributions, one answer, first names and accents"
       source: "act-lane",
     });
     assert.deepEqual(latest([sent])?.others, ["elise@regis.example"]);
+  });
+});
+
+describe("the round-6 review: trails that look like a person's words, and the row's own reads", () => {
+  test("a sentence with an address, a notice with an ask below it, a caution about the office and a From/To list stay", () => {
+    for (const keep of [
+      'Hi Antaeus,\n\nOn Friday the client\'s HR lead (maria.lopez@cliente.example) wrote:\n\n"We need both hires by January 4."\n\nCan you send the quote this week?\n\nThanks,\nDana',
+      "Hi Antaeus,\n\nAttached is the census for the two Mexico hires.\n\nThis email and any attachments are confidential because the census lists their national IDs, so please keep it inside your team.\n\nCan you get us the quote by Friday?\n\nThanks,\nDana",
+      "Hi Dana,\n\nThanks for the time today.\n\nBook a meeting with me here for the pricing walk-through: https://calendly.com/antaeus-coe/30min\n\nI'll send the order form Friday.\n\nBest,\nAntaeus",
+      "Hi Antaeus,\n\nCaution: the two Mexico hires work outside the office most days, so we need remote work terms in the contract.\n\nThanks,\nDana",
+      "Hi Antaeus,\n\nOne of our client's employees is relocating:\n\nFrom: Puerto Rico\nTo: Mexico City\nDate: January 4\n\nCan you tell us what EOR would need from them?\n\nThanks,\nDana",
+    ])
+      assert.equal(cleanEmailWhole(keep), keep);
+  });
+
+  test("the partners' taglines, more outside-sender banners and a one-paragraph footer go", () => {
+    const body = "Hi Antaeus,\n\nThursday works for the demo.\n\nThanks,\nDana";
+    for (const foot of [
+      "Enviado desde mi iPhone",
+      "Obtener Outlook para iOS",
+      "Sent from Yahoo Mail on Android",
+      "Sent from Outlook",
+    ])
+      assert.equal(cleanEmailWhole(`${body}\n\n${foot}`), body, foot);
+    for (const top of [
+      "ATTENTION: This email originated from outside the organization. Do not click links or open attachments unless you recognize the sender.",
+      "This email is from an external sender. Please do not click links or open attachments unless you trust the sender.",
+      "CAUTION: This email originated from outside of the organization.\nDo not click links or open attachments unless you recognize the sender and know the content is safe.",
+    ])
+      assert.equal(cleanEmailWhole(`${top}\n\n${body}`), body, top);
+    assert.equal(
+      cleanEmailWhole(
+        "Thursday works, thanks!\nDana\nCONFIDENTIALITY NOTICE: This e-mail message, including any attachments, is for the sole use of the intended recipient(s).",
+      ),
+      "Thursday works, thanks!\nDana",
+    );
+  });
+
+  test("a call's body opens with its prices hidden", () => {
+    const call = note({
+      id: "k1",
+      body: "☎ SF Oct 19 2:00 PM — Pricing call · Antaeus Coe → Dana Reyes\nWalked through pricing: 599 for Mexico, 699 for Brazil. Deposit of 2000 required. Can you do 450 per head?",
+      actors: "Antaeus Coe → Dana Reyes",
+    });
+    const body = lines([call])[0].body;
+    assert.doesNotMatch(body, /599|699|2000|450/);
+  });
+
+  test("an Act Lane send loses to the relay's copy of the same email", () => {
+    const stub = note({
+      id: "act",
+      createdAt: "2026-10-20T15:03:22.481Z",
+      body: "✉ Toronto pricing — sent to Dana Reyes.",
+      actors: "Antaeus Coe → Dana Reyes",
+      recipients: "Dana Reyes",
+      source: "act-lane",
+    });
+    const copy = note({
+      id: "rel",
+      body: "✉ OL Oct 20 10:03 AM — Toronto pricing · Antaeus Coe → Dana Reyes\nSends the Toronto numbers.",
+      actors: "Antaeus Coe → Dana Reyes",
+    });
+    const l = latest([stub, copy]);
+    assert.equal(l?.id, "rel");
+    assert.equal(l?.logged, false);
+    assert.equal(latest([stub])?.logged, true);
+  });
+
+  test("a line with two Owed markers reads two segments, and prose after the block stays prose", () => {
+    const two = note({
+      id: "o1",
+      body: "✉ OL Oct 20 9:10 AM — Plan · Dana Reyes → Antaeus Coe\nPrefers SmartPay. Owed: SmartPay follow-up — @Lucas. Owed: coordinate the post-mortem — @Antaeus.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    assert.deepEqual(
+      lines([two])[0].email?.owed.map((o) => [o.text, o.who]),
+      [
+        ["SmartPay follow-up", "Lucas"],
+        ["coordinate the post-mortem", "Antaeus"],
+      ],
+    );
+    const prose = note({
+      id: "o2",
+      body: "✉ OL Oct 20 9:10 AM — Plan · Dana Reyes → Antaeus Coe\nSends the plan. Owed: send the census file — @Dana Reyes. Dana is out until Monday.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const e = lines([prose])[0].email;
+    assert.deepEqual(
+      e?.owed.map((o) => o.text),
+      ["send the census file"],
+    );
+    assert.equal(e?.kept, "Sends the plan. Dana is out until Monday.");
+    assert.deepEqual(owedSegments("Owed: send the census."), [
+      { text: "send the census", who: "", mine: false },
+    ]);
+  });
+
+  test("the partners' forward and reply prefixes leave the subject", () => {
+    for (const raw of [
+      "RV: Nómina de México",
+      "TR: Nómina de México",
+      "ENC: Nómina de México",
+      "RES: Nómina de México",
+    ])
+      assert.equal(cleanSubject(raw), "Nómina de México", raw);
+    assert.equal(threadSubject("RV: Nómina"), threadSubject("FW: Nómina"));
   });
 });

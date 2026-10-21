@@ -31,7 +31,7 @@
 
 import { LEGACY_HEAD_START_RE } from "@/lib/ingest/dialect";
 import { commitmentKey } from "@/lib/ingest/fanout";
-import { redactMoney, redactMoneyStrict } from "@/lib/intel/lexicon";
+import { redactMoneyStrict } from "@/lib/intel/lexicon";
 import { MINE_RE, isHomeSideName, splitRecipients } from "@/lib/intel/provenance";
 import { threadSubject } from "@/lib/intel/email-whole";
 import { knowledgeKey } from "@/lib/playbook/store";
@@ -548,6 +548,7 @@ function pickLatest(
 ): LatestEmail | null {
   // An entry filed with no day is a candidate only when no dated email is.
   let best: { n: RowNote; at: number; dateless: boolean } | null = null;
+  const candidates: { n: RowNote; at: number; dateless: boolean }[] = [];
   for (const n of notes) {
     const d = docById.get(n.id);
     if (!d || !MAIL_HEAD.test(n.body) || d.closer || d.machinery) continue;
@@ -564,19 +565,40 @@ function pickLatest(
       : best.dateless !== w.dateless
         ? best.dateless
         : at > best.at;
+    candidates.push({ n, at, dateless: w.dateless });
     if (better) best = { n, at, dateless: w.dateless };
   }
   if (!best) return null;
+  // The Act Lane logs a send the moment it opens mail; the copy the relay
+  // files of that same email claims only its minute, so it can read a few
+  // seconds older. The filed copy, which carries the whole email, wins.
+  if (logged(best.n)) {
+    const subject = threadSubject(cleanSubject(partsOf(best.n).parts?.subject ?? ""));
+    const at = best.at;
+    const copy = candidates.find(
+      (c) =>
+        !logged(c.n) &&
+        !c.dateless &&
+        docById.get(c.n.id)?.direction === "out" &&
+        Math.abs(c.at - at) <= 30 * 60_000 &&
+        threadSubject(cleanSubject(partsOf(c.n).parts?.subject ?? "")) === subject,
+    );
+    if (copy) best = copy;
+  }
   const n = best.n;
   const w = whens.get(n.id)!;
   return {
     id: n.id,
     day: w.day,
     time: w.time,
-    logged: ACT_SENT.test(n.body.split("\n")[0] ?? "") || n.source === "act-lane",
+    logged: logged(n),
     ...factsOf(n, docById.get(n.id)),
   };
 }
+
+/** A send the Act Lane logged, with no email of its own on file. */
+const logged = (n: RowNote): boolean =>
+  ACT_SENT.test(n.body.split("\n")[0] ?? "") || n.source === "act-lane";
 
 /** The record's lines, from what share() read once. */
 function pickLines(
@@ -673,7 +695,7 @@ function pickLines(
     const stored = parts ? parts.subject.trim() : head.replace(GLYPH_STRIP, "").trim();
     // ✎ starts from what is stored, with the figures the line hides hidden
     // in the box too, by the rule the line renders by.
-    const edit = isEmail(n.body) ? redactMoneyStrict(stored) : redactMoney(stored);
+    const edit = redactMoneyStrict(stored);
     if (isEmail(n.body)) {
       const doc = docById.get(n.id);
       const f = factsOf(n, doc);
@@ -704,7 +726,9 @@ function pickLines(
         },
       };
     }
-    const body = redactMoney(rest.trim());
+    // A call's synopsis, a chat and a tape talk prices the way an email
+    // does, so the strict rule reads them too.
+    const body = redactMoneyStrict(rest.trim());
     const people = parts ? peopleOf(n, parts.who) : null;
     // A call's or a task's entry head carries the pipeline's subject, so it
     // reads clean as an email's does.
@@ -718,7 +742,7 @@ function pickLines(
       day: w.day,
       time: w.time,
       who: people?.from ? `${people.from}${people.to ? ` → ${people.to}` : ""}` : "",
-      line: redactMoney(line),
+      line: redactMoneyStrict(line),
       body: body.length > BODY_CAP ? `${body.slice(0, BODY_CAP).trimEnd()}…` : body,
       email: null,
     };

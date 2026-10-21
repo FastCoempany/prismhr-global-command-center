@@ -443,12 +443,16 @@ stays Mark it done.
   notices and first-contact tips, mail-app taglines, the quoted trail (a
   header block, an attribution in any of those languages, Apple's quoted
   one and Zoho's dashed one included, a forward marker, a closing block of
-  quoted lines, and a footer below the quote; an attribution carries an
-  address, or a date with its year and a clock, so a person quoting someone
-  "on Monday at 10:30" keeps their words), a signature card (only when a name follows the
-  sign-off and every line after it reads as a card with a phone, link or
-  address) and a legal notice that opens its own line below the first
-  paragraph; paragraphs, inline answers (a line of their own between quoted
+  quoted lines, a footer below the quote, and a quoted header that carries
+  an address, a subject or a dated clock; an attribution carries a date
+  with its year and a clock, so a person quoting someone "on Monday at
+  10:30", or naming an address in their own sentence, keeps their words),
+  a banner only in banner words (what to click or open), a signature card
+  (only when a name follows the sign-off and every line after it reads as a
+  card with a phone, link or address) and a legal notice that opens its own
+  line below the first paragraph, or the first line of a one-paragraph
+  email, with nothing of the person's own after it (no sign-off, question
+  or promise); paragraphs, inline answers (a line of their own between quoted
   lines or straight under one), a P.S. and a sentence that only looks like a
   trail are kept (cleanEmailWhole, src/lib/activity/excerpt.ts).
   It lands in the EmailText table keyed by the note, redacted on the way in
@@ -458,9 +462,11 @@ stays Mark it done.
   what is not money and takes every other figure: a date, a time, a year
   said as one, a phone number, an ordinal, a numbered label or form, a share
   that prices nothing, and a count, stay. A year is said as one after a word
-  that sets a year ("in 2009", "Q3 2026"), beside another year or a month,
-  or before a word a year leads ("the 2026 renewal"); a round figure in a
-  price's place ("a fee of 2000", "2000 net") is a figure like any other. A
+  that only ever sets a year ("in 2009", "since 2019", "Q3 2026", "the fall
+  of 2026"), beside a month, as a run of consecutive years ("2025-2026",
+  "2026/27"), or before a word a year leads ("the 2026 renewal"), and never
+  in a sentence that talks price; a round figure in a price's place ("a fee
+  of 2000", "2000 net", "1950-2050") is a figure like any other. A
   count is a figure followed on its own line by a word from the list of
   what a figure can count, in prose's lowercase ("45 employees", "3 open
   roles", the partners' "35 empleados"), with no slash or price word after
@@ -468,25 +474,35 @@ stays Mark it done.
   a figure only for one of it or when it describes the word after it ("a 50
   person company"). Time counts in the plural or one of it ("3 months", "1
   month", "12-month"), and a headcount or a team of so many counts with
-  nothing after the figure. A word the list does not name never keeps a
-  figure, and a pace of hiring goes like a price. A share prices something
-  when a price word, singular or plural, stands before it in its sentence
-  (a decimal point or an abbreviation ends no sentence) or just after it ("a
-  12% markup"). A figure with a currency on either side, spelled out as an
-  amount or set as a rate always goes. What decides reads words, never
+  nothing after the figure. A number word, a determiner or a quantifier
+  between a figure and what follows ends the count ("599 six months ago",
+  "3500 these days", "tous les mois"). A word the list does not name never
+  keeps a figure, and a pace of hiring goes like a price. A share prices
+  something when a price word, singular or plural, stands before it in its
+  sentence (a decimal point or an abbreviation ends no sentence), just
+  after it ("a 12% markup", "a 20% rev share"), or when it is a share "of
+  gross", payroll, salary or revenue. A figure with a currency on either
+  side, a currency or a unit glued to it ("P25,000", "RM5000", "9000zł",
+  "599ea"), spelled out as an amount ("sixty thousand", "1 lakh") or set as
+  a rate always goes; a name with a digit in it ("Q3", "B2B", "SOC2")
+  stays. What decides reads words, never
   digits, so running it twice changes nothing. An entry with no sure message keeps an empty
   row, so the row can say the filing looked. The undo takes it back after the
   notes. An email without its words shows the read's synopsis and says why,
   each reason true: "This one was filed before whole emails were kept." (no
   row), "This filing didn't include the whole email." (an empty row), "This
-  send was logged from the app." (an Act Lane send, read off the note), or
+  send was logged from the app." (an Act Lane send, read off the note, which
+  gives way to the relay's filed copy of the same email within half an
+  hour), or
   nothing when the store could not be read.
 - **EARLIER is rebuilt.** Each line reads the day and the clock from the note
   itself, who wrote to whom ("you" for the operator), and the subject with the
   format code, the frozen "Today", the reply prefixes, the external tags and
   the pipeline's placeholders gone. The stored head keeps its grammar, because
   the clock, the meeting read and the promote regex parse it; a call's and a
-  task's entry head reads as clean as an email's. ✎ on a filed activity
+  task's entry head reads as clean as an email's, the partners' forward and
+  reply prefixes ("RV:", "TR:", "ENC:", "RES:") included, and every line and
+  every opened body takes the strict money rule an email takes. ✎ on a filed activity
   edits the subject in its slot and starts from what is stored, never the
   display's copy, with the figures the line hides hidden in the box too; a
   sign-off line carries no ✎. The lines run in
@@ -504,9 +520,11 @@ stays Mark it done.
   shows only when it can.
 - **Each line opens in place, one at a time**, to what the account record
   history holds for it: WHAT THE READ KEPT (WHAT WAS FILED when the rules
-  filed it) and its Owed lines, YOU OWE, the owner by first name, accents
-  and all, a group as the read wrote it ("THEIR LEGAL TEAM OWES"), or OWED
-  when the line names nobody. An Owed line closes by its own promise, the one to-do
+  filed it) and its Owed lines, YOU OWE, a person by first name when every
+  word of the owner is capitalized ("JOSÉ OWES", "MARY-KATE OWES"), a group
+  as the read wrote it ("THEIR LEGAL TEAM OWES"), or OWED when the line
+  names nobody. Each "Owed:" marker opens its own segments, and a plain
+  sentence after the last owner goes back to what the read kept. An Owed line closes by its own promise, the one to-do
   or loop that tracks it among those the fan-out's own key ties to it: the
   row the note's own filing opened, else the one opened nearest at or after
   the note, an earlier one only when none is newer, so a later promise in

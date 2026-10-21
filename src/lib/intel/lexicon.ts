@@ -316,9 +316,13 @@ const TIME_SINGULARS = new Set(
 /** Words that end a count's reach: a figure before them is a price or a rate
  *  ("599 a month", "649 in Brazil", "599 every month"). */
 const STOPS = new Set(
-  "a an the per each every to for in at on of by from with and or is was are be as than over under across into via vs versus plus after before until last next this que por al par de du le la el".split(
-    " ",
-  ),
+  (
+    "a an the per each every to for in at on of by from with and or is was are be as than over under across into via vs versus plus after before until last next this que por al par de du le la el " +
+    // A number word, a determiner or a quantifier between a figure and a
+    // time word: "599 six months ago", "3500 these days", "tous les mois".
+    "these those some most many few several both all only just within ago one two three four five six seven eight nine ten eleven twelve " +
+    "tous toutes les todos todas los las os as cada hace há dos dois deux trois"
+  ).split(" "),
 );
 /** The words for numbers that spell an amount out ("sixty thousand"). */
 const NUMBER_WORDS =
@@ -342,17 +346,18 @@ const PRICE_AFTER_NOUN =
  *  plural: before it in its sentence ("our markups are 12%") or just after
  *  it ("a 12% markup"). */
 const PRICED_SHARE_BEFORE =
-  /\b(?:mark-?ups?|margins?|discounts?|commissions?|fees?|rates?|premiums?|surcharges?|admin|charge[sd]?|charging|prices?|priced|pricing|takes?|adds?|uplifts?|on top)\b/i;
+  /\b(?:mark-?ups?|margins?|discounts?|commissions?|fees?|rates?|premiums?|surcharges?|admin|charge[sd]?|charging|prices?|priced|pricing|takes?|adds?|uplifts?|on top|costs?|costing|bill(?:s|ed|ing)?|invoic(?:e|es|ed|ing)|quot(?:e|es|ed|ing)|referrals?|rev(?:enue)? share|splits?|payouts?|spreads?|load(?:ed)?|burden)\b/i;
 const PRICED_SHARE_AFTER =
-  /^(?:[ \t]+[A-Za-z][\w'’-]*){0,2}?[ \t]+(?:mark-?ups?|margins?|discounts?|commissions?|fees?|cut|surcharges?|premiums?|uplifts?|rates?|admin|on top)\b/i;
+  /^(?:(?:[ \t]+[A-Za-z][\w'’-]*){0,2}?[ \t]+(?:mark-?ups?|margins?|discounts?|commissions?|fees?|cut|surcharges?|premiums?|uplifts?|rates?|admin|on top|referrals?|rev(?:enue)? share|splits?|spreads?|load|burden)\b|[ \t]+(?:of|on)[ \t]+(?:the[ \t]+)?(?:gross|salary|salaries|payroll|wages|revenue|first-year|base|billing|invoice)\b)/i;
 /** Does a price word stand before a position in its own sentence? A
  *  sentence starts after a ; or a line break, or after a stop that a space
  *  and a capital follow; a decimal point, "U.S." or "approx." ends nothing,
  *  so the same sentence reads the same on a second pass. One replace pass
  *  asks about one text many times, so the sentence starts and the price
  *  words are found once and kept for the next ask. */
-let pricedOf: { text: string; starts: number[]; hits: number[] } = {
+let pricedOf: { text: string; re: RegExp; starts: number[]; hits: number[] } = {
   text: "",
+  re: /$^/,
   starts: [0],
   hits: [],
 };
@@ -366,31 +371,47 @@ function lastAtOrBefore(list: readonly number[], at: number): number {
   }
   return lo < 0 ? -1 : list[lo];
 }
-function pricedBefore(text: string, at: number): boolean {
-  if (pricedOf.text !== text) {
+function pricedBefore(
+  text: string,
+  at: number,
+  re: RegExp = PRICED_SHARE_BEFORE,
+): boolean {
+  if (pricedOf.text !== text || pricedOf.re !== re) {
     const starts = [0];
     for (const hit of text.matchAll(/[!?](?=\s)|\.(?=\s+[A-Z(])|[;\n]/g))
       starts.push(hit.index + 1);
     const hits: number[] = [];
-    for (const hit of text.matchAll(new RegExp(PRICED_SHARE_BEFORE.source, "gi")))
+    for (const hit of text.matchAll(new RegExp(re.source, "gi")))
       hits.push(hit.index + hit[0].length);
-    pricedOf = { text, starts, hits };
+    pricedOf = { text, re, starts, hits };
   }
   const hit = lastAtOrBefore(pricedOf.hits, at);
   return hit >= 0 && hit >= lastAtOrBefore(pricedOf.starts, at);
 }
 /** A figure from 1900 to 2099 is a year only where it is said as one:
- *  after a word that sets a year, beside another year, or before a word a
- *  year leads. A round figure in a price's place ("a fee of 2000", "2000
- *  net", "2000 al mes") is a figure like any other. */
+ *  after a word that only ever sets a year ("in 2009", "since 2019", "Q3
+ *  2026", "FY 2026", "the fall of 2026"), beside a month, as a run of
+ *  consecutive years ("2025-2026", "2026/27"), or before a word a year leads
+ *  ("the 2026 renewal"), and never in a sentence that talks price. A round
+ *  figure in a price's place ("a fee of 2000", "2000 net", "1950-2050") is
+ *  a figure like any other. */
 const YEAR_BEFORE =
-  /(?:\b(?:in|since|by|until|till|through|thru|during|early|late|mid|end of|start of|beginning of|middle of|as of|back in|spring|summer|fall|autumn|winter|planning for|plans? for|ready for|in time for|starting|FY|fiscal(?: year)?|year|class of|en|desde|hasta|em|até|depuis|année|año|ano|Q[1-4]|H[12])|©|\(c\)|copyright|\b(?:19|20)\d{2}[^\S\n]*(?:-|–|to|and|or|\/))[^\S\n-]*-?[^\S\n]*$/i;
+  /(?:\b(?:in|since|until|during|early|late|mid|as of|back in|(?:end|start|beginning|middle|half|quarter|fall|spring|summer|autumn|winter) of|class of|desde|depuis|FY|Q[1-4]|H[12])|©|\(c\)|copyright)[^\S\n]*$/i;
 const YEAR_AFTER =
-  /^(?:[^\S\n]*(?:-|–|to|and|or|\/)[^\S\n]*(?:19|20)\d{2}\b|[^\S\n-]*[-\s][^\S\n]*(?:plan|plans|planning|renewals?|rollout|launch|season|cycle|roadmap|onwards?|enrollment|open enrollment|tax year|filings?|calendar|goals?|forecast|hiring|census|fiscal|Q[1-4]|H[12])\b|,?[^\S\n]*(?:Q[1-4]|H[12])\b)/i;
+  /^[^\S\n]+(?:plan year|renewal|roadmap|open enrollment|enrollment|tax year|fiscal year|calendar year|census|Q[1-4]|H[12])\b(?![^\S\n]+(?:fees?|prices?|pricing|costs?|rates?|quotes?)\b)/i;
+/** Price talk in a sentence keeps a year-shaped figure a figure. */
+const YEAR_PRICE_WORDS =
+  /\b(?:fees?|salar(?:y|ies)|sueldo|salário|salaire|pay|paid|pays|wages?|quot(?:e|es|ed)|cotiz\w*|costs?|prices?|pricing|budget|bonus|deposit|charge[sd]?|bill(?:s|ed)?|invoice[sd]?|offer(?:ed)?|asking|rate|total|comes? to|PEPM)\b/i;
 const YEAR_RATE = new RegExp(
-  `^\\s?(?:k\\b|K\\b|M\\b|MM\\b|PEPM|PEPY|PMPM|PEPW|PEPA|PUPM|monthly|annually|yearly|weekly|per\\b|a\\s(?:month|year|week|head)|an\\s(?:hour|employee)|\\/|al mes|por mes|por mês|par mois|mensual|mensuales|mensais|mensuel|net\\b|gross\\b|bruto|brutos|brut|each\\b|apiece)`,
+  `^\\s?(?:k\\b|K\\b|M\\b|MM\\b|PEPM|PEPY|PMPM|PEPW|PEPA|PUPM|monthly|annually|yearly|weekly|per\\b|a\\s(?:month|year|week|head)|an\\s(?:hour|employee)|\\/\\s?[A-Za-z]|al mes|por mes|por mês|par mois|mensual|mensuales|mensais|mensuel|net\\b|gross\\b|bruto|brutos|brut|each\\b|apiece)`,
   "i",
 );
+/** A run of digits with letters glued to it, at most three on a side. */
+const GLUED =
+  /(?<![\p{L}\p{N}_])(?:\p{L}{1,3}\d(?:[\d,.]*\d)?(?: \d{3})*(?:\p{L}{1,3}\d*)?|\d(?:[\d,.]*\d)?(?: \d{3})*\p{L}{1,3}\d*)(?![\p{L}\p{N}_])/gu;
+/** Names with a digit in them, which carry no money. */
+const GLUED_NAMES =
+  /^(?:Q[1-4]|H[12]|W-?[2489]s?|I-?9s?|H-?1B|[LOE]-?[123]|B2[BC]|P2P|SOC-?[12]|ISO\d+|[2-9]FA|24x7|[MO]365|Office365|[2-9][DGK]|COVID-?19|Y2K|FY\d{2,4}|v\d+(?:\.\d+)*|mp[34]|1099s|401ks)$/i;
 /** The price units a figure is set in: always money. */
 const RATE_UNITS = "PEPM|PEPY|PMPM|PEPW|PEPA|PUPM";
 
@@ -441,7 +462,7 @@ export function redactMoneyStrict(input: string): string {
     // hundred employees", "2 million users").
     .replace(
       new RegExp(
-        `\\b(?:(?:\\d(?:[\\d,.]*\\d)?|${NUMBER_WORDS})[\\s-]+){0,5}(?:hundred|thousand|million|billion|grand)\\b(?:\\s(?:${CURRENCY_WORDS}))?(?!\\s(?:[\\w-]+\\s){0,2}?(?:${COUNTED_AFTER})\\b)`,
+        `\\b(?:(?:\\d(?:[\\d,.]*\\d)?|${NUMBER_WORDS})[\\s-]+){0,5}(?:hundred|thousand|million|billion|grand|lakhs?|lacs?|crores?)\\b(?:\\s(?:${CURRENCY_WORDS}))?(?!\\s(?:[\\w-]+\\s){0,2}?(?:${COUNTED_AFTER})\\b)`,
         "gi",
       ),
       "[—]",
@@ -465,12 +486,26 @@ export function redactMoneyStrict(input: string): string {
       ),
       hold,
     )
-    // A month and its year ("October 2026").
-    .replace(new RegExp(`\\b(?:${MONTHS})\\.?,?\\s(?:19|20)\\d{2}\\b`, "g"), hold)
-    // A year said as one, never one set as a rate.
+    // A run of consecutive years said as one ("2025-2026", "2026/27").
+    .replace(
+      /\b((?:19|20)\d{2})[^\S\n]?(?:-|–|\/|to)[^\S\n]?((?:19|20)?\d{2})\b/g,
+      (m: string, a: string, b: string) => {
+        const from = Number(a);
+        const to = b.length === 2 ? Math.floor(from / 100) * 100 + Number(b) : Number(b);
+        return to > from && to - from <= 5 ? hold(m) : m;
+      },
+    )
+    // A month and its year ("October 2026"), never one set as a rate.
+    .replace(
+      new RegExp(`\\b(?:${MONTHS})\\.?,?\\s(?:19|20)\\d{2}\\b`, "g"),
+      (m: string, at: number, whole: string) =>
+        YEAR_RATE.test(whole.slice(at + m.length, at + m.length + 48)) ? m : hold(m),
+    )
+    // A year said as one, never one set as a rate or in price talk.
     .replace(/\b(?:19|20)\d{2}\b/g, (m: string, at: number, whole: string) => {
       const after = whole.slice(at + m.length, at + m.length + 48);
       if (YEAR_RATE.test(after)) return m;
+      if (pricedBefore(whole, at, YEAR_PRICE_WORDS)) return m;
       return YEAR_BEFORE.test(whole.slice(Math.max(0, at - 32), at)) ||
         YEAR_AFTER.test(after)
         ? hold(m)
@@ -513,7 +548,23 @@ export function redactMoneyStrict(input: string): string {
       /\b(?:No\.?|Number|Unit|Line|Item|Case|Ref|PO|Group|Batch|Q)\s?#?\d[\d.]*\b/g,
       hold,
     )
-    .replace(/#\d+\b/g, hold);
+    .replace(/#\d+\b/g, hold)
+    .replace(/\bCOVID-19\b/gi, hold);
+
+  // A figure glued to letters: a currency or a unit run into it
+  // ("P25,000", "RM5000", "9000zł", "599ea", "60kpa", "599x12") goes; a name
+  // with a digit in it ("Q3", "B2B", "SOC2", "M365") stays.
+  s = s.replace(GLUED, (m: string, ...rest: unknown[]) => {
+    const whole = rest[rest.length - 1] as string;
+    const at = rest[rest.length - 2] as number;
+    if (whole.charCodeAt(at - 1) === 0xe001 || whole.charCodeAt(at + m.length) === 0xe000)
+      return m;
+    // A bare multiplier ("1.5k") is the figure pass's to read with what follows.
+    if (GLUED_NAMES.test(m) || /^\d(?:[\d,.]*\d)?(?:k|K|M|MM)$/.test(m)) return m;
+    const digits = (/\d[\d,. ]*/.exec(m)?.[0] ?? "").replace(/\D/g, "");
+    const unit = /\d(\p{L})/u.exec(m)?.[1] ?? "";
+    return digits.length >= 2 || /^[kKmM]$/.test(unit) ? "[—]" : m;
+  });
 
   // Every figure left: kept when it counts or is a share that prices
   // nothing; taken otherwise. What decides reads words, never digits, so a

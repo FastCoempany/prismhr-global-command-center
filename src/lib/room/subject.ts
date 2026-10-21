@@ -19,7 +19,7 @@ export function cleanSubject(s: string): string {
     .replace(/❗/g, " ");
   for (;;) {
     const next = t.replace(
-      /^[\s!*:|-]*(?:re|fw|fwd|aw|sv|wg|external)\s*(?:\[\d+\])?\s*:\s*/i,
+      /^[\s!*:|-]*(?:re|fw|fwd|aw|sv|wg|rv|tr|res|enc|external)\s*(?:\[\d+\])?\s*:\s*/i,
       "",
     );
     if (next === t) break;

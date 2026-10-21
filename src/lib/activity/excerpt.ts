@@ -150,12 +150,20 @@ export function cleanExcerpt(raw: string, cap = 500): string {
  *  whitespace (a long blank line must cost one pass, never its square). */
 const EXTERNAL_LINES: RegExp[] = [
   /^\[?\s?(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s?\]?:?$/i,
-  /^CAUTION:[^\n]{0,400}\boutside\b/i,
+  // A caution banner says what to click or open; "Caution: the hires work
+  // outside the office" is the person's own line.
+  /^CAUTION:(?=[^\n]{0,400}\b(?:click|links?|attachments?|organi[sz]ation|sender)\b)[^\n]{0,400}\b(?:outside|external)\b/i,
   /^(?:Sent from my .{1,40}|Get Outlook for (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?.{0,20})$/i,
   // The "originated from outside" banner, with or without a tag before it,
   // and "External email. Do not click…" in any of its prefixes.
-  /^(?:\[?\s?(?:EXTERNAL(?: EMAIL| SENDER)?|External(?: Email| Sender)?|CAUTION|WARNING|NOTICE)\s?\]?\s?[:!-]?\s*)?(?:This (?:e-?mail|message) (?:originated|came|was sent) from outside\b|External (?:e-?mail|sender)\b[^\n]{0,200}\b(?:click|links?|attachments?|sender|organi[sz]ation)\b)[^\n]{0,400}$/i,
-  /^Sent from (?:Mail for Windows|Outlook for (?:Mac|Windows)|Yahoo Mail(?: for \w+)?|AOL Mobile Mail|my [^.!?\n]{1,40})$/i,
+  /^(?:\[?\s?(?:EXTERNAL(?: EMAIL| SENDER)?|External(?: Email| Sender)?|CAUTION|WARNING|NOTICE|ATTENTION)\s?\]?\s?[:!-]?\s*)?(?:This (?:e-?mail|message) (?:originated|came|was sent|is) (?:from )?(?:outside|an? external sender)\b|External (?:e-?mail|sender)\b)(?=[^\n]{0,400}\b(?:click|links?|attachments?|organi[sz]ation|sender|safe|caution)\b)[^\n]{0,400}$/i,
+  // The second line of a two-line banner.
+  /^(?:Please )?(?:do not|don['’]t) click (?:on )?links or open attachments unless[^\n]{0,200}$/i,
+  /^Sent from (?:Mail for Windows(?: 1[01])?|Outlook(?: for (?:Mac|Windows|iOS|Android))?|Yahoo Mail(?: (?:for|on) \w+)?|AOL Mobile Mail|the all new AOL app[^\n]{0,40}|my [^.!?\n]{1,40})$/i,
+  // The same taglines in the partners' languages.
+  /^(?:Enviado desde mi|Enviado do meu|Envoyé de mon|Von meinem|Inviato dal mio|Verzonden vanaf mijn) [^.!?\n]{1,40}$/i,
+  /^(?:Obtener|Obtenga|Obtenha|Obtenez|Holen Sie sich) Outlook (?:para|pour|für|for) (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?$/i,
+  /^(?:Enviado desde|Enviado do|Envoyé depuis|Gesendet von) (?:Outlook|Correo|Yahoo|Mail)[^.!?\n]{0,40}$/i,
   // Exchange's first-contact tip, above a new sender's first reply.
   /^(?:Some people who received this message )?(?:You )?don['’]t often get email from \S{1,200}\s?Learn why this is important\.?$/i,
 ];
@@ -176,12 +184,12 @@ const FORWARDED =
 // ("> On … wrote:"). "Here is what she wrote:" in a sentence is the
 // person's own words.
 const GMAIL_WROTE =
-  /^[ \t]*(?:>[ \t]?)*(?:-{2,}[ \t]*)?(?:On|El|Le|Am|Il|Op) (?:[^\n]|\n(?!\s*\n)){4,250}?(?:(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef)\s?(?::|[ \t]*-{2,})|(?:schrieb|schreef) [^\n]{1,200}:)[ \t]*$/m;
+  /^[ \t]*(?:>[ \t]?)*(?:-{2,}[ \t]*)?(?:On|El|Le|Am|Il|Op) (?:[^\n]|(?<![.!?])\n(?!\s*\n)){4,250}?(?:(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef)\s?(?::|[ \t]*-{2,})|(?:schrieb|schreef) [^\n]{1,200}:)[ \t]*$/m;
 // What a mail client's attribution always carries before the verb: an
 // address, or a date with its four-digit year and a clock. "On Monday at
 // 10:30 she wrote:" is a person quoting someone, and stays.
 const ATTRIBUTION =
-  /[<@]|\b(?:19|20)\d{2}\b[\s\S]*\d{1,2}[:.h]\d{2}|\d{1,2}[:.]\d{2}[\s\S]*\b(?:19|20)\d{2}\b/;
+  /(?:\b(?:19|20)\d{2}\b|\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b)[\s\S]*?\d{1,2}[:.h]\d{2}|\d{1,2}[:.h]\d{2}[\s\S]*?\b(?:19|20)\d{2}\b/;
 const QUOTED = /^[ \t]*>/;
 const RULE = /^[ \t]*(?:_{8,}|-{8,})[ \t]*$/;
 const FROM_AT = /(^[ \t]*|[A-Za-z0-9])\*?(?:From|De|Von|Da|Van)\s?:\*?\s/;
@@ -218,6 +226,17 @@ function headerBlockAt(s: string): number {
       if (!lines[j].trim()) continue;
       seen++;
       if (!SENT_AT.test(lines[j])) continue;
+      // A quoted header carries an address, a subject, or a sent line with a
+      // year or a clock; "From: Puerto Rico / To: Mexico City / Date:
+      // January 4" in the body is a list.
+      const block = lines.slice(i, j + 6);
+      const shaped =
+        /[@<]/.test(lines[i]) ||
+        block.some((l) =>
+          /^[ \t]*\*?(?:Subject|Asunto|Betreff|Objet|Oggetto|Onderwerp)\s?:/i.test(l),
+        ) ||
+        /\b(?:19|20)\d{2}\b|\d{1,2}:\d{2}/.test(lines[j]);
+      if (!shaped) break;
       // Glued onto the words before it: the cut falls where "From:" begins.
       return glued ? at : ruled(i);
     }
@@ -346,6 +365,31 @@ const WHOLE_TAIL_MARKERS: RegExp[] = [
   /(?:[A-Z][A-Za-z ]{2,30}:\s*)?The information contained in this (?:e-?mail|message|communication)[^\n]{0,40}?(?:is|may be) (?:strictly )?(?:confidential|privileged)/i,
 ];
 
+/** The vocabulary of a legal notice, so a line of it is never read as the
+ *  person asking or promising. */
+const LEGAL =
+  /\b(?:confidential|intended|recipient|privileged|liab|disclaim|prohibit|notify|unauthori[sz]ed|addressee|in error)\w*/i;
+
+/** Words of the person's own after a notice's paragraph: a sign-off, a
+ *  question, or a promise that opens its line ("I'll send the order form
+ *  Friday."). A notice with any of these below it is part of the email. */
+function ownAfter(s: string, at: number): boolean {
+  const end = s.slice(at).search(/\n\s*\n/);
+  if (end < 0) return false;
+  return s
+    .slice(at + end)
+    .split("\n")
+    .some((l) => {
+      const t = l.trim();
+      if (!t || LEGAL.test(t)) return false;
+      return (
+        SIGN_OFF_LINE.test(t) ||
+        /\?$/.test(t) ||
+        (t.length <= 160 && /^(?:I|We)(?:['’]ll| will)\b/i.test(t))
+      );
+    });
+}
+
 function tailAt(s: string): number {
   const firstBreak = s.search(/\n\s*\n/);
   let cut = -1;
@@ -353,7 +397,10 @@ function tailAt(s: string): number {
     const re = new RegExp(`(^|\\n)[ \\t*_]*(?=${m.source})`, "gi");
     for (let hit = re.exec(s); hit; hit = re.exec(s)) {
       const at = hit.index + hit[1].length;
-      if (firstBreak < 0 || at < firstBreak) continue;
+      // Below the first paragraph, or below the first line of an email that
+      // is one paragraph, and with nothing of the person's own after it.
+      if (firstBreak < 0 ? at === 0 : at < firstBreak) continue;
+      if (ownAfter(s, at)) continue;
       const line = s.slice(at, s.indexOf("\n", at) < 0 ? s.length : s.indexOf("\n", at));
       if (/book a meeting/i.test(m.source) && line.trim().length > 40 && !LINK.test(line))
         continue;

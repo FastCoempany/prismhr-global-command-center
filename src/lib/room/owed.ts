@@ -142,19 +142,24 @@ const OWED_SEG_SPLIT = /;|\.\s+(?=[A-Z])/;
 const OWED_SEG_RE =
   /^\s*(.{3,140}?)\s*—\s*@?\s*(\p{Lu}[\p{L}\p{M}\w'’-]*(?:\s\p{Lu}[\p{L}\p{M}\w'’-]*){0,3})\s*\.?\s*$/u;
 
-/** An Owed block, segment by segment, as the record's own line holds it: the
- *  thing, who owes it as the record names them ("" when the segment names
- *  nobody), and whether that is our side. The HomeRoom's opened email reads
- *  it (ship order 2026-10-20); the same scan and the same segments as the
- *  court's, so the two never read a line two ways. */
-export function owedSegments(
-  text: string,
-): { text: string; who: string; mine: boolean }[] {
-  const out: { text: string; who: string; mine: boolean }[] = [];
-  OWED_BLOCK_RE.lastIndex = 0;
-  let m: RegExpExecArray | null;
-  while ((m = OWED_BLOCK_RE.exec(text ?? ""))) {
-    for (const seg of m[1].split(OWED_SEG_SPLIT)) {
+type OwedSegment = { text: string; who: string; mine: boolean };
+
+/** One line read for its Owed block: the words before the block, the
+ *  block's segments, and the prose after the last owed segment. A line may
+ *  carry the marker more than once ("Owed: X — @Lucas. Owed: Y —
+ *  @Antaeus."); each marker opens its own segments. A segment that names
+ *  nobody is owed only when nothing after it names an owner either, or when
+ *  the block names nobody at all ("Owed: send the census."); a plain
+ *  sentence after the last owner ("Dana is out until Monday.") is prose and
+ *  goes back to the line. */
+function owedLine(line: string): { before: string; segs: OwedSegment[]; prose: string } {
+  const at = line.search(/\bOwed:/);
+  if (at < 0) return { before: line, segs: [], prose: "" };
+  const parsed = line
+    .slice(at)
+    .split(/\bOwed:\s*/)
+    .flatMap((block) => block.split(OWED_SEG_SPLIT))
+    .map((seg) => {
       // The owner as the court's own line reads it (OWED_LINE_RE): any case,
       // so "— @antaeus" and "— @me" are ours here as they are there.
       const s = OWED_SEG_RE.exec(seg) ?? OWED_SEG_ANY_RE.exec(seg);
@@ -162,18 +167,37 @@ export function owedSegments(
         .replace(/\s+/g, " ")
         .replace(/[.,;:]+$/, "")
         .trim();
-      if (what.length < 3) continue;
       const who = s ? s[2].trim() : "";
       // Ours as the court counts ours: the operator, or you, me, us or we
       // (owedByThem skips the same set as never theirs).
-      out.push({
+      return {
         text: what,
         who,
         mine: MINE_RE.test(who) || /^(you|me|us|we)$/i.test(who),
-      });
-    }
-  }
-  return out;
+      };
+    })
+    .filter((x) => x.text.length >= 3);
+  const lastOwned = parsed.map((x) => x.who !== "").lastIndexOf(true);
+  const prose =
+    lastOwned < 0
+      ? []
+      : parsed
+          .slice(lastOwned + 1)
+          .map((x) => (/[.!?]$/.test(x.text) ? x.text : `${x.text}.`));
+  return {
+    before: line.slice(0, at).trimEnd(),
+    segs: lastOwned < 0 ? parsed : parsed.slice(0, lastOwned + 1),
+    prose: prose.join(" "),
+  };
+}
+
+/** An Owed block, segment by segment, as the record's own line holds it: the
+ *  thing, who owes it as the record names them ("" when the segment names
+ *  nobody), and whether that is our side. The HomeRoom's opened email reads
+ *  it (ship order 2026-10-20); the same scan and the same segments as the
+ *  court's, so the two never read a line two ways. */
+export function owedSegments(text: string): OwedSegment[] {
+  return (text ?? "").split("\n").flatMap((l) => owedLine(l).segs);
 }
 
 const OWED_SEG_ANY_RE =
@@ -183,7 +207,10 @@ const OWED_SEG_ANY_RE =
 export function withoutOwed(text: string): string {
   return (text ?? "")
     .split("\n")
-    .map((l) => l.replace(/\s*\bOwed:\s*[^\n]*$/, "").trimEnd())
+    .map((l) => {
+      const { before, prose } = owedLine(l);
+      return [before, prose].filter(Boolean).join(" ").trimEnd();
+    })
     .filter((l, i, all) => l.trim() || (i > 0 && all[i - 1]?.trim()))
     .join("\n")
     .trim();
@@ -238,7 +265,10 @@ export function owedByThem(
     OWED_BLOCK_RE.lastIndex = 0;
     let m: RegExpExecArray | null;
     while ((m = OWED_BLOCK_RE.exec(n.body ?? ""))) {
-      for (const seg of m[1].split(OWED_SEG_SPLIT)) {
+      // A repeated marker opens its own segments, as owedLine reads it.
+      for (const seg of m[1]
+        .split(/\bOwed:\s*/)
+        .flatMap((b) => b.split(OWED_SEG_SPLIT))) {
         const s = OWED_SEG_RE.exec(seg);
         if (!s) continue;
         const who = s[2].trim();

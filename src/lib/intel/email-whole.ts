@@ -153,7 +153,7 @@ export function threadSubject(s: string): string {
   let t = (s ?? "").replace(/\[\s*(?:EXTERNAL|EXT|External Email)\s*\]/gi, " ");
   for (;;) {
     const next = t.replace(
-      /^[\s❗!*:|-]*(?:re|fw|fwd|aw|sv|wg)\s*(?:\[\d+\])?\s*:\s*/i,
+      /^[\s❗!*:|-]*(?:re|fw|fwd|aw|sv|wg|rv|tr|res|enc)\s*(?:\[\d+\])?\s*:\s*/i,
       "",
     );
     if (next === t) break;

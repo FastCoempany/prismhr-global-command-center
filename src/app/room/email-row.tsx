@@ -33,13 +33,15 @@ function owedLabel(o: OwedLine): string {
   if (o.closed) return "CLOSED";
   if (o.mine) return "YOU OWE";
   const who = o.who.trim();
-  const [first = ""] = who.split(/\s+/);
-  if (
-    /^\p{Lu}[\p{Ll}\p{M}]+$/u.test(first) &&
-    !/^(?:The|Their|Our|His|Her|My|Your|Its)$/.test(first)
-  )
-    return `${first.toUpperCase()} OWES`;
-  if (who && who.split(/\s+/).length <= 3) return `${who.toUpperCase()} OWES`;
+  const words = who.split(/\s+/).filter(Boolean);
+  // A person when every word is capitalized, by first name ("Mary-Kate",
+  // "D'Andre", "McKenzie" and "José" included); a group as the read wrote it.
+  const person =
+    words.length > 0 &&
+    words.every((w) => /^\p{Lu}[\p{L}\p{M}'’-]*$/u.test(w)) &&
+    !/^(?:The|Their|Our|His|Her|My|Your|Its)$/.test(words[0]);
+  if (person) return `${words[0].toUpperCase()} OWES`;
+  if (words.length > 0 && words.length <= 3) return `${who.toUpperCase()} OWES`;
   return "OWED";
 }
 
