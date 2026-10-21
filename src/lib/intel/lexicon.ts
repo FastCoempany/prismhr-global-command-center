@@ -399,7 +399,7 @@ const YEAR_AFTER =
   /^[^\S\n]+(?:plan year|renewal|roadmap|open enrollment|enrollment|tax year|fiscal year|calendar year|census|Q[1-4]|H[12])\b(?![^\S\n]+(?:fees?|prices?|pricing|costs?|rates?|quotes?)\b)/i;
 /** Price talk in a sentence keeps a year-shaped figure a figure. */
 const YEAR_PRICE_WORDS =
-  /\b(?:fees?|salar(?:y|ies)|sueldo|salário|salaire|pay|paid|pays|wages?|quot(?:e|es|ed)|cotiz\w*|costs?|prices?|pricing|budget|bonus|deposit|charge[sd]?|bill(?:s|ed)?|invoice[sd]?|offer(?:ed)?|asking|rate|total|comes? to|PEPM)\b/i;
+  /\b(?:fees?|salar(?:y|ies)|sueldos?|salários?|salarios?|salaires?|pay|paid|pays|wages?|quot(?:e|es|ed)|cotiz\w*|costs?|prices?|pricing|budget|bonus|deposit|charge[sd]?|bill(?:s|ed)?|invoice[sd]?|offer(?:ed)?|asking|rate|total|comes? to|PEPM|precios?|costos?|tarifas?|honorarios|remunera\w*|r[ée]mun[ée]ration|preç(?:o|os)|custos?|prix|coûts?|tarifs?|mensual(?:es)?|mensais|cobr\w*|pag(?:a|an|ar|o|amos)|gan(?:a|aba|ha|hava))\b/i;
 const YEAR_RATE = new RegExp(
   `^\\s?(?:k\\b|K\\b|M\\b|MM\\b|PEPM|PEPY|PMPM|PEPW|PEPA|PUPM|monthly|annually|yearly|weekly|per\\b|a\\s(?:month|year|week|head)|an\\s(?:hour|employee)|\\/\\s?[A-Za-z]|al mes|por mes|por mês|par mois|mensual|mensuales|mensais|mensuel|net\\b|gross\\b|bruto|brutos|brut|each\\b|apiece)`,
   "i",
@@ -435,6 +435,28 @@ const WORD = new RegExp(
   `(?:[^\\S\\n]+|-)(?:${String.fromCharCode(0xe000)}[a-z]+${String.fromCharCode(0xe001)}|(?:[A-Z]\\.){2,}|([\\p{L}][\\p{L}\\p{M}\\w'’]*))`,
   "uy",
 );
+/** The words that make a count's noun phrase a price label. */
+const PHRASE_PRICE = new Set(
+  "fee fees cost costs price prices pricing rate rates deposit deposits discount discounts credit credits stipend stipends allowance allowances charge charges invoice invoices payment payments bonus bonuses salary salaries pay wage wages budget total retainer premium surcharge markup margin spend comp compensation side contribution contributions wholesale retail apiece each per".split(
+    " ",
+  ),
+);
+/** Is the noun phrase after a count word a price: a slash or a price word
+ *  right after it, or a price word anywhere in the next few words before a
+ *  stop ("a 1500 client setup fee", "a 2000 year end bonus")? */
+function pricedPhrase(tail: string): boolean {
+  if (PRICE_AFTER_NOUN.test(tail)) return true;
+  const words =
+    /^(?:[^\S\n]+[\p{L}][\p{L}\p{M}\w'’-]*){1,4}/u.exec(tail)?.[0].trim().split(/\s+/) ??
+    [];
+  for (const w of words) {
+    const lw = w.toLowerCase();
+    if (STOPS.has(lw)) return false;
+    if (PHRASE_PRICE.has(lw) || lw.split("-").some((p) => PHRASE_PRICE.has(p)))
+      return true;
+  }
+  return false;
+}
 /** The price units a figure is set in: always money. */
 const RATE_UNITS = "PEPM|PEPY|PMPM|PEPW|PEPA|PUPM";
 
@@ -496,19 +518,29 @@ export function redactMoneyStrict(input: string): string {
   s = s
     .replace(/https?:\/\/\S+|www\.\S+|[\w.%+-]+@[\w-]+(?:\.[\w-]+)+/g, hold)
     .replace(/\b\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z?)?\b/g, hold)
+    // A month and its day, with its year when one follows that is a year
+    // and not a figure in its place ("Oct 1, 8500 gross" keeps only Oct 1).
     .replace(
       new RegExp(
-        `\\b(?:${MONTHS})\\.?\\s\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s\\d{4})?\\b`,
+        `\\b(?:(?:${MONTHS})\\.?\\s\\d{1,2}(?:st|nd|rd|th)?|\\d{1,2}(?:st|nd|rd|th)?\\s(?:of\\s)?(?:${MONTHS})\\b\\.?)(?:(,?\\s)(\\d{4})\\b)?`,
         "g",
       ),
-      hold,
-    )
-    .replace(
-      new RegExp(
-        `\\b\\d{1,2}(?:st|nd|rd|th)?\\s(?:of\\s)?(?:${MONTHS})\\b\\.?(?:,?\\s\\d{4})?`,
-        "g",
-      ),
-      hold,
+      (
+        m: string,
+        sep: string | undefined,
+        year: string | undefined,
+        at: number,
+        whole: string,
+      ) => {
+        if (!year) return hold(m);
+        const day = m.slice(0, m.length - year.length - (sep ?? "").length);
+        const after = whole.slice(at + m.length, at + m.length + 48);
+        const isYear =
+          /^(?:19|20)\d{2}$/.test(year) &&
+          !YEAR_RATE.test(after) &&
+          !pricedBefore(whole, at, YEAR_PRICE_WORDS);
+        return isYear ? hold(m) : `${hold(day)}${sep ?? ""}${year}`;
+      },
     )
     // A run of consecutive years said as one ("2025-2026", "2026/27").
     .replace(
@@ -530,6 +562,8 @@ export function redactMoneyStrict(input: string): string {
       const after = whole.slice(at + m.length, at + m.length + 48);
       if (YEAR_RATE.test(after)) return m;
       if (pricedBefore(whole, at, YEAR_PRICE_WORDS)) return m;
+      // "desde 1950 hasta 2300" is a range of figures, not a year.
+      if (/^[^\S\n]*(?:hasta|até|a|to|-|–)[^\S\n]*\d/i.test(after)) return m;
       return YEAR_BEFORE.test(whole.slice(Math.max(0, at - 32), at)) ||
         YEAR_AFTER.test(after)
         ? hold(m)
@@ -579,17 +613,18 @@ export function redactMoneyStrict(input: string): string {
     // An hour said bare after the word that sets it ("meet at 2?"), only in
     // a sentence about meeting and never in one about price.
     .replace(
-      /\b(?:at|by|around|before|after|until|till)\s(?:1[0-2]|[1-9])(?:\s?(?:or|and|to|-|–)\s?(?:1[0-2]|[1-9]))?(?=[ \t]?(?:[.,;!?)]|$)|\s(?:or|today|tomorrow|tonight|on|o'clock|works?|would|is)\b)/gim,
+      /\b(?:at|by|around|before|after|until|till|from|between)\s(?:1[0-2]|[1-9])(?:\s?(?:or|and|to|-|–)\s?(?:1[0-2]|[1-9]))?\b(?![,.]?\d)(?!\s?(?:per|each|an? (?:hour|head|month|year|week|day))\b)/gim,
       (m: string, at: number, whole: string) => {
-        const sentence =
-          whole
-            .slice(Math.max(0, at - 200), at)
-            .split(/[.!?;\n]/)
-            .pop() ?? "";
-        return MEETING.test(`${sentence}${m}`) &&
-          !pricedBefore(whole, at, YEAR_PRICE_WORDS)
-          ? hold(m)
-          : m;
+        // The sentence's own words, read by its starts, and the few words
+        // after the hour, so a second pass reads the same sentence.
+        const soon = whole
+          .slice(at + m.length)
+          .split(/[.!?;\n]/)[0]
+          .split(/\s+/)
+          .slice(0, 6)
+          .join(" ");
+        const meeting = pricedBefore(whole, at, MEETING) || MEETING.test(`${m} ${soon}`);
+        return meeting && !pricedBefore(whole, at, YEAR_PRICE_WORDS) ? hold(m) : m;
       },
     )
     // The partners' dates and clocks ("15 de enero de 2027", "3 novembre",
@@ -621,7 +656,9 @@ export function redactMoneyStrict(input: string): string {
         !lead.trim() &&
         !fwd.split("\n")[0].trim() &&
         (fwd.includes("\n") || at + m.length + 160 >= whole.length);
-      return alone || PHONE_CUE.test(lead) ? hold(m) : m;
+      // Figures and taken figures read alike, so a second pass measures the
+      // same distance to the phone word.
+      return alone || PHONE_CUE.test(lead.replace(/\[—\]|\d+/g, "#")) ? hold(m) : m;
     })
     .replace(/\b\d+(?:st|nd|rd|th)\b/g, hold)
     .replace(
@@ -724,7 +761,7 @@ export function redactMoneyStrict(input: string): string {
         if (TIME_PLURALS.has(lw)) return m;
         const describes = () => {
           const next = /^[^\S\n]+([\p{L}][\p{L}\p{M}\w'’-]*)/u.exec(tail)?.[1] ?? "";
-          return !!next && !STOPS.has(next.toLowerCase()) && !PRICE_AFTER_NOUN.test(tail);
+          return !!next && !STOPS.has(next.toLowerCase()) && !pricedPhrase(tail);
         };
         // Time in the singular counts for one of it, joined by a hyphen, or
         // describing what follows ("a 90 day notice period"); "599 month to
@@ -732,7 +769,7 @@ export function redactMoneyStrict(input: string): string {
         if (TIME_SINGULARS.has(lw))
           return far === "1" || (i === 0 && joined) || describes() ? m : take();
         if (COUNT_NOUNS.has(lw)) {
-          if (PRICE_AFTER_NOUN.test(tail)) return take();
+          if (pricedPhrase(tail)) return take();
           if (lw.endsWith("s") || PLURAL_ALWAYS.has(lw) || far === "1") return m;
           // A singular count describes what follows it ("a 50 person
           // company"); alone, it labels a price ("320 employee, 680

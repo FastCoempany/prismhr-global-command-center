@@ -1137,6 +1137,25 @@ describe("the strict money rule takes every figure that is not plainly something
       "Contractor management runs [—] pm with them.",
     ],
     ["Per headcount: 650.", "Per headcount: [—]."],
+    // The round-7 review's leaks: a price word later in a count's phrase, a
+    // figure in a date's year slot, and the partners' price nouns.
+    ["a 1500 client setup fee", "a [—] client setup fee"],
+    [
+      "We charge a 750 contract termination fee.",
+      "We charge a [—] contract termination fee.",
+    ],
+    [
+      "They give each hire a 500 employee stipend.",
+      "They give each hire a [—] employee stipend.",
+    ],
+    ["She's due a 2000 year end bonus", "She's due a [—] year end bonus"],
+    ["Starting Oct 1, 8500 gross per month.", "Starting Oct 1, [—] gross per month."],
+    ["Effective 1 March, 4500 per month.", "Effective 1 March, [—] per month."],
+    ["El salario va desde 1950 hasta 2300 euros.", "El salario va desde [—] hasta [—]."],
+    [
+      "O custo vai desde 1990 até 2500 por mês.",
+      "O custo vai desde [—] até [—] por mês.",
+    ],
     [
       "The client pays them around 8 or 9 an hour.",
       "The client pays them around [—] or [—] an hour.",
@@ -1223,6 +1242,16 @@ describe("the strict money rule takes every figure that is not plainly something
       assert.equal(redactMoneyStrict(raw), want);
       assert.equal(redactMoneyStrict(want), want, "a second pass changed it");
     });
+  test("a phone after a phone word, with figures between, survives a second pass", () => {
+    for (const raw of [
+      "Direct line, weekdays 8 to 5 only: 312 555 1234",
+      "Mobile, before 9 or after 5 only: 312 555 1234",
+    ]) {
+      const once = redactMoneyStrict(raw);
+      assert.match(once, /312 555 1234$/);
+      assert.equal(redactMoneyStrict(once), once);
+    }
+  });
   test("dates, years, times, phones, labels, forms, shares and counts stay", () => {
     for (const keep of [
       "a total of 12 employees",
@@ -1274,6 +1303,8 @@ describe("the strict money rule takes every figure that is not plainly something
       "We have 120 companies and work with 3 PEOs.",
       "Form 940 and 1099-NEC, PrismHR v1.38, case 00123456.",
       "(312) 555-0199 and 312.555.0100 x204",
+      "Can we meet at 2 Thursday? How about a call at 2 next week? Free from 1 to 3 on Friday.",
+      "Starting Oct 1, 2026 the new plan applies.",
     ])
       assert.equal(redactMoneyStrict(keep), keep);
   });
@@ -2186,5 +2217,84 @@ describe("the round-7 review: banners in a person's words, a label under a thank
       filingId: "f1",
     };
     assert.equal(lines([ask], [september])[0].email?.owed[0]?.closed, "");
+  });
+});
+
+describe("the round-8 review: notices in their own words, lists in the body, and promises repeated", () => {
+  test("a disclaimer phrased off the list goes; a notice with a question or a sign-off of the person's own stays", () => {
+    const body = "Hi Antaeus,\n\nThursday works for the demo.\n\nThanks,\nDana";
+    for (const d of [
+      "This message contains confidential information and is intended only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy this e-mail.",
+      "DISCLAIMER: This email and its attachments may be confidential and are intended solely for the addressee.",
+      "Confidentiality Note: This e-mail is intended only for the person or entity to which it is addressed and may contain confidential material.",
+    ])
+      assert.equal(cleanEmailWhole(`${body}\n\n${d}`), body, d);
+    for (const keep of [
+      "Hi Antaeus,\n\nAttached is the census.\n\nThis email and any attachments are confidential because the census lists national IDs.\nCan you keep it inside your team?\n\nDana",
+      "Hi Antaeus,\n\nAttached is the census.\n\nConfidentiality notice: it lists their national IDs, so please keep it inside your team.\n\nTalk Thursday,\nDana",
+      "Hi Antaeus,\n\nRelocating:\n\nFrom: San Juan\nTo: Mexico City\nDate: January 4, 2027\n\nCan you tell us what EOR would need?\n\nThanks,\nDana",
+    ])
+      assert.equal(cleanEmailWhole(keep), keep);
+  });
+
+  test("a first-name address is its owner's, so the Act Lane stub gives way and +N stays quiet", () => {
+    const stub = note({
+      id: "stub",
+      createdAt: "2026-10-20T15:00:40.000Z",
+      body: "✉ Census template — sent to Dana Reyes.",
+      actors: "Antaeus Coe → Dana Reyes",
+      recipients: "Dana Reyes",
+      source: "act-lane",
+    });
+    const copy = note({
+      id: "copy",
+      body: "✉ OL Oct 20 10:00 AM — Census template · Antaeus Coe → dana@regis.example\nSends the template.",
+      actors: "Antaeus Coe → dana@regis.example",
+      recipients: "dana@regis.example",
+    });
+    assert.equal(latest([stub, copy])?.id, "copy");
+    const named = note({
+      ...copy,
+      id: "copy2",
+      filingId: "fc",
+      body: "✉ OL Oct 20 10:00 AM — Census template · Antaeus Coe → Dana Reyes\nSends the template.",
+      actors: "Antaeus Coe → Dana Reyes",
+      recipients: "Dana Reyes",
+    });
+    assert.ok(
+      lines([stub, named]).every((x) => !x.email?.twice),
+      "a stub is never a twin",
+    );
+  });
+
+  test("a promise repeated while its to-do is open closes with that to-do, never a later one", () => {
+    const ask = (id: string, filingId: string, day: string, md: string) =>
+      note({
+        id,
+        filingId,
+        createdAt: `${day}T12:00:00.000Z`,
+        body: `✉ OL ${md} 9:00 AM — Census · Dana Reyes → Antaeus Coe\nAsks for the file. Owed: send the census file — @Antaeus Coe.`,
+        actors: "Dana Reyes → Antaeus Coe",
+      });
+    const repeat = ask("a", "fa", "2026-09-05", "Sep 5");
+    const t0 = {
+      id: "t0",
+      body: withTags("Send the census file", {
+        ...NO_TAGS,
+        kind: "action",
+        doneAt: String(Date.parse("2026-09-07T15:00:00Z")),
+      }),
+      done: true,
+      createdAt: "2026-09-01T17:00:00Z",
+      filingId: "fz",
+    };
+    const t2 = {
+      id: "t2",
+      body: "Send the census file",
+      done: false,
+      createdAt: "2026-10-12T17:00:00Z",
+      filingId: "fc",
+    };
+    assert.equal(lines([repeat], [t0, t2])[0].email?.owed[0]?.closed, "Done 9/7.");
   });
 });

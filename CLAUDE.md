@@ -453,8 +453,11 @@ stays Mark it done.
   a signature card (only when a name sits straight under the sign-off and
   every line after it reads as a card with a phone, link or address) and a legal notice that opens its own
   line below the first paragraph, or the first line of a one-paragraph
-  email, with nothing of the person's own after it (no sign-off, question
-  or promise); paragraphs, inline answers (a line of their own between quoted
+  email, known by its phrasing or by its own words (an opening like a
+  notice's and two words of one), with nothing of the person's own after it
+  (no sign-off, question, promise or closing name, on its own lines or the
+  rest of its paragraph); a quoted header without an address or a subject
+  needs a date with its year and a clock; paragraphs, inline answers (a line of their own between quoted
   lines or straight under one), a P.S. and a sentence that only looks like a
   trail are kept (cleanEmailWhole, src/lib/activity/excerpt.ts).
   It lands in the EmailText table keyed by the note, redacted on the way in
@@ -465,10 +468,11 @@ stays Mark it done.
   said as one, a phone number, an ordinal, a numbered label or form, a share
   that prices nothing, and a count, stay. Each keeps only its own shape: a
   time is an hour of 1 to 12 with its minutes, meridiem or zone, a range or
-  an alternative of them ("2-3pm", "10:30 or 11"), or a bare hour in a
-  sentence about meeting, never in price talk ("49 pm" is per month); a
-  date or a clock may be the partners' ("15 de enero de 2027", "14h", "a las
-  10"); a phone is dashed, dotted, in parentheses or with its country code,
+  an alternative of them ("2-3pm", "10:30 or 11"), or a bare hour after at,
+  from or between in a sentence about meeting, never in price talk ("49 pm"
+  is per month); a date or a clock may be the partners' ("15 de enero de
+  2027", "14h", "a las 10"), and a date takes a year only when the figure
+  after it is one ("Oct 1, 8500 gross" keeps only Oct 1); a phone is dashed, dotted, in parentheses or with its country code,
   or joined by spaces only alone on its line or after a phone word, so a
   price grid is no phone; a label is capitalized with a short number ("Day
   1", "Tier 2", "Ticket 4471"); a form number is a form only said as one
@@ -476,12 +480,15 @@ stays Mark it done.
   that only ever sets a year ("in 2009", "since 2019", "Q3 2026", "the fall
   of 2026"), beside a month, as a run of consecutive years ("2025-2026",
   "2026/27"), or before a word a year leads ("the 2026 renewal"), and never
-  in a sentence that talks price; a round figure in a price's place ("a fee
-  of 2000", "2000 net", "1950-2050") is a figure like any other. A
+  in a sentence that talks price, the partners' price words included
+  ("salario", "custo", "tarifa"), nor before a range ("desde 1950 hasta
+  2300"); a round figure in a price's place ("a fee of 2000", "2000 net",
+  "1950-2050") is a figure like any other. A
   count is a figure followed on its own line by a word from the list of
   what a figure can count, in prose's lowercase ("45 employees", "3 open
   roles", the partners' "35 empleados"), with no slash or price word after
-  it ("499 partner cost", "599 employee/month"); a singular count word keeps
+  it or anywhere in the rest of its phrase ("499 partner cost", "599
+  employee/month", "a 1500 client setup fee"); a singular count word keeps
   a figure only for one of it or when it describes the word after it ("a 50
   person company"). Time counts in the plural, one of it, or describing
   what follows ("3 months", "1 month", "12-month", "a 90 day notice
@@ -532,20 +539,22 @@ stays Mark it done.
   dated none, keeps its filing's capture order, and takes the latest email
   only when no dated email can. A clock with no day is no moment, so two
   undated copies are the same email only with the same words. +N opens everyone else the recipients column names,
-  never the operator or a name the line already shows in another form, and
-  shows only when it can.
+  never the operator when the line already shows them, nor a name the line
+  shows in another form (a first-name address included), and shows only
+  when it can. An Act Lane send is a log, never a twin.
 - **Each line opens in place, one at a time**, to what the account record
   history holds for it: WHAT THE READ KEPT (WHAT WAS FILED when the rules
   filed it) and its Owed lines, YOU OWE, a person by first name when every
   word of the owner is capitalized ("JOSÉ OWES", "MARY-KATE OWES"), a group
   as the read wrote it ("THEIR LEGAL TEAM OWES"), or OWED when the line
-  names nobody. Each "Owed:" marker opens its own segments, and a plain
+  names nobody; a group of any length reads whole. Each "Owed:" marker opens its own segments, and a plain
   sentence after the last owner goes back to what the read kept. An Owed line closes by its own promise, the one to-do
   or loop that tracks it among those the fan-out's own key ties to it: the
-  row the note's own filing opened, else the one opened nearest at or after
-  the note, an earlier one only when none is newer and only one still open
-  when the promise was made, so a later promise in the same words never
-  reopens a kept one and a delivery before the promise never closes it. It reads CLOSED "Done M/D." once
+  row the note's own filing opened, else the row that was open when the
+  promise was made (the one a repeated promise was deduped against), else
+  the one opened nearest after it, so a later promise in the same words
+  never reopens a kept one and a delivery before the promise never closes
+  it. It reads CLOSED "Done M/D." once
   that row is done, on the day its own done tag holds, and "Released." once
   their side released it (the closer rule: delivery or release closes a promise, a
   later message never does); a colleague's promise is tracked by nothing here

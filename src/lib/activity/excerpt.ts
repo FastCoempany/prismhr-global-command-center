@@ -235,7 +235,8 @@ function headerBlockAt(s: string): number {
         block.some((l) =>
           /^[ \t]*\*?(?:Subject|Asunto|Betreff|Objet|Oggetto|Onderwerp)\s?:/i.test(l),
         ) ||
-        /\b(?:19|20)\d{2}\b|\d{1,2}:\d{2}/.test(lines[j]);
+        (/\b(?:19|20)\d{2}\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(lines[j]) &&
+          /\b\d{1,2}:\d{2}\b/.test(lines[j]));
       if (!shaped) break;
       // Glued onto the words before it: the cut falls where "From:" begins.
       return glued ? at : ruled(i);
@@ -374,25 +375,55 @@ const LEGAL =
  *  question, or a promise that opens its line ("I'll send the order form
  *  Friday."). A notice with any of these below it is part of the email. */
 function ownAfter(s: string, at: number): boolean {
-  const end = s.slice(at).search(/\n\s*\n/);
-  if (end < 0) return false;
-  return s
-    .slice(at + end)
+  const first = s.indexOf("\n", at);
+  if (first < 0) return false;
+  const lines = s
+    .slice(first + 1)
     .split("\n")
-    .some((l) => {
-      const t = l.trim();
-      if (!t || LEGAL.test(t)) return false;
-      return (
-        SIGN_OFF_LINE.test(t) ||
-        /\?$/.test(t) ||
-        (t.length <= 160 && /^(?:I|We)(?:['’]ll| will)\b/i.test(t))
-      );
-    });
+    .map((l) => l.trim());
+  const filled = lines.filter(Boolean);
+  return lines.some((t, i) => {
+    if (!t || LEGAL.test(t)) return false;
+    const next = lines.slice(i + 1).find(Boolean) ?? "";
+    return (
+      SIGN_OFF_LINE.test(t) ||
+      /\?$/.test(t) ||
+      (t.length <= 160 && /^(?:I|We)(?:['’]ll| will)\b/i.test(t)) ||
+      // A sign-off in the person's own words over their name, or their name
+      // closing the email.
+      (/,$/.test(t) && t.length <= 40 && isNameLine(next)) ||
+      (t === filled[filled.length - 1] && isNameLine(t) && t.split(/\s+/).length <= 3)
+    );
+  });
+}
+
+/** A notice by its own words: it opens like one and carries at least two
+ *  words of a legal notice ("This message contains confidential information
+ *  and is intended only for…"). */
+const LEGAL_OPENER =
+  /^[ \t*_]*(?:(?:confidentiality (?:note|notice|statement)|disclaimer|privileged(?: (?:and|&) confidential)?|important(?: notice)?|legal notice|notice)\s*[:\-–]|this (?:e-?mail|message|communication|transmission)\b|the (?:information|contents?) (?:contained )?(?:in|of) this (?:e-?mail|message|communication))/i;
+const LEGAL_WORDS =
+  /\b(?:confidential|intended|recipient|privileged|addressee|disseminat\w*|distribut\w*|prohibit\w*|unauthori[sz]ed)\b/gi;
+function noticeAt(s: string, at: number): boolean {
+  const line = s.slice(at, s.indexOf("\n", at) < 0 ? s.length : s.indexOf("\n", at));
+  if (!LEGAL_OPENER.test(line)) return false;
+  const words = new Set(
+    (line.match(LEGAL_WORDS) ?? []).map((w) => w.toLowerCase().slice(0, 8)),
+  );
+  return words.size >= 2;
 }
 
 function tailAt(s: string): number {
   const firstBreak = s.search(/\n\s*\n/);
   let cut = -1;
+  // A notice by its own words, wherever its phrasing is not on the list.
+  for (let at = 0; at < s.length; at = s.indexOf("\n", at) + 1 || s.length) {
+    if (firstBreak < 0 ? at === 0 : at < firstBreak) continue;
+    if (noticeAt(s, at) && !ownAfter(s, at)) {
+      cut = at;
+      break;
+    }
+  }
   for (const m of WHOLE_TAIL_MARKERS) {
     const re = new RegExp(`(^|\\n)[ \\t*_]*(?=${m.source})`, "gi");
     for (let hit = re.exec(s); hit; hit = re.exec(s)) {

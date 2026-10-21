@@ -41,8 +41,7 @@ function owedLabel(o: OwedLine): string {
     words.every((w) => /^\p{Lu}[\p{L}\p{M}'’-]*$/u.test(w)) &&
     !/^(?:The|Their|Our|His|Her|My|Your|Its)$/.test(words[0]);
   if (person) return `${words[0].toUpperCase()} OWES`;
-  if (words.length > 0 && words.length <= 3) return `${who.toUpperCase()} OWES`;
-  return "OWED";
+  return who ? `${who.toUpperCase()} OWES` : "OWED";
 }
 
 /** Who wrote to whom, with the door to everyone else on it. */

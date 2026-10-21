@@ -436,6 +436,7 @@ function spells(address: string, name: string): boolean {
   const last = parts[parts.length - 1];
   return (
     local === parts.join("") ||
+    (first.length >= 3 && local === first) ||
     (parts.length > 1 &&
       (local === `${first[0]}${last}` || local === `${first}${last[0]}`))
   );
@@ -545,14 +546,17 @@ function owedOf(
         });
     const opened = (t: Todo) => Date.parse(t.createdAt ?? "");
     const at = Number.isNaN(moment) ? Date.parse(n.createdAt) : moment;
+    // The row the note's own filing opened; else the row that was open when
+    // the promise was made, the one a repeated promise was deduped against;
+    // else the row opened nearest after it. A row done before the promise
+    // was made never tracks it.
     const tracking =
       (n.filingId ? same.find((t) => t.filingId === n.filingId) : undefined) ??
-      same.filter((t) => opened(t) >= at).sort((a, b) => opened(a) - opened(b))[0] ??
       same
-        // An earlier row tracks this promise only if it was still open when
-        // the promise was made: a delivery before it cannot be its delivery.
-        .filter((t) => !(opened(t) >= at) && (!t.done || doneAt(t) >= at))
-        .sort((a, b) => (opened(b) || 0) - (opened(a) || 0))[0];
+        // A row with no opening moment on file counts as opened before.
+        .filter((t) => !(opened(t) > at) && (!t.done || doneAt(t) >= at))
+        .sort((a, b) => (opened(b) || 0) - (opened(a) || 0))[0] ??
+      same.filter((t) => opened(t) >= at).sort((a, b) => opened(a) - opened(b))[0];
     const closed = !tracking
       ? ""
       : tracking.done
@@ -722,8 +726,12 @@ function pickLines(
   };
   const words = (n: RowNote) =>
     withoutOwed(partsOf(n).rest).toLowerCase().replace(/\s+/g, " ");
+  // An Act Lane stub is a log of a send, not a filing: it gives way to its
+  // copy and is never a twin.
   const twins = (n: RowNote, q: RowNote): boolean =>
     n.id !== q.id &&
+    !logged(n) &&
+    !logged(q) &&
     !(n.filingId && q.filingId === n.filingId) &&
     // A clock with no day is no moment: those need the same words.
     ((when(n).time !== "" && when(n).dayKey !== "") ||
