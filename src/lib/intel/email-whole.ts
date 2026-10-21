@@ -207,10 +207,11 @@ function aliasesOf(msgs: readonly EmailMessage[]): Map<string, string> {
 
 /** Does the read's sender name the message's sender? Never across sides
  *  (ours against theirs). The same address is the same sender. By name,
- *  every word the read wrote is in the header's name, or in the name the
- *  capture pairs the address with elsewhere; failing a name the header
- *  shows itself, the address spells the read's name (its surname, its
- *  first name alone, or initial and surname). */
+ *  the read's name and the header's, or the name the capture pairs the
+ *  address with elsewhere, are one the other's short form; only when the
+ *  capture names the address nowhere does the address spell the read's
+ *  name (its surname at either end, its first name alone, or initial and
+ *  surname). */
 function sameSender(
   entryFrom: string,
   msgFrom: string,
@@ -224,12 +225,27 @@ function sameSender(
   if (from.address && from.address === address) return true;
   const want = words(from.name || aliases.get(from.address) || "");
   if (want.length === 0) return false;
+  // A name the capture shows for the address decides: the header's own, or
+  // the one another header pairs it with. A short form ("Dana" for "Dana
+  // Reyes") pairs only when the address, if there is one, spells the read's
+  // name, so another Dana at the same company never does.
   const shown = name || aliases.get(address) || "";
   if (shown) {
-    const have = new Set(words(shown));
-    if (want.every((w) => have.has(w))) return true;
-    if (name) return false;
+    const have = words(shown);
+    if (have.length === 0) return false;
+    if (want.every((w) => have.includes(w))) return true;
+    if (!have.every((w) => want.includes(w))) return false;
+    return !address || spellsName(address, want);
   }
+  return spellsName(address, want);
+}
+
+/** Does an address's local part spell a name, in the shapes mail systems
+ *  make of one: the surname alone, the first name alone, both run together
+ *  either way round, or an initial and the other name ("dreyes",
+ *  "dana.reyes", "reyesd"), accents folded. A name merely inside another
+ *  ("kim" in "kimberly") never does. */
+function spellsName(address: string, want: readonly string[]): boolean {
   const local = (address.split("@")[0] ?? "")
     .normalize("NFD")
     .replace(/\p{M}+/gu, "")
@@ -237,13 +253,17 @@ function sameSender(
     .replace(/[^a-z]/g, "");
   const first = want[0];
   const last = want[want.length - 1];
-  if (!local) return false;
-  return want.length === 1
-    ? local === first
-    : (last.length >= 3 && local.includes(last)) ||
-        (first.length >= 3 && local === first) ||
-        local === `${first[0]}${last}` ||
-        local === `${first}${last[0]}`;
+  if (!local || !first) return false;
+  if (want.length === 1) return local === first;
+  return [
+    last,
+    first,
+    `${first}${last}`,
+    `${last}${first}`,
+    `${first[0]}${last}`,
+    `${last}${first[0]}`,
+    `${first}${last[0]}`,
+  ].includes(local);
 }
 
 /** The days a Sent line can mean: an ISO stamp with its offset is a moment,

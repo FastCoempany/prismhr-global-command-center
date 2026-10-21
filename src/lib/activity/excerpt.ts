@@ -152,6 +152,10 @@ const EXTERNAL_LINES: RegExp[] = [
   /^\[?\s?(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s?\]?:?$/i,
   /^CAUTION:[^\n]{0,400}\boutside\b/i,
   /^(?:Sent from my .{1,40}|Get Outlook for (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?.{0,20})$/i,
+  // The "originated from outside" banner, with or without a tag before it,
+  // and "External email. Do not click…" in any of its prefixes.
+  /^(?:\[?\s?(?:EXTERNAL(?: EMAIL| SENDER)?|External(?: Email| Sender)?|CAUTION|WARNING|NOTICE)\s?\]?\s?[:!-]?\s*)?(?:This (?:e-?mail|message) (?:originated|came|was sent) from outside\b|External (?:e-?mail|sender)\b[^\n]{0,200}\b(?:click|links?|attachments?|sender|organi[sz]ation)\b)[^\n]{0,400}$/i,
+  /^Sent from (?:Mail for Windows|Outlook for (?:Mac|Windows)|Yahoo Mail(?: for \w+)?|AOL Mobile Mail|my [^.!?\n]{1,40})$/i,
   // Exchange's first-contact tip, above a new sender's first reply.
   /^(?:Some people who received this message )?(?:You )?don['’]t often get email from \S{1,200}\s?Learn why this is important\.?$/i,
 ];
@@ -163,7 +167,7 @@ const ORIGINAL_MESSAGE =
 /** The forward marker Gmail and Apple Mail set above a forwarded message:
  *  what follows it is someone else's email. */
 const FORWARDED =
-  /^[ \t]*(?:-{3,}\s*(?:Forwarded message|Mensaje reenviado|Message transféré|Weitergeleitete Nachricht|Messaggio inoltrato|Doorgestuurd bericht)\s*-{3,}|(?:Begin forwarded message|Inicio del mensaje reenviado|Début du message réexpédié)\s?:)/im;
+  /^[ \t]*(?:={3,}\s*Forwarded message\s*={3,}|-{3,}\s*(?:Forwarded message|Mensaje reenviado|Message transféré|Weitergeleitete Nachricht|Messaggio inoltrato|Doorgestuurd bericht)\s*-{3,}|(?:Begin forwarded message|Inicio del mensaje reenviado|Début du message réexpédié)\s?:)/im;
 // Gmail's and Apple Mail's attribution, which wraps onto a second line when
 // the address is long, never across a blank line, and always names a moment
 // and a person: a digit, and an address or a clock, before "wrote:" or its
@@ -172,7 +176,7 @@ const FORWARDED =
 // ("> On … wrote:"). "Here is what she wrote:" in a sentence is the
 // person's own words.
 const GMAIL_WROTE =
-  /^[ \t]*(?:>[ \t]?)*(?:On|El|Le|Am|Il|Op) (?:[^\n]|\n(?!\s*\n)){4,250}?(?:(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef)\s?:|(?:schrieb|schreef) [^\n]{1,200}:)[ \t]*$/m;
+  /^[ \t]*(?:>[ \t]?)*(?:-{2,}[ \t]*)?(?:On|El|Le|Am|Il|Op) (?:[^\n]|\n(?!\s*\n)){4,250}?(?:(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef)\s?(?::|[ \t]*-{2,})|(?:schrieb|schreef) [^\n]{1,200}:)[ \t]*$/m;
 const ATTRIBUTION = /\d[\s\S]*(?:[<@]|\d:\d\d)/;
 const QUOTED = /^[ \t]*>/;
 const RULE = /^[ \t]*(?:_{8,}|-{8,})[ \t]*$/;
@@ -246,9 +250,15 @@ function gmailTrail(s: string): { cut: number; text: string } {
   const m = GMAIL_WROTE.exec(s);
   if (!m || !ATTRIBUTION.test(m[0])) return { cut: -1, text: s };
   const after = s.slice(m.index + m[0].length).split("\n");
-  const answers = after.some((l) => l.trim() && !QUOTED.test(l));
-  const quotes = after.some((l) => QUOTED.test(l));
-  if (!(answers && quotes)) return { cut: m.index, text: s };
+  // An answer sits between quoted lines; lines after the last quoted one are
+  // a footer or a signature below the quote, never an answer on their own.
+  let lastQuote = -1;
+  after.forEach((l, i) => {
+    if (QUOTED.test(l)) lastQuote = i;
+  });
+  const answers =
+    lastQuote > 0 && after.slice(0, lastQuote).some((l) => l.trim() && !QUOTED.test(l));
+  if (!answers) return { cut: m.index, text: s };
   return {
     cut: -1,
     text: s.slice(0, m.index) + after.filter((l) => !QUOTED.test(l)).join("\n"),
@@ -311,10 +321,20 @@ function cutSignatureBlock(s: string): string {
 /** The legal tail: a notice that opens its own line below the email's first
  *  paragraph. A scheduling link counts only as a short line or one holding
  *  the link; "Could you book a meeting with me" is a sentence of the email. */
+/** The legal notices a whole email can end on, beyond the ones the excerpt
+ *  cutter already knows: each opens its own line, a "NOTICE:" or like tag
+ *  allowed before it. */
+const WHOLE_TAIL_MARKERS: RegExp[] = [
+  ...TAIL_MARKERS,
+  /(?:[A-Z][A-Za-z ]{2,30}:\s*)?This e-?mail(?: message)?,?[^\n]{0,80}?is for the sole use of the intended recipient/i,
+  /(?:[A-Z][A-Za-z ]{2,30}:\s*)?This (?:e-?mail|message|communication) and any attachments (?:are|is|may be) (?:strictly )?(?:confidential|privileged)/i,
+  /(?:[A-Z][A-Za-z ]{2,30}:\s*)?The information contained in this (?:e-?mail|message|communication)[^\n]{0,40}?(?:is|may be) (?:strictly )?(?:confidential|privileged)/i,
+];
+
 function tailAt(s: string): number {
   const firstBreak = s.search(/\n\s*\n/);
   let cut = -1;
-  for (const m of TAIL_MARKERS) {
+  for (const m of WHOLE_TAIL_MARKERS) {
     const re = new RegExp(`(^|\\n)[ \\t*_]*(?=${m.source})`, "gi");
     for (let hit = re.exec(s); hit; hit = re.exec(s)) {
       const at = hit.index + hit[1].length;

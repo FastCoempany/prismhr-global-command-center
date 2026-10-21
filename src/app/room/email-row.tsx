@@ -9,7 +9,7 @@
 // for it. The data is the page's (src/lib/room/email-row.ts); this draws it.
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import type { LatestEmail, RecordLine } from "@/lib/room/email-row";
+import type { LatestEmail, OwedLine, RecordLine } from "@/lib/room/email-row";
 import type { WholeMissing } from "@/lib/notes/email-text";
 import styles from "./room.module.css";
 
@@ -20,11 +20,28 @@ export type RowLatestEmail = LatestEmail & {
 
 const MISSING: Record<WholeMissing, string> = {
   before: "This one was filed before whole emails were kept.",
-  capture: "This filing didn't carry the email whole.",
+  capture: "This filing didn't include the whole email.",
   record: "This send was logged from the app.",
   // The store could not be read: the line claims nothing.
   unread: "",
 };
+
+/** Who owes an Owed line: CLOSED once kept, YOU OWE for ours, the owner's
+ *  first name when the read named a person, the owner as the read wrote it
+ *  when it named a group ("THEIR LEGAL TEAM OWES"), else OWED. */
+function owedLabel(o: OwedLine): string {
+  if (o.closed) return "CLOSED";
+  if (o.mine) return "YOU OWE";
+  const who = o.who.trim();
+  const [first = ""] = who.split(/\s+/);
+  if (
+    /^[A-Z][a-z]+$/.test(first) &&
+    !/^(?:The|Their|Our|His|Her|My|Your|Its)$/.test(first)
+  )
+    return `${first.toUpperCase()} OWES`;
+  if (who && who.split(/\s+/).length <= 3) return `${who.toUpperCase()} OWES`;
+  return "OWED";
+}
 
 /** Who wrote to whom, with the door to everyone else on it. */
 function WhoLine({ from, to, others }: { from: string; to: string; others: string[] }) {
@@ -125,7 +142,7 @@ export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
       <p className={styles.mailSubj}>{email.subject}</p>
       {!email.whole && (
         <p className={styles.mailGist}>
-          <b>{email.read ? "WHAT THE READ KEPT" : "WHAT WAS FILED"}</b>
+          <b>{email.read ? "WHAT THE READ KEPT" : "WHAT WAS FILED"}</b>{" "}
           {MISSING[email.missing || "before"]}
         </p>
       )}
@@ -174,21 +191,13 @@ function Opened({ line }: { line: RecordLine }) {
       <p className={styles.keptB}>{e.kept || "Nothing beyond the subject."}</p>
       {e.owed.map((o, i) => (
         <div key={i} className={styles.keptOwed}>
-          <b>
-            {o.closed
-              ? "CLOSED"
-              : o.mine
-                ? "YOU OWE"
-                : o.who
-                  ? `${(o.who.split(/\s+/)[0] ?? "").toUpperCase()} OWES`
-                  : "OWED"}
-          </b>
+          <b>{owedLabel(o)}</b>{" "}
           {`${o.text}${/[.?!]$/.test(o.text) ? "" : "."}${o.closed ? ` ${o.closed}` : ""}`}
         </div>
       ))}
       {e.answered && (
         <div className={styles.keptOwed}>
-          <b>CLOSED</b>Answered {e.answered}.
+          <b>CLOSED</b> Answered {e.answered}.
         </div>
       )}
     </div>
@@ -243,8 +252,18 @@ export function EarlierLine({
             {[when, e ? "" : line.who].filter(Boolean).join(" · ")}
             {e?.from && when ? " · " : ""}
             {e && <WhoLine from={e.from} to={e.to} others={e.others} />}
-            {e?.closer && <span className={styles.entTag}>SIGN-OFF</span>}
-            {e?.twice && !e.closer && <span className={styles.entTag}>FILED TWICE</span>}
+            {e?.closer && (
+              <>
+                {" "}
+                <span className={styles.entTag}>SIGN-OFF</span>
+              </>
+            )}
+            {e?.twice && !e.closer && (
+              <>
+                {" "}
+                <span className={styles.entTag}>FILED TWICE</span>
+              </>
+            )}
           </span>
           <button
             type="button"

@@ -105,7 +105,7 @@ describe("the latest email: whole under the meter, never taller than the right p
     );
     assert.match(
       await old.innerText(),
-      /WHAT THE READ KEPT\s*This one was filed before whole emails were kept\.\s*Follows up on the September package\./,
+      /WHAT THE READ KEPT This one was filed before whole emails were kept\.\s*Follows up on the September package\./,
     );
     assert.match(
       await old.locator($("mailWho")).innerText(),
@@ -211,7 +211,7 @@ describe("EARLIER: who, when and the subject, each opening in place", () => {
     await subject(0).click();
     assert.match(
       await lines.nth(0).locator($("kept")).innerText(),
-      /WHAT THE READ KEPT\s*They chose the reseller model[\s\S]*YOU OWE\s*Send the reseller agreement\./,
+      /WHAT THE READ KEPT\s*They chose the reseller model[\s\S]*YOU OWE Send the reseller agreement\.\s*THEIR LEGAL TEAM OWES Review the agreement\./,
     );
     await subject(3).click();
     assert.equal(

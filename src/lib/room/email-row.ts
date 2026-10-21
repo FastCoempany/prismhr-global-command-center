@@ -307,7 +307,14 @@ function whensOf(notes: readonly RowNote[]): Map<string, When> {
     const filing = n.filingId || `note:${n.id}`;
     if (w.dateless)
       undated.set(filing, [...(undated.get(filing) ?? []), { n, ms: w.at }]);
-    else if (n.filingId && !Number.isNaN(w.at))
+    // Only an entry whose day the record holds anchors its filing's undated
+    // entries: a marker or an archive the filing wrote is stamped at the
+    // filing's own moment.
+    else if (
+      n.filingId &&
+      !Number.isNaN(w.at) &&
+      LEGACY_HEAD_START_RE.test(n.body.split("\n")[0] ?? "")
+    )
       oldestDated.set(
         n.filingId,
         Math.min(oldestDated.get(n.filingId) ?? Infinity, w.at),
@@ -367,6 +374,27 @@ function reachedMe(n: RowNote): boolean {
 const MAIL_HEAD = /^✉ (?!TM |CT )/;
 const isEmail = (body: string) => body.startsWith("✉ ");
 
+/** An address that spells a name: its local part is the whole name, or
+ *  initial and surname, or first name and initial ("antaeus.coe@…",
+ *  "acoe@…" for Antaeus Coe). */
+function spells(address: string, name: string): boolean {
+  const m = /^([^@\s<]+)@/.exec(address.trim().replace(/^.*</, ""));
+  if (!m) return false;
+  const local = m[1].toLowerCase().replace(/[^a-z]/g, "");
+  const parts = name
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter(Boolean);
+  if (!local || parts.length === 0) return false;
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  return (
+    local === parts.join("") ||
+    (parts.length > 1 &&
+      (local === `${first[0]}${last}` || local === `${first}${last[0]}`))
+  );
+}
+
 /** From, to and everyone else, from the actors column with the head as its
  *  fallback, and the recipients column for the rest. */
 function peopleOf(
@@ -377,11 +405,17 @@ function peopleOf(
   const [rawFrom = "", rawTo = ""] = actors.split("→").map((s) => s.trim());
   const from = rawFrom && !UNATTRIBUTED.test(rawFrom) ? person(rawFrom) : "";
   const to = rawTo ? person(rawTo.split(/[;,]/)[0] ?? "") : "";
-  const named = new Set([nameKey(rawFrom), nameKey(rawTo.split(/[;,]/)[0] ?? "")]);
+  const firstTo = rawTo.split(/[;,]/)[0] ?? "";
+  const named = new Set([nameKey(rawFrom), nameKey(firstTo)]);
+  const shown = [rawFrom, firstTo].filter(Boolean);
   const others: string[] = [];
   for (const r of splitRecipients(n.recipients)) {
     const k = nameKey(r);
     if (!k || named.has(k)) continue;
+    // The operator already on the line, in any form, is not someone else;
+    // nor is an address that spells a name already shown.
+    if (isMe(r) && (from === "you" || to === "you")) continue;
+    if (shown.some((x) => spells(r, x))) continue;
     named.add(k);
     others.push(isMe(r) ? "you" : r);
   }
@@ -595,7 +629,9 @@ function pickLines(
   const twins = (n: RowNote, q: RowNote): boolean =>
     n.id !== q.id &&
     !(n.filingId && q.filingId === n.filingId) &&
-    (when(n).time !== "" || (words(n) !== "" && words(n) === words(q)));
+    // A clock with no day is no moment: those need the same words.
+    ((when(n).time !== "" && when(n).dayKey !== "") ||
+      (words(n) !== "" && words(n) === words(q)));
   const groups = new Map<string, RowNote[]>();
   for (const n of input.all)
     if (isEmail(n.body)) groups.set(keyOf(n), [...(groups.get(keyOf(n)) ?? []), n]);

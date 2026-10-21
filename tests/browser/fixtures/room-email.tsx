@@ -50,6 +50,12 @@ export const RECORD: RecordLine[] = [
       kept: "They chose the reseller model and want the agreement for their legal team to review. Asks for a Wednesday or Thursday afternoon to go over what comes next.",
       owed: [
         { mine: true, who: "Antaeus", text: "Send the reseller agreement", closed: "" },
+        {
+          mine: false,
+          who: "their legal team",
+          text: "Review the agreement",
+          closed: "",
+        },
       ],
     }),
   }),

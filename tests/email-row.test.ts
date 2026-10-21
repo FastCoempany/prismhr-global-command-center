@@ -37,6 +37,7 @@ import { owedSegments } from "../src/lib/room/owed";
 import { NO_TAGS, withTags } from "../src/lib/today/route-notes";
 import { docOf } from "../src/lib/record/docs";
 import { ADDITIVE } from "../src/lib/db/migrate";
+import { outcomeMarkBody } from "../src/lib/room/loss";
 
 const RELAY = `OUTLOOK THREAD — inbox copy
 From: Dana Reyes <dana@regis.example>
@@ -843,6 +844,8 @@ ${quoted}`;
       "Antaeus, can you take this one? I told her you'd call today.\nAnika",
       "Do you have a census template?",
     );
+    // Her own quoted message is hers, "Dana" being her name's short form;
+    // the colleague's note above it never is.
     assert.deepEqual(
       wholeEmails(raw, [
         {
@@ -852,7 +855,19 @@ ${quoted}`;
           dayIso: "2026-10-20",
         },
       ]),
+      ["Do you have a census template?"],
+    );
+    assert.deepEqual(
+      wholeEmails(raw, [
+        {
+          kind: "email",
+          from: "Dana Smith",
+          subject: "Pricing for Mexico",
+          dayIso: "2026-10-20",
+        },
+      ]),
       [null],
+      "another Dana is not her",
     );
   });
 
@@ -1066,6 +1081,41 @@ describe("the strict money rule takes every figure that is not plainly something
     ["599 plus tax", "[—] plus tax"],
     ["EOR at 599, COR at 299", "EOR at [—], COR at [—]"],
     ["2 million", "[—]"],
+    // The round-3 review's leaks: a word that counts before a price, any
+    // plural or foreign word after one, and priced shares.
+    ["Contractors: 49\nEmployees: 599", "Contractors: [—]\nEmployees: [—]"],
+    ["We bill contractors at 49 each.", "We bill contractors at [—] each."],
+    ["We have 2 people at 4500 a month each.", "We have 2 people at [—] a month each."],
+    [
+      "The client is hiring at 75000 a year for the role.",
+      "The client is hiring at [—] a year for the role.",
+    ],
+    ["Onboarding: 1500 one-time", "Onboarding: [—] one-time"],
+    ["Placement fee per hire: 3500", "Placement fee per hire: [—]"],
+    ["She'd make 4500 after taxes.", "She'd make [—] after taxes."],
+    ["EOR is 599 versus 649 at Deel.", "EOR is [—] versus [—] at Deel."],
+    ["Their quote of 549 beats ours.", "Their quote of [—] beats ours."],
+    ["We pay 599 every month for her.", "We pay [—] every month for her."],
+    ["649 year one, 599 year two", "[—] year one, [—] year two"],
+    ["It's 599 month to month.", "It's [—] month to month."],
+    ["EOR 599 Contractors 49 Payroll 25", "EOR [—] Contractors [—] Payroll [—]"],
+    ["599 times 12 is 7188", "[—] times [—] is [—]"],
+    ["Deel quoted 599 last week.", "Deel quoted [—] last week."],
+    ["El salario es de 35000 mensuales.", "El salario es de [—] mensuales."],
+    ["Le pagan 4500 soles al mes.", "Le pagan [—] soles al mes."],
+    ["O salário é 5000 mensais.", "O salário é [—] mensais."],
+    ["We'd apply our standard 12% markup.", "We'd apply our standard [—] markup."],
+    ["Remote takes a 20% cut.", "Remote takes a [—] cut."],
+    ["We charge 12% on top of gross payroll.", "We charge [—] on top of gross payroll."],
+    [
+      "The markup on employer cost in Mexico is 12%.",
+      "The markup on employer cost in Mexico is [—].",
+    ],
+    [
+      "The admin fee on the 4500 salary is 10%.",
+      "The admin fee on the [—] salary is [—].",
+    ],
+    ["Margin: 599 base, 12% on top", "Margin: [—] base, [—] on top"],
   ];
   for (const [raw, want] of gone)
     test(raw, () => {
@@ -1099,6 +1149,9 @@ describe("the strict money rule takes every figure that is not plainly something
       "About 80% of their clients are in Texas.",
       "see https://example.com/a/599 or dana@ex123.com",
       "24/7 support",
+      "They want 6 months of runway and 3 open roles.",
+      "Tenemos 35 empleados en 3 países.",
+      "a 12-month term",
     ])
       assert.equal(redactMoneyStrict(keep), keep);
   });
@@ -1560,5 +1613,182 @@ Which model do you want?`;
     ];
     assert.equal(owed(augLegacy, legacy), "Done 8/5.");
     assert.equal(owed(octLegacy, legacy), "");
+  });
+});
+
+describe("the round-4 review: what counts, what trails, and who else is on it", () => {
+  test("mail-app taglines, the outside-sender banner and legal footers go; a sentence about external email stays", () => {
+    const body = "Hi Antaeus,\n\nThursday works for the demo.\n\nThanks,\nDana";
+    for (const top of [
+      "EXTERNAL EMAIL: This email originated from outside of the organization. Do not click links or open attachments unless you recognize the sender.",
+      "This email originated from outside of the organization. Do not click links or open attachments unless you recognize the sender.",
+      "CAUTION: External email. Do not click links or open attachments unless you recognize the sender.",
+    ])
+      assert.equal(cleanEmailWhole(`${top}\n\n${body}`), body, top);
+    for (const foot of [
+      "NOTICE: This e-mail message, including any attachments, is for the sole use of the intended recipient(s) and may contain confidential information.",
+      "This email and any attachments are confidential and intended solely for the use of the addressee.",
+      "The information contained in this email is confidential and may be legally privileged.",
+      "Sent from Mail for Windows",
+    ])
+      assert.equal(cleanEmailWhole(`${body}\n\n${foot}`), body, foot);
+    const own =
+      "Hi Antaeus,\n\nWe sent an external email to the client yesterday about links in the portal.\n\nThanks,\nDana";
+    assert.equal(cleanEmailWhole(own), own);
+  });
+
+  test("a footer below the quote is never an answer, Zoho's dashed attribution is a trail, and inline answers stay", () => {
+    assert.equal(
+      cleanEmailWhole(
+        "Thursday works.\n\nDana\n\nOn Mon, Oct 19, 2026 at 2:00 PM Antaeus Coe <antaeus.coe@prismhr.com> wrote:\n> Can we meet this week?\n>\n\nThis email and any attachments are confidential.",
+      ),
+      "Thursday works.\n\nDana",
+    );
+    assert.equal(
+      cleanEmailWhole(
+        "Thursday works.\n\nOn Mon, Oct 19, 2026 at 2:00 PM Antaeus Coe <antaeus.coe@prismhr.com> wrote:\n> Can we meet?\n\n-- \nDana Reyes\nVP\n555-123-4567",
+      ),
+      "Thursday works.",
+    );
+    assert.equal(
+      cleanEmailWhole(
+        "Thursday works.\n\nDana\n\n---- On Mon, 19 Oct 2026 14:00:00 -0500 Antaeus Coe <antaeus.coe@prismhr.com> wrote ----\n\nHi Dana,\nOur quote is attached.",
+      ),
+      "Thursday works.\n\nDana",
+    );
+    assert.equal(
+      cleanEmailWhole(
+        "FYI\n\n============ Forwarded message ============\nFrom: Sam <s@x.example>",
+      ),
+      "FYI",
+    );
+    const inline = cleanEmailWhole(
+      "Answers below.\n\nOn Mon, Oct 19, 2026 at 2:00 PM Antaeus Coe <antaeus.coe@prismhr.com> wrote:\n> How many hires?\nFive.\n> When?\nJanuary.\n\nThanks,\nDana",
+    );
+    assert.match(inline, /Five\.[\s\S]*January\.[\s\S]*Dana/);
+    assert.doesNotMatch(inline, /How many/);
+  });
+
+  test("a short display pairs only when the address spells the read's name, and a paired name decides", () => {
+    const raw = (top: string, quotedTo: string) => `OUTLOOK THREAD — inbox copy
+From: ${top}
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: 2026-10-20T14:10:00+00:00
+Subject: RE: Census
+
+We'll send the census Friday.
+
+From: Antaeus Coe <antaeus.coe@prismhr.com>
+Sent: Monday, October 19, 2026 2:00 PM
+To: ${quotedTo}
+Subject: Census
+
+Can you send the census?`;
+    const entry = (from: string) => [
+      {
+        kind: "email",
+        from,
+        subject: "RE: Census",
+        dayIso: "2026-10-20",
+        timeLabel: "9:10 AM",
+      },
+    ];
+    const KEPT = ["We'll send the census Friday."];
+    assert.deepEqual(
+      wholeEmails(
+        raw("Dana <dreyes@regis.example>", "Dana <dreyes@regis.example>"),
+        entry("Dana Reyes"),
+      ),
+      KEPT,
+    );
+    assert.deepEqual(
+      wholeEmails(
+        raw("Dana <dreyes@regis.example>", "Dana <dreyes@regis.example>"),
+        entry("Dana Smith"),
+      ),
+      [null],
+      "another Dana at the company is not her",
+    );
+    assert.deepEqual(
+      wholeEmails(
+        raw("dana@regis.example", "Smith, Dana <dana@regis.example>"),
+        entry("Dana Reyes"),
+      ),
+      [null],
+      "the name the thread pairs the address with decides",
+    );
+    assert.deepEqual(
+      wholeEmails(
+        raw("kimberly@regis.example", "kimberly@regis.example"),
+        entry("John Kim"),
+      ),
+      [null],
+      "a surname inside an address names no one",
+    );
+  });
+
+  test("a marker or archive the filing wrote never anchors its undated entries above older dated mail", () => {
+    const record = note({
+      id: "r9",
+      filingId: "fr",
+      createdAt: "2026-10-19T12:00:00.000Z",
+      body: "✉ OL Oct 19 4:00 PM — Proposal · Dana Reyes → Antaeus Coe\nAsks for the proposal.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const undated = note({
+      id: "u1",
+      filingId: "fb",
+      createdAt: "2026-10-21T21:05:00.000Z",
+      body: "✉ OL activity — RE: Proposal · Dana Reyes → Antaeus Coe\nWe went with another provider.",
+      actors: "Dana Reyes → Antaeus Coe",
+    });
+    const marker = note({
+      id: "m1",
+      filingId: "fb",
+      createdAt: "2026-10-21T21:05:02.000Z",
+      body: outcomeMarkBody("lost", "went with another provider"),
+      source: "outcome",
+    });
+    const order = lines([marker, undated, record]).map((x) => x.id);
+    assert.ok(order.indexOf("r9") < order.indexOf("u1"), order.join(","));
+  });
+
+  test("two undated emails with one clock and different words are not twins", () => {
+    const at = (id: string, filingId: string, createdAt: string, words: string) =>
+      note({
+        id,
+        filingId,
+        createdAt,
+        body: `✉ OL 9:00 AM — Weekly census · Dana Reyes → Antaeus Coe\n${words}`,
+        actors: "Dana Reyes → Antaeus Coe",
+      });
+    const a = at("w1", "fa", "2026-10-14T21:05:00.000Z", "Three new hires in Mexico.");
+    const b = at("w2", "fb", "2026-10-21T21:05:00.000Z", "No new hires this week.");
+    assert.ok(lines([a, b]).every((x) => !x.email?.twice));
+    const c = at("w3", "fc", "2026-10-22T21:05:00.000Z", "No new hires this week.");
+    assert.ok(
+      lines([b, c]).some((x) => x.email?.twice),
+      "the same words still say so",
+    );
+  });
+
+  test("+N never counts the operator twice or an address that spells a name already shown", () => {
+    const mk = (recipients: string) =>
+      note({
+        id: "p1",
+        body: "✉ OL Oct 20 9:10 AM — Plan · Dana Reyes → Antaeus Coe\nThe plan.",
+        actors: "Dana Reyes → Antaeus Coe",
+        recipients,
+      });
+    assert.deepEqual(latest([mk("antaeus.coe@prismhr.com")])?.others, []);
+    assert.deepEqual(latest([mk("Antaeus, Elise Munoz")])?.others, ["Elise Munoz"]);
+    assert.deepEqual(latest([mk("Antaeus Coe antaeus.coe@prismhr.com")])?.others, []);
+    const toSam = note({
+      id: "p2",
+      body: "✉ OL Oct 20 9:10 AM — Plan · Antaeus Coe → Sam Ortiz\nThe plan.",
+      actors: "Antaeus Coe → Sam Ortiz",
+      recipients: "sortiz@integra.example, Elise Munoz",
+    });
+    assert.deepEqual(latest([toSam])?.others, ["Elise Munoz"]);
   });
 });

@@ -3064,7 +3064,7 @@ button.sdRadio:hover {
   color: var(--soft);
 }
 .mailGist b {
-  margin-right: 8px;
+  margin-right: 4px;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 8.5px;
   font-weight: 600;
@@ -3217,7 +3217,7 @@ button.sdRadio:hover {
   color: var(--ink);
 }
 .entTag {
-  margin-left: 6px;
+  margin-left: 3px;
   padding: 2px 4px;
   border: 1px solid var(--hair);
   border-radius: 3px;
@@ -3267,7 +3267,7 @@ button.sdRadio:hover {
   color: var(--soft);
 }
 .keptOwed b {
-  margin-right: 6px;
+  margin-right: 3px;
   font-family: var(--f-mono), Menlo, monospace;
   font-size: 8.5px;
   font-weight: 600;

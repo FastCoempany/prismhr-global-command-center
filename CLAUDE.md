@@ -430,16 +430,19 @@ stays Mark it done.
   no header, and its blocks are only what it quotes. Each email entry is
   matched to its message by sender and subject: the same address is the
   same sender, accents fold, a bare address reads as the name the thread
-  pairs it with anywhere in the capture ("Reyes, Dana" included), and never
+  pairs it with anywhere in the capture ("Reyes, Dana" included), a short
+  form ("Dana") pairs only when the address spells the read's name, an
+  address spells a name only when the capture names it nowhere, and never
   across sides;
   a day and a clock both sides name must agree, and a tie left standing keeps
   nothing. When the read files one email, the capture's own message pairs on
   its sender alone, never on the subject alone, which every message of a
   thread shares. Headers read in English and in the languages the book's
   partners write in. The message is cleaned of banners, external-sender
-  notices and first-contact tips, the quoted trail (a header block, an
-  attribution in any of those languages, Apple's quoted one included, a
-  forward marker, a closing block of quoted lines), a signature card (only when a name follows the
+  notices and first-contact tips, mail-app taglines, the quoted trail (a
+  header block, an attribution in any of those languages, Apple's quoted
+  one and Zoho's dashed one included, a forward marker, a closing block of
+  quoted lines, and a footer below the quote), a signature card (only when a name follows the
   sign-off and every line after it reads as a card with a phone, link or
   address) and a legal notice that opens its own line below the first
   paragraph; paragraphs, inline answers, a P.S. and a sentence that only
@@ -450,14 +453,20 @@ stays Mark it done.
   prices in more ways than a list of price forms can name, so the rule names
   what is not money and takes every other figure: a date, a time, a year, a
   phone number, an ordinal, a numbered label or form, a share that prices
-  nothing, and a count, a figure followed on its own line by what it counts
-  or set after a word that counts, stay; a figure with a currency on either
-  side, spelled out as an amount or set as a rate always goes. Running it
-  twice changes nothing. An entry with no sure message keeps an empty
+  nothing, and a count, stay. A count is a figure followed on its own line
+  by a word from the list of what a figure can count, in prose's lowercase
+  ("45 employees", "3 open roles", the partners' "35 empleados"), time in
+  the plural or one of it ("3 months", "1 month", "12-month"), or set after
+  a headcount, a team of so many, or a hire straight on ("we hire 5 a
+  month"); a word the list does not name never keeps a figure. A share
+  prices something when a price word stands before it in its sentence or
+  just after it ("a 12% markup"). A figure with a currency on either side,
+  spelled out as an amount or set as a rate always goes. What decides reads
+  words, never digits, so running it twice changes nothing. An entry with no sure message keeps an empty
   row, so the row can say the filing looked. The undo takes it back after the
   notes. An email without its words shows the read's synopsis and says why,
   each reason true: "This one was filed before whole emails were kept." (no
-  row), "This filing didn't carry the email whole." (an empty row), "This
+  row), "This filing didn't include the whole email." (an empty row), "This
   send was logged from the app." (an Act Lane send, read off the note), or
   nothing when the store could not be read.
 - **EARLIER is rebuilt.** Each line reads the day and the clock from the note
@@ -472,16 +481,20 @@ stays Mark it done.
   the order the record happened, an entry at its head's clock in any dialect
   read as Chicago's. A moment is claimed only as far as the record holds it:
   a day with no clock sits at that day's Chicago noon and answers nothing on
-  its own day. An entry filed with no day shows none, and never outranks a
-  dated entry, because its stamp is when it was filed: it sits just below its
-  filing's oldest dated entry, or below every dated entry when its filing
+  its own day. An entry filed with no day shows none, and its stamp, which is
+  when it was filed, never places it: it sits just below its filing's oldest
+  dated entry (an entry whose day the record holds, never a marker or an
+  archive the filing wrote), or below every dated entry when its filing
   dated none, keeps its filing's capture order, and takes the latest email
-  only when no dated email can. +N opens everyone else the recipients column names,
-  and shows only when it can.
+  only when no dated email can. A clock with no day is no moment, so two
+  undated copies are the same email only with the same words. +N opens everyone else the recipients column names,
+  never the operator or a name the line already shows in another form, and
+  shows only when it can.
 - **Each line opens in place, one at a time**, to what the account record
   history holds for it: WHAT THE READ KEPT (WHAT WAS FILED when the rules
-  filed it) and its Owed lines, YOU OWE, the owner by name, or OWED when the
-  line names nobody. An Owed line closes by its own promise, the one to-do
+  filed it) and its Owed lines, YOU OWE, the owner by first name, a group
+  as the read wrote it ("THEIR LEGAL TEAM OWES"), or OWED when the line
+  names nobody. An Owed line closes by its own promise, the one to-do
   or loop that tracks it among those the fan-out's own key ties to it: the
   row the note's own filing opened, else the one opened nearest at or after
   the note, an earlier one only when none is newer, so a later promise in

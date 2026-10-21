@@ -278,24 +278,45 @@ const CURRENCY_WORDS =
   "dollars?|euros?|pesos?|pounds?|reais|rupees?|bucks|francs?|yen|cents?";
 const MONTHS =
   "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?";
-/** What a count counts, in the singular: a figure before one of these, or
- *  before any plural that is not a currency or a verb, counts something. */
+/** What a figure can count, written lowercase as prose writes it after a
+ *  figure ("45 employees", "3 open roles"); a capitalized word after a
+ *  figure is a label ("EOR 599 Contractors 49"). Only these keep a figure:
+ *  a word this list does not name never does, whatever it ends in. The
+ *  partners' Spanish, Portuguese and French count words are here too. */
 const COUNT_NOUNS = new Set(
-  "employee ee worker hire person people staff headcount contractor client country entity seat user location worksite option team week day month year hour minute yr yrs mo mos wk wks hr hrs min mins time round state province site office role position".split(
+  (
+    "employee employees ee ees fte ftes worker workers hire hires person people persons folks staff headcount heads " +
+    "contractor contractors freelancer freelancers consultant consultants client clients customer customers partner partners " +
+    "member members user users seat seats role roles position positions job jobs opening openings candidate candidates " +
+    "developer developers engineer engineers designer designers manager managers admin admins analyst analysts " +
+    "accountant accountants rep reps agent agents nurse nurses driver drivers technician technicians specialist specialists " +
+    "assistant assistants associate associates teacher teachers caregiver caregivers " +
+    "country countries entity entities state states province provinces city cities market markets location locations " +
+    "worksite worksites site sites office offices branch branches subsidiary subsidiaries team teams " +
+    "account accounts deal deals contract contracts case cases ticket tickets question questions thing things item items " +
+    "option options plan plans call calls meeting meetings demo demos document documents doc docs form forms file files " +
+    "page pages email emails message messages round rounds step steps phase phases " +
+    "empleado empleados trabajador trabajadores persona personas colaborador colaboradores contratista contratistas " +
+    "cliente clientes funcionario funcionarios funcionário funcionários pessoa pessoas employé employés salarié salariés " +
+    "país países pais paises entidad entidades oficina oficinas " +
+    "personne personnes"
+  ).split(" "),
+);
+/** Time a figure counts: in the plural it counts ("3 months", "30 days"); in
+ *  the singular only for one of it or joined by a hyphen ("1 month",
+ *  "12-month"), since "599 month to month" and "649 year one" are prices. */
+const TIME_PLURALS = new Set(
+  "minutes hours days weeks months quarters years mins hrs wks mos yrs meses semanas días dias años anos horas mois semaines jours ans heures".split(
     " ",
   ),
 );
-/** Words ending in s that count nothing: currencies, and the verbs and small
- *  words a price runs into ("599 includes payroll", "599 plus tax"). */
-const NOT_PLURALS = new Set(
-  "dollars euros pesos pounds rupees bucks francs cents reais pepms includes covers works goes comes sounds looks seems means makes gets stays applies runs holds needs does plus minus thanks always perhaps unless this whereas besides".split(
-    " ",
-  ),
+const TIME_SINGULARS = new Set(
+  "minute hour day week month quarter year min hr wk mo yr".split(" "),
 );
 /** Words that end a count's reach: a figure before them is a price or a rate
- *  ("599 a month", "649 in Brazil"). */
+ *  ("599 a month", "649 in Brazil", "599 every month"). */
 const STOPS = new Set(
-  "a an the per each to for in at on of by from with and or is was are be as than over under across into via vs plus".split(
+  "a an the per each every to for in at on of by from with and or is was are be as than over under across into via vs versus plus after before until last next this que por al par de du le la el".split(
     " ",
   ),
 );
@@ -305,12 +326,17 @@ const NUMBER_WORDS =
 /** The plurals that make a spelled amount a count ("two hundred employees"). */
 const COUNTED_AFTER =
   "employees|people|workers|hires|staff|contractors|clients|users|seats|heads|countries|locations";
-/** A word just before a figure that says the figure counts people. */
+/** Words just before a figure that say it counts people: a headcount, a
+ *  team of so many, and a pace of hiring said straight on ("we hire 5 a
+ *  month"). "Contractors: 49" and "hiring at 75000" are prices. */
 const COUNTED_BEFORE =
-  /\b(?:headcount|employees|workers|hires|people|staff|contractors|seats|team of|staff of|hire|hiring|onboard|onboarding)\s*(?:[:=]|of|is|are|was|at|about|around)?\s*$/i;
-/** The words that make a percentage our price, not a share. */
-const PRICED_SHARE =
-  /\b(?:markup|mark-up|margin|discount|commission|fee|fees|rate|premium|surcharge|admin)\b[^\d\n]{0,30}$/i;
+  /(?:\bheadcount\s*(?:[:=]|of|is|at|around|about)?|\b(?:team|staff) of|\b(?:hire|hires|hiring))\s*$/i;
+/** The words that make a percentage our price, not a share: before it in
+ *  its sentence ("our markup is 12%") or just after it ("a 12% markup"). */
+const PRICED_SHARE_BEFORE =
+  /\b(?:markup|mark-up|margin|discount|commission|fees?|rates?|premium|surcharge|admin|charge[sd]?|charging|price[sd]?|pricing|takes?|adds?|uplift|on top)\b/i;
+const PRICED_SHARE_AFTER =
+  /^(?:[ \t]+[A-Za-z][\w'’-]*){0,2}?[ \t]+(?:markup|mark-up|margin|discount|commission|fees?|cut|surcharge|premium|uplift|rate|admin|on top)\b/i;
 /** The price units a figure is set in: always money. */
 const RATE_UNITS = "PEPM|PEPY|PMPM|PEPW|PEPA|PUPM";
 
@@ -320,9 +346,10 @@ const RATE_UNITS = "PEPM|PEPY|PMPM|PEPW|PEPA|PUPM";
  *  is not money and takes the rest. Every figure goes except a date, a time,
  *  a year, a phone number, an ordinal, a numbered label or form ("Day 1",
  *  "Tier 2", "W-2", "401k", "#4471"), a share that prices nothing, and a
- *  count, which is a figure followed on its own line by what it counts ("45
- *  employees", "3 weeks", "4-5 India admin workers", "a 2-week trial") or
- *  set after a word that counts ("headcount 45", "we hire 5 a month"). A
+ *  count, which is a figure followed on its own line by a word from the list
+ *  of what a figure can count ("45 employees", "3 weeks", "4-5 India admin
+ *  workers", "a 2-week trial") or set after a word that counts ("headcount
+ *  45", "we hire 5 a month"). A
  *  figure with a currency on either side, spelled out as an amount, or set
  *  as a rate ("599 a month", "599 PEPM") always goes. Running it twice
  *  changes nothing. */
@@ -335,10 +362,10 @@ export function redactMoneyStrict(input: string): string {
       tag = String.fromCharCode(97 + (i % 26)) + tag;
       i = Math.floor(i / 26) - 1;
     } while (i >= 0);
-    return `${tag}`;
+    return `\uE000${tag}\uE001`;
   };
   const AMOUNT = "(?:\\d{1,3}(?:[ \\u00A0\\u202F]\\d{3})+|\\d(?:[\\d,.]*\\d)?)";
-  let s = redactMoney((input ?? "").replace(/[]/g, ""))
+  let s = redactMoney((input ?? "").replace(/[\uE000\uE001]/g, ""))
     // A figure with a currency on either side, by code, word or symbol.
     .replace(
       new RegExp(
@@ -432,44 +459,55 @@ export function redactMoneyStrict(input: string): string {
     );
 
   // Every figure left: kept when it counts or is a share that prices
-  // nothing; taken otherwise.
+  // nothing; taken otherwise. What decides reads words, never digits, so a
+  // figure taken on the first pass changes nothing on the second.
   s = s.replace(
-    /(?<![\w])(\d(?:[\d,.]*\d)?)(\s?(?:k|K|M|MM)\b)?(%)?(?![\w])/g,
-    (m: string, n: string, _x: string, pct: string, at: number, whole: string) => {
-      const before = whole.slice(Math.max(0, at - 60), at);
-      if (pct) return PRICED_SHARE.test(before) ? "[—]" : m;
-      if (COUNTED_BEFORE.test(before)) return m;
+    /(?<![\w\uE001])(\d(?:[\d,.]*\d)?)(\s?(?:k|K|M|MM)\b)?(%)?(?![\w\uE000])/g,
+    (m: string, n: string, mult: string, pct: string, at: number, whole: string) => {
       let after = whole.slice(at + m.length);
+      if (pct) {
+        const sentence =
+          whole
+            .slice(0, at)
+            .split(/[.!?;\n]/)
+            .pop() ?? "";
+        return PRICED_SHARE_BEFORE.test(sentence) || PRICED_SHARE_AFTER.test(after)
+          ? "[—]"
+          : m;
+      }
+      if (!mult && COUNTED_BEFORE.test(whole.slice(Math.max(0, at - 40), at))) return m;
       // A range reads as one figure: what follows its far end decides.
       const range = /^[ \t]?(?:-|–|to)[ \t]?\d(?:[\d,.]*\d)?/.exec(after);
       if (range) after = after.slice(range[0].length);
       if (/^\s?(?:\/\s?[a-z]|monthly|annually|yearly|weekly)/i.test(after)) return "[—]";
-      // What it counts stands on its own line, a few words on at most.
+      // What it counts stands on its own line, after a couple of words that
+      // describe it at most ("45 full-time employees", "4-5 India admin
+      // workers"), hyphen-joined or spaced.
+      const joined = /^-[a-z]/.test(after);
       const words =
         after
-          .match(/^(?:(?:[ \t ]+|-)[A-Za-z][\w'’]*){1,3}/)?.[0]
+          .match(
+            /^(?:(?:[ \t\u00A0]+|-)[A-Za-z\u00C0-\u024F][\w'’\u00C0-\u024F]*){1,3}/,
+          )?.[0]
+          .replace(/^-/, "")
           .trim()
-          .split(/[ \t -]+/)
+          .split(/[ \t\u00A0-]+/)
           .filter(Boolean) ?? [];
       for (const [i, w] of words.entries()) {
         const lw = w.toLowerCase();
         if (STOPS.has(lw)) return "[—]";
-        if (
-          COUNT_NOUNS.has(lw) ||
-          (lw.length > 3 &&
-            lw.endsWith("s") &&
-            !lw.endsWith("ss") &&
-            !NOT_PLURALS.has(lw))
-        )
-          return m;
+        const prose = w === lw || /^[A-Z]{2,4}s?$/.test(w);
+        if (!prose) continue;
+        if (COUNT_NOUNS.has(lw) || TIME_PLURALS.has(lw)) return m;
+        if (TIME_SINGULARS.has(lw) && (n === "1" || (i === 0 && joined))) return m;
         // One of a thing takes the singular: "1 designer".
-        if (i === 0 && n === "1" && !_x) return m;
+        if (i === 0 && n === "1" && !mult) return m;
       }
       return "[—]";
     },
   );
   return s
-    .replace(/([a-z]+)/g, (_m, tag: string) => {
+    .replace(/\uE000([a-z]+)\uE001/g, (_m, tag: string) => {
       let i = 0;
       for (const c of tag) i = i * 26 + (c.charCodeAt(0) - 96);
       return held[i - 1] ?? "";
