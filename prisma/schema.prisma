@@ -1169,6 +1169,24 @@ model VaultChunk {
   @@index([accountId, filename])
 }
 
+// The whole email (ship order 2026-10-20; CLAUDE.md, The email in the row):
+// the read keeps each filed email as a synopsis on its note, and this keeps
+// the email's own words beside it, one row per email entry, keyed by the
+// note. Cleaned of banners, the quoted trail and the signature block, and
+// money-redacted on the way in (src/lib/notes/email-text.ts). A table of its
+// own, so no reader of a note ever reads it, and the filing's undo takes it
+// back with the note.
+model EmailText {
+  noteId    String   @id
+  accountId String
+  filingId  String?
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([accountId])
+  @@index([filingId])
+}
+
 // A dated, time-stamped note pinned to a partner (CSM) — the by-partner
 // repository behind the Partner Room and the notes strip on each partner's
 // outreach card. Written from Stash routing, the Partner Room's note box, or

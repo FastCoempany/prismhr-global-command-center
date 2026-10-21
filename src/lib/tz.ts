@@ -38,6 +38,21 @@ export function sameUserDay(iso: string, ref: Date | number = Date.now()): boole
   return k !== "" && k === userDayKey(ref instanceof Date ? ref : new Date(ref));
 }
 
+// One formatter for every wall-clock read: building one costs far more than
+// using it, and the HomeRoom reads a moment for every line of every row.
+let partsFormat: Intl.DateTimeFormat | null = null;
+const chicagoParts = (): Intl.DateTimeFormat =>
+  (partsFormat ??= new Intl.DateTimeFormat("en-US", {
+    timeZone: USER_TZ,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }));
+
 /** A Chicago wall-clock moment as the instant it names (2026-10-14): the
  *  "captured 10/14/2026, 9:05:00 AM" a bookmarklet writes on the operator's
  *  clock, or an email's zoneless "Sent:" line. The offset is the one Chicago
@@ -56,16 +71,7 @@ export function chicagoWallToUtc(
   // fall, where either reading is fine for a day key.
   const shown = (t: number) => {
     const p = Object.fromEntries(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: USER_TZ,
-        hourCycle: "h23",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
+      chicagoParts()
         .formatToParts(t)
         .map((x) => [x.type, x.value]),
     );

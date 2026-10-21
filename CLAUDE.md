@@ -400,6 +400,173 @@ land behind a fold. Attendant decrees, permanent:
   work NEVER ships without an explicit ship order — naming a winner or
   amending a face is judging, not shipping. Ask first, every time.
 
+## The email in the row (ship order 2026-10-20)
+
+Concept A of docs/mockups/homeroom-email-row-2026-10-20.html won and shipped
+on the founder's order ("we're going with A", then "yup ship it"). The
+HomeRoom row's left column carries the newest email on the record whole,
+under the meter: either direction, read past sign-offs, calendar acceptances
+and machinery by the doc read's own flags, past a line whose direction the doc
+read cannot name (a colleague's coordination mail, an unattributed entry),
+past a send of ours that reached only our own side (a colleague named by
+first name alone included, unless someone on the account's side shares that
+first name), past their mail that
+never reached the operator (another lane, the operator on no line of it), and
+past a chat or call line.
+It never makes the row taller than the right panel: past that height it fades,
+with one door, "Show the whole email", and a few lines always show. Its
+kicker, LATEST EMAIL, names the column and carries no orange; the one move
+stays Mark it done.
+
+- **The founder's order amends the click-depth law for this one surface:** the
+  latest email arrives whole, and the HomeRoom row's arrival budget rose to
+  hold it (tests/browser/budgets.json, 39 to 49, measured on the most a row
+  arrives with: the email's own seven pieces, the read's two-piece line when
+  the email has no whole text, and the door). Everything else on the row stays
+  one click down.
+- **The whole email is kept at filing.** The read files each email as a
+  synopsis; the filing now also keeps the email's own words, read from the
+  whole capture and never the read's window (D4). Only a capture that leads
+  with its own header is split (the relay's copies, a dropped .eml or .msg):
+  a reading-pane grab or a hand-pasted reply carries the newest message with
+  no header, and its blocks are only what it quotes. Each email entry is
+  matched to its message by sender and subject: the same address is the
+  same sender, accents fold, a bare address reads as the name the thread
+  pairs it with anywhere in the capture ("Reyes, Dana" included), a short
+  form ("Dana") pairs only when the address spells the read's name, an
+  address spells a name only when the capture names it nowhere, and never
+  across sides;
+  a day and a clock both sides name must agree, and a tie left standing keeps
+  nothing. When the read files one email, the capture's own message pairs on
+  its sender alone, never on the subject alone, which every message of a
+  thread shares. Headers read in English and in the languages the book's
+  partners write in. The message is cleaned of banners, external-sender
+  notices and first-contact tips, mail-app taglines, the quoted trail (a
+  header block, an attribution in any of those languages, Apple's quoted
+  one and Zoho's dashed one included, a forward marker, a closing block of
+  quoted lines, a footer below the quote, and a quoted header that carries
+  an address, a subject or a dated clock; an attribution carries a date
+  with its year and a clock, so a person quoting someone "on Monday at
+  10:30", or naming an address in their own sentence, keeps their words),
+  a banner only in banner words (what not to click or open, or that it
+  originated outside) and never a line that asks or speaks for the person,
+  a signature card (only when a name sits straight under the sign-off and
+  every line after it reads as a card with a phone, link or address) and a legal notice that opens its own
+  line below the first paragraph, or the first line of a one-paragraph
+  email, known by its phrasing or by its own words (an opening like a
+  notice's and two words of one), with nothing of the person's own after it
+  (no sign-off, question, promise or closing name, on its own lines or the
+  rest of its paragraph); a quoted header without an address or a subject
+  needs a date with its year and a clock; paragraphs, inline answers (a line of their own between quoted
+  lines or straight under one), a P.S. and a sentence that only looks like a
+  trail are kept (cleanEmailWhole, src/lib/activity/excerpt.ts).
+  It lands in the EmailText table keyed by the note, redacted on the way in
+  and out by the strict rule an email's own words take (redactMoneyStrict,
+  src/lib/intel/lexicon.ts; src/lib/notes/email-text.ts). An email talks
+  prices in more ways than a list of price forms can name, so the rule names
+  what is not money and takes every other figure: a date, a time, a year
+  said as one, a phone number, an ordinal, a numbered label or form, a share
+  that prices nothing, and a count, stay. Each keeps only its own shape: a
+  time is an hour of 1 to 12 with its minutes, meridiem or zone, a range or
+  an alternative of them ("2-3pm", "10:30 or 11"), or a bare hour after at,
+  from or between in a sentence about meeting, never in price talk ("49 pm"
+  is per month); a date or a clock may be the partners' ("15 de enero de
+  2027", "14h", "a las 10"), and a date takes a year only when the figure
+  after it is one ("Oct 1, 8500 gross" keeps only Oct 1); a phone is dashed, dotted, in parentheses or with its country code,
+  or joined by spaces only alone on its line or after a phone word, so a
+  price grid is no phone; a label is capitalized with a short number ("Day
+  1", "Tier 2", "Ticket 4471"); a form number is a form only said as one
+  ("Form 940", "1099 contractors"). A year is said as one after a word
+  that only ever sets a year ("in 2009", "since 2019", "Q3 2026", "the fall
+  of 2026"), beside a month, as a run of consecutive years ("2025-2026",
+  "2026/27"), or before a word a year leads ("the 2026 renewal"), and never
+  in a sentence that talks price, the partners' price words included
+  ("salario", "custo", "tarifa"), nor before a range ("desde 1950 hasta
+  2300"); a round figure in a price's place ("a fee of 2000", "2000 net",
+  "1950-2050") is a figure like any other. A
+  count is a figure followed on its own line by a word from the list of
+  what a figure can count, in prose's lowercase ("45 employees", "3 open
+  roles", the partners' "35 empleados"), with no slash or price word after
+  it or anywhere in the rest of its phrase ("499 partner cost", "599
+  employee/month", "a 1500 client setup fee"); a singular count word keeps
+  a figure only for one of it or when it describes the word after it ("a 50
+  person company"). Time counts in the plural, one of it, or describing
+  what follows ("3 months", "1 month", "12-month", "a 90 day notice
+  period"), and a headcount or a team of so many counts with
+  nothing after the figure and no price in its sentence. A range or an
+  alternative of two figures gets one verdict ("45-50", "2 or 3 hires"),
+  "50+" counts as 50 does, a held form or a dotted abbreviation describes
+  what follows ("45 W-2 employees", "12 U.S. employees"), and the book's own
+  words count ("120 companies", "3 PEOs"). A number word, a determiner or a quantifier
+  between a figure and what follows ends the count ("599 six months ago",
+  "3500 these days", "tous les mois"). A word the list does not name never
+  keeps a figure, and a pace of hiring goes like a price. A share prices
+  something when a price word, singular or plural, stands before it in its
+  sentence (a decimal point or an abbreviation ends no sentence), just
+  after it ("a 12% markup", "a 20% rev share"), or when it is a share "of
+  gross", payroll, salary or revenue. A figure with a currency on either
+  side, a currency or a unit glued to it ("P25,000", "RM5000", "9000zł",
+  "599ea"), spelled out as an amount ("sixty thousand", "1 lakh") or set as
+  a rate always goes; a name with a digit in it ("Q3", "B2B", "SOC2")
+  stays. What decides reads words, never
+  digits, so running it twice changes nothing. An entry with no sure message keeps an empty
+  row, so the row can say the filing looked. The undo takes it back after the
+  notes. An email without its words shows the read's synopsis and says why,
+  each reason true: "This one was filed before whole emails were kept." (no
+  row), "This filing didn't include the whole email." (an empty row), "This
+  send was logged from the app." (an Act Lane send, read off the note, which
+  gives way to the relay's filed copy of the same email, to the same
+  person, sent in its minute or within half an hour after), or
+  nothing when the store could not be read.
+- **EARLIER is rebuilt.** Each line reads the day and the clock from the note
+  itself, who wrote to whom ("you" for the operator), and the subject with the
+  format code, the frozen "Today", the reply prefixes, the external tags and
+  the pipeline's placeholders gone. The stored head keeps its grammar, because
+  the clock, the meeting read and the promote regex parse it; a call's and a
+  task's entry head reads as clean as an email's, the partners' forward and
+  reply prefixes ("RV:", "TR:", "ENC:", "RES:") included, and every line and
+  every opened body takes the strict money rule an email takes. ✎ on a filed activity
+  edits the subject in its slot and starts from what is stored, never the
+  display's copy, with the figures the line hides hidden in the box too; a
+  sign-off line carries no ✎. The lines run in
+  the order the record happened, an entry at its head's clock in any dialect
+  read as Chicago's. A moment is claimed only as far as the record holds it:
+  a day with no clock sits at that day's Chicago noon and answers nothing on
+  its own day. An entry filed with no day shows none, and its stamp, which is
+  when it was filed, never places it: it sits just below its filing's oldest
+  dated entry (an entry whose day the record holds, never a marker or an
+  archive the filing wrote), or below every dated entry when its filing
+  dated none, keeps its filing's capture order, and takes the latest email
+  only when no dated email can. A clock with no day is no moment, so two
+  undated copies are the same email only with the same words. +N opens everyone else the recipients column names,
+  never the operator when the line already shows them, nor a name the line
+  shows in another form (a first-name address included), and shows only
+  when it can. An Act Lane send is a log, never a twin.
+- **Each line opens in place, one at a time**, to what the account record
+  history holds for it: WHAT THE READ KEPT (WHAT WAS FILED when the rules
+  filed it) and its Owed lines, YOU OWE, a person by first name when every
+  word of the owner is capitalized ("JOSÉ OWES", "MARY-KATE OWES"), a group
+  as the read wrote it ("THEIR LEGAL TEAM OWES"), or OWED when the line
+  names nobody; a group of any length reads whole. Each "Owed:" marker opens its own segments, and a plain
+  sentence after the last owner goes back to what the read kept. An Owed line closes by its own promise, the one to-do
+  or loop that tracks it among those the fan-out's own key ties to it: the
+  row the note's own filing opened, else the row that was open when the
+  promise was made (the one a repeated promise was deduped against), else
+  the one opened nearest after it, so a later promise in the same words
+  never reopens a kept one and a delivery before the promise never closes
+  it. It reads CLOSED "Done M/D." once
+  that row is done, on the day its own done tag holds, and "Released." once
+  their side released it (the closer rule: delivery or release closes a promise, a
+  later message never does); a colleague's promise is tracked by nothing here
+  and stays as written. CLOSED "Answered M/D." marks an inbound a later send
+  of ours to the account answered; a sign-off, machinery or a note to a
+  colleague answers nothing. A sign-off says A SIGN-OFF and that it doesn't
+  change the latest email. The same email filed twice (one sender, recipient,
+  subject and moment, on separate filings, either lane) says FILED TWICE: when
+  both copies show, the second says it; a copy whose twin is out of view says
+  it alone. Any other line opens to its note's own body, and every line,
+  opened, shows its whole text where it rested trailing off.
+
 ## The Ted doctrine (founder-decreed 2026-08-14)
 
 Named for the day the room told the operator to chase Ted — a man the record

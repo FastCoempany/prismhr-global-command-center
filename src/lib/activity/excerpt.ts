@@ -137,6 +137,366 @@ export function cleanExcerpt(raw: string, cap = 500): string {
   return `${cut.slice(0, lastSpace > cap * 0.6 ? lastSpace : cap).trimEnd()}…`;
 }
 
+// ── the whole email (ship order 2026-10-20) ────────────────────────────────
+// The HomeRoom row shows the newest email whole (CLAUDE.md, The email in the
+// row), so one message's own words are kept as the person wrote them: the
+// same junk goes as cleanExcerpt cuts, but the paragraphs stay paragraphs and
+// nothing trims to a cap. It reads one message at a time; the thread is split
+// into its messages before it gets here (src/lib/intel/email-whole.ts), and
+// the trail cut below is the backstop for a trail the split could not see.
+
+/** The external-sender tags and notices mail systems put above a message,
+ *  read against each line trimmed, so no pattern runs whitespace against
+ *  whitespace (a long blank line must cost one pass, never its square). */
+const EXTERNAL_LINES: RegExp[] = [
+  /^\[?\s?(?:EXTERNAL|EXTERNAL EMAIL|External Email|External Sender)\s?\]?:?$/i,
+  // A caution banner says what to click or open; "Caution: the hires work
+  // outside the office" is the person's own line.
+  /^CAUTION:(?![^\n]*\?\s*$)(?=[^\n]{0,400}(?:\b(?:do not|don['’]t|never)\s(?:click|open)|\bunless you (?:recognize|trust|know)|\b(?:use|exercise) (?:extra )?caution|\boriginated\b))[^\n]{0,400}\b(?:outside|external)\b/i,
+  /^(?:Sent from my .{1,40}|Get Outlook for (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?.{0,20})$/i,
+  // The "originated from outside" banner, with or without a tag before it,
+  // and "External email. Do not click…" in any of its prefixes.
+  /^(?:\[?\s?(?:EXTERNAL(?: EMAIL| SENDER)?|External(?: Email| Sender)?|CAUTION|WARNING|NOTICE|ATTENTION)\s?\]?\s?[:!-]?\s*)?(?:This (?:e-?mail|message) (?:originated|came|was sent|is) (?:from )?(?:outside|an? external sender)\b|External (?:e-?mail|sender)\b)(?![^\n]*\?\s*$)(?![^\n]*\b(?:we|I|could you|can you|my)\b)(?=[^\n]{0,400}(?:\b(?:do not|don['’]t|never)\s(?:click|open)|\bunless you (?:recognize|trust|know)|\b(?:use|exercise) (?:extra )?caution|\bbe cautious|\boriginated\b))[^\n]{0,400}$/i,
+  // The second line of a two-line banner.
+  /^(?:Please )?(?:do not|don['’]t) click (?:on )?links or open attachments unless[^\n]{0,200}$/i,
+  /^Sent from (?:Mail(?:\s?<[^>\s]{1,300}>)? for Windows(?: 1[01])?|Outlook(?: for (?:Mac|Windows|iOS|Android))?|Yahoo Mail(?: (?:for|on) \w+)?|AOL Mobile Mail|the all new AOL app[^\n]{0,40}|my [^.!?\n<]{1,40})(?:\s?<[^>\s]{1,300}>)?$/i,
+  // The same taglines in the partners' languages.
+  /^(?:Enviado desde mi|Enviado do meu|Envoyé de mon|Von meinem|Inviato dal mio|Verzonden vanaf mijn) [^.!?\n]{1,40}$/i,
+  /^(?:Obtener|Obtenga|Obtenha|Obtenez|Holen Sie sich) Outlook (?:para|pour|für|for) (?:iOS|Android)(?:\s?<[^>\s]{1,200}>)?$/i,
+  /^(?:Enviado desde|Enviado do|Envoyé depuis|Gesendet von) (?:Outlook|Correo|Yahoo|Mail)[^.!?\n]{0,40}$/i,
+  // Exchange's first-contact tip, above a new sender's first reply.
+  /^\[?\s?(?:Some people who received this message )?(?:You )?don['’]t often get email from \S{1,200}\s?Learn why this is important(?:\s?<https?:\/\/[^>\s]{1,300}>|\s+at\s+https?:\/\/\S{1,300})?\.?\s?\]?$/i,
+];
+
+/** The quoted trail, as a mail client sets it on its own lines, in the
+ *  languages the book's partners write in. */
+const ORIGINAL_MESSAGE =
+  /^[ \t]*-{2,}\s*(?:Original Message|Mensaje original|Message d'origine|Ursprüngliche Nachricht|Messaggio originale|Oorspronkelijk bericht)\s*-{2,}/im;
+/** The forward marker Gmail and Apple Mail set above a forwarded message:
+ *  what follows it is someone else's email. */
+const FORWARDED =
+  /^[ \t]*(?:={3,}\s*Forwarded message\s*={3,}|-{3,}\s*(?:Forwarded message|Mensaje reenviado|Message transféré|Weitergeleitete Nachricht|Messaggio inoltrato|Doorgestuurd bericht)\s*-{3,}|(?:Begin forwarded message|Inicio del mensaje reenviado|Début du message réexpédié)\s?:)/im;
+// Gmail's and Apple Mail's attribution, which wraps onto a second line when
+// the address is long, never across a blank line, and always names a moment
+// and a person: a digit, and an address or a clock, before "wrote:" or its
+// translation, or, in German and Dutch, before the verb and the name
+// ("Am … um 09:10 Uhr schrieb Dana <…>:"). Apple quotes it with the rest
+// ("> On … wrote:"). "Here is what she wrote:" in a sentence is the
+// person's own words.
+const GMAIL_WROTE =
+  /^[ \t]*(?:>[ \t]?)*(?:-{2,}[ \t]*)?(?:On|El|Le|Am|Il|Op) (?:[^\n]|(?<![.!?])\n(?!\s*\n)){4,250}?(?:(?:wrote|escribió|a écrit|schrieb|ha scritto|schreef)\s?(?::|[ \t]*-{2,})|(?:schrieb|schreef) [^\n]{1,200}:)[ \t]*$/m;
+// What a mail client's attribution always carries before the verb: an
+// address, or a date with its four-digit year and a clock. "On Monday at
+// 10:30 she wrote:" is a person quoting someone, and stays.
+const ATTRIBUTION =
+  /(?:\b(?:19|20)\d{2}\b|\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b)[\s\S]*?\d{1,2}[:.h]\d{2}|\d{1,2}[:.h]\d{2}[\s\S]*?\b(?:19|20)\d{2}\b/;
+const QUOTED = /^[ \t]*>/;
+const RULE = /^[ \t]*(?:_{8,}|-{8,})[ \t]*$/;
+const FROM_AT = /(^[ \t]*|[A-Za-z0-9])\*?(?:From|De|Von|Da|Van)\s?:\*?\s/;
+const SENT_AT =
+  /^[ \t]*\*?(?:Sent|Date|Enviado(?: el)?|Fecha|Envoyé(?: le)?|Gesendet|Datum|Inviato|Verzonden)\s?:\*?\s/i;
+
+/** A header block inside the text: a From line, at the start of a line or
+ *  glued onto the words before it ("Get Outlook for iOSFrom: …"), with a Sent
+ *  or Date line within the next six lines, blank lines skipped, as Outlook
+ *  quotes, in any of the languages above; or Outlook's one-line form, "From:
+ *  … Sent: …" run together. The cut takes the rule Outlook draws above it,
+ *  when there is one. -1 when there is none. */
+function headerBlockAt(s: string): number {
+  const lines = s.split("\n");
+  const starts: number[] = [];
+  let offset = 0;
+  for (const l of lines) {
+    starts.push(offset);
+    offset += l.length + 1;
+  }
+  const ruled = (i: number): number => {
+    let k = i - 1;
+    while (k >= 0 && !lines[k].trim()) k--;
+    return k >= 0 && RULE.test(lines[k]) ? starts[k] : starts[i];
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const m = FROM_AT.exec(lines[i]);
+    if (!m) continue;
+    const glued = /[A-Za-z0-9]$/.test(m[1]);
+    const at = starts[i] + m.index + m[1].length;
+    if (/\s(?:Sent|Date)\s?:\s/.test(lines[i].slice(m.index)))
+      return glued ? at : ruled(i);
+    for (let j = i + 1, seen = 0; j < lines.length && seen < 6; j++) {
+      if (!lines[j].trim()) continue;
+      seen++;
+      if (!SENT_AT.test(lines[j])) continue;
+      // A quoted header carries an address, a subject, or a sent line with a
+      // year or a clock; "From: Puerto Rico / To: Mexico City / Date:
+      // January 4" in the body is a list.
+      const block = lines.slice(i, j + 6);
+      const shaped =
+        /[@<]/.test(lines[i]) ||
+        block.some((l) =>
+          /^[ \t]*\*?(?:Subject|Asunto|Betreff|Objet|Oggetto|Onderwerp)\s?:/i.test(l),
+        ) ||
+        (/\b(?:19|20)\d{2}\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(lines[j]) &&
+          /\b\d{1,2}:\d{2}\b/.test(lines[j]));
+      if (!shaped) break;
+      // Glued onto the words before it: the cut falls where "From:" begins.
+      return glued ? at : ruled(i);
+    }
+  }
+  return -1;
+}
+
+/** A quoted block that ends the email with no attribution above it: two or
+ *  more ">" lines, set off by a blank line or opening the text, and nothing
+ *  of the person's own after them. -1 when there is none. */
+function quotedTailAt(s: string): number {
+  const lines = s.split("\n");
+  let k = lines.length - 1;
+  while (k >= 0 && !lines[k].trim()) k--;
+  let quoted = 0;
+  while (k >= 0 && (QUOTED.test(lines[k]) || !lines[k].trim())) {
+    if (lines[k].trim()) quoted++;
+    k--;
+  }
+  if (quoted < 2) return -1;
+  // The block begins after the last line of the person's own.
+  let start = k + 1;
+  while (start < lines.length && !lines[start].trim()) start++;
+  if (k >= 0 && lines[k + 1]?.trim()) return -1;
+  return lines.slice(0, start).reduce((n, l) => n + l.length + 1, 0);
+}
+
+/** Gmail's attribution cuts the trail only when what follows it is the quote
+ *  alone. An inline reply answers between the quoted lines, and those answers
+ *  are the person's words: the attribution goes, the quoted lines go, the
+ *  answers stay. A ">" line above the attribution is the person's own (a
+ *  bullet), and stays. */
+function gmailTrail(s: string): { cut: number; text: string } {
+  // The first line shaped like an attribution that carries what one always
+  // carries; a sentence of the person's own above it never hides it.
+  const all = new RegExp(GMAIL_WROTE.source, "gm");
+  let m: RegExpExecArray | null = null;
+  for (let hit = all.exec(s); hit; hit = all.exec(s))
+    if (ATTRIBUTION.test(hit[0])) {
+      m = hit;
+      break;
+    }
+  if (!m) return { cut: -1, text: s };
+  const after = s.slice(m.index + m[0].length).split("\n");
+  // An answer is a line of their own between quoted lines, or straight
+  // under a quoted line with no blank between; a footer or a signature
+  // below the quote comes after a blank line, and is never an answer.
+  let lastQuote = -1;
+  after.forEach((l, i) => {
+    if (QUOTED.test(l)) lastQuote = i;
+  });
+  const own = (l: string) => !!l.trim() && !QUOTED.test(l);
+  const answers = after.some(
+    (l, i) => own(l) && (i < lastQuote || (i > 0 && QUOTED.test(after[i - 1]))),
+  );
+  if (!answers) return { cut: m.index, text: s };
+  return {
+    cut: -1,
+    text: s.slice(0, m.index) + after.filter((l) => !QUOTED.test(l)).join("\n"),
+  };
+}
+
+/** The sign-off a person closes on, alone on its line. */
+const SIGN_OFF_LINE =
+  /^[ \t]*(?:best regards|kind regards|warm regards|warmest regards|best wishes|many thanks|thanks so much|thank you so much|thanks again|thanks in advance|all the best|regards|sincerely|respectfully|cheers|thanks|thank you|thx|talk soon|best)[ \t]*[,.!]*[ \t]*$/i;
+const PHONE = /\+?\d[\d\s().-]{7,}\d/;
+const LINK = /https?:\/\/|www\.|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
+
+/** A name under a sign-off: a few capitalized words, no sentence ("Dana",
+ *  "-Dana", "Dana Reyes | Regis HR"). "Here's the census file" is a line of
+ *  the email, never a name. */
+const isNameLine = (l: string): boolean => {
+  const t = l.trim().replace(/^[-–—]\s*/, "");
+  if (!t || t.length > 60 || /[.?!:;]$/.test(t) || /\d|@|https?:|www\./i.test(t))
+    return false;
+  const tokens = t.split(/\s+/).filter((w) => !/^[|·,/&–—-]+$/.test(w));
+  return tokens.length > 0 && tokens.length <= 6 && tokens.every((w) => /^[A-Z]/.test(w));
+};
+
+/** A line of a signature card: short, no sentence. */
+const isCardLine = (l: string): boolean =>
+  l.length <= 70 &&
+  l.split(/\s+/).length <= 8 &&
+  !/^p\.?\s?s\b/i.test(l) &&
+  !/[?!]$/.test(l) &&
+  !/\b(?:I|we|you|I'm|we're|will|would|can|could|please|let|is|are|was)\b/i.test(l);
+
+/** The signature block under a sign-off: the name line stays, the card
+ *  beneath it goes. A sign-off counts only when a name follows it, so a
+ *  "Thank you!" opening a paragraph never ends the email, and the tail goes
+ *  only when every line of it reads as a card (short, no sentence, no P.S.)
+ *  and one of them carries a phone number, a link or an address. A P.S., an
+ *  introduction or a second paragraph after "Thanks," stays. */
+function cutSignatureBlock(s: string): string {
+  const lines = s.split("\n");
+  for (let i = 1; i < lines.length; i++) {
+    if (!SIGN_OFF_LINE.test(lines[i])) continue;
+    // The name sits straight under the sign-off, as every card does; a
+    // "Thank you!" set off by a blank line opens a paragraph.
+    const j = i + 1;
+    if (j >= lines.length || !lines[j].trim() || !isNameLine(lines[j])) continue;
+    const rest = lines
+      .slice(j + 1)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (rest.length === 0) return s;
+    const card =
+      rest.length <= 14 &&
+      rest.every(isCardLine) &&
+      rest.some((l) => PHONE.test(l) || LINK.test(l));
+    return card ? lines.slice(0, j + 1).join("\n") : s;
+  }
+  return s;
+}
+
+/** The legal tail: a notice that opens its own line below the email's first
+ *  paragraph. A scheduling link counts only as a short line or one holding
+ *  the link; "Could you book a meeting with me" is a sentence of the email. */
+/** The legal notices a whole email can end on, beyond the ones the excerpt
+ *  cutter already knows: each opens its own line, a "NOTICE:" or like tag
+ *  allowed before it. */
+const WHOLE_TAIL_MARKERS: RegExp[] = [
+  ...TAIL_MARKERS,
+  /(?:[A-Z][A-Za-z ]{2,30}:\s*)?This e-?mail(?: message)?,?[^\n]{0,80}?is for the sole use of the intended recipient/i,
+  /(?:[A-Z][A-Za-z ]{2,30}:\s*)?This (?:e-?mail|message|communication) and any attachments (?:are|is|may be) (?:strictly )?(?:confidential|privileged)/i,
+  /(?:[A-Z][A-Za-z ]{2,30}:\s*)?The information contained in this (?:e-?mail|message|communication)[^\n]{0,40}?(?:is|may be) (?:strictly )?(?:confidential|privileged)/i,
+];
+
+/** The vocabulary of a legal notice, so a line of it is never read as the
+ *  person asking or promising. */
+const LEGAL =
+  /\b(?:confidential|intended|recipient|privileged|liab|disclaim|prohibit|notify|unauthori[sz]ed|addressee|in error)\w*/i;
+
+/** Words of the person's own after a notice's paragraph: a sign-off, a
+ *  question, or a promise that opens its line ("I'll send the order form
+ *  Friday."). A notice with any of these below it is part of the email. */
+function ownAfter(s: string, at: number): boolean {
+  const first = s.indexOf("\n", at);
+  if (first < 0) return false;
+  const lines = s
+    .slice(first + 1)
+    .split("\n")
+    .map((l) => l.trim());
+  const filled = lines.filter(Boolean);
+  return lines.some((t, i) => {
+    if (!t || LEGAL.test(t)) return false;
+    const next = lines.slice(i + 1).find(Boolean) ?? "";
+    return (
+      SIGN_OFF_LINE.test(t) ||
+      /\?$/.test(t) ||
+      (t.length <= 160 && /^(?:I|We)(?:['’]ll| will)\b/i.test(t)) ||
+      // A sign-off in the person's own words over their name, or their name
+      // closing the email.
+      (/,$/.test(t) && t.length <= 40 && isNameLine(next)) ||
+      (t === filled[filled.length - 1] && isNameLine(t) && t.split(/\s+/).length <= 3)
+    );
+  });
+}
+
+/** A notice by its own words: it opens like one and carries at least two
+ *  words of a legal notice ("This message contains confidential information
+ *  and is intended only for…"). */
+const LEGAL_OPENER =
+  /^[ \t*_]*(?:(?:confidentiality (?:note|notice|statement)|disclaimer|privileged(?: (?:and|&) confidential)?|important(?: notice)?|legal notice|notice)\s*[:\-–]|this (?:e-?mail|message|communication|transmission)\b|the (?:information|contents?) (?:contained )?(?:in|of) this (?:e-?mail|message|communication))/i;
+const LEGAL_WORDS =
+  /\b(?:confidential|intended|recipient|privileged|addressee|disseminat\w*|distribut\w*|prohibit\w*|unauthori[sz]ed)\b/gi;
+function noticeAt(s: string, at: number): boolean {
+  const line = s.slice(at, s.indexOf("\n", at) < 0 ? s.length : s.indexOf("\n", at));
+  if (!LEGAL_OPENER.test(line)) return false;
+  const words = new Set(
+    (line.match(LEGAL_WORDS) ?? []).map((w) => w.toLowerCase().slice(0, 8)),
+  );
+  return words.size >= 2;
+}
+
+function tailAt(s: string): number {
+  const firstBreak = s.search(/\n\s*\n/);
+  let cut = -1;
+  // A notice by its own words, wherever its phrasing is not on the list.
+  for (let at = 0; at < s.length; at = s.indexOf("\n", at) + 1 || s.length) {
+    if (firstBreak < 0 ? at === 0 : at < firstBreak) continue;
+    if (noticeAt(s, at) && !ownAfter(s, at)) {
+      cut = at;
+      break;
+    }
+  }
+  for (const m of WHOLE_TAIL_MARKERS) {
+    const re = new RegExp(`(^|\\n)[ \\t*_]*(?=${m.source})`, "gi");
+    for (let hit = re.exec(s); hit; hit = re.exec(s)) {
+      const at = hit.index + hit[1].length;
+      // Below the first paragraph, or below the first line of an email that
+      // is one paragraph, and with nothing of the person's own after it.
+      if (firstBreak < 0 ? at === 0 : at < firstBreak) continue;
+      if (ownAfter(s, at)) continue;
+      const line = s.slice(at, s.indexOf("\n", at) < 0 ? s.length : s.indexOf("\n", at));
+      if (/book a meeting/i.test(m.source) && line.trim().length > 40 && !LINK.test(line))
+        continue;
+      if (cut === -1 || at < cut) cut = at;
+      break;
+    }
+  }
+  return cut;
+}
+
+/** One email's own words, whole, with its line breaks: the banners and
+ *  external-sender notices, the quoted trail, the signature card and the
+ *  legal tail go; nothing trims to a cap. "" when nothing of its own is left,
+ *  a forward with no note above it, say. Money is the store's to redact
+ *  (src/lib/notes/email-text.ts), as the note writer redacts the note. */
+export function cleanEmailWhole(raw: string): string {
+  let s = (raw ?? "")
+    .replace(/\r/g, "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\uFFFD/g, " ")
+    // Control characters (a NUL an HTML entity decoded to, say) never reach
+    // the table, which refuses them.
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+  if (!s.trim()) return "";
+  s = s.replace(BANNER_SPAN, "\n").replace(BANNER_TOKEN, "");
+  for (const w of WARNING_LINES) s = s.replace(w, "");
+  s = s
+    .split("\n")
+    .filter((l) => !EXTERNAL_LINES.some((re) => re.test(l.trim())))
+    .join("\n");
+
+  // The quoted trail: the earliest place another message begins.
+  const gmail = gmailTrail(s);
+  s = gmail.text;
+  const cuts = [
+    headerBlockAt(s),
+    gmail.cut,
+    ORIGINAL_MESSAGE.exec(s)?.index ?? -1,
+    FORWARDED.exec(s)?.index ?? -1,
+    quotedTailAt(s),
+  ];
+  // Outlook's run-on header after a short reply ("Works for me.From: …");
+  // cleanExcerpt's floor guards Salesforce scaffolds, which never come here.
+  const run = QUOTE_TRAIL.exec(s);
+  if (run) cuts.push(run.index + (/^[A-Za-z0-9]/.test(run[0]) ? 1 : 0));
+  const trail = Math.min(...cuts.filter((c) => c >= 0), Infinity);
+  if (trail !== Infinity) s = s.slice(0, trail);
+  // The rule a trail leaves standing is not the person's words.
+  s = s.replace(/(?:(?:^|\n)[ \t]*(?:_{8,}|-{8,})[ \t]*)+\s*$/, "");
+
+  const tail = tailAt(s);
+  if (tail >= 0) s = s.slice(0, tail);
+
+  s = s.replace(CONTACT_CARD, "");
+  s = cutSignatureBlock(s.trim());
+  const out = s
+    .split("\n")
+    .map((l) => l.replace(/[ \t]+/g, " ").trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  // Rules and marks with no word in them are nothing of the person's own.
+  return /[\p{L}\p{N}]/u.test(out) ? out : "";
+}
+
 // ── who WROTE it ────────────────────────────────────────────────────────────
 // Salesforce's comment scaffold carries To/CC/BCC and no From at all, so every
 // reader downstream fell back to the Assigned column — which on a captured

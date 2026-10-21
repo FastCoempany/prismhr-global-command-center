@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>The Email, Opened</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* The HomeRoom row with the email in it: the latest email in the empty
+     left column, and an EARLIER list whose lines open to what the read kept.
+     Three structures, one theme, the room's own tokens. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1280px;margin:0 auto;padding-block:40px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+  /* ── the document's own head ─────────────────────────────────────── */
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,48px)/1.1 var(--serif);margin:10px 0 12px;text-wrap:balance}
+  .lede{color:var(--soft);max-width:76ch;margin:0}
+  .status{display:inline-block;margin-top:16px;padding:6px 12px;border:1px solid var(--hair);border-radius:99px;background:var(--surface);font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+  .notes,.why{margin:18px 0 0;padding:0;list-style:none;max-width:88ch}
+  .notes li,.why li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before,.why li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b,.why b{color:var(--ink);font-weight:600}
+  .why{margin:0 0 20px}
+  section{margin-top:64px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .demos{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+  .sim{border:1px dashed var(--quiet);background:var(--surface);border-radius:6px;padding:6px 10px;font:600 9.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+  .sim:hover{color:var(--ink);border-color:var(--faint)}
+
+  /* ── the HomeRoom row, as production draws it ────────────────────── */
+  .board{background:var(--field);background-image:radial-gradient(1200px 600px at 85% -10%,rgba(37,99,235,.05),transparent 60%);border:1px solid var(--hair-soft);border-radius:12px;padding:18px 20px 22px;overflow:hidden}
+  .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:0 34px;padding:14px 0 12px}
+  @media (max-width:880px){.row{grid-template-columns:minmax(0,1fr)}.row .rec{margin-top:14px}}
+  .deal{min-width:0;display:flex;flex-direction:column}
+  .nmline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .shut{color:var(--faint);font-size:12px}
+  .nm{position:relative;padding-left:17px}
+  .sf{position:absolute;left:0;top:7px;font:700 7.5px/1 var(--mono);color:var(--faint);border:1px solid var(--quiet);border-radius:2px;padding:1px 2px}
+  .nmLink{font:400 20px/1.2 var(--serif);color:var(--ink);text-decoration:none;border-bottom:2px solid rgba(10,28,64,.1)}
+  .chips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .chip{font:700 10px/1.9 var(--mono);letter-spacing:.08em;border:1px solid var(--hair);border-radius:4px;padding:0 6px;background:var(--surface)}
+  .metaIn{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .multi{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:#fff;background:var(--green);border-radius:4px;padding:5px 8px}
+  .zap{color:var(--faint);font-size:14px}
+  .zap:hover{color:var(--orange)}
+  .rsrch{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--blue)}
+  .movewrap{margin-top:18px}
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .move{font:600 16.5px/1.5 var(--sans);margin:2px 0 0}
+  .ghost{margin-top:9px;border:1.5px solid var(--ink);border-radius:8px;padding:7px 14px;font-weight:600;font-size:14.5px;background:var(--surface)}
+  .climb{margin-top:12px}
+  .meterZone{position:relative;height:5px}
+  .track{position:absolute;inset:0;border-radius:3px;overflow:hidden;background:repeating-linear-gradient(-60deg,rgba(10,28,64,.05) 0 6px,transparent 6px 12px)}
+  .gain{position:absolute;inset:0 auto 0 0;border-radius:3px 0 0 3px;background:var(--faint)}
+  .cap{position:absolute;top:0;bottom:0;width:4px;z-index:2;background:var(--green)}
+  .node{position:absolute;top:50%;transform:translate(-50%,-50%);width:5px;height:5px;border-radius:50%;border:1.2px solid rgba(10,28,64,.28);background:rgba(255,255,255,.85);z-index:3}
+  .nodeDone{background:var(--ink);border-color:rgba(255,255,255,.8)}
+  .nodeCur{width:8px;height:8px;background:#fff;border:2px solid var(--ink)}
+  .climbCap{font:700 9px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:8px}
+
+  .rec{background:rgba(255,255,255,.62);backdrop-filter:blur(14px);border-radius:14px;padding:12px 16px 14px;align-self:start;min-width:0;box-shadow:0 1px 2px rgba(10,28,64,.04)}
+  .sum{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--hair-soft);font-size:13.5px;min-width:0}
+  .sum .k{font:600 9.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--faint);flex:none}
+  .sum .n{font:600 11px/1 var(--mono);color:var(--soft);flex:none}
+  .sum .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--soft);min-width:0;flex:1}
+  .sum .pl{color:var(--quiet);flex:none}
+  .drop{margin-top:12px;font:600 9px/1.4 var(--mono);letter-spacing:.16em;color:var(--faint)}
+  .doors{display:flex;gap:8px;margin:8px 0 6px}
+  .door{width:32px;height:30px;border:1px solid var(--hair);border-radius:7px;background:var(--surface);display:grid;place-items:center;color:var(--soft);font-size:13px}
+  .door.o{color:var(--orange);border-color:rgba(230,112,30,.4)}
+  .dayrule{display:flex;align-items:center;gap:8px;margin:12px 0 6px;font:600 8.5px/1 var(--mono);letter-spacing:.14em;color:var(--quiet)}
+  .dayrule::after{content:"";flex:1;border-top:1px solid var(--hair-soft)}
+  .dayrule b{color:var(--soft);font-weight:600}
+  .more{display:flex;gap:16px;margin-top:10px;font-size:11.5px;font-weight:600;color:var(--faint)}
+  .more span:hover{color:var(--ink)}
+
+  /* ── shared: the rebuilt EARLIER line ───────────────────────────── */
+  .ent{border-top:1px solid var(--hair-soft)}
+  .ent:first-of-type{border-top:0}
+  .entBtn{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;width:100%;text-align:left;padding:7px 2px;align-items:baseline;border-radius:6px}
+  .entBtn:hover{background:rgba(10,28,64,.025)}
+  .ic{font-size:12px;color:var(--blue)}
+  .ic.out{color:var(--soft)}
+  .ic.q{color:var(--quiet)}
+  .kk{display:block;font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .kk .who{color:var(--soft)}
+  .subj{display:block;font-size:13.5px;line-height:1.45;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ent.quiet .subj{color:var(--faint)}
+  .car{font:600 10px/1 var(--mono);color:var(--quiet)}
+  .entBtn:hover .car{color:var(--ink)}
+  .sel .entBtn{box-shadow:inset 2px 0 0 var(--ink);background:rgba(10,28,64,.03)}
+  .tag{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--ink);background:rgba(10,28,64,.07);border:1px solid var(--hair);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px}
+  .plus{font:inherit;color:inherit;text-decoration:underline dotted;text-underline-offset:2px}
+  .plusList{display:block;font:500 11px/1.5 var(--sans);color:var(--soft);text-transform:none;letter-spacing:0;margin-top:2px}
+
+  /* what the read kept: the record history's content, opened in place */
+  .kept{margin:0 0 8px 26px;padding:8px 10px 10px 12px;border-left:2px solid var(--hair);background:rgba(255,255,255,.7);border-radius:0 6px 6px 0}
+  .keptK{font:600 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue)}
+  .keptB{margin:3px 0 0;font-size:13.5px;line-height:1.55;color:var(--ink);white-space:pre-wrap}
+  .owed{margin-top:6px;font-size:12.5px;color:var(--soft)}
+  .owed b{font:600 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--faint);margin-right:6px}
+  .keptFoot{display:flex;gap:14px;align-items:baseline;margin-top:8px;font:600 9px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .keptFoot button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--soft)}
+  .keptFoot button:hover{color:var(--ink)}
+  .nokept{font-size:12.5px;color:var(--faint);margin-top:6px}
+
+  /* the latest email, in the left column */
+  .mail{margin-top:22px;border-top:1px solid var(--hair);padding-top:14px;min-width:0}
+  .mailK{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .mailK .lbl{color:var(--soft)}
+  .mailWho{font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .mailSubj{font:600 15px/1.4 var(--sans);margin:6px 0 0}
+  .mailBody{margin:10px 0 0;font-size:14.5px;line-height:1.62;color:var(--ink);white-space:pre-wrap;max-width:66ch}
+  .capped{position:relative;overflow:hidden}
+  .capped::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(rgba(245,247,251,0),var(--field))}
+  .open{margin-top:8px;font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+  .open:hover{color:var(--ink)}
+  .gist{margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--soft)}
+  .gist b{font:600 8.5px/1 var(--mono);letter-spacing:.14em;color:var(--blue);margin-right:8px}
+  .newfx{animation:land 1.2s ease}
+  @keyframes land{from{background:var(--blue-soft)}to{background:transparent}}
+  @media (prefers-reduced-motion:reduce){.newfx{animation:none}}
+
+  /* concept C: the thread */
+  .thr .entBtn{grid-template-columns:16px minmax(0,1fr) auto}
+  .msgs{margin:0 0 8px 26px;border-left:2px solid var(--hair)}
+  .msg{padding:6px 10px 8px 12px;border-top:1px solid var(--hair-soft)}
+  .msg:first-child{border-top:0}
+  .msg .keptB{font-size:13px}
+  .dup{display:inline-block;font:600 8.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--ink);background:rgba(10,28,64,.07);border:1px solid var(--hair);border-radius:3px;padding:1px 5px;margin-top:6px}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="kick">HomeRoom · the latest email and the record · three concepts · 10/20 · A shipped</div>
+  <h1>The Email, Opened</h1>
+  <p class="lede">The row's left column sits mostly empty under the move, and EARLIER reads as a stack of subject lines with a format code nobody uses. Each concept below puts the newest email into that column and makes every email line in EARLIER open to what the account record history already holds for it: the read's synopsis of the email. They differ in structure: where the email lives, what opens it, and how much the row shows before you click.</p>
+  <span class="status">Concept A won · ship order 2026-10-20</span>
+  <ul class="notes">
+    <li><b>What the app keeps today.</b> The inbox relay files each email as its head line plus the read's synopsis, 600 characters at most. The email itself is dropped after the read. Every line here can open to that synopsis today. Showing <b>the whole email</b> needs one storage change at filing: keep the cleaned email whole on the note (banners, signatures and the quoted trail removed, money redacted), the way call transcripts are already kept. Emails filed before that change open to the synopsis alone and say so.</li>
+    <li><b>"OL" goes.</b> It is the Outlook format code the readers parse, so the stored head keeps it. The row stops printing it, along with "Today" frozen at filing, the clock-only head, and the "RE: Re: [EXTERNAL]" prefixes. The date and time come from the note itself.</li>
+    <li><b>Latest email</b> means the newest email on the record in either direction, skipping sign-offs ("thanks!"), calendar acceptances and machinery, by the closer rule. The demo buttons show both cases.</li>
+    <li><b>Your arrival budget.</b> The build's ratchet holds a HomeRoom row at 39 visible pieces on arrival, and canon says nothing deep surfaces uninvited. All three concepts add the email to the row's arrival, so the build raises that number in the same change: A and B by the whole email, C by a three-line card. Only C keeps the email's body a click down.</li>
+    <li><b>The other lines in EARLIER</b> (a worked move, a typed note, a call) keep their line and open to their full note body. In C they sit between the email threads in date order and never fold into a thread. The sample shows one: the move you worked on 10/16.</li>
+    <li>EARLIER is drawn open so the lines can be judged; it still rests folded until you click it.</li>
+    <li>Names, subjects, dates and recipients come from the Regis row. Email bodies and synopses are samples <span class="sample">SAMPLE</span> and carry no figures.</li>
+  </ul>
+
+  <section id="a">
+    <div class="kick">Concept A</div>
+    <h2>The email, open</h2>
+    <ul class="why">
+      <li><b>Your ask, as stated.</b> The newest email sits whole under the meter, filling the column. Reading it takes no click.</li>
+      <li>The email never makes the row taller than the right panel: past that height it fades out, with one door to the rest.</li>
+      <li>EARLIER lines read who, when and the subject. A click opens the line in place to what the account record history shows. One line open at a time.</li>
+      <li><b>Costs:</b> amends the arrival budget for every row with an email on file. Needs the whole-email store. Older emails open to the synopsis only.</li>
+    </ul>
+    <div class="demos">
+      <button class="sim" data-demo="new" data-c="A">Demo · a new email lands</button>
+      <button class="sim" data-demo="thanks" data-c="A">Demo · a "thanks!" lands</button>
+      <button class="sim" data-demo="reset" data-c="A">Demo · reset</button>
+    </div>
+    <div class="board"><div id="rowA"></div></div>
+  </section>
+
+  <section id="b">
+    <div class="kick">Concept B</div>
+    <h2>The reading pane</h2>
+    <ul class="why">
+      <li>The left column becomes the row's reading pane. It arrives on the newest email.</li>
+      <li>Click any EARLIER line and that email moves into the pane: the read's synopsis on top, the whole email beneath when it was kept. The line you are reading carries a navy rule.</li>
+      <li>EARLIER stays one line per email and never grows. The pane is where an email opens.</li>
+      <li><b>Costs:</b> amends the arrival budget like A. Click on the right, read on the left is new to the room. On a narrow screen the pane sits above the panel, so the click scrolls you up to it.</li>
+    </ul>
+    <div class="demos">
+      <button class="sim" data-demo="new" data-c="B">Demo · a new email lands</button>
+      <button class="sim" data-demo="thanks" data-c="B">Demo · a "thanks!" lands</button>
+      <button class="sim" data-demo="reset" data-c="B">Demo · reset</button>
+    </div>
+    <div class="board"><div id="rowB"></div></div>
+  </section>
+
+  <section id="c">
+    <div class="kick">Concept C</div>
+    <h2>The thread, folded</h2>
+    <ul class="why">
+      <li><b>The body stays a click down.</b> The newest email arrives as three lines: who and when, the subject, and the read's one-line gist. One click opens the whole email into the column.</li>
+      <li>EARLIER folds by thread. Today six lines repeat "Intro to your Global Business Consultant"; here that is one line with a count. A click opens the thread with every email's synopsis showing, newest first.</li>
+      <li>The same email filed twice (10/15 9:38 AM, twice) folds into one and says so.</li>
+      <li><b>Costs:</b> the arrival budget still rises by the three-line card. The whole email is one click away, not on arrival. The relay carries no thread id, so threads group by cleaned subject; a renamed subject starts a new thread.</li>
+    </ul>
+    <div class="demos">
+      <button class="sim" data-demo="new" data-c="C">Demo · a new email lands</button>
+      <button class="sim" data-demo="thanks" data-c="C">Demo · a "thanks!" lands</button>
+      <button class="sim" data-demo="reset" data-c="C">Demo · reset</button>
+    </div>
+    <div class="board"><div id="rowC"></div></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── The sample record ──────────────────────────────────────────────────
+// Heads, dates and recipients from the Regis row as it stands; bodies and
+// synopses are samples. dir: "in" (they wrote), "out" (you wrote).
+const SUBJ = "Intro to your Global Business Consultant";
+const OTHERS = ["Elise Munoz", "Lesha Cyphers", "Carlos Saladrigas", "Matthew Cooper", "Ameli Padron"];
+const BASE = [
+  { id: "e6", day: "10/20", time: "9:10 AM", dir: "in", from: "Leilani Gonzalez", to: "you", others: OTHERS,
+    subj: SUBJ, raw: "RE: Re: [EXTERNAL] Re: " + SUBJ,
+    kept: "Regis has chosen the reseller model and wants the agreement for its legal team to review. Integra's answers will follow once Ameli hears from their CFO. Asks for a Wednesday or Thursday afternoon to go over what comes next.",
+    owed: "Send the reseller agreement.",
+    whole: "Hi Antaeus,\n\nThank you for laying out the order. We talked it through as a team and we'd like to go with the reseller model.\n\nCan you send the reseller agreement over so our legal team can start their review? I'll loop back on the Integra questions once Ameli hears from their CFO.\n\nWould Wednesday or Thursday afternoon work to walk through next steps?\n\nThanks,\nLeilani" },
+  { id: "e5", day: "10/16", time: "11:01 AM", dir: "out", from: "you", to: "Leilani Gonzalez", others: OTHERS,
+    subj: SUBJ, raw: "Re: Re: [EXTERNAL] Re: " + SUBJ,
+    kept: "Lays out the order for partners: decide the partner model first, then get clear on Integra. Attaches a pre-recorded payroll demo for the team. Asks for her reaction and the right time to start the reseller agreement review.",
+    owed: "", whole: null },
+  { id: "n1", kind: "note", day: "10/16", time: "11:03 AM", subj: "Worked the move · Answer Leilani", body: "Marked done from the HomeRoom after the 11:01 AM email went out.", others: [] },
+  { id: "e4", day: "10/16", time: "10:01 AM", dir: "out", from: "you", to: "Leilani Gonzalez", others: OTHERS,
+    subj: SUBJ, raw: "Re: ❗ Re: [EXTERNAL] Re: " + SUBJ,
+    kept: "Shares the OneDrive link again for anyone who could not open the package.",
+    owed: "", whole: null },
+  { id: "e3", day: "10/15", time: "9:38 AM", dir: "in", from: "Leilani Gonzalez", to: "you", others: OTHERS,
+    subj: SUBJ, raw: "RE: ❗ Re: [EXTERNAL] Re: " + SUBJ, dupOf: null,
+    kept: "Says the team is working through pricing. Asks for demo times next week.",
+    owed: "", closed: "Answered 10/16.", whole: null },
+  { id: "e2", day: "10/15", time: "9:38 AM", dir: "in", from: "Leilani Gonzalez", to: "you", others: OTHERS,
+    subj: SUBJ, raw: "RE: Re: [EXTERNAL] Re: " + SUBJ, dupOf: "e3",
+    kept: "Says the team is working through pricing. Asks for demo times next week.",
+    owed: "", whole: null },
+  { id: "e1", day: "10/6", time: "10:23 AM", dir: "out", from: "you", to: "Elise Munoz", others: OTHERS.filter(n => n !== "Elise Munoz"),
+    subj: SUBJ, raw: "Re: ❗ Re: [EXTERNAL] Re: " + SUBJ,
+    kept: "Follows up on the September package and asks whether Integra's CFO has the questions yet.",
+    owed: "", whole: null },
+];
+const NEW_MAIL = { id: "e7", day: "10/20", time: "3:05 PM", dir: "in", from: "Ameli Padron", to: "you", others: ["Leilani Gonzalez", "Matthew Cooper"],
+  subj: "Integra CFO answers", raw: "RE: [EXTERNAL] Integra CFO answers",
+  kept: "Passes on the CFO's answers: the three are paid as employees through the current PEO's US payroll, and the Puerto Rico entity has its own bank account. Still checking the notice period.",
+  owed: "",
+  whole: "Hi Antaeus,\n\nHere's what Integra's CFO sent back.\n\nThe three are paid as employees, through the current PEO's US payroll. The Puerto Rico entity has its own bank account there. She's still checking the notice period in the PEO agreement and will send it this week.\n\nAmeli", fresh: true };
+const THANKS = { id: "e8", day: "10/20", time: "3:40 PM", dir: "in", from: "Leilani Gonzalez", to: "you", others: [],
+  subj: SUBJ, raw: "RE: " + SUBJ, closer: true, kept: "", owed: "", whole: "Thanks!", fresh: true };
+
+const state = {
+  A: { mails: BASE.slice(), open: null, wholeOpen: false },
+  B: { mails: BASE.slice(), sel: null },
+  C: { mails: BASE.slice(), open: null, wholeOpen: false },
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// The newest email that counts: sign-offs and machinery are read past.
+const latestOf = (mails) => mails.find((m) => !m.closer && !m.dupOf && m.kind !== "note");
+const whoLine = (m, id) => {
+  const others = m.others.length
+    ? ` <span class="plus" role="button" tabindex="0" data-plus="${id}" title="Everyone else on it">+${m.others.length}</span>`
+    : "";
+  return `<span class="who">${esc(m.from)}</span> → ${esc(m.to)}${others}`;
+};
+
+function rowFrame(left, right, count) {
+  return `
+  <div class="row">
+    <div class="deal">
+      <div class="nmline">
+        <span class="shut">▾</span>
+        <span class="nm"><span class="sf">SF</span><a class="nmLink" href="#" data-toast="Opens the account">Regis HR Group</a></span>
+        <span class="chips"><span class="chip">EOR +CP +W</span><span class="metaIn">RESALE · PUERTO RICO</span><span class="multi">MULTI</span><span class="zap">⚡</span><span class="rsrch">RESEARCH 7/2 ⟳</span></span>
+      </div>
+      <div class="movewrap">
+        <div class="lbl">NEXT MOVE</div>
+        <p class="move">Answer Leilani. They wrote today.</p>
+        <button class="ghost" data-toast="Marks the move done">Mark it done ✓</button>
+      </div>
+      <div class="climb"><div class="meterZone"><div class="track"></div><div class="gain" style="width:31%"></div><div class="cap" style="left:31%"></div><span class="node nodeDone" style="left:4%"></span><span class="node nodeDone" style="left:18%"></span><span class="node nodeCur" style="left:31%"></span><span class="node" style="left:46%"></span><span class="node" style="left:60%"></span><span class="node" style="left:74%"></span><span class="node" style="left:88%"></span></div><div class="climbCap">RECORD SAYS NEEDS ANALYSIS</div></div>
+      ${left}
+    </div>
+    <div class="rec">
+      <div class="sum"><span class="k">UNKNOWN</span><span class="n">3 · 31 queued</span><span class="tx">What is Integra's current PEO notice period and termination fee against a Jan 1 start?</span><span class="pl">⊕</span></div>
+      <div class="sum"><span class="k">COMPARABLE</span><span class="n">2</span><span class="tx">PUERTO RICO · "I just figured it couldn't hurt to see if you had any experience or, you know, background</span><span class="pl">⊕</span></div>
+      <div class="sum"><span class="k">TODAY</span><span class="n">12</span><span class="tx">Send the reseller agreement for review now that Regis has chosen the reseller model</span><span class="pl">⊕</span></div>
+      <div class="drop">THE DROP · FILES TO REGIS HR GROUP, EVERYWHERE</div>
+      <div class="doors"><span class="door o">⚡</span><span class="door">▢</span><span class="door">✸</span><span class="door">⇪</span></div>
+      <div class="dayrule"><b>EARLIER · ${count}</b> ▾</div>
+      ${right}
+      <div class="more"><span data-toast="Opens Record &amp; history on the account">the full record (${count}) ▸</span><span data-toast="Opens the archive">archive →</span></div>
+    </div>
+  </div>`;
+}
+
+// One EARLIER line, rebuilt: when and who in mono, the subject in the work.
+function entLine(m, opts) {
+  if (m.kind === "note") return `
+    <button class="entBtn" data-ent="${m.id}" aria-expanded="${opts.open ? "true" : "false"}">
+      <span class="ic" style="color:var(--green)">✓</span>
+      <span style="min-width:0"><span class="kk">${esc(m.day)} · ${esc(m.time)}</span><span class="subj">${esc(m.subj)}</span></span>
+      <span class="car">${opts.car ?? "▸"}</span>
+    </button>`;
+  const icon = m.closer ? `<span class="ic q">✉</span>` : `<span class="ic ${m.dir === "out" ? "out" : ""}">✉</span>`;
+  const tag = m.closer ? `<span class="tag">SIGN-OFF</span>` : m.dupOf ? `<span class="tag">FILED TWICE</span>` : "";
+  const car = opts.car ?? "▸";
+  return `
+    <button class="entBtn" data-ent="${m.id}" aria-expanded="${opts.open ? "true" : "false"}">
+      ${icon}
+      <span style="min-width:0">
+        <span class="kk">${esc(m.day)} · ${esc(m.time)} · ${whoLine(m, m.id)}${tag}</span>
+        <span class="subj">${m.closer ? "“" + esc(m.whole) + "”" : esc(m.subj)}</span>
+      </span>
+      <span class="car">${car}</span>
+    </button>`;
+}
+
+// What the read kept: the account record history's content for the email.
+function keptBlock(m, withWholeDoor, cKey) {
+  if (m.kind === "note") return `<div class="kept"><p class="keptB" style="margin:0">${esc(m.body)}</p></div>`;
+  if (m.closer) return `<div class="kept"><div class="keptK">A SIGN-OFF</div><p class="keptB">It doesn't change the latest email.</p></div>`;
+  const owed = m.owed ? `<div class="owed"><b>YOU OWE</b>${esc(m.owed)}</div>` : m.closed ? `<div class="owed"><b>CLOSED</b>${esc(m.closed)}</div>` : "";
+  const door = withWholeDoor
+    ? m.whole
+      ? `<div class="keptFoot"><button data-whole="${cKey}:${m.id}">Show the whole email</button></div>`
+      : `<div class="nokept">This one was filed before whole emails were kept.</div>`
+    : "";
+  return `<div class="kept"><div class="keptK">WHAT THE READ KEPT</div><p class="keptB">${esc(m.kept)}</p>${owed}${door}</div>`;
+}
+
+const wholeOpenIds = new Set();
+
+// ── Concept A ──────────────────────────────────────────────────────────
+function renderA() {
+  const s = state.A;
+  const latest = latestOf(s.mails);
+  const body = latest.whole ?? latest.kept;
+  const left = `
+    <div class="mail ${latest.fresh ? "newfx" : ""}">
+      <div class="mailK"><span class="lbl">LATEST EMAIL</span><span class="mailWho">${esc(latest.day)} · ${esc(latest.time)} · ${whoLine(latest, latest.id)}</span></div>
+      <p class="mailSubj">${esc(latest.subj)}</p>
+      ${latest.whole ? "" : `<p class="gist"><b>WHAT THE READ KEPT</b>This one was filed before whole emails were kept.</p>`}
+      <div class="bodyWrap"><p class="mailBody">${esc(body)}</p></div>
+      <button class="open" data-a-whole hidden>${s.wholeOpen ? "Show less" : "Show the whole email"}</button>
+    </div>`;
+  const right = s.mails.map((m) => `<div class="ent ${m.closer ? "quiet" : ""}">${entLine(m, { open: s.open === m.id, car: s.open === m.id ? "▾" : "▸" })}${s.open === m.id ? keptBlock(m, false, "A") : ""}</div>`).join("");
+  const host = document.getElementById("rowA");
+  host.innerHTML = rowFrame(left, right, 33 + s.mails.length);
+  // The email never makes the row taller than the right panel: past that
+  // height it fades, with one door to the rest.
+  const deal = host.querySelector(".deal"), rec = host.querySelector(".rec");
+  const wrap = host.querySelector(".bodyWrap"), door = host.querySelector("[data-a-whole]");
+  if (s.wholeOpen) { door.hidden = false; return; }
+  if (window.matchMedia("(max-width:880px)").matches) return;
+  const over = deal.offsetHeight - rec.offsetHeight;
+  if (over > 0) {
+    wrap.style.maxHeight = Math.max(120, wrap.scrollHeight - over - 30) + "px";
+    wrap.classList.add("capped");
+    door.hidden = false;
+  }
+}
+addEventListener("resize", () => renderA());
+
+// ── Concept B ──────────────────────────────────────────────────────────
+function renderB() {
+  const s = state.B;
+  const latest = latestOf(s.mails);
+  const shown = s.sel ? s.mails.find((m) => m.id === s.sel) : latest;
+  const isLatest = shown.id === latest.id;
+  const head = isLatest ? "LATEST EMAIL" : "READING";
+  const back = isLatest ? "" : `<button class="open" data-b-back>Show the latest email</button>`;
+  let inner;
+  if (shown.kind === "note") {
+    inner = `<p class="mailBody">${esc(shown.body)}</p>`;
+  } else if (shown.closer) {
+    inner = `<p class="mailBody">“${esc(shown.whole)}”</p><p class="gist"><b>A SIGN-OFF</b>It doesn't change the latest email.</p>`;
+  } else {
+    inner = `
+      <p class="gist"><b>WHAT THE READ KEPT</b>${esc(shown.kept)}</p>
+      ${shown.owed ? `<p class="gist" style="margin-top:4px"><b style="color:var(--faint)">YOU OWE</b>${esc(shown.owed)}</p>` : shown.closed ? `<p class="gist" style="margin-top:4px"><b style="color:var(--faint)">CLOSED</b>${esc(shown.closed)}</p>` : ""}
+      ${shown.whole ? `<p class="mailBody">${esc(shown.whole)}</p>` : `<p class="gist" style="color:var(--faint)">This one was filed before whole emails were kept.</p>`}`;
+  }
+  const left = `
+    <div class="mail ${shown.fresh && isLatest ? "newfx" : ""}" id="paneB">
+      <div class="mailK"><span class="lbl">${head}</span><span class="mailWho">${esc(shown.day)} · ${esc(shown.time)}${shown.kind === "note" ? "" : " · " + whoLine(shown, shown.id)}</span></div>
+      <p class="mailSubj">${esc(shown.subj)}</p>
+      ${inner}
+      ${back}
+    </div>`;
+  const right = s.mails.map((m) => `<div class="ent ${m.closer ? "quiet" : ""} ${shown.id === m.id ? "sel" : ""}">${entLine(m, { open: shown.id === m.id, car: shown.id === m.id ? "◂" : "▸" })}</div>`).join("");
+  document.getElementById("rowB").innerHTML = rowFrame(left, right, 33 + s.mails.length);
+}
+
+// ── Concept C ──────────────────────────────────────────────────────────
+function renderC() {
+  const s = state.C;
+  const latest = latestOf(s.mails);
+  const gist = latest.kept.split(/(?<=\.)\s/)[0];
+  const left = `
+    <div class="mail ${latest.fresh ? "newfx" : ""}">
+      <div class="mailK"><span class="lbl">LATEST EMAIL</span><span class="mailWho">${esc(latest.day)} · ${esc(latest.time)} · ${whoLine(latest, latest.id)}</span></div>
+      <p class="mailSubj">${esc(latest.subj)}</p>
+      <p class="gist"><b>GIST</b>${esc(gist)}</p>
+      ${s.wholeOpen ? (latest.whole ? `<p class="mailBody">${esc(latest.whole)}</p>` : `<p class="gist" style="color:var(--faint)">This one was filed before whole emails were kept.</p><p class="mailBody">${esc(latest.kept)}</p>`) : ""}
+      <button class="open" data-c-whole>${s.wholeOpen ? "Show less" : "Show the whole email"}</button>
+    </div>`;
+  // Threads by cleaned subject, newest first; a twin filing folds in.
+  const threads = [];
+  for (const m of s.mails) {
+    if (m.kind === "note") { threads.push({ note: m }); continue; }
+    let t = threads.find((x) => x.key === m.subj);
+    if (!t) threads.push((t = { key: m.subj, mails: [] }));
+    t.mails.push(m);
+  }
+  const right = threads.map((t, i) => {
+    if (t.note) {
+      const open = s.open === t.note.id;
+      return `<div class="ent">${entLine(t.note, { open, car: open ? "▾" : "▸" }).replace('data-ent=', 'data-thr=')}${open ? keptBlock(t.note, false, "C") : ""}</div>`;
+    }
+    const real = t.mails.filter((m) => !m.dupOf && !m.closer);
+    const newest = t.mails[0];
+    const people = [...new Set(t.mails.map((m) => (m.dir === "in" ? m.from : null)).filter(Boolean))];
+    const tid = "t" + i;
+    const open = s.open === tid;
+    const head = `
+      <button class="entBtn" data-thr="${tid}" aria-expanded="${open}">
+        <span class="ic">✉</span>
+        <span style="min-width:0">
+          <span class="kk">${real.length} EMAIL${real.length === 1 ? "" : "S"} · LAST ${esc(newest.day)} · <span class="who">${people.length ? esc(people.join(", ")) + "</span> and you" : "you</span>"}</span>
+          <span class="subj">${esc(t.key)}</span>
+        </span>
+        <span class="car">${open ? "▾" : "▸"}</span>
+      </button>`;
+    const msgs = open
+      ? `<div class="msgs">${t.mails.filter((m) => !m.dupOf).map((m) => `
+          <div class="msg">
+            <span class="kk">${esc(m.day)} · ${esc(m.time)} · ${whoLine(m, m.id)}${m.closer ? '<span class="tag">SIGN-OFF</span>' : ""}</span>
+            <p class="keptB">${m.closer ? "“" + esc(m.whole) + "” A sign-off. It doesn't change the latest email." : esc(m.kept)}</p>
+            ${m.owed ? `<div class="owed"><b>YOU OWE</b>${esc(m.owed)}</div>` : m.closed ? `<div class="owed"><b>CLOSED</b>${esc(m.closed)}</div>` : ""}
+            ${t.mails.some((x) => x.dupOf === m.id) ? `<div class="dup">FILED TWICE · ONE SHOWN</div>` : ""}
+          </div>`).join("")}</div>`
+      : "";
+    return `<div class="ent thr">${head}${msgs}</div>`;
+  }).join("");
+  document.getElementById("rowC").innerHTML = rowFrame(left, right, 33 + s.mails.length);
+}
+
+const render = { A: renderA, B: renderB, C: renderC };
+const toast = (t) => {
+  const el = document.getElementById("toast");
+  el.textContent = t;
+  el.classList.add("on");
+  clearTimeout(toast.h);
+  toast.h = setTimeout(() => el.classList.remove("on"), 1800);
+};
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-plus], button, a, [data-toast]");
+  if (!t) return;
+  if (t.dataset.toast) { e.preventDefault(); return toast(t.dataset.toast + ". Not in the mockup."); }
+  if (t.dataset.plus) {
+    e.stopPropagation();
+    const row = t.closest(".kk, .mailWho");
+    const had = row.querySelector(".plusList");
+    if (had) return had.remove();
+    const all = [...BASE, NEW_MAIL, THANKS];
+    const m = all.find((x) => x.id === t.dataset.plus);
+    if (!m) return;
+    row.insertAdjacentHTML("beforeend", `<span class="plusList">${m.others.map(esc).join(", ")}</span>`);
+    return;
+  }
+  const sec = t.closest("section");
+  const c = sec ? sec.id.toUpperCase() : null;
+  if (t.dataset.demo) {
+    const s = state[t.dataset.c];
+    s.mails.forEach((m) => delete m.fresh);
+    if (t.dataset.demo === "reset") {
+      state[t.dataset.c] = t.dataset.c === "B" ? { mails: BASE.slice(), sel: null } : { mails: BASE.slice(), open: null, wholeOpen: false };
+      BASE.forEach((m) => delete m.fresh);
+    } else {
+      const add = t.dataset.demo === "new" ? { ...NEW_MAIL, fresh: true } : { ...THANKS, fresh: true };
+      if (!s.mails.some((m) => m.id === add.id)) s.mails = [add, ...s.mails];
+      if ("sel" in s) s.sel = null;
+      toast(add.closer ? "A sign-off landed. The latest email holds." : "A new email landed. The column shows it.");
+    }
+    return render[t.dataset.c]();
+  }
+  if (t.dataset.ent && c === "A") { state.A.open = state.A.open === t.dataset.ent ? null : t.dataset.ent; return renderA(); }
+  if (t.dataset.ent && c === "B") {
+    state.B.sel = t.dataset.ent;
+    renderB();
+    if (window.matchMedia("(max-width:880px)").matches) document.getElementById("paneB").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (t.hasAttribute("data-a-whole")) { state.A.wholeOpen = !state.A.wholeOpen; return renderA(); }
+  if (t.hasAttribute("data-b-back")) { state.B.sel = null; return renderB(); }
+  if (t.hasAttribute("data-c-whole")) { state.C.wholeOpen = !state.C.wholeOpen; return renderC(); }
+  if (t.dataset.thr) { state.C.open = state.C.open === t.dataset.thr ? null : t.dataset.thr; return renderC(); }
+});
+
+document.addEventListener("keydown", (e) => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-plus]")) { e.preventDefault(); e.target.click(); }
+});
+renderA(); renderB(); renderC();
+</script>
+</body>
+</html>

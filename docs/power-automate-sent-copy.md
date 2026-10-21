@@ -10,7 +10,7 @@ The sent email comes back through a Power Automate flow on your Sent Items folde
 2. **It files through the same pipeline a paste takes**: the duplicate check, the misfile guard and the read. Commitments you made in the email open as loops, like any filed thread. The same email posted twice files once.
 3. **Groundwork stamps the move.** An email move whose account the record shows sent to today leaves the queue.
 
-The route answers with counts and the routing rung only. It never sends anything and never renders the email anywhere.
+The route answers with counts and the routing rung only, and it never sends anything. The email it files keeps its own words beside the read's synopsis, cleaned of banners, the quoted trail and the signature, with money redacted, and the HomeRoom row shows the newest email on the account whole (ship order 2026-10-20; CLAUDE.md, "The email in the row").
 
 ## Setting it up
 

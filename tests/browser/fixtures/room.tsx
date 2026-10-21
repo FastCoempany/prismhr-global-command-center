@@ -49,7 +49,31 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
   sheetDelayed: [],
   sheetDoneToday: [],
   record: [
-    { id: "n1", t: "9/25", text: "✉ Chassie asked for the invoices.", struck: false },
+    {
+      id: "n1",
+      text: "✉ OL Sep 25 10:22 AM — RE: [EXTERNAL] Invoices · Chassie Smith → Antaeus Coe",
+      edit: "RE: [EXTERNAL] Invoices",
+      struck: false,
+      glyph: "✉",
+      day: "9/25",
+      time: "10:22 AM",
+      who: "",
+      line: "Invoices",
+      body: "",
+      email: {
+        dir: "in",
+        from: "Chassie Smith",
+        to: "you",
+        others: [],
+        subject: "Invoices",
+        kept: "Chassie asked for the invoices.",
+        read: true,
+        owed: [],
+        answered: "",
+        closer: false,
+        twice: false,
+      },
+    },
   ],
   recordTotal: 1,
   backgroundTotal: 0,
@@ -74,6 +98,25 @@ export { row as roomRow };
 const ROWS: RoomRow[] = [
   row({
     multiTone: "r",
+    // The newest email in the left column (ship order 2026-10-20), as most
+    // rows show it on launch day and the most a row can arrive with: filed
+    // before whole emails were kept, so the read's line says so, and its
+    // synopsis long enough to meet the right panel and take the door.
+    latestEmail: {
+      id: "n1",
+      day: "9/25",
+      time: "10:22 AM",
+      logged: false,
+      dir: "in",
+      from: "Chassie Smith",
+      to: "you",
+      others: ["Dana Reyes"],
+      subject: "Invoices",
+      kept: "Chassie asked for the invoices from the moving company's current provider, so the team can see what the client pays for its India admin workers today and where the separate site and its billing come from. She wants the reseller route with their own markup, and says the client asked whether everything could sit in one place. The client is on a month-to-month term as far as she knows, and she will confirm it with them this week. She is open to a slight premium for consolidation and says there is no rush.",
+      read: true,
+      whole: null,
+      missing: "before",
+    },
     theirs: {
       label: "ASKED ABOUT MEXICO · 9/30",
       gems: [
