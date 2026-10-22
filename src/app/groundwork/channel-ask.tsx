@@ -1,14 +1,17 @@
 "use client";
 
 // The Channel Ask (the Sendbook's shared instrument, decreed 2026-08-19).
-// Worked-it no longer files blind: pressing it springs a chip row in place —
-// one tap names the channel, an optional second names the person when the
-// book knows more than one. Two taps, never a form. The pre-answer rule
-// lives server-side: when the record already holds today's send, the page
-// renders the plain stamp button instead of this component. The steps are
-// askStep's (src/lib/sendbook/ask.ts); this holds the state and files.
+// Pressing Worked it stamps the move at once (ship order
+// 2026-10-22: whatever Worked it is clicked for lands in Done today) and
+// springs a chip row in place: one tap names the channel, an optional second
+// names the person when the book knows more than one. Two taps, never a
+// form. The pre-answer rule lives server-side: when the record already holds
+// today's send, the page renders the plain stamp button instead of this
+// component. The steps are askStep's (src/lib/sendbook/ask.ts); this holds
+// the state and files.
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   ASK_IDLE,
   ASK_MORE,
@@ -17,7 +20,7 @@ import {
   type AskEvent,
   type AskState,
 } from "@/lib/sendbook/ask";
-import { workedChannel } from "./actions";
+import { pressWorked, workedChannel } from "./actions";
 import styles from "./groundwork.module.css";
 
 export function ChannelAsk({
@@ -35,10 +38,19 @@ export function ChannelAsk({
 }) {
   const [state, setState] = useState<AskState>(ASK_IDLE);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const send = (e: AskEvent) => {
     const r = askStep(state, e, contacts);
     setState(r.state);
+    // The press is the stamp; the row only names the channel after it.
+    if (e.kind === "open" && state.stage === "idle")
+      startTransition(async () => {
+        await pressWorked(mk, accountId);
+      });
+    // ✕ files no tap and keeps the stamp: the page shows it on the wing,
+    // where ↺ takes it back.
+    if (e.kind === "close") router.refresh();
     const tap = r.file;
     if (tap)
       startTransition(async () => {
@@ -59,7 +71,7 @@ export function ChannelAsk({
 
 /** The Channel Ask as it paints in each state: the Worked-it button, the
  *  channel row (with ··· for the rest), or the who row. Both rows carry ✕,
- *  which closes the row and files nothing. */
+ *  which closes the row and files no tap; the press's stamp stays. */
 export function AskRow({
   state,
   contacts,
@@ -77,7 +89,7 @@ export function AskRow({
     <button
       type="button"
       className={`${styles.chChip} ${styles.chChipMore}`}
-      title="Never mind. Nothing files."
+      title="Close. The move stays worked; ↺ on the wing takes it back."
       onClick={() => send({ kind: "close" })}
     >
       ✕

@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // The files the stage's Send in Outlook carries ride with the one route
+  // that serves them (src/lib/collateral/attachments.ts), and no other.
+  outputFileTracingIncludes: {
+    "/groundwork/attach/[id]": ["./collateral/**/*", "./intelligence/flyers/*.pdf"],
+  },
   experimental: {
     serverActions: {
       // The vault's pieces (D8 as amended 2026-10-05 — CLAUDE.md, The Chute):

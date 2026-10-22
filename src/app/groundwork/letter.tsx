@@ -4,7 +4,9 @@
 // the stage"): the move's note, drafted before the send band, edited in
 // place, and sent through Outlook. Send is the stage's one orange move: it
 // opens the draft in the mail client, stamps the move and leaves Send's
-// marker until the sent copy comes back. During the send band the stage runs
+// marker until the sent copy comes back. With files ticked under Attach
+// files (ship order 2026-10-22), Send downloads an Outlook draft that
+// carries them instead. During the send band the stage runs
 // as a stack: S sends, E edits, N sets the move aside for now. The page keys
 // the letter by its draft, so a fresh draft from the server opens a fresh
 // pad, and a pad with edits keeps them until they save.
@@ -12,8 +14,48 @@
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { mailtoHref } from "@/lib/groundwork/stage-draft";
+import { draftWithFiles, type EmlFile } from "@/lib/groundwork/eml";
+import { attachmentById } from "@/lib/collateral/attachments";
 import { redraftStage, saveStageDraft, sendFromStage } from "./actions";
+import { AttachPicker } from "./attach-picker";
 import styles from "./groundwork.module.css";
+
+/** One file the picker ticked, fetched whole from the signed-in route a
+ *  piece at a time (a function's response tops out under 5 MB). */
+async function fetchAttachment(id: string): Promise<EmlFile> {
+  const file = attachmentById(id);
+  if (!file) throw new Error("unknown file");
+  const pieces: Uint8Array[] = [];
+  for (let part = 0, parts = 1; part < parts; part++) {
+    const res = await fetch(`/groundwork/attach/${encodeURIComponent(id)}?part=${part}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`file ${id} part ${part}: ${res.status}`);
+    parts = Number(res.headers.get("x-attach-parts") ?? "1") || 1;
+    pieces.push(new Uint8Array(await res.arrayBuffer()));
+  }
+  const size = pieces.reduce((n, p) => n + p.length, 0);
+  if (size !== file.bytes) throw new Error(`file ${id}: ${size} of ${file.bytes} bytes`);
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const p of pieces) {
+    bytes.set(p, at);
+    at += p.length;
+  }
+  return { name: file.name, mime: file.mime, bytes };
+}
+
+/** Hand the browser a draft to save; opened, Outlook shows it ready to send. */
+function downloadDraft(eml: string, who: string): void {
+  const blob = new Blob([eml], { type: "message/rfc822" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Note to ${(who || "them").replace(/[^\w .-]/g, "")}.eml`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
 
 export type RunPip = "seen" | "sent" | "now" | "left";
 
@@ -65,18 +107,66 @@ export function StageLetter({
     start(() => saveStageDraft(accountId, mk, subject, body));
   };
 
+  // The files the picker ticked ride with Send (ship order
+  // 2026-10-22). With none, Send opens Outlook as it always has.
+  const [picked, setPicked] = useState<string[]>([]);
+
   // A save in flight never holds Send back; only a send already going does.
   const sending = useRef(false);
+
+  // A mailto link carries no files, so Send downloads an Outlook draft that
+  // does, and stamps the move once the draft is in hand. A file that fails
+  // to load stamps nothing.
+  const sendWithFiles = async () => {
+    const n = picked.length;
+    setNote(
+      n === 1 ? "Packing the file into the draft." : `Packing ${n} files into the draft.`,
+    );
+    try {
+      const files = await Promise.all(picked.map(fetchAttachment));
+      downloadDraft(
+        draftWithFiles({
+          to: { name: to.name, email: to.email },
+          subject,
+          body,
+          files,
+          stamp: new Date(),
+        }),
+        to.name,
+      );
+    } catch {
+      setNote("A file didn't load. Nothing was stamped. Send again.");
+      sending.current = false;
+      return;
+    }
+    if (!canWrite) {
+      setNote("Downloaded. Open it and Outlook shows the draft.");
+      sending.current = false;
+      return;
+    }
+    saved.current = { subject, body };
+    setNote("Downloaded. Open it to send. It's on Done today.");
+    start(async () => {
+      await sendFromStage(accountId, mk, subject, body);
+      sending.current = false;
+      router.refresh();
+    });
+  };
+
   const send = () => {
     if (sending.current) return;
     sending.current = true;
+    if (picked.length > 0) {
+      void sendWithFiles();
+      return;
+    }
     window.location.href = mailtoHref({ email: to.email, subject, body });
     if (!canWrite) {
       sending.current = false;
       return;
     }
     saved.current = { subject, body };
-    setNote("Opened in Outlook. The move stamps when your sent copy comes back.");
+    setNote("Opened in Outlook. It's on Done today.");
     start(async () => {
       await sendFromStage(accountId, mk, subject, body);
       sending.current = false;
@@ -182,6 +272,7 @@ export function StageLetter({
           <span>Edits here carry to Outlook</span>
         </div>
       </div>
+      <AttachPicker picked={picked} onChange={setPicked} />
       {instruction && <p className={styles.letterFlag}>{instruction}</p>}
       <div className={styles.stgActs}>
         <button type="button" className={styles.btnAccent} onClick={send}>

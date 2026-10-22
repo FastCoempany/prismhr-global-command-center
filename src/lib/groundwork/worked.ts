@@ -43,6 +43,18 @@ export function seatWorked(
  *  before they shared a clock lands a breath before its stamp. */
 export const TAP_PAIR_MS = 60_000;
 
+/** How long after the press a channel tap still names that press's touch. */
+export const PRESS_PAIR_MS = 30 * 60_000;
+
+/** The moment a channel tap files at: the press's own stamp, when the press
+ *  stamped the move within the pairing window, so the take-back finds the
+ *  tap with its stamp (tapOfStamp); otherwise now. */
+export function tapMoment(pressed: Date | null, now: Date): Date {
+  if (!pressed) return now;
+  const gap = now.getTime() - pressed.getTime();
+  return gap >= 0 && gap <= PRESS_PAIR_MS ? pressed : now;
+}
+
 /** The tap a stamp filed with it, so the take-back withdraws the move's own
  *  touch and never another move's from earlier in the day (pass 8 G8). A
  *  stamp written by Copy filed no tap and takes none back. */

@@ -315,11 +315,14 @@ export default async function GroundworkPage({
   // whose account the record shows sent to today is worked, whether it went
   // from the stage or straight from Outlook. The stamp is the record's, so
   // it carries no take-back: a filed email is a fact, not a stamp.
+  // An account already on the wing by a stamp keeps that one line: the
+  // record's send closes its move without painting a second.
+  const stamped = new Set(doneToday.map((d) => d.accountId));
   const live = liveMoves(rankedAll, doneTimes, dayKey).filter((q) => {
     if (!isEmailRule(q.ruleId) || !recordSendToday.has(q.accountId)) return true;
     const touch = sendToday.get(q.accountId);
     const name = getPeo(q.accountId)?.name;
-    if (name && touch)
+    if (name && touch && !stamped.has(q.accountId))
       doneToday.push({
         name,
         at: clockShort(touch.at),
