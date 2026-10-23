@@ -146,7 +146,7 @@ export function DoneWing({
             {d.sub === WAITING_ON_COPY ? (
               <span
                 className={styles.wingPend}
-                title="Sent from the stage. It stamps when your sent copy comes back."
+                title="Sent from the stage. Your sent copy fills in the channel when it comes back."
               >
                 ◐
               </span>
@@ -314,7 +314,10 @@ export function WorkedControl({
       </button>
     </form>
   ) : (
+    // Keyed by the move, so a row left open on one move never carries to
+    // the next one the stage shows.
     <ChannelAsk
+      key={mk}
       mk={mk}
       accountId={accountId}
       contacts={contacts}

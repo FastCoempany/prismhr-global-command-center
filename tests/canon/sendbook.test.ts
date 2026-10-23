@@ -1292,7 +1292,7 @@ describe("A10.22 · the chip rows carry ✕ to close without filing", () => {
     }
   });
 
-  test("both rows paint ✕ last, titled to say nothing files", async () => {
+  test("both rows paint ✕ last, titled to say the move stays worked", async () => {
     const { AskRow } = await import("../../src/app/groundwork/channel-ask");
     const open = askStep(ASK_IDLE, { kind: "open" }, []).state;
     const who = askStep(open, { kind: "pick", channel: "CALL" }, [
@@ -1311,7 +1311,7 @@ describe("A10.22 · the chip rows carry ✕ to close without filing", () => {
       );
       assert.match(
         html,
-        /<button type="button" class="[^"]*" title="Never mind\. Nothing files\.">✕<\/button><\/span>$/,
+        /<button type="button" class="[^"]*" title="Close\. The move stays worked; ↺ on the wing takes it back\.">✕<\/button><\/span>$/,
       );
     }
   });
@@ -1389,5 +1389,166 @@ describe("the register past its cap opens every line (pass 10, the click-depth l
       page,
       /const cap = all === "1" \? Number\.POSITIVE_INFINITY : LINE_CAP;/,
     );
+  });
+});
+
+// Ship order 2026-10-22: "I need the app to add whatever I click
+// 'Worked it' for to the 'Done today' far left column", because sometimes the
+// operator sends their own email in place of the draft. Worked it stamps on
+// the press; the chip row after it only names the channel.
+describe("Worked it stamps on the press, and the chip names the channel", () => {
+  const src = (p: string) => readFileSync(join(cwd(), p), "utf8");
+
+  test("the press stamps the move with no refresh, so the chip row stays in place", () => {
+    const actions = src("src/app/groundwork/actions.ts");
+    const press = actions.slice(
+      actions.indexOf("export async function pressWorked"),
+      actions.indexOf("\n}\n", actions.indexOf("export async function pressWorked")),
+    );
+    assert.match(press, /writeStamp\(groundworkDoneKey\(now, mk\), now\)/);
+    assert.doesNotMatch(press, /revalidatePath/);
+    const ask = src("src/app/groundwork/channel-ask.tsx");
+    assert.match(
+      ask,
+      /if \(e\.kind === "open" && state\.stage === "idle"\)\s+startTransition\(async \(\) => \{\s+await pressWorked\(mk, accountId\);/,
+    );
+    assert.match(ask, /if \(e\.kind === "close"\) router\.refresh\(\);/);
+  });
+
+  test("the chip's tap files at the press's moment, so the take-back finds it", async () => {
+    const { tapMoment, PRESS_PAIR_MS, tapOfStamp } =
+      await import("../../src/lib/groundwork/worked");
+    const pressed = new Date("2026-10-22T15:00:00.000Z");
+    const soon = new Date(pressed.getTime() + 20_000);
+    assert.equal(tapMoment(pressed, soon).getTime(), pressed.getTime());
+    const late = new Date(pressed.getTime() + PRESS_PAIR_MS + 1);
+    assert.equal(tapMoment(pressed, late).getTime(), late.getTime());
+    assert.equal(tapMoment(null, soon).getTime(), soon.getTime());
+    const at = tapMoment(pressed, soon);
+    assert.ok(tapOfStamp([{ createdAt: at }], pressed), "the tap pairs with its stamp");
+    const actions = src("src/app/groundwork/actions.ts");
+    assert.match(actions, /const at = tapMoment\(pressed\?\.doneAt \?\? null, now\);/);
+    // A move that already carries its touch today files no second one, so
+    // no two touches share the stamp's moment (Codex review of #418).
+    assert.match(
+      actions,
+      /where: \{ accountId: `\$\{SENDBOOK_NS\}\$\{accountId\}`, createdAt: pressed\.doneAt \}[\s\S]{0,120}\}\)\s+\.catch\(\(\) => null\);\s+if \(carried\) \{\s+revalidatePath\("\/groundwork"\);\s+return;/,
+    );
+    assert.ok(
+      actions.indexOf("if (carried)") < actions.indexOf("const at = tapMoment("),
+      "the carried check runs before any tap files",
+    );
+    // A tap past the window moves the stamp to itself, so ↺ still finds it.
+    assert.match(
+      actions,
+      /if \(pressed && at\.getTime\(\) !== pressed\.doneAt\.getTime\(\)\)\s+await getPrisma\(\)\s+\.taskDone\.update\(\{ where: \{ key \}, data: \{ doneAt: at \} \}\)/,
+    );
+  });
+
+  test("a tap long after the press is taken back with its stamp; a tapless stamp takes no other move's tap", async () => {
+    const { takeBack, tapMoment, PRESS_PAIR_MS } =
+      await import("../../src/lib/groundwork/worked");
+    const run = async (gapMs: number) => {
+      const pressed = new Date("2026-10-22T15:00:00.000Z");
+      const now = new Date(pressed.getTime() + gapMs);
+      // What workedChannel writes: the press's stamp, then the tap at its
+      // moment, the stamp moved to the tap when they part.
+      const at = tapMoment(pressed, now);
+      const stamps = new Map([["groundwork:2026-10-22:A1:silence-bump", at]]);
+      const taps = [
+        // Another move's tap on the account, half a minute before the press.
+        { id: "other", createdAt: new Date(pressed.getTime() - 30_000) },
+        { id: "own", createdAt: at },
+      ];
+      const deleted: string[] = [];
+      await takeBack(
+        {
+          stampAt: async (k) => stamps.get(k) ?? null,
+          deleteStamp: async (k) => void stamps.delete(k),
+          tapsBetween: async (_k, from, to) =>
+            taps.filter((t) => t.createdAt >= from && t.createdAt <= to),
+          deleteTap: async (id) => void deleted.push(id),
+        },
+        "A1:silence-bump",
+        "A1",
+        new Date("2026-10-22T18:00:00.000Z"),
+      );
+      return deleted;
+    };
+    assert.deepEqual(await run(20_000), ["own"]);
+    assert.deepEqual(await run(PRESS_PAIR_MS + 60_000), ["own"]);
+    // A press closed with ✕ filed no tap: its ↺ leaves the other move's.
+    const { tapOfStamp } = await import("../../src/lib/groundwork/worked");
+    assert.equal(
+      tapOfStamp(
+        [{ createdAt: new Date("2026-10-22T14:59:30.000Z") }],
+        new Date("2026-10-22T15:00:00.000Z"),
+      ),
+      null,
+    );
+  });
+
+  test("a row left open on one move never carries to the next", () => {
+    assert.match(src("src/app/groundwork/face.tsx"), /<ChannelAsk\s+key=\{mk\}/);
+  });
+
+  test("an older Sales Nav alert stamps its move too", () => {
+    const spine = src("src/app/groundwork/spine.tsx");
+    const worked = spine.slice(
+      spine.indexOf("onWorked={async"),
+      spine.indexOf("onUnwork="),
+    );
+    assert.doesNotMatch(worked, /if \(c\.newest\)/);
+    assert.match(worked, /await workedChannel\(/);
+    const unwork = spine.slice(spine.indexOf("onUnwork="), spine.indexOf("onMute="));
+    assert.match(unwork, /if \(c\.stampedToday\) await unWork\(/);
+    assert.match(
+      src("src/app/groundwork/page.tsx"),
+      /markedToday: spineMarkedToday\.has\(it\.key\)/,
+    );
+  });
+
+  test("an older alert's ↺ returns the move only when its own mark went on today", async () => {
+    const { spineWorked } = await import("../../src/lib/groundwork/spine");
+    const now = new Date("2026-10-22T18:00:00.000Z");
+    const it = {
+      accountId: "A1",
+      rule: "post-trigger" as const,
+      at: "2026-08-03T15:00:00.000Z",
+    };
+    const keys = ["groundwork:2026-10-22:A1:post-trigger"];
+    const older = (marked: boolean, markedToday: boolean) =>
+      spineWorked(it, keys, now, { newest: false, marked, markedToday });
+    assert.equal(older(true, true).stampedToday, true);
+    assert.equal(
+      older(true, false).stampedToday,
+      false,
+      "an old mark never takes back today's stamp",
+    );
+    assert.equal(older(false, false).stampedToday, false);
+    assert.equal(
+      older(false, false).worked,
+      false,
+      "today's stamp never marks an older alert worked",
+    );
+    assert.equal(spineWorked(it, keys, now, { newest: true }).stampedToday, true);
+  });
+
+  test("an account the wing already shows by a stamp gets no second line from the record", () => {
+    const page = src("src/app/groundwork/page.tsx");
+    assert.match(
+      page,
+      /const stamped = new Set\(doneToday\.map\(\(d\) => d\.accountId\)\);/,
+    );
+    assert.match(page, /if \(name && touch && !stamped\.has\(q\.accountId\)\)/);
+  });
+
+  test("✕ keeps the stamp and says so", async () => {
+    const ask = src("src/app/groundwork/channel-ask.tsx");
+    assert.match(
+      ask,
+      /title="Close\. The move stays worked; ↺ on the wing takes it back\."/,
+    );
+    assert.doesNotMatch(ask, /Nothing files/);
   });
 });

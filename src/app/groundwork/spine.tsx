@@ -230,16 +230,16 @@ export function SpineColumn({
       onWorked={async (used) => {
         if (!c.rule) return;
         setBusy(c.key);
-        // Only the newest alert's move is on the queue; an older one is
-        // marked worked by itself and stamps nothing.
-        if (c.newest)
-          await workedChannel(
-            `${c.accountId}:${c.rule}`,
-            c.accountId,
-            channelOf(c, used),
-            c.who || c.draft?.to || "",
-            clauseOf(c),
-          );
+        // Whatever Worked it is clicked for lands in Done today (the
+        // ship order 2026-10-22): an older alert stamps its rule's
+        // move too, and a move already stamped today keeps its one line.
+        await workedChannel(
+          `${c.accountId}:${c.rule}`,
+          c.accountId,
+          channelOf(c, used),
+          c.who || c.draft?.to || "",
+          clauseOf(c),
+        );
         await markAlertWorked(c.key);
         setBusy(null);
         setOpen(null);
@@ -248,8 +248,9 @@ export function SpineColumn({
         if (!c.rule) return;
         setBusy(c.key);
         await unmarkAlertWorked(c.key);
-        if (c.newest && c.stampedToday)
-          await unWork(`${c.accountId}:${c.rule}`, c.accountId);
+        // An older alert's Worked it stamps the move too, so its ↺ returns
+        // the move when its own mark went on today (spineWorked).
+        if (c.stampedToday) await unWork(`${c.accountId}:${c.rule}`, c.accountId);
         setBusy(null);
       }}
       onMute={async () => {

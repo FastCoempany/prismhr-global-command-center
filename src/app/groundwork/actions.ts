@@ -14,7 +14,8 @@ import { getPrisma, hasDatabaseEnv } from "@/lib/db";
 import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
-import { takeBack, workChannel } from "@/lib/groundwork/worked";
+import { takeBack, tapMoment, workChannel } from "@/lib/groundwork/worked";
+import { SENDBOOK_NS } from "@/lib/sendbook/read";
 import { roomResearch } from "@/app/room/actions";
 import { SOURCES } from "@/lib/ingest/dialect";
 import {
@@ -89,6 +90,36 @@ export async function workedChannel(
 ): Promise<void> {
   if (!(await requireWrite())) return;
   if (!getPeo(accountId) || !mk || mk.length > 200) return;
+  // The press stamped the move already (pressWorked); the tap files at the
+  // stamp's own moment so the take-back finds it (tapOfStamp). A tap long
+  // after the press moves the stamp to itself instead, so the two still
+  // pair and the wing shows when the channel was named.
+  const now = new Date();
+  const key = groundworkDoneKey(now, mk);
+  const pressed = await getPrisma()
+    .taskDone.findUnique({ where: { key }, select: { doneAt: true } })
+    .catch(() => null);
+  // A move that already carries its touch today keeps that one: a second
+  // Worked it for it (an older alert of the same rule) files nothing more,
+  // so no two touches share a stamp's moment and ↺ always withdraws the
+  // stamp's own.
+  if (pressed) {
+    const carried = await getPrisma()
+      .accountNote.findFirst({
+        where: { accountId: `${SENDBOOK_NS}${accountId}`, createdAt: pressed.doneAt },
+        select: { id: true },
+      })
+      .catch(() => null);
+    if (carried) {
+      revalidatePath("/groundwork");
+      return;
+    }
+  }
+  const at = tapMoment(pressed?.doneAt ?? null, now);
+  if (pressed && at.getTime() !== pressed.doneAt.getTime())
+    await getPrisma()
+      .taskDone.update({ where: { key }, data: { doneAt: at } })
+      .catch(() => undefined);
   await workChannel(
     {
       note: async (row) => {
@@ -102,9 +133,21 @@ export async function workedChannel(
       stamp: writeStamp,
     },
     { mk, accountId, channel, contact, clause },
-    new Date(),
+    at,
   );
   revalidatePath("/groundwork");
+}
+
+// Worked it stamps on the press (ship order 2026-10-22: whatever
+// Worked it is clicked for lands in Done today, whether the draft went or
+// the operator sent their own). The chip row that springs after it only
+// names the channel. No revalidate here: the stage keeps the row in place,
+// and the chip or ✕ refreshes the page.
+export async function pressWorked(mk: string, accountId: string): Promise<void> {
+  if (!(await requireWrite())) return;
+  if (!getPeo(accountId) || !mk || mk.length > 200) return;
+  const now = new Date();
+  await writeStamp(groundworkDoneKey(now, mk), now);
 }
 
 // The take-back (founder-decreed 2026-08-19): an accidental stamp must be

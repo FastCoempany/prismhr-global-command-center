@@ -484,30 +484,34 @@ export function newestPerRule(
  *  queue's move is about that one: working an August post never marks
  *  October's (review of #411). `today` is whether the ↺ shows: a mark can
  *  always be taken back, a stamp only on its own day. `stampedToday` says
- *  the take-back also returns the queue's move. */
+ *  the take-back also returns the queue's move: the newest alert's always
+ *  when the move is stamped today, an older alert's only when its own mark
+ *  went on today, because its Worked it stamps the move too (ship order
+ *  2026-10-22). */
 export function spineWorked(
   it: Pick<SpineItem, "accountId" | "rule" | "at">,
   stampKeys: Iterable<string>,
   now: Date,
-  own: { newest?: boolean; marked?: boolean } = {},
+  own: { newest?: boolean; marked?: boolean; markedToday?: boolean } = {},
 ): { worked: boolean; today: boolean; stampedToday: boolean } {
   const newest = own.newest ?? true;
   const marked = own.marked ?? false;
   let stamped = false;
-  let stampedToday = false;
-  if (it.rule && newest) {
+  let moveToday = false;
+  if (it.rule) {
     const since = userDayKey(it.at);
     const todayKey = userDayKey(now);
     for (const k of stampKeys) {
       const m = /^groundwork:(\d{4}-\d{2}-\d{2}):(.+)$/.exec(k);
-      if (!m || m[2] !== `${it.accountId}:${it.rule}` || m[1]! < since) continue;
-      stamped = true;
-      if (m[1] === todayKey) stampedToday = true;
+      if (!m || m[2] !== `${it.accountId}:${it.rule}`) continue;
+      if (m[1] === todayKey) moveToday = true;
+      if (newest && m[1]! >= since) stamped = true;
     }
   }
+  const stampedToday = moveToday && (newest || (marked && (own.markedToday ?? false)));
   return {
     worked: marked || stamped,
-    today: marked || stampedToday,
+    today: marked || (newest && stampedToday),
     stampedToday,
   };
 }
