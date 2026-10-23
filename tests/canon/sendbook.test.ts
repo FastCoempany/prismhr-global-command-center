@@ -1428,6 +1428,16 @@ describe("Worked it stamps on the press, and the chip names the channel", () => 
     assert.ok(tapOfStamp([{ createdAt: at }], pressed), "the tap pairs with its stamp");
     const actions = src("src/app/groundwork/actions.ts");
     assert.match(actions, /const at = tapMoment\(pressed\?\.doneAt \?\? null, now\);/);
+    // A move that already carries its touch today files no second one, so
+    // no two touches share the stamp's moment (Codex review of #418).
+    assert.match(
+      actions,
+      /where: \{ accountId: `\$\{SENDBOOK_NS\}\$\{accountId\}`, createdAt: pressed\.doneAt \}[\s\S]{0,120}\}\)\s+\.catch\(\(\) => null\);\s+if \(carried\) \{\s+revalidatePath\("\/groundwork"\);\s+return;/,
+    );
+    assert.ok(
+      actions.indexOf("if (carried)") < actions.indexOf("const at = tapMoment("),
+      "the carried check runs before any tap files",
+    );
     // A tap past the window moves the stamp to itself, so ↺ still finds it.
     assert.match(
       actions,

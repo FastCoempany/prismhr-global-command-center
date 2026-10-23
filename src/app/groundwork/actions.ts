@@ -15,6 +15,7 @@ import { createAccountNoteRow } from "@/lib/notes/write";
 import { getPeo } from "@/lib/book";
 import { READOUT_READ_KEY, groundworkDoneKey } from "@/lib/groundwork/file";
 import { takeBack, tapMoment, workChannel } from "@/lib/groundwork/worked";
+import { SENDBOOK_NS } from "@/lib/sendbook/read";
 import { roomResearch } from "@/app/room/actions";
 import { SOURCES } from "@/lib/ingest/dialect";
 import {
@@ -98,6 +99,22 @@ export async function workedChannel(
   const pressed = await getPrisma()
     .taskDone.findUnique({ where: { key }, select: { doneAt: true } })
     .catch(() => null);
+  // A move that already carries its touch today keeps that one: a second
+  // Worked it for it (an older alert of the same rule) files nothing more,
+  // so no two touches share a stamp's moment and ↺ always withdraws the
+  // stamp's own.
+  if (pressed) {
+    const carried = await getPrisma()
+      .accountNote.findFirst({
+        where: { accountId: `${SENDBOOK_NS}${accountId}`, createdAt: pressed.doneAt },
+        select: { id: true },
+      })
+      .catch(() => null);
+    if (carried) {
+      revalidatePath("/groundwork");
+      return;
+    }
+  }
   const at = tapMoment(pressed?.doneAt ?? null, now);
   if (pressed && at.getTime() !== pressed.doneAt.getTime())
     await getPrisma()
