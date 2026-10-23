@@ -15,6 +15,21 @@ export const dynamic = "force-dynamic";
 
 const noStore = { "cache-control": "no-store" };
 
+const FLYERS = "intelligence/flyers/";
+const COLLATERAL = "collateral/";
+
+/** A listed file's place on disk. Each folder is spelled out, so the build
+ *  traces those two folders with the route and never the whole repo, which
+ *  a path joined from a variable alone would pull in. */
+function onDisk(path: string): string | null {
+  if (path.includes("..")) return null;
+  if (path.startsWith(FLYERS))
+    return join(process.cwd(), "intelligence", "flyers", path.slice(FLYERS.length));
+  if (path.startsWith(COLLATERAL))
+    return join(process.cwd(), "collateral", path.slice(COLLATERAL.length));
+  return null;
+}
+
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const access = await getAppAccess().catch(() => null);
   if (access?.status !== "active")
@@ -29,9 +44,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   if (!Number.isInteger(part) || part < 0 || part >= parts)
     return NextResponse.json({ ok: false }, { status: 400, headers: noStore });
 
+  const at = onDisk(file.path);
+  if (!at) return NextResponse.json({ ok: false }, { status: 404, headers: noStore });
   let bytes: Buffer;
   try {
-    bytes = await readFile(join(process.cwd(), file.path));
+    bytes = await readFile(at);
   } catch {
     return NextResponse.json({ ok: false }, { status: 404, headers: noStore });
   }

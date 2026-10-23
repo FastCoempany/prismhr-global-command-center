@@ -545,6 +545,13 @@ export default async function GroundworkPage({
   const spineMarked = new Set(
     (notesMap.get(SPINE_WORKED) ?? []).map((n) => n.body.trim()),
   );
+  // Marks set today: an older alert's ↺ returns the move its own Worked it
+  // stamped today (spineWorked).
+  const spineMarkedToday = new Set(
+    (notesMap.get(SPINE_WORKED) ?? [])
+      .filter((n) => userDayKey(n.createdAt) === dayKey)
+      .map((n) => n.body.trim()),
+  );
   const spineNewest = newestPerRule(spineAll);
   const spineCards: SpineCard[] = [];
   const spineHidden: { key: string; label: string }[] = [];
@@ -626,6 +633,7 @@ export default async function GroundworkPage({
     const stamped = spineWorked(it, stampKeys, now, {
       newest,
       marked: spineMarked.has(it.key),
+      markedToday: spineMarkedToday.has(it.key),
     });
     const [first, ...restName] = it.who.split(/\s+/);
     spineCards.push({

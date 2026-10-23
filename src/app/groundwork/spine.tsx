@@ -248,8 +248,9 @@ export function SpineColumn({
         if (!c.rule) return;
         setBusy(c.key);
         await unmarkAlertWorked(c.key);
-        if (c.newest && c.stampedToday)
-          await unWork(`${c.accountId}:${c.rule}`, c.accountId);
+        // An older alert's Worked it stamps the move too, so its ↺ returns
+        // the move when its own mark went on today (spineWorked).
+        if (c.stampedToday) await unWork(`${c.accountId}:${c.rule}`, c.accountId);
         setBusy(null);
       }}
       onMute={async () => {

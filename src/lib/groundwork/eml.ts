@@ -61,6 +61,19 @@ export function headerWord(s: string): string {
   return words.join("\r\n ");
 }
 
+/** A display name as the To line carries it: RFC 2047 words when it is not
+ *  ASCII, quoted when it holds a character that would split the line into
+ *  more recipients or redirect it (RFC 5322 specials: "Ersoff, SPHR"),
+ *  else plain. */
+export function displayName(s: string): string {
+  const clean = s.replace(/[\r\n]+/g, " ").trim();
+  if (!/^[\x20-\x7e]*$/.test(clean)) return headerWord(clean);
+  return /[()<>[\]:;@\\,."]/.test(clean) ? `"${clean.replace(/[\\"]/g, "\\$&")}"` : clean;
+}
+
+/** One bare address, nothing that could add a second. */
+const ADDRESS = /^[^\s@,;<>"()[\]\\]+@[^\s@,;<>"()[\]\\]+$/;
+
 /** A file name as a MIME parameter, quoted. */
 const param = (s: string): string => `"${headerWord(s).replace(/"/g, "'")}"`;
 
@@ -76,11 +89,9 @@ export function draftWithFiles(input: {
 }): string {
   const tag = input.stamp.getTime().toString(36);
   const boundary = `=_prismhr_${tag}`;
-  const to = input.to.email
-    ? input.to.name
-      ? `${headerWord(input.to.name)} <${input.to.email}>`
-      : input.to.email
-    : "";
+  const email = input.to.email.trim();
+  const name = displayName(input.to.name);
+  const to = ADDRESS.test(email) ? (name ? `${name} <${email}>` : email) : "";
   const head = [
     ...(to ? [`To: ${to}`] : []),
     `Subject: ${headerWord(input.subject)}`,

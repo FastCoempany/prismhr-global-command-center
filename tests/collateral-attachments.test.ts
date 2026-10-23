@@ -210,6 +210,36 @@ describe("the draft carries every file whole", () => {
     });
   });
 
+  test("a name with a comma, a quote or an at sign stays one recipient", async () => {
+    const { displayName } = await import("../src/lib/groundwork/eml");
+    assert.equal(displayName("Cristina Bell"), "Cristina Bell");
+    assert.equal(displayName("Jason Ersoff, SPHR, PHRca"), '"Jason Ersoff, SPHR, PHRca"');
+    assert.equal(displayName('Pat "PJ" Jones'), '"Pat \\"PJ\\" Jones"');
+    assert.equal(
+      displayName("Jenny jl@amplifyhr.example"),
+      '"Jenny jl@amplifyhr.example"',
+    );
+    assert.match(displayName("José Peña"), /^=\?UTF-8\?B\?/);
+    const eml = draftWithFiles({
+      to: { name: "Jason Ersoff, SPHR, PHRca", email: "jason@stitch.example" },
+      subject: "Hi",
+      body: "Hi",
+      files: [],
+      stamp: new Date("2026-10-22T15:00:00Z"),
+    });
+    assert.match(eml, /^To: "Jason Ersoff, SPHR, PHRca" <jason@stitch\.example>\r\n/);
+    for (const email of ["a@b.example, c@d.example", "a@b.example>x", "not an address"]) {
+      const bad = draftWithFiles({
+        to: { name: "Pat", email },
+        subject: "Hi",
+        body: "Hi",
+        files: [],
+        stamp: new Date("2026-10-22T15:00:00Z"),
+      });
+      assert.ok(!/^To:/m.test(bad), `${email} never reaches To`);
+    }
+  });
+
   test("no address on file leaves To for Outlook", () => {
     const eml = draftWithFiles({
       to: { name: "Pat", email: "" },
@@ -236,6 +266,13 @@ describe("the door is signed in and serves pieces under the cap", () => {
       /status !== "active"\)\s*return NextResponse\.json\(\{ ok: false \}, \{ status: 401/,
     );
     assert.match(route, /attachmentById\(id\)/, "it serves only listed files");
+    // A cwd joined to a variable alone would ship the whole repo with the
+    // route; each folder is spelled out, and every listed file sits in one.
+    assert.ok(!/join\(process\.cwd\(\), file\.path\)/.test(route));
+    assert.match(route, /join\(process\.cwd\(\), "intelligence", "flyers", /);
+    assert.match(route, /join\(process\.cwd\(\), "collateral", /);
+    for (const a of ATTACHMENTS)
+      assert.match(a.path, /^(intelligence\/flyers|collateral)\/[^.]/, a.path);
   });
 
   test("a piece stays under Vercel's 4.5 MB response cap, and the files ship with the route", () => {
@@ -256,5 +293,8 @@ describe("the door is signed in and serves pieces under the cap", () => {
     const letter = read("src/app/groundwork/letter.tsx");
     assert.equal(letter.match(/styles\.btnAccent/g)?.length, 1);
     assert.match(letter, /<AttachPicker picked=\{picked\} onChange=\{setPicked\} \/>/);
+    // The saved draft keeps the person's name whole: accents and apostrophes stay.
+    assert.ok(!letter.includes("[^\\w .-]"));
+    assert.match(letter, /a\.download = `Note to \$\{name \|\| "them"\}\.eml`;/);
   });
 });

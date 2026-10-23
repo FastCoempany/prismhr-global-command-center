@@ -1426,9 +1426,55 @@ describe("Worked it stamps on the press, and the chip names the channel", () => 
     assert.equal(tapMoment(null, soon).getTime(), soon.getTime());
     const at = tapMoment(pressed, soon);
     assert.ok(tapOfStamp([{ createdAt: at }], pressed), "the tap pairs with its stamp");
+    const actions = src("src/app/groundwork/actions.ts");
+    assert.match(actions, /const at = tapMoment\(pressed\?\.doneAt \?\? null, now\);/);
+    // A tap past the window moves the stamp to itself, so ↺ still finds it.
     assert.match(
-      src("src/app/groundwork/actions.ts"),
-      /const at = tapMoment\(pressed\?\.doneAt \?\? null, now\);/,
+      actions,
+      /if \(pressed && at\.getTime\(\) !== pressed\.doneAt\.getTime\(\)\)\s+await getPrisma\(\)\s+\.taskDone\.update\(\{ where: \{ key \}, data: \{ doneAt: at \} \}\)/,
+    );
+  });
+
+  test("a tap long after the press is taken back with its stamp; a tapless stamp takes no other move's tap", async () => {
+    const { takeBack, tapMoment, PRESS_PAIR_MS } =
+      await import("../../src/lib/groundwork/worked");
+    const run = async (gapMs: number) => {
+      const pressed = new Date("2026-10-22T15:00:00.000Z");
+      const now = new Date(pressed.getTime() + gapMs);
+      // What workedChannel writes: the press's stamp, then the tap at its
+      // moment, the stamp moved to the tap when they part.
+      const at = tapMoment(pressed, now);
+      const stamps = new Map([["groundwork:2026-10-22:A1:silence-bump", at]]);
+      const taps = [
+        // Another move's tap on the account, half a minute before the press.
+        { id: "other", createdAt: new Date(pressed.getTime() - 30_000) },
+        { id: "own", createdAt: at },
+      ];
+      const deleted: string[] = [];
+      await takeBack(
+        {
+          stampAt: async (k) => stamps.get(k) ?? null,
+          deleteStamp: async (k) => void stamps.delete(k),
+          tapsBetween: async (_k, from, to) =>
+            taps.filter((t) => t.createdAt >= from && t.createdAt <= to),
+          deleteTap: async (id) => void deleted.push(id),
+        },
+        "A1:silence-bump",
+        "A1",
+        new Date("2026-10-22T18:00:00.000Z"),
+      );
+      return deleted;
+    };
+    assert.deepEqual(await run(20_000), ["own"]);
+    assert.deepEqual(await run(PRESS_PAIR_MS + 60_000), ["own"]);
+    // A press closed with ✕ filed no tap: its ↺ leaves the other move's.
+    const { tapOfStamp } = await import("../../src/lib/groundwork/worked");
+    assert.equal(
+      tapOfStamp(
+        [{ createdAt: new Date("2026-10-22T14:59:30.000Z") }],
+        new Date("2026-10-22T15:00:00.000Z"),
+      ),
+      null,
     );
   });
 
@@ -1444,6 +1490,38 @@ describe("Worked it stamps on the press, and the chip names the channel", () => 
     );
     assert.doesNotMatch(worked, /if \(c\.newest\)/);
     assert.match(worked, /await workedChannel\(/);
+    const unwork = spine.slice(spine.indexOf("onUnwork="), spine.indexOf("onMute="));
+    assert.match(unwork, /if \(c\.stampedToday\) await unWork\(/);
+    assert.match(
+      src("src/app/groundwork/page.tsx"),
+      /markedToday: spineMarkedToday\.has\(it\.key\)/,
+    );
+  });
+
+  test("an older alert's ↺ returns the move only when its own mark went on today", async () => {
+    const { spineWorked } = await import("../../src/lib/groundwork/spine");
+    const now = new Date("2026-10-22T18:00:00.000Z");
+    const it = {
+      accountId: "A1",
+      rule: "post-trigger" as const,
+      at: "2026-08-03T15:00:00.000Z",
+    };
+    const keys = ["groundwork:2026-10-22:A1:post-trigger"];
+    const older = (marked: boolean, markedToday: boolean) =>
+      spineWorked(it, keys, now, { newest: false, marked, markedToday });
+    assert.equal(older(true, true).stampedToday, true);
+    assert.equal(
+      older(true, false).stampedToday,
+      false,
+      "an old mark never takes back today's stamp",
+    );
+    assert.equal(older(false, false).stampedToday, false);
+    assert.equal(
+      older(false, false).worked,
+      false,
+      "today's stamp never marks an older alert worked",
+    );
+    assert.equal(spineWorked(it, keys, now, { newest: true }).stampedToday, true);
   });
 
   test("an account the wing already shows by a stamp gets no second line from the record", () => {

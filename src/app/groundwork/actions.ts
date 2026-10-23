@@ -90,15 +90,19 @@ export async function workedChannel(
   if (!(await requireWrite())) return;
   if (!getPeo(accountId) || !mk || mk.length > 200) return;
   // The press stamped the move already (pressWorked); the tap files at the
-  // stamp's own moment so the take-back finds it (tapOfStamp).
+  // stamp's own moment so the take-back finds it (tapOfStamp). A tap long
+  // after the press moves the stamp to itself instead, so the two still
+  // pair and the wing shows when the channel was named.
   const now = new Date();
+  const key = groundworkDoneKey(now, mk);
   const pressed = await getPrisma()
-    .taskDone.findUnique({
-      where: { key: groundworkDoneKey(now, mk) },
-      select: { doneAt: true },
-    })
+    .taskDone.findUnique({ where: { key }, select: { doneAt: true } })
     .catch(() => null);
   const at = tapMoment(pressed?.doneAt ?? null, now);
+  if (pressed && at.getTime() !== pressed.doneAt.getTime())
+    await getPrisma()
+      .taskDone.update({ where: { key }, data: { doneAt: at } })
+      .catch(() => undefined);
   await workChannel(
     {
       note: async (row) => {

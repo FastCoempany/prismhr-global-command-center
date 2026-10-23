@@ -193,6 +193,27 @@ describe("Send in Outlook carries the files ticked", () => {
     await page.close();
   });
 
+  test("in the run, S sends after a tick: the checkbox never holds the keys", async () => {
+    const page = await mount(browser, FIX, { now: MID });
+    await serveFiles(page);
+    const fold = page.locator($("attach"));
+    await fold.locator("summary").click();
+    await fold.getByLabel(/Referral agreement/).check();
+    assert.equal(
+      await page.evaluate(() => (document.activeElement as HTMLInputElement)?.type),
+      "checkbox",
+    );
+    const download = page.waitForEvent("download");
+    await page.keyboard.press("s");
+    await download;
+    await page.waitForFunction(() =>
+      ((window as unknown as { __calls: [string][] }).__calls ?? []).some(
+        (c) => c[0] === "sendFromStage",
+      ),
+    );
+    await page.close();
+  });
+
   test("a file that fails to load stamps nothing and says so", async () => {
     const page = await mount(browser, FIX, { now: MID });
     await serveFiles(page, true);

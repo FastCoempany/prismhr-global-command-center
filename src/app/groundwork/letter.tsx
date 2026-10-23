@@ -50,7 +50,9 @@ function downloadDraft(eml: string, who: string): void {
   const blob = new Blob([eml], { type: "message/rfc822" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `Note to ${(who || "them").replace(/[^\w .-]/g, "")}.eml`;
+  // Only what a file name cannot hold comes out; accents and apostrophes stay.
+  const name = who.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "").trim();
+  a.download = `Note to ${name || "them"}.eml`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -189,7 +191,14 @@ export function StageLetter({
     if (!run?.on) return;
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) {
+      // A ticked file keeps focus on its checkbox; only text entry holds
+      // the keys back.
+      const typing =
+        !!t &&
+        (t.isContentEditable ||
+          /^(TEXTAREA|SELECT)$/.test(t.tagName) ||
+          (t instanceof HTMLInputElement && !/^(checkbox|radio)$/.test(t.type)));
+      if (t && typing) {
         if (e.key === "Escape") t.blur();
         return;
       }
