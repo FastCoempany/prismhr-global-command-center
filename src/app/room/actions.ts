@@ -518,30 +518,41 @@ async function closeCard(args: {
     });
     if (!card) return { ok: false, reason: "That card is gone." };
     const label = OUTCOME_LABEL[args.status];
+    const at = new Date().toISOString();
+    // The entry files first, so the stamp carries its id and a reopen
+    // withdraws exactly this one.
+    const entry = acct
+      ? await createAccountNoteRow({
+          accountId: acct.id,
+          kind: "account",
+          body: `✓ ${label}. Confirmed by your call.${
+            args.phrase ? ` The evidence: ${redactMoney(args.phrase).slice(0, 160)}` : ""
+          }`,
+          door: "hand",
+          lane: "mine",
+          source: "outcome",
+        }).catch(() => null)
+      : null;
     // The card does NOT leave the board here. A closed deal still has to be
     // able to SAY it closed — the stage meter reads Closed Won / Closed Lost
     // and the row goes quiet at the bottom. Retiring it is its own decision.
-    await prisma.dashCard.update({
-      where: { id: cid },
-      data: {
-        notes: writeOutcome(card.notes, {
-          status: args.status,
-          phrase: redactMoney((args.phrase ?? "").trim()).slice(0, 200),
-          at: new Date().toISOString(),
-        }),
-      },
-    });
-    if (acct) {
-      await createAccountNoteRow({
-        accountId: acct.id,
-        kind: "account",
-        body: `✓ ${label}. Confirmed by your call.${
-          args.phrase ? ` The evidence: ${redactMoney(args.phrase).slice(0, 160)}` : ""
-        }`,
-        door: "hand",
-        lane: "mine",
-        source: "outcome",
-      }).catch(() => null);
+    try {
+      await prisma.dashCard.update({
+        where: { id: cid },
+        data: {
+          notes: writeOutcome(card.notes, {
+            status: args.status,
+            phrase: redactMoney((args.phrase ?? "").trim()).slice(0, 200),
+            at,
+            ...(entry ? { noteId: entry.id } : {}),
+          }),
+        },
+      });
+    } catch (e) {
+      // No stamp, so no entry saying there is one.
+      if (entry)
+        await prisma.accountNote.delete({ where: { id: entry.id } }).catch(() => null);
+      throw e;
     }
     // Quiet this read permanently for the closed card. A close by hand
     // (the row's ☑) answers no read, so it quiets none.
@@ -596,6 +607,11 @@ export async function roomMarkWonByHand(
   return closeCard({ accountId, cardId, noteId: "", status: "won", phrase: "" });
 }
 
+// How far either side of a stamp's moment an older stamp's entry can sit: a
+// little before, in case the store's clock trails ours, and a minute after.
+const STAMP_SLACK_MS = 5 * 1_000;
+const STAMP_MINUTE_MS = 60 * 1_000;
+
 // Reopen (founder's order, 2026-10-26): the closed row's ↺ takes the Closed
 // Won or Closed Lost stamp back, so the deal is live on the board again, and
 // withdraws the outcome entry that stamp filed. The read's own marker and
@@ -621,18 +637,27 @@ export async function roomReopen(
       where: { id: cid },
       data: { notes: writeOutcome(card.notes, null) },
     });
+    // The stamp names its own entry. A stamp from before it did is matched
+    // by its words inside the minute it was written, so another card's
+    // confirmation on the same account is never taken.
     const at = Date.parse(outcome.at);
-    if (acct && !Number.isNaN(at))
+    if (acct && (outcome.noteId || !Number.isNaN(at)))
       await prisma.accountNote
         .deleteMany({
           where: {
             accountId: acct.id,
             source: "outcome",
-            body: {
-              startsWith: `✓ ${OUTCOME_LABEL[outcome.status]}. Confirmed by your call.`,
-            },
-            // A few seconds of slack, in case the store's clock trails ours.
-            createdAt: { gte: new Date(at - 5_000) },
+            ...(outcome.noteId
+              ? { id: outcome.noteId }
+              : {
+                  body: {
+                    startsWith: `✓ ${OUTCOME_LABEL[outcome.status]}. Confirmed by your call.`,
+                  },
+                  createdAt: {
+                    gte: new Date(at - STAMP_SLACK_MS),
+                    lte: new Date(at + STAMP_MINUTE_MS),
+                  },
+                }),
           },
         })
         .catch(() => null);

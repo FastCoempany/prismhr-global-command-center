@@ -225,6 +225,15 @@ describe("Closed Won / Closed Lost — terminal staging", () => {
     assert.equal(readOutcome(open), null);
     assert.equal(open.demo, "x");
   });
+  test("a stamp carries the id of the entry it filed, and an older stamp reads without one", () => {
+    const notes = writeOutcome(
+      {},
+      { status: "won", phrase: "", at: "2026-10-26T15:00:00.000Z", noteId: "note-1" },
+    );
+    assert.equal(readOutcome(notes)?.noteId, "note-1");
+    const old = writeOutcome({}, { status: "won", phrase: "", at: "" });
+    assert.ok(!("noteId" in readOutcome(old)!));
+  });
   test("an unstamped card is simply open", () => {
     assert.equal(readOutcome(null), null);
     assert.equal(readOutcome({}), null);
@@ -755,11 +764,25 @@ describe("Closed Won by hand, and the reopen", () => {
     assert.match(reopen, /requireWrite\(\)/);
     assert.match(reopen, /data: \{ notes: writeOutcome\(card\.notes, null\) \}/);
     assert.match(reopen, /source: "outcome",/);
+    // The stamp's own entry by id; an older stamp by its words in its minute.
+    assert.match(reopen, /\? \{ id: outcome\.noteId \}/);
     assert.match(
       reopen,
       /body: \{\s*startsWith: `✓ \$\{OUTCOME_LABEL\[outcome\.status\]\}\. Confirmed by your call\.`,?\s*\}/,
     );
-    assert.match(reopen, /createdAt: \{ gte: new Date\(at - 5_000\) \}/);
+    assert.match(
+      reopen,
+      /createdAt: \{\s*gte: new Date\(at - STAMP_SLACK_MS\),\s*lte: new Date\(at \+ STAMP_MINUTE_MS\),?\s*\}/,
+    );
+    const close = actions.slice(
+      actions.indexOf("async function closeCard("),
+      actions.indexOf("export async function roomMarkLost("),
+    );
+    assert.ok(
+      close.indexOf("createAccountNoteRow(") < close.indexOf("prisma.dashCard.update("),
+      "the entry files first, so the stamp can carry its id",
+    );
+    assert.match(close, /\.\.\.\(entry \? \{ noteId: entry\.id \} : \{\}\)/);
     assert.doesNotMatch(reopen, /THE RECORD READS/, "the read's own marker stays");
   });
 });

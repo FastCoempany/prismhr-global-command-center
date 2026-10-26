@@ -18,6 +18,9 @@ type DealOutcome = {
   status: OutcomeStatus;
   phrase: string; // the evidence sentence, in the record's own words
   at: string; // ISO — when it was recorded
+  // The record entry the stamp filed, so a reopen withdraws that one entry
+  // and never another card's (an account can hold more than one card).
+  noteId?: string;
 };
 
 export const OUTCOME_LABEL: Record<OutcomeStatus, string> = {
@@ -38,6 +41,9 @@ export function readOutcome(notes: unknown): DealOutcome | null {
       status: p.status,
       phrase: typeof p.phrase === "string" ? p.phrase.slice(0, 200) : "",
       at: typeof p.at === "string" ? p.at : "",
+      ...(typeof p.noteId === "string" && p.noteId
+        ? { noteId: p.noteId.slice(0, 60) }
+        : {}),
     };
   } catch {
     return null;
@@ -62,6 +68,7 @@ export function writeOutcome(
       status: outcome.status,
       phrase: outcome.phrase.slice(0, 200),
       at: outcome.at,
+      ...(outcome.noteId ? { noteId: outcome.noteId.slice(0, 60) } : {}),
     });
   return out;
 }
