@@ -563,6 +563,55 @@ describe("low signal · a section above the closed ledger, and a closed ledger t
     await page.close();
   });
 
+  // Closed Won by hand (founder's order, 2026-10-26).
+  test("☑ asks once in the move's slot, and the confirm stamps the deal won", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const row = rowOf(page, "Simploy");
+    const btn = row.locator($("wonBtn"));
+    assert.equal(await btn.getAttribute("title"), "Mark Closed Won.");
+    assert.equal(await btn.evaluate((el) => getComputedStyle(el).opacity), "0");
+    await row.hover();
+    await page.waitForTimeout(250);
+    assert.equal(await btn.evaluate((el) => getComputedStyle(el).opacity), "1");
+    await btn.click();
+    assert.match(await row.innerText(), /MARK IT CLOSED WON/);
+    // Not yet puts the move back and stamps nothing.
+    await row.getByRole("button", { name: "Not yet" }).click();
+    assert.doesNotMatch(await row.innerText(), /MARK IT CLOSED WON/);
+    assert.ok(!(await callsOf(page)).some(([n]) => n === "roomMarkWonByHand"));
+    await row.hover();
+    await btn.click();
+    const confirm = row.getByRole("button", { name: "Confirm Closed Won" });
+    assert.notEqual(
+      await confirm.evaluate((el) => getComputedStyle(el).backgroundColor),
+      "rgb(230, 112, 30)",
+      "the row's one orange move stays Mark it done",
+    );
+    await confirm.click();
+    await page.waitForFunction(
+      () => (window as { __refreshes?: number[] }).__refreshes?.length,
+    );
+    const call = (await callsOf(page)).find(([n]) => n === "roomMarkWonByHand");
+    assert.ok(call, "the stamp never reached the server");
+    assert.deepEqual(call[1], [ROW_A, "card-simploy"]);
+    await page.close();
+  });
+
+  test("a closed row's ↺ reopens the deal", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const row = rowOf(page, "Axcet HR");
+    const back = row.locator("button[title='Reopen the deal. The stamp comes off.']");
+    assert.equal((await back.innerText()).trim(), "↺");
+    assert.equal(await row.locator($("wonBtn")).count(), 0, "a closed row has no ☑");
+    await back.click();
+    await page.waitForFunction(
+      () => (window as { __refreshes?: number[] }).__refreshes?.length,
+    );
+    const call = (await callsOf(page)).find(([n]) => n === "roomReopen");
+    assert.deepEqual(call?.[1], ["001F000000w38ZZIAY", "card-axcet"]);
+    await page.close();
+  });
+
   test("LOW SIGNAL sits between the live book and the closed ledger", async () => {
     const page = await mount(browser, SECTIONS_FIX);
     const y = async (sel: string) => (await box(page, sel)).y;

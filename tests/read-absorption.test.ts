@@ -550,6 +550,8 @@ describe("the room wires every new mechanism", () => {
     "roomGapsRefill",
     "roomResearch",
     "roomMarkWon",
+    "roomMarkWonByHand",
+    "roomReopen",
     "roomRetire",
   ]) {
     test(`${wired} reaches the client`, () => assert.ok(client.includes(wired)));
@@ -725,6 +727,43 @@ describe("the room wires every new mechanism", () => {
 
 // ── the defects the adversarial pass found, each with the test that would have
 // caught it ───────────────────────────────────────────────────────────────────
+// Closed Won by hand (founder's order, 2026-10-26): the row's ☑ closes the
+// deal with no read to answer, and a closed row's ↺ takes the stamp back.
+describe("Closed Won by hand, and the reopen", () => {
+  const actions = roomActionsSource(root);
+  const fn = (name: string) => {
+    const at = actions.indexOf(`export async function ${name}(`);
+    assert.ok(at >= 0, `${name} exists`);
+    return actions.slice(at, actions.indexOf("\n}\n", at));
+  };
+
+  test("the hand close runs the same close with no read and no evidence", () => {
+    assert.match(
+      fn("roomMarkWonByHand"),
+      /closeCard\(\{ accountId, cardId, noteId: "", status: "won", phrase: "" \}\)/,
+    );
+    // A close that answers no read quiets none.
+    const close = actions.slice(
+      actions.indexOf("async function closeCard("),
+      actions.indexOf("export async function roomMarkLost("),
+    );
+    assert.match(close, /if \(args\.noteId\) \{\s+const key = `loss-dismiss:/);
+  });
+
+  test("the reopen clears the stamp and withdraws only the entry the stamp filed", () => {
+    const reopen = fn("roomReopen");
+    assert.match(reopen, /requireWrite\(\)/);
+    assert.match(reopen, /data: \{ notes: writeOutcome\(card\.notes, null\) \}/);
+    assert.match(reopen, /source: "outcome",/);
+    assert.match(
+      reopen,
+      /body: \{\s*startsWith: `✓ \$\{OUTCOME_LABEL\[outcome\.status\]\}\. Confirmed by your call\.`,?\s*\}/,
+    );
+    assert.match(reopen, /createdAt: \{ gte: new Date\(at - 5_000\) \}/);
+    assert.doesNotMatch(reopen, /THE RECORD READS/, "the read's own marker stays");
+  });
+});
+
 describe("the repairs hold", () => {
   test("a stage-note save can't erase a confirmed closure", () => {
     const closed = writeOutcome(

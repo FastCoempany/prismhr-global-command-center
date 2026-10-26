@@ -68,7 +68,12 @@ import { lowSignalKey, lowSignalKeys } from "@/lib/room/low-signal";
 import { groundworkDoneKey } from "@/lib/groundwork/file";
 import { applyStepComplete } from "@/lib/dashboard/complete";
 import { mirrorNoteToSheet } from "@/lib/today/mirror";
-import { OUTCOME_LABEL, writeOutcome, type OutcomeStatus } from "@/lib/dashboard/outcome";
+import {
+  OUTCOME_LABEL,
+  readOutcome,
+  writeOutcome,
+  type OutcomeStatus,
+} from "@/lib/dashboard/outcome";
 import type { DashNodeKey } from "@/lib/dashboard/stages";
 import { fileGrabCapture, pasteCapture, type PasteResult } from "@/lib/room/paste-core";
 import { dropEmailTexts } from "@/lib/notes/email-text";
@@ -538,15 +543,18 @@ async function closeCard(args: {
         source: "outcome",
       }).catch(() => null);
     }
-    // Quiet this read permanently for the closed card.
-    const key = `loss-dismiss:${cid}:${(args.noteId ?? "").slice(0, 40)}`.slice(0, 191);
-    await prisma.accountDisposition
-      .upsert({
-        where: { accountId: key },
-        create: { accountId: key, status: "parked", reason: label },
-        update: { status: "parked", reason: label },
-      })
-      .catch(() => null);
+    // Quiet this read permanently for the closed card. A close by hand
+    // (the row's ☑) answers no read, so it quiets none.
+    if (args.noteId) {
+      const key = `loss-dismiss:${cid}:${args.noteId.slice(0, 40)}`.slice(0, 191);
+      await prisma.accountDisposition
+        .upsert({
+          where: { accountId: key },
+          create: { accountId: key, status: "parked", reason: label },
+          update: { status: "parked", reason: label },
+        })
+        .catch(() => null);
+    }
     return { ok: true };
   } catch {
     return { ok: false, reason: "That didn't save. Try again." };
@@ -575,6 +583,63 @@ export async function roomMarkWon(
   phrase?: string,
 ): Promise<{ ok: boolean; reason?: string }> {
   return closeCard({ accountId, cardId, noteId, status: "won", phrase: phrase ?? "" });
+}
+
+// Closed Won by hand (founder's order, 2026-10-26): the row's ☑ stamps the
+// deal won on the operator's call, with no read to answer. The same close a
+// read's confirm runs, with no evidence sentence, so the row says "Closed by
+// your call."
+export async function roomMarkWonByHand(
+  accountId: string,
+  cardId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  return closeCard({ accountId, cardId, noteId: "", status: "won", phrase: "" });
+}
+
+// Reopen (founder's order, 2026-10-26): the closed row's ↺ takes the Closed
+// Won or Closed Lost stamp back, so the deal is live on the board again, and
+// withdraws the outcome entry that stamp filed. The read's own marker and
+// every filed message stay: the record is never unwritten.
+export async function roomReopen(
+  accountId: string,
+  cardId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  const cid = typeof cardId === "string" ? cardId.trim().slice(0, 40) : "";
+  if (!cid) return { ok: false, reason: "Not a bound row." };
+  if (!(await requireWrite())) return { ok: false, reason: "Read-only session." };
+  try {
+    const prisma = getPrisma();
+    const card = await prisma.dashCard.findUnique({
+      where: { id: cid },
+      select: { notes: true },
+    });
+    if (!card) return { ok: false, reason: "That card is gone." };
+    const outcome = readOutcome(card.notes);
+    if (!outcome) return { ok: true };
+    await prisma.dashCard.update({
+      where: { id: cid },
+      data: { notes: writeOutcome(card.notes, null) },
+    });
+    const at = Date.parse(outcome.at);
+    if (acct && !Number.isNaN(at))
+      await prisma.accountNote
+        .deleteMany({
+          where: {
+            accountId: acct.id,
+            source: "outcome",
+            body: {
+              startsWith: `✓ ${OUTCOME_LABEL[outcome.status]}. Confirmed by your call.`,
+            },
+            // A few seconds of slack, in case the store's clock trails ours.
+            createdAt: { gte: new Date(at - 5_000) },
+          },
+        })
+        .catch(() => null);
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save. Try again." };
+  }
 }
 
 // Retire a closed row from the board. Separate from closing on purpose: the
