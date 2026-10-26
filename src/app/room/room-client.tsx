@@ -46,6 +46,8 @@ import {
   roomMarkLost,
   roomMoveDone,
   roomMarkWon,
+  roomMarkWonByHand,
+  roomReopen,
   roomResearch,
   roomRetire,
   roomNoteToAction,
@@ -1162,6 +1164,32 @@ export function Row({
   };
   const markLost = () => confirmClose("lost");
   const markWon = () => confirmClose("won");
+  // Closed Won by hand (founder's order, 2026-10-26): the row's ☑ asks once
+  // in the move's slot, and the confirm stamps the deal won on the operator's
+  // call, with no read to answer.
+  const [askWon, setAskWon] = useState(false);
+  const markWonByHand = () => {
+    if (pending) return;
+    start(async () => {
+      const r = took(await roomMarkWonByHand(row.accountId, row.cardId));
+      if (r.ok) {
+        setAskWon(false);
+        setLossState("lost");
+        addInfo("Closed Won. The meter says so now. Retire the row when you're done.");
+      } else setNote(r.reason ?? "That didn't save.");
+    });
+  };
+  // ↺ on a closed row takes the stamp back: the deal is live again.
+  const reopenRow = () => {
+    if (pending) return;
+    start(async () => {
+      const r = took(await roomReopen(row.accountId, row.cardId));
+      if (r.ok) {
+        setLossState("live");
+        addInfo("Reopened. The deal is live on the board.");
+      } else setNote(r.reason ?? "That didn't save.");
+    });
+  };
   const retireRow = () => {
     if (pending) return;
     start(async () => {
@@ -1572,6 +1600,21 @@ export function Row({
                 {row.lowSignal ? "↺" : "⇣"}
               </button>
             )}
+            {/* Closed Won by hand (founder's order, 2026-10-26): revealed
+                under the hand beside ⇣, it asks once in the move's slot. A
+                row with no card has no meter to stamp. */}
+            {row.canWrite && !row.outcome && row.cardId && (
+              <button
+                type="button"
+                className={styles.wonBtn}
+                disabled={pending}
+                onClick={() => setAskWon(true)}
+                title="Mark Closed Won."
+                aria-label="Mark Closed Won."
+              >
+                ☑
+              </button>
+            )}
           </span>
         </div>
         {identityOpen && row.identity?.length ? (
@@ -1609,8 +1652,45 @@ export function Row({
                   >
                     Retire the row
                   </button>
+                  {row.cardId && (
+                    <button
+                      type="button"
+                      className={styles.reopenBtn}
+                      disabled={pending}
+                      onClick={reopenRow}
+                      title="Reopen the deal. The stamp comes off."
+                      aria-label="Reopen the deal. The stamp comes off."
+                    >
+                      ↺
+                    </button>
+                  )}
                 </span>
               )}
+            </>
+          ) : askWon ? (
+            <>
+              <span className={styles.lbl}>MARK IT CLOSED WON</span>
+              <p className={styles.move}>
+                Your call: stamp the meter, or keep working it.
+              </p>
+              <span className={styles.lossBtns}>
+                <button
+                  type="button"
+                  className={styles.wonConfirm}
+                  disabled={pending}
+                  onClick={markWonByHand}
+                >
+                  Confirm Closed Won
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghost}
+                  disabled={pending}
+                  onClick={() => setAskWon(false)}
+                >
+                  Not yet
+                </button>
+              </span>
             </>
           ) : lossLive ? (
             <>
@@ -3440,6 +3520,7 @@ export function RoomClient({
           <span>→ find the answer</span>
           <span>✕ not this deal</span>
           <span>⇣ low signal</span>
+          <span>☑ closed won</span>
         </div>
       )}
 

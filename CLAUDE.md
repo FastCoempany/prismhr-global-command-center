@@ -826,3 +826,11 @@ founder-decreed 2026-09-15.
   operator's own hand, a namespaced disposition (`lowsig:`) that no queue
   reads; a stamped outcome outranks it. The closed ledger hides and shows
   whole, remembered per browser, and hidden rows stay mounted.
+- **Closed Won by hand** (founder's order, 2026-10-26): a HomeRoom deal
+  row's hover ☑, beside ⇣, asks once in the move's slot ("Confirm Closed
+  Won" in green, or "Not yet") and stamps the deal Closed Won on the
+  operator's call, with no read to answer; the row then says "Closed by your
+  call." A row with no card has no meter and no ☑. A closed row's ↺ reopens
+  the deal, Won or Lost: the stamp comes off and the outcome entry the stamp
+  filed is withdrawn, while the read's own marker and every filed message
+  stay.

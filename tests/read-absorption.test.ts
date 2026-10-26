@@ -225,6 +225,15 @@ describe("Closed Won / Closed Lost — terminal staging", () => {
     assert.equal(readOutcome(open), null);
     assert.equal(open.demo, "x");
   });
+  test("a stamp carries the id of the entry it filed, and an older stamp reads without one", () => {
+    const notes = writeOutcome(
+      {},
+      { status: "won", phrase: "", at: "2026-10-26T15:00:00.000Z", noteId: "note-1" },
+    );
+    assert.equal(readOutcome(notes)?.noteId, "note-1");
+    const old = writeOutcome({}, { status: "won", phrase: "", at: "" });
+    assert.ok(!("noteId" in readOutcome(old)!));
+  });
   test("an unstamped card is simply open", () => {
     assert.equal(readOutcome(null), null);
     assert.equal(readOutcome({}), null);
@@ -550,6 +559,8 @@ describe("the room wires every new mechanism", () => {
     "roomGapsRefill",
     "roomResearch",
     "roomMarkWon",
+    "roomMarkWonByHand",
+    "roomReopen",
     "roomRetire",
   ]) {
     test(`${wired} reaches the client`, () => assert.ok(client.includes(wired)));
@@ -725,6 +736,57 @@ describe("the room wires every new mechanism", () => {
 
 // ── the defects the adversarial pass found, each with the test that would have
 // caught it ───────────────────────────────────────────────────────────────────
+// Closed Won by hand (founder's order, 2026-10-26): the row's ☑ closes the
+// deal with no read to answer, and a closed row's ↺ takes the stamp back.
+describe("Closed Won by hand, and the reopen", () => {
+  const actions = roomActionsSource(root);
+  const fn = (name: string) => {
+    const at = actions.indexOf(`export async function ${name}(`);
+    assert.ok(at >= 0, `${name} exists`);
+    return actions.slice(at, actions.indexOf("\n}\n", at));
+  };
+
+  test("the hand close runs the same close with no read and no evidence", () => {
+    assert.match(
+      fn("roomMarkWonByHand"),
+      /closeCard\(\{ accountId, cardId, noteId: "", status: "won", phrase: "" \}\)/,
+    );
+    // A close that answers no read quiets none.
+    const close = actions.slice(
+      actions.indexOf("async function closeCard("),
+      actions.indexOf("export async function roomMarkLost("),
+    );
+    assert.match(close, /if \(args\.noteId\) \{\s+const key = `loss-dismiss:/);
+  });
+
+  test("the reopen clears the stamp and withdraws only the entry the stamp filed", () => {
+    const reopen = fn("roomReopen");
+    assert.match(reopen, /requireWrite\(\)/);
+    assert.match(reopen, /data: \{ notes: writeOutcome\(card\.notes, null\) \}/);
+    assert.match(reopen, /source: "outcome",/);
+    // The stamp's own entry by id; an older stamp by its words in its minute.
+    assert.match(reopen, /\? \{ id: outcome\.noteId \}/);
+    assert.match(
+      reopen,
+      /body: \{\s*startsWith: `✓ \$\{OUTCOME_LABEL\[outcome\.status\]\}\. Confirmed by your call\.`,?\s*\}/,
+    );
+    assert.match(
+      reopen,
+      /createdAt: \{\s*gte: new Date\(at - STAMP_SLACK_MS\),\s*lte: new Date\(at \+ STAMP_MINUTE_MS\),?\s*\}/,
+    );
+    const close = actions.slice(
+      actions.indexOf("async function closeCard("),
+      actions.indexOf("export async function roomMarkLost("),
+    );
+    assert.ok(
+      close.indexOf("createAccountNoteRow(") < close.indexOf("prisma.dashCard.update("),
+      "the entry files first, so the stamp can carry its id",
+    );
+    assert.match(close, /\.\.\.\(entry \? \{ noteId: entry\.id \} : \{\}\)/);
+    assert.doesNotMatch(reopen, /THE RECORD READS/, "the read's own marker stays");
+  });
+});
+
 describe("the repairs hold", () => {
   test("a stage-note save can't erase a confirmed closure", () => {
     const closed = writeOutcome(

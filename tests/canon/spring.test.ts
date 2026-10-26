@@ -330,7 +330,7 @@ describe("the per-row keybar is retired; one legend lives at the page foot (A6.5
 
 describe("the minimalist controls are glyphs with titles, never words (A6.6)", () => {
   const WORDS =
-    /ask the brain|mint sharper asks|find the answer|not this deal|low signal|live board/i;
+    /ask the brain|mint sharper asks|find the answer|not this deal|low signal|live board|mark closed won/i;
   const CONTROLS: { glyph: string; title: string; tag: "a" | "button"; cls: string }[] = [
     { glyph: "⌕", title: "Ask the brain", tag: "a", cls: "sic" },
     { glyph: "⟳", title: "Mint sharper asks", tag: "button", cls: "sic" },
@@ -342,6 +342,7 @@ describe("the minimalist controls are glyphs with titles, never words (A6.6)", (
       tag: "button",
       cls: "lowBtn",
     },
+    { glyph: "☑", title: "Mark Closed Won.", tag: "button", cls: "wonBtn" },
   ];
   /** Every element carrying `title`, with its own text. */
   const carrying = (html: string, title: string) =>
@@ -409,6 +410,43 @@ describe("the minimalist controls are glyphs with titles, never words (A6.6)", (
     );
     const readOnly = await paintRow(springRow({ canWrite: false }), null);
     for (const html of [closed, readOnly]) assert.ok(!html.includes('class="lowBtn"'));
+  });
+
+  // Closed Won by hand (founder's order, 2026-10-26).
+  test("☑ rests hidden beside ⇣ and its row reveals it on hover or focus", () => {
+    assert.match(rule(".wonBtn"), /opacity:\s*0;/);
+    assert.match(rule(".row:hover .wonBtn"), /opacity:\s*1;/);
+    assert.match(rule(".wonBtn:focus-visible"), /opacity:\s*1;/);
+  });
+
+  test("a closed row, a read-only session and a row with no card carry no ☑", async () => {
+    const closed = await paintRow(
+      springRow({ outcome: { status: "won", phrase: "", at: "2026-10-01T15:00:00Z" } }),
+      null,
+    );
+    const readOnly = await paintRow(springRow({ canWrite: false }), null);
+    const cardless = await paintRow(springRow({ cardId: "" }), null);
+    for (const html of [closed, readOnly, cardless])
+      assert.ok(!html.includes('class="wonBtn"'));
+  });
+
+  test("a closed row carries ↺, which reopens it; a read-only one does not", async () => {
+    const closed = (canWrite: boolean) =>
+      paintRow(
+        springRow({
+          canWrite,
+          outcome: { status: "won", phrase: "", at: "2026-10-01T15:00:00Z" },
+        }),
+        null,
+      );
+    const back = carrying(await closed(true), "Reopen the deal. The stamp comes off.");
+    assert.equal(back.length, 1);
+    assert.equal(back[0][3], "↺");
+    assert.match(back[0][2], /class="reopenBtn"/);
+    assert.equal(
+      carrying(await closed(false), "Reopen the deal. The stamp comes off.").length,
+      0,
+    );
   });
 });
 
