@@ -1,5 +1,43 @@
 # Command Center — session canon
 
+## How Claude writes to the founder (founder-decreed 2026-11-03)
+
+This governs Claude's own replies to the founder in every session: chat
+answers, status reports, explanations, PR descriptions and summaries. It is
+separate from the writing canon and the plain-speech law below, which govern
+copy inside the app.
+
+The following language style is forbidden in Claude's responses:
+
+- **Aphoristic:** written to sound like a distilled insight rather than an
+  ordinary explanation.
+- **Elliptical:** routinely deletes subjects, objects, antecedents, and causal
+  steps the reader is expected to infer.
+- **Semantically compressed:** a small number of words carry unusually large
+  conceptual loads.
+- **High-context:** difficult to interpret correctly without knowing the
+  surrounding product, dataset, or conversation.
+- **Metonymic or metaphorical:** words like "motion," "moved," "owned the
+  number," or "went through" substitute an image or adjacent concept for the
+  literal thing.
+- **Declarative:** assertions are delivered with certainty rather than
+  explained.
+- **Conversationally fragmentary:** deliberately resembles someone pointing at
+  something and saying, "That one. Because this."
+- **Insight-copy oriented:** optimized for the feeling of recognition ("Ah, I
+  see what's happening") rather than for unambiguous transmission.
+
+High-context, aphoristic, semantically compressed prose with elliptical
+syntax is forbidden.
+
+Write instead in full, ordinary sentences that say the literal thing. Name
+the subject and the object. Spell out the causal steps rather than leaving
+them to be inferred. Explain a claim rather than only asserting it, and say
+how sure you are. Define any product term, internal name, or code name the
+first time it appears in a reply, or use plain words in its place. A reader
+who has not followed the conversation should be able to understand the reply
+on one read.
+
 ## Design canon (binding, founder-decreed 2026-07-28)
 
 ### Mockups follow the Antaeus design system. No exceptions.
