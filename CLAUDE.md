@@ -816,11 +816,12 @@ founder-decreed 2026-09-15.
   accounts already allow: Power Automate's standard connectors, the inbound
   relay, the app's own routes.
 - The word "steps" never appears in operator-facing copy.
-- **The app never says "wallet"** (founder-decreed 2026-11-03): what the
-  platform calls the wallet is global payroll. The reader files a mention of
-  the wallet, its stablecoin or a GCash payout as global payroll, the deal's
-  shape chip shows global payroll beside EOR or CP as +GP, and no label,
-  product name or file name the app shows says wallet.
+- **The wallet is not a product** (founder-decreed 2026-11-03): the wallet is
+  a feature of the global payroll product. The app may name the wallet when it
+  means that feature, as a demo's name or the playbook's lines do, and never
+  lists it as a product of its own. The reader files a mention of the wallet,
+  its stablecoin or a GCash payout as global payroll, and the deal's shape
+  chip shows global payroll beside EOR or CP as +GP, never +W.
 - Account names are plain links — no ↗ arrows or affordance glyphs.
 - Threading badge reads exactly `MULTI`, colored by the semantic ladder
   (red 1 thread / amber 2 / green 3+).
