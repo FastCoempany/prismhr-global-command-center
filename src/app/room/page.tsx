@@ -241,9 +241,9 @@ export default async function RoomPage() {
     const intel = acct.intel;
 
     const prods = new Set(intel.products.map((p) => p.value));
-    // Global payroll rides as +GP beside EOR or CP. The app never says
-    // "wallet" (founder-decreed 2026-11-03): the reader files a wallet
-    // mention as global payroll, so it reads here as +GP too.
+    // Global payroll rides as +GP beside EOR or CP. The wallet is a feature
+    // of global payroll and never a product (founder-decreed 2026-11-03): the
+    // reader files a wallet mention as global payroll, so it reads here as +GP.
     const shape = prods.has("eor")
       ? `EOR${prods.has("contractor") ? " +CP" : ""}${prods.has("payroll") ? " +GP" : ""}`
       : prods.has("contractor")

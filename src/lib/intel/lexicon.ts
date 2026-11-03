@@ -11,8 +11,9 @@ export const PRODUCT_TERMS: Record<
   // "contractor plus" must win over plain "contractor" — check it first.
   contractor_plus: /\b(contractor\s*plus|agent of record)\b/i,
   contractor: /\b(contractors?|1099s?)\b/i,
-  // The app never says "wallet" (founder-decreed 2026-11-03): a mention of
-  // the platform's wallet, its stablecoin or a GCash payout is global payroll.
+  // The wallet is a feature of global payroll and never a product of its own
+  // (founder-decreed 2026-11-03): a mention of the wallet, its stablecoin or a
+  // GCash payout files as global payroll.
   payroll: /\b(payroll|payslips?|gross[- ]to[- ]net|wallet|stablecoin|GCash)\b/i,
   mpex: /\bMPEX\b/i,
   tlm: /\b(TLM|time and labor|time[- ]tracking)\b/i,

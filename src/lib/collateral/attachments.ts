@@ -87,9 +87,9 @@ export const ATTACHMENTS: readonly Attachment[] = [
   ),
   demo(
     "demo-funding",
-    "Payroll funding and approvals",
+    "Funding, wallet and approvals",
     "2:45",
-    "c05b-payroll-funding-approvals.mp4",
+    "c05b-funding-wallet-approvals.mp4",
     2_749_872,
   ),
   demo("demo-team", "The team view", "1:15", "c06-team.mp4", 1_282_484),

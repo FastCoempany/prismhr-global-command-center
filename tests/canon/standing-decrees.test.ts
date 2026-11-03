@@ -998,13 +998,13 @@ describe("every revalidatePath names the action's own route, and nothing revalid
   });
 });
 
-// ── The app never says "wallet" (CLAUDE.md, Other standing decrees;
-// founder-decreed 2026-11-03): what the platform calls the wallet is global
-// payroll. The reader files a wallet mention as global payroll, the shape
-// chip shows it as +GP, and no label, product name or file name the app
-// shows says wallet. The authored sales content is a separate question and
-// is not swept here. ─────────────────────────────────────────────────────
-describe("the app never says wallet", () => {
+// ── The wallet is not a product (CLAUDE.md, Other standing decrees;
+// founder-decreed 2026-11-03): the wallet is a feature of the global payroll
+// product. The reader files a wallet mention as global payroll, the shape
+// chip shows it as +GP, and no product list names it. The word itself stays
+// wherever it means the feature, so a demo's name or a playbook line may say
+// it and nothing here sweeps for the word. ────────────────────────────────
+describe("the wallet is a feature of global payroll, never a product", () => {
   const read = (p: string) => readFileSync(join(cwd(), p), "utf8");
 
   test("no product is named wallet, and a wallet mention reads as global payroll", async () => {
@@ -1021,14 +1021,8 @@ describe("the app never says wallet", () => {
     assert.doesNotMatch(page, /wallet: "/);
   });
 
-  test("no product label, intake option or attachment the app shows says wallet", async () => {
+  test("no product label or intake inference treats the wallet as a product", () => {
     assert.doesNotMatch(read("src/lib/pipeline/build.ts"), /wallet: "/);
-    assert.doesNotMatch(read("src/app/intake/actions.ts"), /"wallet"/);
-    const { ATTACHMENTS } = await import("../../src/lib/collateral/attachments");
-    for (const a of ATTACHMENTS) {
-      assert.doesNotMatch(a.label, /wallet/i, a.id);
-      assert.doesNotMatch(a.name, /wallet/i, a.id);
-      assert.doesNotMatch(a.path, /wallet/i, a.id);
-    }
+    assert.doesNotMatch(read("src/app/intake/actions.ts"), /=== "wallet"/);
   });
 });
