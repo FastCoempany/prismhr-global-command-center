@@ -45,7 +45,6 @@ const PRODUCT_WORD: Record<string, string> = {
   contractor: "contractors",
   contractor_plus: "contractor plus",
   payroll: "global payroll",
-  wallet: "the wallet",
 };
 const mmddChicago = (iso: string): string => {
   const t = Date.parse(iso);
@@ -242,10 +241,13 @@ export default async function RoomPage() {
     const intel = acct.intel;
 
     const prods = new Set(intel.products.map((p) => p.value));
+    // Global payroll rides as +GP beside EOR or CP. The app never says
+    // "wallet" (founder-decreed 2026-11-03): the reader files a wallet
+    // mention as global payroll, so it reads here as +GP too.
     const shape = prods.has("eor")
-      ? `EOR${prods.has("contractor") ? " +CP" : ""}${prods.has("wallet") ? " +W" : ""}`
+      ? `EOR${prods.has("contractor") ? " +CP" : ""}${prods.has("payroll") ? " +GP" : ""}`
       : prods.has("contractor")
-        ? `CP${prods.has("wallet") ? " +W" : ""}`
+        ? `CP${prods.has("payroll") ? " +GP" : ""}`
         : "GP";
 
     const country = intel.countries[0]

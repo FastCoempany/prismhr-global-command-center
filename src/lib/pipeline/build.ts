@@ -107,7 +107,6 @@ const PRODUCT: Record<string, string> = {
   contractor_plus: "Contractor Mgmt+",
   payroll: "Global Payroll",
   mpex: "MPEX",
-  wallet: "Wallet",
   tlm: "TLM",
   aor: "AOR",
   talent: "Talent",

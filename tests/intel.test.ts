@@ -30,7 +30,11 @@ describe("lexicon: product terms", () => {
     );
     assert.ok(PRODUCT_TERMS.mpex.test("MPEX Licensing Need- ESC"));
     assert.ok(!PRODUCT_TERMS.mpex.test("mpexish word inside"));
-    assert.ok(PRODUCT_TERMS.wallet.test("directly deposit into their GCash"));
+    // The app never says "wallet" (founder-decreed 2026-11-03): a wallet or
+    // GCash payout reads as global payroll, and no product is named wallet.
+    assert.ok(PRODUCT_TERMS.payroll.test("directly deposit into their GCash"));
+    assert.ok(PRODUCT_TERMS.payroll.test("paid out through the wallet"));
+    assert.ok(!("wallet" in PRODUCT_TERMS));
     assert.ok(PRODUCT_TERMS.tlm.test("Unknown if they need TLM"));
   });
 });

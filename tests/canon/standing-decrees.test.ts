@@ -997,3 +997,38 @@ describe("every revalidatePath names the action's own route, and nothing revalid
     }
   });
 });
+
+// ── The app never says "wallet" (CLAUDE.md, Other standing decrees;
+// founder-decreed 2026-11-03): what the platform calls the wallet is global
+// payroll. The reader files a wallet mention as global payroll, the shape
+// chip shows it as +GP, and no label, product name or file name the app
+// shows says wallet. The authored sales content is a separate question and
+// is not swept here. ─────────────────────────────────────────────────────
+describe("the app never says wallet", () => {
+  const read = (p: string) => readFileSync(join(cwd(), p), "utf8");
+
+  test("no product is named wallet, and a wallet mention reads as global payroll", async () => {
+    const { PRODUCT_TERMS } = await import("../../src/lib/intel/lexicon");
+    assert.ok(!("wallet" in PRODUCT_TERMS));
+    assert.ok(PRODUCT_TERMS.payroll.test("they'd be paid out through the wallet"));
+    assert.doesNotMatch(read("src/lib/intel/types.ts"), /\|\s*"wallet"/);
+  });
+
+  test("the shape chip shows global payroll as +GP and never +W", () => {
+    const page = read("src/app/room/page.tsx");
+    assert.match(page, /prods\.has\("payroll"\) \? " \+GP" : ""/);
+    assert.doesNotMatch(page, /\+W\b/);
+    assert.doesNotMatch(page, /wallet: "/);
+  });
+
+  test("no product label, intake option or attachment the app shows says wallet", async () => {
+    assert.doesNotMatch(read("src/lib/pipeline/build.ts"), /wallet: "/);
+    assert.doesNotMatch(read("src/app/intake/actions.ts"), /"wallet"/);
+    const { ATTACHMENTS } = await import("../../src/lib/collateral/attachments");
+    for (const a of ATTACHMENTS) {
+      assert.doesNotMatch(a.label, /wallet/i, a.id);
+      assert.doesNotMatch(a.name, /wallet/i, a.id);
+      assert.doesNotMatch(a.path, /wallet/i, a.id);
+    }
+  });
+});
