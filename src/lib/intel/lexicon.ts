@@ -4,16 +4,17 @@
 // appear in deal email and call-transcript text.
 
 export const PRODUCT_TERMS: Record<
-  "eor" | "contractor" | "contractor_plus" | "payroll" | "mpex" | "wallet" | "tlm",
+  "eor" | "contractor" | "contractor_plus" | "payroll" | "mpex" | "tlm",
   RegExp
 > = {
   eor: /\b(EOR|employer of record)\b/i,
   // "contractor plus" must win over plain "contractor" — check it first.
   contractor_plus: /\b(contractor\s*plus|agent of record)\b/i,
   contractor: /\b(contractors?|1099s?)\b/i,
-  payroll: /\b(payroll|payslips?|gross[- ]to[- ]net)\b/i,
+  // The app never says "wallet" (founder-decreed 2026-11-03): a mention of
+  // the platform's wallet, its stablecoin or a GCash payout is global payroll.
+  payroll: /\b(payroll|payslips?|gross[- ]to[- ]net|wallet|stablecoin|GCash)\b/i,
   mpex: /\bMPEX\b/i,
-  wallet: /\b(wallet|stablecoin|GCash)\b/i,
   tlm: /\b(TLM|time and labor|time[- ]tracking)\b/i,
 };
 

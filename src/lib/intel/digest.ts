@@ -46,7 +46,7 @@ export const DIGEST: DigestEntry[] = [
       products: [
         { value: "eor", ...d("demo", "2026-07-07") },
         { value: "contractor", ...d("demo", "2026-07-07") },
-        { value: "wallet", ...d("demo", "2026-07-07") },
+        { value: "payroll", ...d("demo", "2026-07-07") },
       ],
       chair: "referral",
       incumbent: { value: "Globalization Partners", ...d("demo", "2026-07-07") },

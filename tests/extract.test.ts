@@ -73,7 +73,7 @@ describe("extractDealIntel", () => {
     const codes = intel.countries.map((c) => c.value);
     for (const c of ["bg", "in", "ph", "mx", "za", "gb"]) assert.ok(codes.includes(c), c);
     const prods = intel.products.map((p) => p.value);
-    for (const p of ["eor", "contractor", "wallet"] as const)
+    for (const p of ["eor", "contractor", "payroll"] as const)
       assert.ok(prods.includes(p), p);
     assert.equal(intel.chair, "referral");
     assert.ok(intel.threads.execSeen && intel.threads.opsSeen);

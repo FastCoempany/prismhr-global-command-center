@@ -28,7 +28,6 @@ export type ProductKey =
   | "contractor_plus"
   | "payroll"
   | "mpex"
-  | "wallet"
   | "tlm";
 
 export type DealIntel = {

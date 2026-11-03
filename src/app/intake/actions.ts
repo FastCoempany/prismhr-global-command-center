@@ -119,8 +119,6 @@ export async function getDealIntel(accountId: string): Promise<PayrollPrefill | 
 
   const functionality: string[] = [];
   if (intel.products.some((p) => p.value === "tlm")) functionality.push("Time and Labor");
-  if (intel.products.some((p) => p.value === "wallet"))
-    functionality.push("Expense Mgmt");
 
   return {
     provider: peo.name,
