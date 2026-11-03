@@ -1,0 +1,1387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>The HomeRoom, Reformed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* The HomeRoom reformed around the deal facts the founder named on
+     2026-11-03: what the PEO needs, the client and what the client needs,
+     the countries with their flags, the headcount, reseller or referral,
+     the files sent, the file sender Groundwork already has, and the
+     client's date. UNKNOWN, TODAY and COMPARABLE are gone; everything
+     else on the HomeRoom stays. Three structures, one theme, the room's
+     own tokens. Flags are the one place colour comes from outside the
+     palette, because a flag is content, not a role colour. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.08);
+    --green:#22c55e; --green-soft:rgba(34,197,94,.1);
+    --amber:#f59e0b; --amber-soft:rgba(245,158,11,.12);
+    --red:#ef4444; --red-soft:rgba(239,68,68,.09);
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --rest:0 1px 2px rgba(10,28,64,.05);
+    --lift:0 6px 18px rgba(10,28,64,.08),0 1px 2px rgba(10,28,64,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer;background:none;border:0;padding:0}
+  button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+  a{color:inherit}
+  .page{max-width:1320px;margin:0 auto;padding-block:40px 140px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+  /* ── the document's own head ─────────────────────────────────────── */
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,48px)/1.1 var(--serif);margin:10px 0 12px;text-wrap:balance}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .status{display:inline-block;margin-top:16px;padding:6px 12px;border:1px solid var(--hair);border-radius:99px;background:var(--surface);font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+  .notes,.why{margin:18px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li,.why li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before,.why li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b,.why b{color:var(--ink);font-weight:600}
+  .why{margin:0 0 16px}
+  .jump{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+  .jump a{font:600 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--soft);border:1px solid var(--hair);border-radius:99px;padding:8px 12px;background:var(--surface)}
+  .jump a:hover{color:var(--ink);border-color:var(--faint)}
+  section.concept{margin-top:72px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  h3{font:400 21px/1.25 var(--serif);margin:0 0 8px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .demos{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+  .sim{border:1px dashed var(--quiet);background:var(--surface);border-radius:6px;padding:6px 10px;font:600 9.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+  .sim:hover{color:var(--ink);border-color:var(--faint)}
+  .order{margin:16px 0 0;padding:12px 16px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:10px;max-width:92ch}
+  .order ol{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--soft)}
+  .order ol b{color:var(--ink);font-weight:600}
+
+  /* ── the app frame: wayfinder, the room, the edge tabs ────────────── */
+  .app{position:relative;background:var(--field);background-image:radial-gradient(1200px 600px at 85% -10%,rgba(37,99,235,.05),transparent 60%);border:1px solid var(--hair);border-radius:12px;overflow:hidden;box-shadow:var(--rest)}
+  .wf{display:flex;align-items:center;gap:18px;height:46px;padding:0 18px;background:rgba(255,255,255,.72);border-bottom:1px solid var(--hair-soft);overflow-x:auto;scrollbar-width:none}
+  .wf::-webkit-scrollbar{display:none}
+  .wfBrand{display:inline-flex;align-items:center;gap:8px;font:700 11px/1 var(--sans);letter-spacing:.22em;flex:none}
+  .wf nav{display:flex;gap:16px;flex:none}
+  .wf nav span{font:600 13px/1 var(--sans);color:var(--faint);padding:15px 0 13px;border-bottom:2px solid transparent;white-space:nowrap}
+  .wf nav span.here{color:var(--ink);border-bottom-color:var(--ink)}
+  .roomIn{padding:16px 52px 22px 22px}
+  @media (max-width:760px){.roomIn{padding:14px 40px 18px 14px}}
+
+  .chute{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1.5px dashed var(--quiet);border-radius:10px;padding:9px 14px;background:rgba(255,255,255,.55)}
+  .chuteK{font:700 9.5px/1 var(--mono);letter-spacing:.18em;color:var(--soft)}
+  .chuteLine{font-size:13.5px;color:var(--soft)}
+  .chuteBtn{margin-left:auto;border:1px solid var(--hair);border-radius:6px;padding:5px 10px;background:var(--surface);font:600 12.5px/1.2 var(--sans)}
+  .rcpts{list-style:none;margin:6px 0 0;padding:0}
+  .rcpts li{display:flex;gap:10px;align-items:baseline;font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft);padding:4px 2px;border-top:1px solid var(--hair-soft)}
+  .rcpts li:first-child{border-top:0}
+  .rcpts li b{color:var(--ink);font-weight:700}
+  .rcpts li .x{margin-left:auto;color:var(--quiet)}
+
+  .rbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 4px}
+  .ident{display:inline-flex;align-items:center;gap:9px}
+  .roomName{font:700 11px/1 var(--mono);letter-spacing:.22em}
+  .shutAll{font:600 9.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hair);border-radius:4px;padding:5px 7px;background:var(--surface)}
+  .shutAll:hover{color:var(--ink)}
+  .addWrap{display:inline-flex;align-items:center;gap:6px}
+  .addBtn{font:600 13px/1 var(--sans);border:1px solid var(--hair);border-radius:6px;padding:6px 10px;background:var(--surface)}
+  .addBadge{font:700 10px/1 var(--mono);color:#fff;background:var(--ink);border-radius:99px;padding:4px 7px}
+  .clock{margin-left:auto;font:600 10px/1 var(--mono);letter-spacing:.12em;color:var(--faint)}
+
+  .edges{position:absolute;right:0;top:150px;display:flex;flex-direction:column;gap:12px;z-index:4}
+  .edge{writing-mode:vertical-rl;font:600 8.5px/1 var(--mono);letter-spacing:.2em;color:var(--quiet);background:rgba(255,255,255,.7);border:1px solid var(--hair-soft);border-right:0;border-radius:6px 0 0 6px;padding:12px 6px;display:flex;align-items:center;gap:8px}
+  .edge:hover{color:var(--ink)}
+  .edge .ec{writing-mode:horizontal-tb;font-size:9px;color:var(--soft)}
+  .scratch{position:absolute;right:16px;bottom:14px;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--hair);box-shadow:var(--lift);font-size:16px;display:grid;place-items:center;z-index:5}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:22px;padding:12px 56px 0 0;border-top:1px solid var(--hair-soft);font:600 9px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .legend .lg{display:inline-flex;align-items:center;gap:6px}
+
+  .rule{display:flex;align-items:center;gap:10px;margin:26px 0 4px;font:600 9.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .rule::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--hair),transparent)}
+  .rule button{font:inherit;letter-spacing:inherit;color:var(--soft);border:1px solid var(--hair);border-radius:4px;padding:3px 6px;background:var(--surface);order:2}
+  .rule::after{order:3}
+
+  /* ── the identity line (stays) ─────────────────────────────────────── */
+  .nmline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+  .caret{color:var(--faint);font-size:12px;width:14px}
+  .nm{display:inline-flex;align-items:center;gap:7px;min-width:0}
+  .bf{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--quiet);flex:none}
+  .bf.on{background:var(--green);border-color:var(--green)}
+  .sf{font:700 7.5px/1 var(--mono);color:var(--faint);border:1px solid var(--quiet);border-radius:2px;padding:2px 3px}
+  .nmLink{font:400 20px/1.2 var(--serif);color:var(--ink);text-decoration:none;border-bottom:2px solid rgba(10,28,64,.1)}
+  .nmLink.big{font-size:32px}
+  .stamp{font:700 9px/1 var(--mono);letter-spacing:.14em;border-radius:4px;padding:3px 7px;color:var(--green);border:1px solid rgba(34,197,94,.45)}
+  .chips{display:inline-flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .chip{font:700 10px/1.9 var(--mono);letter-spacing:.08em;border:1px solid var(--hair);border-radius:4px;padding:0 6px;background:var(--surface)}
+  .metaIn{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .multi{position:relative;font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:#fff;border-radius:4px;padding:5px 8px}
+  .multi.g{background:var(--green)} .multi.a{background:var(--amber)} .multi.r{background:var(--red)}
+  .hover{position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:260px;background:var(--surface);border:1px solid var(--hair);border-radius:8px;box-shadow:var(--lift);padding:10px 12px;color:var(--ink);text-align:left;letter-spacing:0;font:400 12.5px/1.5 var(--sans)}
+  .hover .hk{display:block;font:600 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--faint);margin-bottom:4px}
+  .zap{color:var(--faint);font-size:14px}
+  .zap:hover{color:var(--ink)}
+  .rsrch{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--blue)}
+  .worked{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--green)}
+  .hov{color:var(--quiet);font-size:13px;opacity:0;transition:opacity .12s}
+  .row:hover .hov,.hov:focus-visible,.cstage:hover .hov,.bopen:hover .hov{opacity:1}
+  .hov:hover{color:var(--ink)}
+
+  /* ── the move slot (stays) ─────────────────────────────────────────── */
+  .movewrap{margin-top:16px}
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .move{font:600 16.5px/1.5 var(--sans);margin:2px 0 0}
+  .move .r{font-weight:400;color:var(--soft)}
+  .go,.ghost{margin-top:9px;border-radius:8px;padding:7px 14px;font-weight:600;font-size:14.5px}
+  .go{background:var(--orange);color:#fff;box-shadow:0 4px 14px rgba(230,112,30,.2)}
+  .ghost{border:1.5px solid var(--ink);background:var(--surface)}
+  .wonYes{margin-top:9px;border:1px solid rgba(34,197,94,.55);background:var(--green-soft);border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px}
+  .acts{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .reopen{margin-top:9px;color:var(--quiet);font-size:15px}
+  .reopen:hover{color:var(--ink)}
+
+  /* ── the stage meter (stays) ───────────────────────────────────────── */
+  .climb{margin-top:14px}
+  .meterZone{position:relative;height:5px}
+  .track{position:absolute;inset:0;border-radius:3px;overflow:hidden;background:repeating-linear-gradient(-60deg,rgba(10,28,64,.05) 0 6px,transparent 6px 12px)}
+  .gain{position:absolute;inset:0 auto 0 0;border-radius:3px 0 0 3px;background:var(--faint)}
+  .cap{position:absolute;top:0;bottom:0;width:4px;z-index:2}
+  .cap.ok{background:var(--green)} .cap.warn{background:var(--amber)} .cap.risk{background:var(--red)}
+  .node{position:absolute;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;border:1.2px solid rgba(10,28,64,.28);background:rgba(255,255,255,.85);z-index:3}
+  .node.done{background:var(--ink);border-color:rgba(255,255,255,.8)}
+  .node.cur{width:9px;height:9px;background:#fff;border:2px solid var(--ink)}
+  .climbCap{font:700 9px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:8px}
+
+  /* ── the latest email (stays) ──────────────────────────────────────── */
+  .mail{margin-top:20px;border-top:1px solid var(--hair);padding-top:14px;min-width:0}
+  .mailK{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .mailK .lbl{color:var(--soft)}
+  .mailWho{font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .mailSubj{font:600 15px/1.4 var(--sans);margin:6px 0 0}
+  .mailBody{margin:8px 0 0;font-size:14px;line-height:1.6;color:var(--ink);white-space:pre-wrap;max-width:66ch}
+  .capped{position:relative;max-height:130px;overflow:hidden}
+  .capped::after{content:"";position:absolute;left:0;right:0;bottom:0;height:48px;background:linear-gradient(rgba(245,247,251,0),var(--field))}
+  .on-white .capped::after{background:linear-gradient(rgba(255,255,255,0),#fff)}
+  .open{margin-top:6px;font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+  .open:hover{color:var(--ink)}
+
+  /* ── the right column's pieces (stay): THEIRS, the Drop, EARLIER ──── */
+  .theirs{font:600 10px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--blue);padding:2px 0 8px}
+  .theirs button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;text-decoration:underline dotted;text-underline-offset:3px}
+  .theirsFold{margin:0 0 10px;padding:8px 12px;border-left:2px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0;font-size:13px}
+  .theirsFold .t{font:600 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue)}
+  .drop{margin-top:14px;padding-top:10px;border-top:1px solid var(--hair-soft)}
+  .dropK{font:600 9px/1.4 var(--mono);letter-spacing:.16em;color:var(--faint);text-transform:uppercase}
+  .doors{display:flex;gap:8px;margin:8px 0 4px}
+  .door{width:32px;height:30px;border:1px solid var(--hair);border-radius:7px;background:var(--surface);display:grid;place-items:center;color:var(--soft);font-size:13px}
+  .door.on{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+  .pane{margin-top:6px}
+  .pane textarea{width:100%;min-height:70px;border:1px solid var(--hair);border-radius:8px;padding:8px 10px;font:400 13.5px/1.5 var(--sans);background:var(--surface);resize:vertical}
+  .paneRow{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+  .paneRow button{font:600 12.5px/1 var(--sans);border-radius:6px;padding:7px 11px;border:1px solid var(--hair);background:var(--surface)}
+  .paneRow .file{border-color:var(--ink)}
+  .dropRcpt{margin-top:6px;font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft);display:flex;gap:10px;align-items:baseline}
+  .dropRcpt b{color:var(--green)}
+  .dayrule{display:flex;align-items:center;gap:8px;width:100%;margin:12px 0 4px;font:600 8.5px/1 var(--mono);letter-spacing:.14em;color:var(--quiet);text-transform:uppercase}
+  .dayrule::after{content:"";flex:1;border-top:1px solid var(--hair-soft)}
+  .dayrule:hover{color:var(--ink)}
+  .ent{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;padding:6px 2px;border-top:1px solid var(--hair-soft);font-size:13px;align-items:baseline}
+  .ent:first-of-type{border-top:0}
+  .ent .g{color:var(--blue);font-size:12px}
+  .ent .g.out{color:var(--soft)}
+  .ent .kk{display:block;font:600 9px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .ent .s{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .more{display:flex;gap:16px;margin-top:8px;font-size:11.5px;font-weight:600;color:var(--faint)}
+
+  /* ── the new facts: shared widgets ─────────────────────────────────── */
+  .fk{font:700 8.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .light{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;border:1.5px solid transparent}
+  .light.hot,.light.past{background:var(--red)}
+  .light.warm{background:var(--amber)}
+  .light.later{background:var(--surface);border-color:var(--faint)}
+  .light.none{background:transparent;border-color:var(--quiet)}
+  .light.hot{animation:pulse 1.6s cubic-bezier(.2,0,0,1) infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}70%{box-shadow:0 0 0 8px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+  .light.hot.still{animation:none}
+  @media (prefers-reduced-motion:reduce){.light.hot{animation:none}}
+
+  .alert{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--hair);border-radius:8px;padding:6px 11px;background:var(--surface);text-align:left}
+  .alert b{font:700 10.5px/1.3 var(--mono);letter-spacing:.1em}
+  .alert .cnt{font:700 10.5px/1.3 var(--mono);letter-spacing:.1em;color:var(--soft)}
+  .alert.hot,.alert.past{border-color:rgba(239,68,68,.55);background:var(--red-soft)}
+  .alert.hot .cnt,.alert.past .cnt{color:var(--red)}
+  .alert.warm{border-color:rgba(245,158,11,.6);background:var(--amber-soft)}
+  .alert.none b{color:var(--faint);font-weight:600}
+
+  .needs{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .prods{display:inline-flex;gap:5px}
+  .prod{width:30px;height:30px;border:1px solid var(--hair);border-radius:7px;background:var(--surface);display:inline-grid;place-items:center;color:var(--quiet)}
+  .prod svg{width:17px;height:17px}
+  .prod.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .prod:hover{border-color:var(--faint)}
+  .needs.lg .prods{gap:6px}
+  .needs.lg .prod{width:46px;height:46px;border-radius:9px}
+  .needs.lg .prod svg{width:25px;height:25px}
+  .needs.lg .pnames{flex-basis:100%;font-size:11px}
+  .pl{font:700 8px/1.2 var(--mono);letter-spacing:.12em}
+  .pnames{font:700 10px/1.3 var(--mono);letter-spacing:.1em}
+  .who{font:700 8.5px/1 var(--mono);letter-spacing:.14em;border-radius:99px;padding:4px 8px;border:1px solid var(--hair);color:var(--soft);background:var(--surface)}
+  .who.client{color:var(--ink);border-color:var(--ink)}
+
+  .client{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .clTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cl{font:600 14.5px/1.3 var(--sans);text-align:left}
+  .cl.named{border-bottom:2px solid rgba(10,28,64,.12)}
+  .cl.unknown{font:700 10px/1 var(--mono);letter-spacing:.12em;color:var(--ink);border:1.5px dashed var(--amber);background:var(--amber-soft);border-radius:6px;padding:6px 9px}
+  .cl.internal{font:700 10px/1 var(--mono);letter-spacing:.12em;color:var(--soft);border:1px solid var(--hair);border-radius:6px;padding:6px 9px;background:var(--surface)}
+  .cneed{font-size:13.5px;line-height:1.45;color:var(--ink)}
+  .conf{display:inline-flex;align-items:center;gap:4px;font:700 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--blue)}
+  .conf i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--blue);display:inline-block}
+  .conf i.on{background:var(--blue)}
+  .conf.thin{color:var(--ink)}
+  .conf.thin i{border-color:var(--amber)}
+  .conf.thin i.on{background:var(--amber)}
+  .conf span{margin-left:3px}
+  .namer{font:600 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);border:1px solid var(--hair);border-radius:4px;padding:5px 7px;background:var(--surface)}
+  .namer:hover{color:var(--ink)}
+  .nameIn{border:1px solid var(--ink);border-radius:6px;padding:5px 8px;font:500 13px/1.2 var(--sans);width:200px;max-width:100%}
+  .src{font:600 8.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  button.src{text-decoration:underline dotted;text-underline-offset:2px}
+  button.src:hover{color:var(--ink)}
+  .src.hand{color:var(--ink)}
+  .src.hand button{color:var(--soft);margin-left:4px;font-size:12px}
+
+  .flag{display:inline-block;flex:none;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(10,28,64,.14);line-height:0;vertical-align:middle}
+  .flag svg{width:100%;height:100%;display:block}
+  .ctrys{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .ctry{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--hair);border-radius:7px;padding:4px 9px 4px 5px;background:var(--surface);font:600 13px/1.2 var(--sans)}
+  .ctry:hover{border-color:var(--faint)}
+  .ctry.hand{border-style:dashed}
+  .ctry.lg{flex-direction:column;gap:7px;padding:10px 12px 8px;border-radius:10px;font-size:13.5px}
+  .ctry.sm{border:0;padding:0;background:none;font-size:12.5px;font-weight:600;gap:5px}
+  .cadd{position:relative;display:inline-flex}
+  .cadd > button{width:26px;height:26px;border:1px dashed var(--quiet);border-radius:7px;color:var(--soft);font-size:14px;line-height:1}
+  .cadd select{margin-left:6px;border:1px solid var(--ink);border-radius:6px;padding:3px 6px;background:var(--surface);font-size:12.5px}
+  .none{font:600 9px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--quiet)}
+
+  .heads{display:flex;gap:10px;flex-wrap:wrap}
+  .hc{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--hair);border-radius:8px;padding:4px 10px 4px 8px;background:var(--surface);color:var(--ink)}
+  .hc svg{width:17px;height:17px;color:var(--soft)}
+  .hc .hn{font:400 21px/1 var(--serif)}
+  .hc .hl{font:700 8.5px/1.2 var(--mono);letter-spacing:.12em;color:var(--soft)}
+  .hc.none{border-style:dashed;color:var(--quiet)}
+  .hc.none svg{color:var(--quiet)}
+  .hc.none .ns{font:700 8.5px/1.2 var(--mono);letter-spacing:.12em;color:var(--quiet)}
+  .heads.lg .hc{flex-direction:column;align-items:flex-start;gap:4px;padding:10px 14px;min-width:120px;border-radius:10px}
+  .heads.lg .hc .hn{font-size:40px}
+  .heads.sm .hc{border:0;padding:0;background:none;gap:4px}
+  .heads.sm .hc .hn{font:700 12.5px/1 var(--mono)}
+
+  .chair{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .lever{display:inline-flex;border:1px solid var(--hair);border-radius:99px;padding:2px;background:var(--surface)}
+  .lever button{font:700 9.5px/1 var(--mono);letter-spacing:.12em;color:var(--faint);border-radius:99px;padding:7px 11px;white-space:nowrap}
+  .lever button:hover{color:var(--ink)}
+  .lever button.on{background:var(--ink);color:#fff}
+  .chair.lg .lever button{padding:11px 13px;font-size:10px}
+  .dealPill{font:700 9px/1 var(--mono);letter-spacing:.12em;border-radius:99px;padding:5px 8px;border:1px solid var(--hair);background:var(--surface);color:var(--faint)}
+  .dealPill.set{color:#fff;background:var(--ink);border-color:var(--ink)}
+
+  .files{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .filesTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .folder{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair);border-radius:8px;padding:6px 10px;background:var(--surface)}
+  .folder svg{width:18px;height:18px;color:var(--ink)}
+  .folder b{font:400 19px/1 var(--serif)}
+  .folder span{font:700 9px/1.2 var(--mono);letter-spacing:.12em;color:var(--soft)}
+  .folder.empty svg,.folder.empty b{color:var(--quiet)}
+  .sendf{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--ink);border-radius:8px;padding:6px 11px;background:var(--surface);font:600 13px/1 var(--sans)}
+  .sendf svg{width:15px;height:15px}
+  .flist{border:1px solid var(--hair-soft);border-radius:8px;background:var(--surface);padding:4px 10px}
+  .fl{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--hair-soft);font-size:13px}
+  .fl:first-child{border-top:0}
+  .fl svg{width:15px;height:15px;color:var(--soft)}
+  .fl .fd{font:600 8.5px/1.3 var(--mono);letter-spacing:.1em;color:var(--faint);text-align:right}
+  .fl.new .fd{color:var(--green)}
+  .picker{border:1px solid var(--hair);border-radius:10px;background:var(--surface);padding:10px 12px;box-shadow:var(--rest)}
+  .pk{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--faint);margin:8px 0 2px}
+  .pk:first-child{margin-top:0}
+  .pi{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:3px 0;font-size:13px;cursor:pointer}
+  .pi input{accent-color:var(--ink);margin:0;transform:translateY(1px)}
+  .pi .ps{font:600 9px/1.3 var(--mono);letter-spacing:.08em;color:var(--faint);white-space:nowrap}
+  .pi .was{font:700 8px/1 var(--mono);letter-spacing:.1em;color:var(--green);border:1px solid rgba(34,197,94,.45);border-radius:3px;padding:2px 4px;margin-left:6px}
+  .pfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px solid var(--hair-soft)}
+  .ptotal{font-size:12.5px;color:var(--soft)}
+  .psend{margin-left:auto;background:var(--ink);color:#fff;border-radius:8px;padding:8px 13px;font:600 13px/1 var(--sans)}
+  .pnote{font-size:12px;color:var(--faint);margin:6px 0 0}
+
+  .flash{animation:flash 1.2s cubic-bezier(.2,0,0,1)}
+  @keyframes flash{0%{background-color:var(--blue-soft);box-shadow:0 0 0 3px var(--blue-soft)}100%{box-shadow:0 0 0 0 transparent}}
+  @media (prefers-reduced-motion:reduce){.flash{animation:none}}
+
+  /* ── Concept A: the facts panel in every row ───────────────────────── */
+  .rowA{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.06fr);gap:0 30px;padding:18px 0 16px;border-top:1px solid var(--hair-soft)}
+  .rowA:first-of-type{border-top:0}
+  .rowA.shut{grid-template-columns:minmax(0,1fr);padding:12px 0}
+  .rowA.low{opacity:.86}
+  .rowA.closed .nmLink{color:var(--soft)}
+  .rowA.hid{display:none}
+  @media (max-width:900px){.rowA{grid-template-columns:minmax(0,1fr)}.rowA .rec{margin-top:14px}}
+  .deal{min-width:0;display:flex;flex-direction:column}
+  .rec{min-width:0;background:rgba(255,255,255,.66);border-radius:14px;padding:12px 16px 14px;align-self:start;box-shadow:var(--rest)}
+  .facts{display:flex;flex-direction:column}
+  .fx{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--hair-soft);position:relative}
+  .fx:first-child{border-top:0;padding-top:2px}
+  .fx.gauge-hot::before,.fx.gauge-warm::before{content:"";position:absolute;left:-16px;top:6px;bottom:6px;width:3px;border-radius:0 2px 2px 0}
+  .fx.gauge-hot::before{background:var(--red)}
+  .fx.gauge-warm::before{background:var(--amber)}
+  @media (max-width:560px){.fx{grid-template-columns:minmax(0,1fr);gap:4px}}
+
+  /* ── Concept B: the light board ───────────────────────────────────── */
+  .bbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 10px}
+  .bsel{border:1px solid var(--hair);border-radius:6px;padding:5px 8px;background:var(--surface);font:600 12.5px/1.2 var(--sans)}
+  .fgroup{display:inline-flex;border:1px solid var(--hair);border-radius:99px;padding:2px;background:var(--surface)}
+  .fgroup button{font:700 9px/1 var(--mono);letter-spacing:.12em;color:var(--faint);border-radius:99px;padding:6px 9px;display:inline-flex;align-items:center;gap:5px}
+  .fgroup button.on{background:var(--ink);color:#fff}
+  .fgroup button svg{width:14px;height:14px}
+  .bk{font:700 8.5px/1 var(--mono);letter-spacing:.14em;color:var(--faint)}
+  .bhid{font:600 9px/1.4 var(--mono);letter-spacing:.12em;color:var(--faint);text-transform:uppercase;margin-top:8px}
+  .bgrid{display:grid;grid-template-columns:22px minmax(140px,1.25fr) 150px minmax(120px,1fr) minmax(130px,1.05fr) 96px 88px 62px 112px;gap:0 12px;align-items:center}
+  .bhead{padding:0 12px 6px;font:700 8px/1.3 var(--mono);letter-spacing:.14em;color:var(--faint)}
+  .strip{padding:10px 12px;border-top:1px solid var(--hair-soft);cursor:pointer;position:relative;border-radius:8px}
+  .strip:hover{background:rgba(10,28,64,.025)}
+  .strip.isOpen{background:var(--surface);box-shadow:var(--rest);border-radius:10px 10px 0 0;border-top-color:transparent}
+  .strip.g-hot::before,.strip.g-warm::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 2px 2px 0}
+  .strip.g-hot::before{background:var(--red)}
+  .strip.g-warm::before{background:var(--amber)}
+  .strip .sname{font:400 16.5px/1.2 var(--serif)}
+  .strip .snm{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}
+  .strip .clx{font:600 13px/1.3 var(--sans);overflow:hidden;text-overflow:ellipsis}
+  .strip .clx.unknown{font:700 9px/1 var(--mono);letter-spacing:.12em;border:1.5px dashed var(--amber);background:var(--amber-soft);border-radius:5px;padding:4px 6px;display:inline-block}
+  .strip .clx.internal{font:700 9px/1 var(--mono);letter-spacing:.12em;color:var(--soft)}
+  .strip .sdate{display:flex;align-items:center;gap:6px;font:700 9.5px/1.3 var(--mono);letter-spacing:.08em}
+  .strip .sdate .d{color:var(--soft)}
+  .strip .sdate.hot .d,.strip .sdate.past .d{color:var(--red)}
+  .strip .sdate.none{color:var(--quiet)}
+  .strip .fcount{display:inline-flex;align-items:center;gap:5px;font:700 11px/1 var(--mono)}
+  .strip .fcount svg{width:15px;height:15px}
+  .strip .prods{gap:3px}
+  .strip .prod{width:22px;height:22px;border-radius:5px}
+  .strip .prod svg{width:13px;height:13px}
+  .strip .ctrys{gap:4px 9px}
+  .bopen{background:var(--surface);border-radius:0 0 12px 12px;box-shadow:var(--rest);padding:6px 16px 18px;margin-bottom:10px}
+  .band{display:flex;flex-wrap:wrap;gap:10px;padding:12px 0 14px;border-bottom:1px solid var(--hair-soft)}
+  .band .tile{flex:0 1 auto}
+  .tile{background:var(--field);border:1px solid var(--hair-soft);border-radius:10px;padding:9px 12px 11px;display:flex;flex-direction:column;gap:7px;min-width:0;position:relative}
+  .tile.g-hot{box-shadow:inset 3px 0 0 var(--red)}
+  .tile.g-warm{box-shadow:inset 3px 0 0 var(--amber)}
+  .bcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 28px;padding-top:12px}
+  .bcols .rec{background:transparent;box-shadow:none;padding:0}
+  @media (max-width:1100px){
+    .bgrid{grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"l n d" ". c c" ". w w";row-gap:6px}
+    .bhead{display:none}
+    .bgrid > :nth-child(1){grid-area:l}
+    .bgrid > :nth-child(2){grid-area:n}
+    .bgrid > :nth-child(9){grid-area:d}
+    .bgrid > :nth-child(3),.bgrid > :nth-child(6),.bgrid > :nth-child(7),.bgrid > :nth-child(8){display:none}
+    .bgrid > :nth-child(4){grid-area:c}
+    .bgrid > :nth-child(5){grid-area:w}
+    .bcols{grid-template-columns:minmax(0,1fr)}
+  }
+
+  /* ── Concept C: the focus stage ───────────────────────────────────── */
+  .cwrap{display:grid;grid-template-columns:268px minmax(0,1fr);gap:22px;margin-top:12px}
+  @media (max-width:980px){.cwrap{grid-template-columns:minmax(0,1fr)}}
+  .rail{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .railK{font:700 8.5px/1.4 var(--mono);letter-spacing:.16em;color:var(--faint);margin:10px 4px 2px;display:flex;align-items:center;gap:8px}
+  .railK:first-child{margin-top:0}
+  .railK button{font:inherit;letter-spacing:inherit;color:var(--soft);border:1px solid var(--hair);border-radius:4px;padding:2px 5px;background:var(--surface)}
+  .rc{display:flex;flex-direction:column;gap:6px;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid transparent;position:relative;min-width:0}
+  .rc:hover{background:rgba(255,255,255,.6)}
+  .rc.sel{background:var(--surface);box-shadow:inset 3px 0 0 var(--ink),var(--rest);border-color:var(--hair-soft)}
+  .rc .rtop{display:flex;align-items:center;gap:8px;min-width:0}
+  .rc .rn{font:400 17px/1.2 var(--serif);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rc .rflags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font:600 11.5px/1.2 var(--sans);color:var(--soft)}
+  .rc .rflags span.fx2{display:inline-flex;align-items:center;gap:4px}
+  .rc .rmeta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .rc .rd{font:700 9px/1 var(--mono);letter-spacing:.08em;color:var(--soft)}
+  .rc .rd.hot,.rc .rd.past{color:var(--red)}
+  .rc .ru{font:700 8px/1 var(--mono);letter-spacing:.1em;border:1.5px dashed var(--amber);background:var(--amber-soft);border-radius:4px;padding:3px 5px}
+  .rc.low,.rc.closed{opacity:.8}
+  .cstage{min-width:0}
+  .banner{display:flex;align-items:center;gap:16px;border-radius:12px;padding:14px 18px;margin-top:14px;border:1px solid var(--hair);background:var(--surface);text-align:left;width:100%}
+  .banner .bnum{font:400 46px/1 var(--serif);min-width:56px;text-align:center}
+  .banner .bt{display:flex;flex-direction:column;gap:3px}
+  .banner .bt b{font:700 10.5px/1.3 var(--mono);letter-spacing:.14em}
+  .banner .bt span{font-size:14px;color:var(--soft)}
+  .banner.hot,.banner.past{border:1.5px solid rgba(239,68,68,.6);background:var(--red-soft)}
+  .banner.hot .bnum,.banner.past .bnum{color:var(--red)}
+  .banner.warm{border:1.5px solid rgba(245,158,11,.65);background:var(--amber-soft)}
+  .banner.none{padding:9px 14px}
+  .banner.none .bt b{color:var(--faint)}
+  .cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+  @media (max-width:1180px){.cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:640px){.cgrid{grid-template-columns:minmax(0,1fr)}}
+  .ctile{background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:var(--rest)}
+  .ctile .client .cl.named{font:400 24px/1.15 var(--serif);border-bottom:0}
+  .clower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 28px;margin-top:6px}
+  @media (max-width:900px){.clower{grid-template-columns:minmax(0,1fr)}}
+  .clower .rec{background:rgba(255,255,255,.66)}
+
+  /* the stays table at the foot of the document */
+  table.stays{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;background:var(--surface);border-radius:10px;overflow:hidden;box-shadow:var(--rest)}
+  table.stays th,table.stays td{text-align:left;vertical-align:top;padding:8px 10px;border-top:1px solid var(--hair-soft)}
+  table.stays th{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);border-top:0;background:rgba(10,28,64,.02)}
+  table.stays td:first-child{font-weight:600;color:var(--ink);width:24%}
+  table.stays td{color:var(--soft)}
+  .tablewrap{overflow-x:auto}
+
+  .pop{pointer-events:none;position:absolute;z-index:60;background:var(--surface);border:1px solid var(--hair);border-radius:10px;box-shadow:var(--lift);padding:10px 12px 12px}
+  .popK{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue);text-transform:uppercase}
+  .popQ{margin:5px 0 0;font-size:13.5px;line-height:1.5;color:var(--ink)}
+  .popN{margin:6px 0 0;font-size:12.5px;line-height:1.5;color:var(--soft)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:min(560px,calc(100vw - 32px));z-index:80}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="kick">HomeRoom · the reform · three concepts · 11/3 · not shipped</div>
+  <h1>The HomeRoom, Reformed</h1>
+  <p class="lede">Each concept below rebuilds the HomeRoom around the deal facts you listed. Every row shows what the PEO needs, who the client is or that no client has been named, what the client needs and how sure the record is, the countries with their flags, how many employees or contractors, reseller or referral, a folder of every file sent and when, the file sender from Groundwork, and the client's date. UNKNOWN, TODAY and COMPARABLE are gone. Everything else on the HomeRoom today is still here, in a new position.</p>
+  <span class="status">Three concepts · waiting on your pick · nothing ships without your order</span>
+
+  <ul class="notes">
+    <li><b>Where the facts come from.</b> Each fact is read from the account's record: the emails, calls, notes and files you have filed to that account, including every file dropped into the Chute. Every fact opens with one click to the sentence it came from and the date it was filed. A fact the record has never mentioned says so in plain words, instead of being left blank.</li>
+    <li><b>What the app already reads today.</b> The reader that runs on every drop already pulls the countries, which of the five products are involved, the headcounts, and whether reseller or referral was discussed. Those four facts need display work, not new reading.</li>
+    <li><b>What would be new.</b> The reader does not yet pull the client's name, the client's need with a confidence level, or a client's date or deadline as its own fact. It only notes deadlines as free text today. The app also keeps no list of files sent. Send in Outlook would need to record the files it attaches, and the relayed sent copies would need to carry their attachment names. Split between employees and contractors is already in the headcount text and needs a small change to show separately.</li>
+    <li><b>Colours, and the pulsing light.</b> Red marks a client date 14 days away or less, and its light pulses. Amber marks a date within 30 days, or urgency stated with no date, such as "as soon as we can", and it does not pulse. Navy marks a fact that is lit, such as a product the record names. Blue marks the reader's confidence. Green marks real health: a briefed partner, a closed-won deal, a file already sent. Orange appears once per page, on the top row's Mark it done, as it does today. Flags are the only colours that come from outside the brand palette.</li>
+    <li><b>A rule this goes past.</b> The brand's motion rules allow one looping pulse per page. In this sample only one date is inside 14 days, so only one light pulses. If two of your deals had dates that close, two lights would pulse at once, which breaks that rule. That needs your call. With reduced motion turned on, the light stays red and stops pulsing.</li>
+    <li><b>What leaves with TODAY.</b> TODAY held the row's list of open to-dos with their ✓ done, ⏲ delay, ⚑ chase, ✎ edit and ✕ park buttons, the "the record says you owe" suggestions, and the receipts for things you typed into the Drop. The to-dos are still stored and still build the NEXT MOVE line, but the row no longer lists them, so those five buttons have no place on the HomeRoom. The Drop's receipts now appear right under the Drop.</li>
+    <li><b>What leaves with UNKNOWN and COMPARABLE.</b> The open questions, the stage gate question, ⌕ ask the brain, ⟳ mint sharper asks, → find the answer, and ✕ not this deal all go. The foot legend drops their glyphs.</li>
+    <li><b>Samples.</b> The account names come from your book. Every fact on the rows is a sample <span class="sample">SAMPLE</span>: the clients, people, quotes, countries, counts, dates and files are invented to show the design, and none of it is read from your record. There are no money figures anywhere.</li>
+  </ul>
+
+  <div class="order">
+    <div class="fk">The order the facts appear in, in all three concepts</div>
+    <ol>
+      <li><b>The client's date</b>, as an alert, because a date that is close is the one thing that changes what you do today.</li>
+      <li><b>What the PEO needs</b>: which of the five products, and whether it is for a client or for their own people.</li>
+      <li><b>The client</b>: the name, or a clear "not named yet", then what the client needs and how sure the record is.</li>
+      <li><b>Where</b>: each country with its flag and its name.</li>
+      <li><b>How many</b>: employees and contractors, counted separately.</li>
+      <li><b>Reseller or referral</b>, as a lever you can set by hand.</li>
+      <li><b>Files</b>: the folder of what was sent and when, and the button that sends more.</li>
+    </ol>
+  </div>
+
+  <nav class="jump" aria-label="Concepts">
+    <a href="#a">Concept A · The facts panel</a>
+    <a href="#b">Concept B · The light board</a>
+    <a href="#c">Concept C · The focus stage</a>
+    <a href="#stays">What stays, and where</a>
+  </nav>
+
+  <section class="concept" id="a">
+    <div class="kick">Concept A</div>
+    <h2>The facts panel</h2>
+    <ul class="why">
+      <li><b>What it is.</b> The rows stay stacked the way they are today, and every row stays open. The right-hand panel, where UNKNOWN, COMPARABLE and TODAY used to sit, becomes a panel of the deal facts, one line each, in the order above.</li>
+      <li>The left column keeps the account line, NEXT MOVE with Mark it done, the stage meter and the latest email, exactly as today.</li>
+      <li>The THEIRS line sits at the top of the panel. The Drop and EARLIER sit under the facts.</li>
+      <li><b>What it costs.</b> Every row gets taller by the facts panel, so the page is longer and you scroll more to see the whole book. It is the smallest change to how the room works today.</li>
+    </ul>
+    <div class="demos">
+      <button class="sim" data-act="demo" data-demo="name" data-cid="A">Demo · a drop names Regis's client</button>
+      <button class="sim" data-act="demo" data-demo="date" data-cid="A">Demo · XcelHR's client date moves up</button>
+      <button class="sim" data-act="demo" data-demo="reset" data-cid="A">Demo · reset</button>
+    </div>
+    <div id="hostA"></div>
+  </section>
+
+  <section class="concept" id="b">
+    <div class="kick">Concept B</div>
+    <h2>The light board</h2>
+    <ul class="why">
+      <li><b>What it is.</b> Every account becomes one line of lights, icons and flags, so the whole book can be read top to bottom in a few seconds. The line shows the date light, the account, the products, the client, the countries, the headcount, reseller or referral, how many files were sent, and the date.</li>
+      <li>Click a line and the full row opens beneath it. The facts sit at the top of the open row as larger controls, with NEXT MOVE, the meter, the latest email, THEIRS, the Drop and EARLIER below them.</li>
+      <li>The bar above the board sorts the lines and filters them by reseller or referral, by product and by country.</li>
+      <li><b>What it costs.</b> Rows rest folded to their line instead of open, so the next move and the latest email are one click down for every account except the one that is open. Narrow screens drop some columns from the line.</li>
+    </ul>
+    <div class="demos">
+      <button class="sim" data-act="demo" data-demo="name" data-cid="B">Demo · a drop names Regis's client</button>
+      <button class="sim" data-act="demo" data-demo="date" data-cid="B">Demo · XcelHR's client date moves up</button>
+      <button class="sim" data-act="demo" data-demo="reset" data-cid="B">Demo · reset</button>
+    </div>
+    <div id="hostB"></div>
+  </section>
+
+  <section class="concept" id="c">
+    <div class="kick">Concept C</div>
+    <h2>The focus stage</h2>
+    <ul class="why">
+      <li><b>What it is.</b> One account at a time fills the page. A rail on the left lists every account with its date light, flags, reseller or referral, and a warning when no client has been named. Click an account in the rail to put it on the stage.</li>
+      <li>The stage leads with a large date banner, then NEXT MOVE with Mark it done, then six large tiles: what they need, the client, where, how many, reseller or referral, and files. The meter, the latest email, THEIRS, the Drop and EARLIER sit below the tiles.</li>
+      <li>This is the most visual of the three. Flags and counts are large enough to read from across the room.</li>
+      <li><b>What it costs.</b> You see one account's detail at a time. Comparing two accounts means clicking between them in the rail.</li>
+    </ul>
+    <div class="demos">
+      <button class="sim" data-act="demo" data-demo="name" data-cid="C">Demo · a drop names Regis's client</button>
+      <button class="sim" data-act="demo" data-demo="date" data-cid="C">Demo · XcelHR's client date moves up</button>
+      <button class="sim" data-act="demo" data-demo="reset" data-cid="C">Demo · reset</button>
+    </div>
+    <div id="hostC"></div>
+  </section>
+
+  <section class="concept" id="stays">
+    <div class="kick">The rule you set</div>
+    <h2>What stays, and where it sits</h2>
+    <p class="lede">You said that anything you did not name stays, and can move. This table lists every part of today's HomeRoom and where each concept puts it.</p>
+    <div class="tablewrap"><table class="stays">
+      <thead><tr><th>Part of today's HomeRoom</th><th>Concept A · the facts panel</th><th>Concept B · the light board</th><th>Concept C · the focus stage</th></tr></thead>
+      <tbody>
+        <tr><td>The top navigation</td><td>Unchanged</td><td>Unchanged</td><td>Unchanged</td></tr>
+        <tr><td>The Chute and its receipts</td><td>Top of the page</td><td>Top of the page</td><td>Top of the page</td></tr>
+        <tr><td>The HomeRoom bar: the mark, Collapse all, ＋ add with the follow-up count, the Chicago clock</td><td>Unchanged. Collapse all folds every row to its account line.</td><td>Unchanged. Collapse all folds every open row back to its line; Open all opens every row.</td><td>Unchanged. Collapse all folds the lower half of the stage: the email, THEIRS, the Drop and EARLIER.</td></tr>
+        <tr><td>The row's fold caret</td><td>On every row, as today</td><td>The line itself is the fold: click it to open or close the row</td><td>On the stage's account line, folding that account's lower half</td></tr>
+        <tr><td>The partner-briefed mark and the SF link</td><td>Account line</td><td>Account line in the open row; the briefed mark also on the line</td><td>Stage account line; the briefed mark also on the rail card</td></tr>
+        <tr><td>The account name link</td><td>Account line</td><td>On the line and in the open row</td><td>Rail card and the stage heading</td></tr>
+        <tr><td>The shape chip with what the read stands on, and the meta line</td><td>Account line</td><td>Account line in the open row</td><td>Stage account line</td></tr>
+        <tr><td>MULTI with who is in the deal</td><td>Account line</td><td>Account line in the open row</td><td>Stage account line</td></tr>
+        <tr><td>⚡ paste</td><td>Account line and the Drop</td><td>Account line in the open row and the Drop</td><td>Stage account line and the Drop</td></tr>
+        <tr><td>RESEARCH chip and its "what changed" note</td><td>Account line</td><td>Account line in the open row</td><td>Stage account line</td></tr>
+        <tr><td>✓ WORKED</td><td>Account line</td><td>On the line and in the open row</td><td>Rail card and the stage account line</td></tr>
+        <tr><td>⇣ low signal and ☑ closed won, shown on hover</td><td>Account line</td><td>Account line in the open row</td><td>Stage account line</td></tr>
+        <tr><td>NEXT MOVE and Mark it done</td><td>Left column, under the account line</td><td>Open row, left column</td><td>Under the date banner</td></tr>
+        <tr><td>The closed states: CLOSED WON or LOST, Retire the row, ↺ reopen, the record's won or lost read, the Closed Won confirm</td><td>In the NEXT MOVE slot</td><td>In the NEXT MOVE slot</td><td>In the NEXT MOVE slot</td></tr>
+        <tr><td>The stage meter with its seven stages, checklists and why card</td><td>Left column</td><td>Open row, left column</td><td>Full width under the tiles</td></tr>
+        <tr><td>LATEST EMAIL with Show the whole email</td><td>Left column</td><td>Open row, left column</td><td>Lower half, left</td></tr>
+        <tr><td>The THEIRS line</td><td>Top of the right panel</td><td>Open row, right column</td><td>Lower half, right</td></tr>
+        <tr><td>The Drop: ⚡ paste, ▢ note, ✸ action, ⇪ file, the held box</td><td>Right panel, under the facts</td><td>Open row, right column</td><td>Lower half, right</td></tr>
+        <tr><td>EARLIER and its lines</td><td>Right panel, at the foot</td><td>Open row, right column</td><td>Lower half, right</td></tr>
+        <tr><td>LOW SIGNAL and the CLOSED ledger with SHOW and HIDE</td><td>Sections of rows</td><td>Sections of lines</td><td>Groups in the rail</td></tr>
+        <tr><td>The foot legend</td><td>Page foot, with the removed glyphs gone and the new ones added</td><td>Same</td><td>Same</td></tr>
+        <tr><td>The edge tabs: PIPELINE, ROUNDUPS · CHECK-INS, keep an eye out</td><td>Right edge</td><td>Right edge</td><td>Right edge</td></tr>
+        <tr><td>The Scratchpaper ✎</td><td>Bottom right</td><td>Bottom right</td><td>Bottom right</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+</div>
+<div class="pop" id="pop" hidden></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// ── Helpers ────────────────────────────────────────────────────────────
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const TODAY = new Date("2026-11-03T12:00:00-06:00");
+const TODAY_MD = "11/3";
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const daysTo = (iso) => Math.round((new Date(iso + "T12:00:00-06:00") - TODAY) / 86400000);
+const monDay = (iso) => { const [, m, d] = iso.split("-").map(Number); return `${MON[m - 1]} ${d}`; };
+const toneOf = (n) => (n == null ? "none" : n < 0 ? "past" : n <= 14 ? "hot" : n <= 30 ? "warm" : "later");
+const firstWord = (s) => String(s).split(/\s+/)[0];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+let toastT = 0;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove("on"), 2600);
+}
+
+// Evidence: every fact registers what it stands on; a click opens it.
+const EVS = {};
+let evN = 0;
+const ev = (o) => { const k = "e" + ++evN; EVS[k] = o; return k; };
+function showPop(el, k) {
+  const o = EVS[k];
+  if (!o) return;
+  const p = $("#pop");
+  p.innerHTML = `<div class="popK">${esc(o.k)}</div>${o.q ? `<p class="popQ">“${esc(o.q)}”</p>` : ""}${o.n ? `<p class="popN">${esc(o.n)}</p>` : ""}`;
+  p.hidden = false;
+  const r = el.getBoundingClientRect();
+  const w = Math.min(360, window.innerWidth - 24);
+  p.style.width = w + "px";
+  let left = window.scrollX + r.left;
+  const maxLeft = window.scrollX + window.innerWidth - 12 - w;
+  if (left > maxLeft) left = maxLeft;
+  p.style.left = Math.max(window.scrollX + 12, left) + "px";
+  p.style.top = window.scrollY + r.bottom + 6 + "px";
+}
+const hidePop = () => { $("#pop").hidden = true; };
+
+// ── Flags: drawn, so they show on Windows, which draws no flag emoji ────
+function star(cx, cy, R, r) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = (-90 + i * 36) * Math.PI / 180;
+    const rad = i % 2 ? r : R;
+    pts.push(`${(cx + rad * Math.cos(a)).toFixed(2)},${(cy + rad * Math.sin(a)).toFixed(2)}`);
+  }
+  return pts.join(" ");
+}
+const LEAF = [[50,5],[57,20],[65,17],[62,40],[77,25],[80,33],[95,30],[88,47],[95,52],[70,70],[73,80],[52,77],[52,95],[48,95],[48,77],[27,80],[30,70],[5,52],[12,47],[5,30],[20,33],[23,25],[38,40],[35,17],[43,20]]
+  .map(([x, y]) => `${(10 + x * 0.1).toFixed(2)},${(5.3 + y * 0.095).toFixed(2)}`).join(" ");
+const sunRays = (cx, cy) => [0, 45, 90, 135, 180, 225, 270, 315].map((d) => {
+  const a = d * Math.PI / 180;
+  return `<line x1="${(cx + 2.6 * Math.cos(a)).toFixed(2)}" y1="${(cy + 2.6 * Math.sin(a)).toFixed(2)}" x2="${(cx + 3.6 * Math.cos(a)).toFixed(2)}" y2="${(cy + 3.6 * Math.sin(a)).toFixed(2)}" stroke="#FCD116" stroke-width=".7"/>`;
+}).join("");
+const chakra = [0, 30, 60, 90, 120, 150].map((d) => {
+  const a = d * Math.PI / 180;
+  return `<line x1="${(15 - 2.4 * Math.cos(a)).toFixed(2)}" y1="${(10 - 2.4 * Math.sin(a)).toFixed(2)}" x2="${(15 + 2.4 * Math.cos(a)).toFixed(2)}" y2="${(10 + 2.4 * Math.sin(a)).toFixed(2)}" stroke="#000080" stroke-width=".22"/>`;
+}).join("");
+const FLAGSVG = {
+  IN: `<rect width="30" height="6.67" fill="#FF9933"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><rect y="13.33" width="30" height="6.67" fill="#138808"/><circle cx="15" cy="10" r="2.5" fill="none" stroke="#000080" stroke-width=".55"/>${chakra}<circle cx="15" cy="10" r=".55" fill="#000080"/>`,
+  PH: `<rect width="30" height="10" fill="#0038A8"/><rect y="10" width="30" height="10" fill="#CE1126"/><polygon points="0,0 17.32,10 0,20" fill="#fff"/><circle cx="5.8" cy="10" r="2.1" fill="#FCD116"/>${sunRays(5.8, 10)}<circle cx="1.7" cy="2.3" r=".8" fill="#FCD116"/><circle cx="1.7" cy="17.7" r=".8" fill="#FCD116"/><circle cx="14.6" cy="10" r=".8" fill="#FCD116"/>`,
+  PR: `<rect width="30" height="20" fill="#ED0000"/><rect y="4" width="30" height="4" fill="#fff"/><rect y="12" width="30" height="4" fill="#fff"/><polygon points="0,0 17.32,10 0,20" fill="#0050F0"/><polygon points="${star(5.8, 10.3, 2.8, 1.12)}" fill="#fff"/>`,
+  MX: `<rect width="10" height="20" fill="#006847"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#CE1126"/><circle cx="15" cy="10" r="2.3" fill="none" stroke="#8C5A2B" stroke-width=".7"/><path d="M12.9 11.4c1.3 1.4 2.9 1.4 4.2 0" fill="none" stroke="#006847" stroke-width=".6"/><circle cx="15" cy="9.6" r=".9" fill="#8C5A2B"/>`,
+  CA: `<rect width="30" height="20" fill="#fff"/><rect width="7.5" height="20" fill="#D52B1E"/><rect x="22.5" width="7.5" height="20" fill="#D52B1E"/><polygon points="${LEAF}" fill="#D52B1E"/>`,
+  CO: `<rect width="30" height="10" fill="#FCD116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#CE1126"/>`,
+  DE: `<rect width="30" height="6.67" fill="#000"/><rect y="6.67" width="30" height="6.67" fill="#DD0000"/><rect y="13.33" width="30" height="6.67" fill="#FFCE00"/>`,
+  GB: `<rect width="30" height="20" fill="#012169"/><path d="M0,0 L30,20 M30,0 L0,20" stroke="#fff" stroke-width="4"/><path d="M0,0 L30,20 M30,0 L0,20" stroke="#C8102E" stroke-width="1.3"/><path d="M15,0 V20 M0,10 H30" stroke="#fff" stroke-width="6"/><path d="M15,0 V20 M0,10 H30" stroke="#C8102E" stroke-width="3.4"/>`,
+};
+const COUNTRY = { IN: "India", PH: "Philippines", PR: "Puerto Rico", MX: "Mexico", CA: "Canada", CO: "Colombia", DE: "Germany", GB: "United Kingdom" };
+const flag = (c, w) => `<span class="flag" style="width:${w}px;height:${Math.round(w * 2 / 3)}px" aria-hidden="true"><svg viewBox="0 0 30 20" preserveAspectRatio="none">${FLAGSVG[c]}</svg></span>`;
+
+// ── Line glyphs: one stroke, currentColor, no fill (brand iconography) ─
+const svg = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+const ICON = {
+  eor: svg(`<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7.5 17.5c1-2.2 2.6-3.2 4.5-3.2s3.5 1 4.5 3.2"/>`),
+  gp: svg(`<path d="M6 3h9l3 3v15H6z"/><path d="M15 3v3h3"/><path d="M9 11h6M9 14h6M9 17h4"/>`),
+  cm: svg(`<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/><path d="M3 12.5h18"/>`),
+  cor: svg(`<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/><path d="M8.8 13.6l2.2 2.2 4-4.4"/>`),
+  tal: svg(`<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/><circle cx="10.5" cy="9" r="2"/><path d="M7.4 13.8c.8-1.3 1.8-1.9 3.1-1.9s2.3.6 3.1 1.9"/>`),
+  people: svg(`<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5S13.7 16 14.5 19"/><circle cx="16.5" cy="9" r="2.4"/><path d="M15.2 14.6c2.5-.3 4.4 1.1 5.3 4.4"/>`),
+  brief: svg(`<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/><path d="M3 12.5h18"/>`),
+  folder: svg(`<path d="M3 6.5h6l2 2h10v10.5H3z"/>`),
+  clip: svg(`<path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7-7L13 4.5a3.3 3.3 0 0 1 4.7 4.7L10 17a1.6 1.6 0 0 1-2.3-2.3l7-7"/>`),
+  video: svg(`<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>`),
+  doc: svg(`<path d="M6 3h9l3 3v15H6z"/><path d="M15 3v3h3"/>`),
+};
+const MARK = `<svg viewBox="0 0 48 48" width="20" height="20" fill="none" stroke="#0A1C40" stroke-width="4.4" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M14 38 L24 10 L34 38"/><path d="M18.2 28 h11.6"/><path d="M2 38 h44"/></svg>`;
+
+const PRODUCTS = [
+  { k: "eor", label: "Employer of record", short: "EOR" },
+  { k: "gp", label: "Global payroll", short: "PAYROLL" },
+  { k: "cm", label: "Contractor management", short: "CONTRACTORS" },
+  { k: "cor", label: "Contractor of record", short: "COR" },
+  { k: "tal", label: "Talent", short: "TALENT" },
+];
+
+// The files Send in Outlook already carries on Groundwork (the 10/22 order).
+const FILES = [
+  { id: "demo-whole", g: "demo", label: "The whole platform", runs: "41:21", kb: 4924 },
+  { id: "demo-signin", g: "demo", label: "Sign-in and worker types", runs: "3:00", kb: 2226 },
+  { id: "demo-portal", g: "demo", label: "The worker portal", runs: "3:15", kb: 3579 },
+  { id: "demo-invoices", g: "demo", label: "Invoices, reseller and referral", runs: "2:30", kb: 1860 },
+  { id: "demo-settings", g: "demo", label: "Settings and client pricing", runs: "4:30", kb: 2839 },
+  { id: "demo-payperiods", g: "demo", label: "Pay periods and gross to net", runs: "3:15", kb: 2580 },
+  { id: "demo-funding", g: "demo", label: "Funding, wallet and approvals", runs: "2:45", kb: 2750 },
+  { id: "demo-team", g: "demo", label: "The team view", runs: "1:15", kb: 1282 },
+  { id: "demo-newhire", g: "demo", label: "A new EOR hire", runs: "5:45", kb: 3888 },
+  { id: "demo-benefits", g: "demo", label: "Benefits and the offer letter", runs: "7:15", kb: 4629 },
+  { id: "demo-contractor", g: "demo", label: "Contractor pay and support", runs: "2:30", kb: 1476 },
+  { id: "demo-users", g: "demo", label: "Users and permissions", runs: "3:30", kb: 2878 },
+  { id: "demo-approvals", g: "demo", label: "Approval workflows", runs: "1:50", kb: 1619 },
+  { id: "op-overview", g: "op", label: "PrismHR Global at a glance", kb: 104 },
+  { id: "op-eor", g: "op", label: "Employer of record", kb: 479 },
+  { id: "op-payroll", g: "op", label: "Global payroll", kb: 433 },
+  { id: "op-contractor", g: "op", label: "Contractor solutions", kb: 421 },
+  { id: "op-talent", g: "op", label: "Talent", kb: 492 },
+  { id: "ag-reseller", g: "ag", label: "Reseller agreement, review copy", kb: 138 },
+  { id: "ag-referral", g: "ag", label: "Referral agreement, review copy", kb: 48 },
+];
+const FILE = Object.fromEntries(FILES.map((f) => [f.id, f]));
+const GROUP = { demo: "DEMOS", op: "ONE-PAGERS", ag: "AGREEMENTS" };
+const size = (kb) => (kb >= 1000 ? `${(kb / 1000).toFixed(1)} MB` : `${kb} KB`);
+const fileName = (id) => { const f = FILE[id]; return f.g === "demo" ? `Demo · ${f.label}` : f.g === "op" ? `One-pager · ${f.label}` : f.label; };
+
+// ── The sample book: names from the book, every fact a sample ──────────
+const BOOK = [
+  {
+    id: "simploy", name: "Simploy", group: "live", rank: 0, shape: "EOR +W", meta: "RESALE · INDIA", multi: "a", briefed: true, research: "10/30",
+    move: { a: "Send Dana the reseller agreement.", r: "She asked Friday." },
+    meter: { frac: 0.45, cur: 3, cap: "warn", label: "STAGE 4 OF 7 · PROPOSAL" },
+    theirs: { label: "DANA ASKED FOR THE AGREEMENT", act: "Send the reseller agreement.", why: "Dana asked for it on 10/30 so legal can start." },
+    need: { p: ["eor", "gp"], who: "client", ev: { k: "EMAIL · 10/24 · DANA REYES", q: "We'd want to offer employer of record to a client, and maybe run payroll for them later." } },
+    client: { name: "Lumen Freight", sure: "sure", need: "2 engineers in India and 1 in the Philippines.", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "Lumen Freight came back to us. They'd like both engineers in India starting Monday the 16th, and the Philippines hire after that." } },
+    countries: [
+      { c: "IN", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "They'd like both engineers in India starting Monday the 16th." } },
+      { c: "PH", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "…and the Philippines hire after that, if we can." } },
+    ],
+    heads: [
+      { n: 2, kind: "ee", c: "IN", ev: { q: "both engineers in India" } },
+      { n: 1, kind: "ee", c: "PH", ev: { q: "the Philippines hire" } },
+    ],
+    chair: { v: "resale", day: "10/24", ev: { k: "EMAIL · 10/24 · DANA REYES", q: "We'd resell it under our own name rather than refer it out." } },
+    date: { iso: "2026-11-16", what: "Start date", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "They'd like both engineers in India starting Monday the 16th." } },
+    files: [{ id: "op-eor", day: "10/28", to: "Dana Reyes" }, { id: "demo-whole", day: "10/28", to: "Dana Reyes" }],
+    email: { dir: "in", from: "Dana Reyes", to: "you", day: "10/30", time: "9:12 AM", subj: "Lumen Freight start dates", body: "Hi Antaeus,\n\nLumen Freight came back to us. They'd like both engineers in India starting Monday the 16th, and the Philippines hire after that if we can.\n\nCan you send the reseller agreement over so we can get it in front of our legal team this week? I think that's the last thing holding us up on our side.\n\nThanks,\nDana" },
+    earlier: [
+      { g: "✉", day: "10/30", time: "9:12 AM", who: "Dana Reyes → you", s: "Lumen Freight start dates" },
+      { g: "➤", day: "10/28", time: "2:40 PM", who: "you → Dana Reyes", s: "EOR one-pager and the platform demo", out: true },
+      { g: "☎", day: "10/24", time: "11:00 AM", who: "Call · Dana Reyes, Sam Ortiz", s: "Discovery: Lumen Freight, India first" },
+    ],
+    recTotal: 14,
+  },
+  {
+    id: "regis", name: "Regis HR Group", group: "live", rank: 1, shape: "EOR +CP", meta: "RESALE · PUERTO RICO", multi: "g", briefed: true, research: "10/12",
+    move: { a: "Book the Puerto Rico walkthrough.", r: "Leilani asked for times." },
+    meter: { frac: 0.31, cur: 2, cap: "ok", label: "STAGE 3 OF 7 · PARTNER BRIEFED" },
+    theirs: null,
+    need: { p: ["eor"], who: "client", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "We have a client asking about hiring in Puerto Rico before the end of the year." } },
+    client: { name: null, sure: "thin", need: "Hires in Puerto Rico before year end. Count not said.", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "I don't have the details yet, but can we find time next week to walk through how it works?" } },
+    countries: [{ c: "PR", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "We have a client asking about hiring in Puerto Rico before the end of the year." } }],
+    heads: [],
+    chair: { v: "resale", day: "10/20", ev: { k: "EMAIL · 10/20 · LEILANI GONZALEZ", q: "We talked it through as a team and we'd like to go with the reseller model." } },
+    date: { iso: "2026-12-31", what: "Year end", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "…hiring in Puerto Rico before the end of the year." } },
+    files: [{ id: "op-overview", day: "9/30", to: "Leilani Gonzalez" }, { id: "op-payroll", day: "10/16", to: "Leilani Gonzalez" }, { id: "ag-reseller", day: "10/21", to: "Leilani Gonzalez" }],
+    email: { dir: "in", from: "Leilani Gonzalez", to: "you", day: "10/29", time: "3:05 PM", subj: "Puerto Rico walkthrough", body: "Hi Antaeus,\n\nWe have a client asking about hiring in Puerto Rico before the end of the year. I don't have the details yet, but can we find time next week to walk through how it works?\n\nLeilani" },
+    earlier: [
+      { g: "✉", day: "10/29", time: "3:05 PM", who: "Leilani Gonzalez → you", s: "Puerto Rico walkthrough" },
+      { g: "➤", day: "10/21", time: "10:15 AM", who: "you → Leilani Gonzalez", s: "Reseller agreement, review copy", out: true },
+      { g: "✉", day: "10/20", time: "9:10 AM", who: "Leilani Gonzalez → you", s: "Intro to your Global Business Consultant" },
+    ],
+    recTotal: 22,
+  },
+  {
+    id: "xcel", name: "XcelHR", group: "live", rank: 2, shape: "GP +EOR", meta: "REFERRAL · MEXICO", multi: "r", briefed: false, research: "NEVER", worked: true,
+    move: { a: "Send the Mexico payroll timeline.", r: "Promised Thursday." },
+    meter: { frac: 0.2, cur: 1, cap: "warn", label: "STAGE 2 OF 7 · DISCOVERY" },
+    theirs: { label: "MARCO NAMED NORTHGATE", act: "Confirm the Mexico entity.", why: "Marco said the client has its own entity in Mexico." },
+    need: { p: ["gp"], who: "client", ev: { k: "CALL NOTES · 10/27", q: "The client already has its own entity in Mexico and wants us to run payroll for it." } },
+    client: { name: "Northgate Dental Group", sure: "likely", need: "Payroll in Mexico through their own entity. Count in Mexico not said.", ev: { k: "CALL NOTES · 10/27", q: "Marco thinks it's Northgate, but he wants to check before he says for sure." } },
+    countries: [
+      { c: "MX", ev: { k: "CALL NOTES · 10/27", q: "The client already has its own entity in Mexico." } },
+      { c: "CA", ev: { k: "EMAIL · 10/9 · MARCO RUIZ", q: "They also have ten people in Canada we'd want to look at." } },
+    ],
+    heads: [{ n: 10, kind: "ee", c: "CA", ev: { q: "They also have ten people in Canada we'd want to look at." } }],
+    chair: { v: "referral", day: "10/9", ev: { k: "EMAIL · 10/9 · MARCO RUIZ", q: "We'd rather refer these over to you than take them on ourselves." } },
+    date: { iso: "2026-12-01", what: "Payroll by", ev: { k: "CALL NOTES · 10/27", q: "They want the first Mexico payroll run by December 1." } },
+    files: [{ id: "op-payroll", day: "10/9", to: "Marco Ruiz" }, { id: "demo-payperiods", day: "10/9", to: "Marco Ruiz" }],
+    email: { dir: "out", from: "you", to: "Marco Ruiz", day: "11/3", time: "8:40 AM", subj: "Mexico payroll timeline", body: "Hi Marco,\n\nHere is how the Mexico payroll would run if the client keeps its own entity. I can walk Northgate through it whenever they're ready.\n\nAntaeus" },
+    earlier: [
+      { g: "➤", day: "11/3", time: "8:40 AM", who: "you → Marco Ruiz", s: "Mexico payroll timeline", out: true },
+      { g: "☎", day: "10/27", time: "1:30 PM", who: "Call · Marco Ruiz", s: "Northgate, Mexico entity" },
+      { g: "✉", day: "10/9", time: "4:02 PM", who: "Marco Ruiz → you", s: "Clients in Canada and Mexico" },
+    ],
+    recTotal: 9,
+  },
+  {
+    id: "advocate", name: "Advocate Pay", group: "live", rank: 3, shape: "CM", meta: "CANADA · COLOMBIA", multi: "a", briefed: true, research: "9/18",
+    move: { a: "Answer Kim's contractor question.", r: "Asked 10/29." },
+    meter: { frac: 0.58, cur: 4, cap: "ok", label: "STAGE 5 OF 7 · CONTRACT" },
+    theirs: null,
+    need: { p: ["cm"], who: "internal", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "For our own contractors in Canada and Colombia, can they all sit on one agreement?" } },
+    client: { internal: true },
+    countries: [
+      { c: "CA", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "For our own contractors in Canada and Colombia…" } },
+      { c: "CO", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "For our own contractors in Canada and Colombia…" } },
+    ],
+    heads: [{ n: 6, kind: "ctr", about: true, ev: { q: "We have about six right now." } }],
+    chair: { v: null },
+    date: { asap: true, what: "ASAP", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "We'd like to get this sorted as soon as we can." } },
+    files: [],
+    email: { dir: "in", from: "Kim Ellis", to: "you", day: "10/29", time: "11:48 AM", subj: "One agreement or two?", body: "Quick question. For our own contractors in Canada and Colombia, can they all sit on one agreement, or does each country need its own? We have about six right now. We'd like to get this sorted as soon as we can.\n\nKim" },
+    earlier: [
+      { g: "✉", day: "10/29", time: "11:48 AM", who: "Kim Ellis → you", s: "One agreement or two?" },
+      { g: "✎", day: "10/22", time: "4:10 PM", who: "Your note", s: "Kim runs the contractor side herself" },
+    ],
+    recTotal: 17,
+  },
+  {
+    id: "axcet", name: "Axcet HR", group: "low", rank: 4, shape: "TAL", meta: "GERMANY", multi: "r", briefed: false, research: "8/30",
+    move: { a: "Answer Priya's Germany question.", r: "Asked 10/8." },
+    meter: { frac: 0.12, cur: 0, cap: "risk", label: "STAGE 1 OF 7 · FIRST CALL" },
+    theirs: null,
+    need: { p: ["tal"], who: "client", ev: { k: "EMAIL · 10/8 · PRIYA NATARAJAN", q: "A client mentioned Germany, but nothing firm." } },
+    client: { name: null, sure: "thin", need: "Something in Germany. Nothing firm yet.", ev: { k: "EMAIL · 10/8 · PRIYA NATARAJAN", q: "Do you have anything on Germany? A client mentioned it but nothing firm." } },
+    countries: [{ c: "DE", ev: { k: "EMAIL · 10/8 · PRIYA NATARAJAN", q: "Do you have anything on Germany?" } }],
+    heads: [],
+    chair: { v: "referral", day: "9/12", ev: { k: "CALL NOTES · 9/12", q: "Priya said they would only ever refer this kind of work." } },
+    date: null,
+    files: [{ id: "op-talent", day: "8/12", to: "Priya Natarajan" }],
+    email: { dir: "in", from: "Priya Natarajan", to: "you", day: "10/8", time: "10:20 AM", subj: "Germany?", body: "Do you have anything on Germany? A client mentioned it but nothing firm.\n\nPriya" },
+    earlier: [{ g: "✉", day: "10/8", time: "10:20 AM", who: "Priya Natarajan → you", s: "Germany?" }],
+    recTotal: 6,
+  },
+  {
+    id: "marvel", name: "Marvel HR", group: "closed", rank: 5, shape: "EOR", meta: "RESALE · UNITED KINGDOM", multi: "g", briefed: true, research: "10/2",
+    outcome: { status: "won" },
+    meter: { frac: 1, cur: 6, cap: "ok", label: "CLOSED WON" },
+    theirs: null,
+    need: { p: ["eor"], who: "client", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "Our first one is a client hiring two people in the UK." } },
+    client: { name: "Brightline Staffing", sure: "sure", need: "2 employees in the United Kingdom.", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "Our first one is Brightline Staffing, hiring two people in the UK." } },
+    countries: [{ c: "GB", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "…hiring two people in the UK." } }],
+    heads: [{ n: 2, kind: "ee", c: "GB", ev: { q: "hiring two people in the UK" } }],
+    chair: { v: "resale", day: "10/2", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "We're going ahead as a reseller." } },
+    date: null,
+    files: [{ id: "op-eor", day: "10/2", to: "John Sharpe" }, { id: "ag-reseller", day: "10/6", to: "John Sharpe" }],
+    email: { dir: "in", from: "John Sharpe", to: "you", day: "10/14", time: "1:15 PM", subj: "Signed agreement", body: "Signed copy attached. Looking forward to getting started.\n\nJohn" },
+    earlier: [{ g: "✉", day: "10/14", time: "1:15 PM", who: "John Sharpe → you", s: "Signed agreement" }],
+    recTotal: 11,
+  },
+];
+
+// Each concept runs on its own copy, so a lever thrown in A leaves B alone.
+const freshUI = () => ({
+  shut: new Set(), closedHidden: false, multi: null, paste: null, door: {}, dropRcpt: {}, text: {},
+  earlier: new Set(), whole: new Set(), theirs: new Set(), worked: new Set(), askWon: null,
+  chair: {}, clientName: {}, naming: null, addC: {}, adding: null,
+  filesOpen: new Set(), pickOpen: new Set(), picks: {}, sentNow: {},
+  chute: [{ who: "Simploy", what: "1 email · 1 to-do", day: TODAY_MD, rung: "contact email" }],
+  flash: new Set(), bOpen: "simploy", order: "urgent", fChair: "all", fProd: null, fCountry: "",
+  cSel: "simploy", lowerShut: false, menu: false,
+});
+const ST = { A: clone(BOOK), B: clone(BOOK), C: clone(BOOK) };
+const UI = { A: freshUI(), B: freshUI(), C: freshUI() };
+const acct = (cid, id) => ST[cid].find((a) => a.id === id);
+const isWorked = (cid, a) => a.worked || UI[cid].worked.has(a.id);
+const fl = (cid, id, what) => (UI[cid].flash.has(`${id}:${what}`) ? " flash" : "");
+
+// ── The new facts ──────────────────────────────────────────────────────
+function urgency(a) {
+  if (a.outcome) return { tone: "none", top: a.date && a.date.iso ? `${a.date.what.toUpperCase()} ${monDay(a.date.iso).toUpperCase()}` : "NO DATE SAID", count: "", days: null };
+  const d = a.date;
+  if (!d) return { tone: "none", top: "NO DATE SAID", count: "", days: null };
+  if (d.asap) return { tone: "warm", top: "ASAP · NO DATE SAID", count: "", days: null, asap: true };
+  const n = daysTo(d.iso);
+  const count = n < 0 ? `${-n} DAYS AGO` : n === 0 ? "TODAY" : n === 1 ? "1 DAY" : `${n} DAYS`;
+  return { tone: toneOf(n), top: `${d.what.toUpperCase()} ${monDay(d.iso).toUpperCase()}`, count, days: n };
+}
+// One pulse per urgent deal: the copy that leads pulses, every other copy
+// of the same light holds still (still = true).
+const light = (t, still) => `<span class="light ${t}${still ? " still" : ""}" aria-hidden="true"></span>`;
+function dateEv(a, u) {
+  if (!a.date) return ev({ k: "NO DATE ON FILE", n: `No client date or deadline appears in the ${a.recTotal} filed entries for ${a.name}.` });
+  const why = u.asap ? "Urgency was stated without a date, so the light is amber and does not pulse."
+    : u.tone === "hot" ? "It is 14 days away or less, so the light is red and pulses."
+    : u.tone === "warm" ? "It is within 30 days, so the light is amber."
+    : u.tone === "past" ? "The date has passed." : "It is more than 30 days away.";
+  return ev({ k: `FROM THE RECORD · ${a.date.ev.k}`, q: a.date.ev.q, n: a.outcome ? "The deal is closed, so the light does not pulse." : why });
+}
+function wAlert(cid, a, still) {
+  const u = urgency(a);
+  return `<button class="alert ${u.tone}${fl(cid, a.id, "date")}" data-ev="${dateEv(a, u)}">${light(u.tone, still)}<b>${esc(u.top)}</b>${u.count ? `<span class="cnt">${esc(u.count)}</span>` : ""}</button>`;
+}
+function wNeeds(cid, a, sz) {
+  const lit = new Set(a.need?.p ?? []);
+  const btns = PRODUCTS.map((p) => {
+    const on = lit.has(p.k);
+    const k = on ? ev({ k: `FROM THE RECORD · ${a.need.ev.k}`, q: a.need.ev.q }) : ev({ k: p.label, n: `${a.name} has not mentioned ${p.label.toLowerCase()} on file.` });
+    return `<button class="prod${on ? " on" : ""}" data-ev="${k}" title="${esc(p.label)}${on ? "" : ". Not mentioned."}" aria-label="${esc(p.label)}${on ? ", mentioned" : ", not mentioned"}">${ICON[p.k]}</button>`;
+  }).join("");
+  const names = PRODUCTS.filter((p) => lit.has(p.k)).map((p) => p.short).join(" · ");
+  const who = a.need ? `<span class="who ${a.need.who}">${a.need.who === "client" ? "FOR A CLIENT" : "INTERNAL"}</span>` : "";
+  if (sz === "sm") return `<span class="needs sm"><span class="prods">${btns}</span></span>`;
+  return `<div class="needs ${sz}"><span class="prods">${btns}</span><span class="pnames">${esc(names || "NOTHING NAMED YET")}</span>${who}</div>`;
+}
+const CONF = { sure: { n: 3, t: "SURE" }, likely: { n: 2, t: "LIKELY" }, thin: { n: 1, t: "NOT ENOUGH TO BE SURE" } };
+const conf = (s) => { const c = CONF[s]; return `<span class="conf ${s}">${[0, 1, 2].map((i) => `<i class="${i < c.n ? "on" : ""}"></i>`).join("")}<span>${c.t}</span></span>`; };
+function clientName(cid, a) { return UI[cid].clientName[a.id] || a.client?.name || ""; }
+function wClient(cid, a, sz) {
+  const ui = UI[cid];
+  const c = a.client;
+  if (c?.internal) return `<div class="client ${sz}"><div class="clTop"><button class="cl internal" data-ev="${ev({ k: `FROM THE RECORD · ${a.need.ev.k}`, q: a.need.ev.q, n: "This is the PEO's own need, so no client is involved." })}">INTERNAL · NO CLIENT</button></div><span class="cneed">Their own people.</span></div>`;
+  const hand = ui.clientName[a.id];
+  const name = hand || c?.name;
+  let top;
+  if (name) {
+    const k = hand ? ev({ k: `SET BY YOU · ${TODAY_MD}`, n: "You named this client by hand. The record has not named a client yet." }) : ev({ k: `FROM THE RECORD · ${c.ev.k}`, q: c.ev.q });
+    top = `<button class="cl named" data-ev="${k}">${esc(name)}</button>${hand ? `<span class="src hand">SET BY YOU · ${TODAY_MD}<button data-act="unname" data-cid="${cid}" data-id="${a.id}" title="Go back to the record's read" aria-label="Go back to the record's read">↺</button></span>` : ""}`;
+  } else {
+    const k = ev({ k: "NO CLIENT NAMED", n: `No client name appears in the ${a.recTotal} filed entries for ${a.name}.` });
+    top = `<button class="cl unknown" data-ev="${k}">CLIENT NOT NAMED YET</button>` + (ui.naming === a.id
+      ? `<input class="nameIn" data-name="${cid}:${a.id}" placeholder="Type the client's name, then Enter" aria-label="Client's name" />`
+      : `<button class="namer" data-act="name" data-cid="${cid}" data-id="${a.id}">Name it ▾</button>`);
+  }
+  const needK = ev({ k: `FROM THE RECORD · ${c.ev.k}`, q: c.ev.q, n: c.sure === "thin" ? "The record does not hold enough to be sure of this yet." : c.sure === "likely" ? "The record points this way, but nobody has confirmed it." : "Stated plainly in the record." });
+  return `<div class="client ${sz}${fl(cid, a.id, "client")}"><div class="clTop">${top}</div><button class="cneed" data-ev="${needK}" style="text-align:left">${esc(c.need)}</button>${conf(c.sure)}</div>`;
+}
+function countryList(cid, a) { return [...a.countries, ...(UI[cid].addC[a.id] ?? []).map((c) => ({ c, hand: true }))]; }
+function wCountries(cid, a, sz) {
+  const ui = UI[cid];
+  const list = countryList(cid, a);
+  const w = sz === "lg" ? 54 : sz === "md" ? 24 : 20;
+  const shown = sz === "sm" ? list.slice(0, 2) : list;
+  const chips = shown.map((x) => {
+    const k = x.hand ? ev({ k: `SET BY YOU · ${TODAY_MD}`, n: "You added this country by hand. The record has not mentioned it yet." }) : ev({ k: `FROM THE RECORD · ${x.ev.k}`, q: x.ev.q });
+    return `<button class="ctry ${sz}${x.hand ? " hand" : ""}" data-ev="${k}">${flag(x.c, w)}<span>${esc(COUNTRY[x.c])}</span></button>`;
+  }).join("");
+  const more = sz === "sm" && list.length > 2 ? `<span class="none">+${list.length - 2}</span>` : "";
+  const empty = list.length ? "" : `<span class="none">NO COUNTRY SAID</span>`;
+  let add = "";
+  if (sz !== "sm" && !a.outcome) {
+    const opts = Object.keys(COUNTRY).filter((c) => !list.some((x) => x.c === c)).map((c) => `<option value="${c}">${esc(COUNTRY[c])}</option>`).join("");
+    add = `<span class="cadd"><button data-act="addc" data-cid="${cid}" data-id="${a.id}" title="Add a country by hand" aria-label="Add a country by hand">＋</button>${ui.adding === a.id ? `<select data-addc="${cid}:${a.id}" aria-label="Pick a country"><option value="">Pick a country</option>${opts}</select>` : ""}</span>`;
+  }
+  return `<div class="ctrys">${chips}${more}${empty}${add}</div>`;
+}
+function wHeads(cid, a, sz) {
+  const item = (kind) => {
+    const l = a.heads.filter((h) => h.kind === kind);
+    const label = kind === "ee" ? "EMPLOYEES" : "CONTRACTORS";
+    const ic = kind === "ee" ? ICON.people : ICON.brief;
+    if (!l.length) {
+      if (sz === "sm") return "";
+      return `<button class="hc none" data-ev="${ev({ k: label, n: `No number of ${label.toLowerCase()} appears on file for ${a.name}.` })}">${ic}<span class="hl">${label}</span><span class="ns">NOT SAID</span></button>`;
+    }
+    const total = l.reduce((n, h) => n + h.n, 0);
+    const about = l.some((h) => h.about);
+    const detail = l.map((h) => `${h.about ? "About " : ""}${h.n} ${kind === "ee" ? "employee" : "contractor"}${h.n === 1 ? "" : "s"}${h.c ? ` in ${COUNTRY[h.c]}` : ""}`).join(". ") + ".";
+    const k = ev({ k: "FROM THE RECORD", q: l.map((h) => h.ev.q).join(" … "), n: detail });
+    if (sz === "sm") return `<button class="hc" data-ev="${k}">${ic}<span class="hn">${about ? "~" : ""}${total}</span><span class="hl">${kind === "ee" ? "EE" : "CTR"}</span></button>`;
+    return `<button class="hc" data-ev="${k}">${ic}<span class="hn">${about ? "~" : ""}${total}</span><span class="hl">${label}</span></button>`;
+  };
+  const inner = item("ee") + item("ctr");
+  return `<div class="heads ${sz}">${inner || `<span class="none">NOT SAID</span>`}</div>`;
+}
+function chairValue(cid, a) { return UI[cid].chair[a.id] ?? (a.chair?.v ?? "none"); }
+function wChair(cid, a, sz) {
+  const ui = UI[cid];
+  const hand = ui.chair[a.id];
+  const v = chairValue(cid, a);
+  const opts = [["resale", "RESELLER"], ["referral", "REFERRAL"], ["none", "NOT SAID"]];
+  if (sz === "sm") {
+    const t = v === "resale" ? "RESELLER" : v === "referral" ? "REFERRAL" : "NOT SAID";
+    return `<span class="dealPill${v === "none" ? "" : " set"}">${t}</span>`;
+  }
+  const btns = opts.map(([k, t]) => `<button class="${v === k ? "on" : ""}" data-act="chair" data-cid="${cid}" data-id="${a.id}" data-v="${k}" aria-pressed="${v === k}">${t}</button>`).join("");
+  const tag = hand
+    ? `<span class="src hand">SET BY YOU · ${TODAY_MD}<button data-act="unchair" data-cid="${cid}" data-id="${a.id}" title="Go back to the record's read" aria-label="Go back to the record's read">↺</button></span>`
+    : a.chair?.v
+      ? `<button class="src" data-ev="${ev({ k: `FROM THE RECORD · ${a.chair.ev.k}`, q: a.chair.ev.q })}">FROM THE RECORD · ${esc(a.chair.day)}</button>`
+      : `<span class="src">NOT MENTIONED ON FILE</span>`;
+  return `<div class="chair ${sz}${fl(cid, a.id, "chair")}"><span class="lever" role="group" aria-label="Reseller or referral">${btns}</span>${tag}</div>`;
+}
+function sentFiles(cid, a) { return [...(UI[cid].sentNow[a.id] ?? []), ...a.files.slice().reverse()]; }
+function wFiles(cid, a, sz) {
+  const ui = UI[cid];
+  const sent = sentFiles(cid, a);
+  const open = ui.filesOpen.has(a.id);
+  const pick = ui.pickOpen.has(a.id);
+  const head = sent.length
+    ? `<button class="folder" data-act="files" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${ICON.folder}<b>${sent.length}</b><span>SENT · LAST ${esc(sent[0].day)} ${open ? "▾" : "▸"}</span></button>`
+    : `<button class="folder empty" data-act="files" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${ICON.folder}<b>0</b><span>NOTHING SENT YET</span></button>`;
+  const send = a.outcome ? "" : `<button class="sendf" data-act="pick" data-cid="${cid}" data-id="${a.id}" aria-expanded="${pick}">${ICON.clip}Send files</button>`;
+  const list = open && sent.length
+    ? `<div class="flist">${sent.map((f) => `<div class="fl${f.now ? " new" : ""}">${FILE[f.id].g === "demo" ? ICON.video : ICON.doc}<span>${esc(fileName(f.id))}</span><span class="fd">SENT ${esc(f.day)}${f.to ? ` · TO ${esc(firstWord(f.to).toUpperCase())}` : ""}</span></div>`).join("")}</div>`
+    : "";
+  let picker = "";
+  if (pick) {
+    const picks = new Set(ui.picks[a.id] ?? []);
+    const was = new Map(sent.map((f) => [f.id, f.day]));
+    const groups = ["demo", "op", "ag"].map((g) => `<div class="pk">${GROUP[g]}</div>` + FILES.filter((f) => f.g === g).map((f) => `<label class="pi"><input type="checkbox" data-pick="${cid}:${a.id}:${f.id}" ${picks.has(f.id) ? "checked" : ""}/><span>${esc(f.label)}${was.has(f.id) ? `<span class="was">SENT ${esc(was.get(f.id))}</span>` : ""}</span><span class="ps">${f.runs ? `${f.runs} · ` : ""}${size(f.kb)}</span></label>`).join("")).join("");
+    const total = [...picks].reduce((n, id) => n + FILE[id].kb * 1.37, 0);
+    picker = `<div class="picker">${groups}<div class="pfoot"><span class="ptotal">${picks.size ? `About ${size(Math.round(total))} in the email.` : "Tick the files to attach."}${total > 20000 ? " Over 20 MB. Most mail stops there." : ""}</span><button class="psend" data-act="send" data-cid="${cid}" data-id="${a.id}">Send in Outlook</button></div><p class="pnote">The same picker Send in Outlook uses on Groundwork. It downloads an Outlook draft with the files attached, and the folder records what went.</p></div>`;
+  }
+  return `<div class="files${fl(cid, a.id, "files")}"><div class="filesTop">${head}${send}</div>${list}${picker}</div>`;
+}
+
+// ── The parts that stay ────────────────────────────────────────────────
+function idLine(cid, a, opts = {}) {
+  const ui = UI[cid];
+  const worked = isWorked(cid, a);
+  const caret = opts.caret === false ? "" : `<button class="caret" data-act="fold" data-cid="${cid}" data-id="${a.id}" aria-expanded="${!opts.shut}" title="${opts.shut ? "Open this row" : "Collapse this row"}">${opts.shut ? "▸" : "▾"}</button>`;
+  const people = a.email ? [a.email.from === "you" ? a.email.to : a.email.from].filter(Boolean) : [];
+  return `<div class="nmline">${caret}<span class="nm"><span class="bf${a.briefed ? " on" : ""}" title="${a.briefed ? "Partner briefed. Click to change." : "Partner not briefed yet. Click to set it by hand."}"></span><span class="sf">SF</span><a class="nmLink${opts.big ? " big" : ""}" href="#" data-act="toast" data-msg="Opens ${esc(a.name)} on the Accounts page.">${esc(a.name)}</a>${a.outcome ? `<span class="stamp">CLOSED WON</span>` : ""}</span>
+    <span class="chips"><button class="chip" data-act="toast" data-msg="Opens what the read stands on.">${esc(a.shape)}</button><span class="metaIn">${esc(a.meta)}</span>
+    <button class="multi ${a.multi}" data-act="multi" data-cid="${cid}" data-id="${a.id}" aria-expanded="${ui.multi === a.id}">MULTI${ui.multi === a.id ? `<span class="hover"><span class="hk">WHO'S IN THIS DEAL · FROM THE REPOSITORY</span>${people.map((p) => `<b>${esc(p)}</b>`).join("<br/>") || "No stakeholders on file yet."}</span>` : ""}</button>
+    <button class="zap" data-act="door" data-door="zap" data-cid="${cid}" data-id="${a.id}" title="Paste. Files to ${esc(a.name)}.">⚡</button>
+    <button class="rsrch" data-act="toast" data-msg="Runs the deep research pass on ${esc(a.name)}.">RESEARCH ${esc(a.research)} ⟳</button>
+    ${worked ? `<button class="worked" data-act="unwork" data-cid="${cid}" data-id="${a.id}" title="Worked today. Click to take the mark back.">✓ WORKED</button>` : ""}
+    ${a.outcome ? "" : `<button class="hov" data-act="toast" data-msg="Sends ${esc(a.name)} to low signal." title="Send to low signal. Not in your Salesforce pipeline.">⇣</button><button class="hov" data-act="won" data-cid="${cid}" data-id="${a.id}" title="Mark Closed Won.">☑</button>`}</span></div>`;
+}
+function moveSlot(cid, a, orange) {
+  const ui = UI[cid];
+  if (a.outcome) return `<div class="movewrap"><span class="lbl">CLOSED WON</span><p class="move" style="font-weight:400;color:var(--soft)">Closed by your call. The record keeps everything.</p><span class="acts"><button class="ghost" data-act="toast" data-msg="Retires ${esc(a.name)} from the board.">Retire the row</button><button class="reopen" data-act="toast" data-msg="Reopens the deal. The stamp comes off." title="Reopen the deal. The stamp comes off.">↺</button></span></div>`;
+  if (ui.askWon === a.id) return `<div class="movewrap"><span class="lbl">MARK IT CLOSED WON</span><p class="move">Your call: stamp the meter, or keep working it.</p><span class="acts"><button class="wonYes" data-act="wonyes" data-cid="${cid}" data-id="${a.id}">Confirm Closed Won</button><button class="ghost" data-act="wonno" data-cid="${cid}">Not yet</button></span></div>`;
+  const worked = isWorked(cid, a);
+  return `<div class="movewrap"><span class="lbl">NEXT MOVE</span><p class="move">${esc(a.move.a)} <span class="r">${esc(a.move.r)}</span></p>${worked ? "" : `<button class="${orange ? "go" : "ghost"}" data-act="done" data-cid="${cid}" data-id="${a.id}">Mark it done ✓</button>`}</div>`;
+}
+function meter(a) {
+  const pct = Math.round(Math.max(0.04, a.meter.frac) * 100);
+  const nodes = Array.from({ length: 7 }, (_, i) => `<button class="node${i < a.meter.cur ? " done" : i === a.meter.cur ? " cur" : ""}" style="left:${2 + i * 14.3}%" data-act="toast" data-msg="Opens this stage's checklist." aria-label="Stage ${i + 1}"></button>`).join("");
+  return `<div class="climb"><div class="meterZone"><div class="track"></div><div class="gain" style="width:${pct}%"></div><div class="cap ${a.meter.cap}" style="left:${pct}%"></div>${nodes}</div><div class="climbCap">${esc(a.meter.label)}</div></div>`;
+}
+function emailPane(cid, a) {
+  const m = a.email;
+  if (!m) return "";
+  const whole = UI[cid].whole.has(a.id);
+  const long = m.body.length > 180;
+  return `<div class="mail"><div class="mailK"><span class="lbl">LATEST EMAIL</span><span class="mailWho">${esc(m.from)} → ${esc(m.to)} · ${esc(m.day)} ${esc(m.time)}</span></div><p class="mailSubj">${esc(m.subj)}</p><div class="${long && !whole ? "capped" : ""}"><p class="mailBody">${esc(m.body)}</p></div>${long ? `<button class="open" data-act="whole" data-cid="${cid}" data-id="${a.id}">${whole ? "Show less ▴" : "Show the whole email ▾"}</button>` : ""}</div>`;
+}
+function theirsLine(cid, a) {
+  if (!a.theirs) return "";
+  const open = UI[cid].theirs.has(a.id);
+  return `<div class="theirs">THEIRS · <button data-act="theirs" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${esc(a.theirs.label)}</button></div>${open ? `<div class="theirsFold"><div class="t">◆ CONFIRMED</div><b>${esc(a.theirs.act)}</b><div>${esc(a.theirs.why)}</div></div>` : ""}`;
+}
+function drop(cid, a) {
+  const ui = UI[cid];
+  const door = ui.door[a.id] ?? null;
+  const pane = door === "zap"
+    ? `<div class="pane"><textarea data-text="${cid}:${a.id}" placeholder="Paste the Salesforce capture, an email, or meeting notes. It files to ${esc(a.name)}.">${esc(ui.text[a.id] ?? "")}</textarea><div class="paneRow"><button data-act="door" data-door="zap" data-cid="${cid}" data-id="${a.id}">Cancel</button><button class="file" data-act="readfile" data-cid="${cid}" data-id="${a.id}">✨ Read &amp; file</button></div></div>`
+    : door === "note" || door === "act"
+      ? `<div class="pane"><textarea data-text="${cid}:${a.id}" placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…">${esc(ui.text[a.id] ?? "")}</textarea><div class="paneRow"><button class="file" data-act="readfile" data-cid="${cid}" data-id="${a.id}">File it</button></div></div>`
+      : "";
+  const rc = ui.dropRcpt[a.id];
+  return `<div class="drop"><div class="dropK">THE DROP · FILES TO ${esc(a.name.toUpperCase())}, EVERYWHERE</div><div class="doors">
+    <button class="door${door === "zap" ? " on" : ""}" data-act="door" data-door="zap" data-cid="${cid}" data-id="${a.id}" title="The bolt. Paste anything.">⚡</button>
+    <button class="door${door === "note" ? " on" : ""}" data-act="door" data-door="note" data-cid="${cid}" data-id="${a.id}" title="Note. A line for the record.">▢</button>
+    <button class="door${door === "act" ? " on" : ""}" data-act="door" data-door="act" data-cid="${cid}" data-id="${a.id}" title="Action. Open work for this account.">✸</button>
+    <button class="door" data-act="toast" data-msg="Opens the file picker. Every file type is taken." title="File.">⇪</button></div>${pane}${rc ? `<div class="dropRcpt${fl(cid, a.id, "rcpt")}"><b>✓</b>${esc(rc)}<span style="margin-left:auto;color:var(--quiet)">↺ ✕</span></div>` : ""}</div>`;
+}
+function earlier(cid, a) {
+  const open = UI[cid].earlier.has(a.id);
+  const lines = open ? a.earlier.map((e) => `<div class="ent"><span class="g${e.out ? " out" : ""}">${e.g}</span><span><span class="kk">${esc(e.day)} ${esc(e.time)} · ${esc(e.who)}</span><span class="s">${esc(e.s)}</span></span></div>`).join("") + `<div class="more"><span>the full record (${a.recTotal}) ▸</span><span>archive →</span></div>` : "";
+  return `<button class="dayrule" data-act="earlier" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">EARLIER · ${a.recTotal} ${open ? "▾" : "▸"}</button>${lines}`;
+}
+
+// ── The frame every concept sits in ────────────────────────────────────
+function wayfinder() {
+  const routes = ["HomeRoom", "Accounts", "Groundwork", "Playbook", "Intranet", "Pricing", "Demos", "Capture"];
+  return `<div class="wf"><span class="wfBrand">${MARK}ANTAEUS</span><nav aria-label="Primary routes">${routes.map((r) => `<span class="${r === "HomeRoom" ? "here" : ""}">${r}</span>`).join("")}</nav></div>`;
+}
+function chute(cid) {
+  const ui = UI[cid];
+  return `<section class="chute"><span class="chuteK">THE CHUTE</span><span class="chuteLine">Throw files here. They find their account.</span><button class="chuteBtn" data-act="toast" data-msg="Opens the file picker for the Chute.">⇪ Files</button></section><ul class="rcpts">${ui.chute.map((r, i) => `<li class="${i === 0 && ui.flash.has("chute") ? "flash" : ""}"><b>${esc(r.who)}</b>${esc(r.what)} · ${esc(r.day)} · ${esc(r.rung)}<span class="x">↺ ✕</span></li>`).join("")}</ul>`;
+}
+function roomBar(cid, label) {
+  return `<div class="rbar"><span class="ident">${MARK}<span class="roomName">HOMEROOM</span><button class="shutAll" data-act="shutall" data-cid="${cid}">${label}</button></span><span class="addWrap"><button class="addBtn" data-act="toast" data-msg="Opens ＋ add: an account to the board, the payroll intake form, and the follow-ups still owed.">＋ add ▾</button><button class="addBadge" data-act="toast" data-msg="Opens the 2 follow-ups still owed.">2</button></span><span class="clock">10:42 AM · CHICAGO</span></div>`;
+}
+const edges = () => `<div class="edges"><button class="edge" data-act="toast" data-msg="Opens the Pipeline tab: every active account's record.">PIPELINE <span class="ec">5</span></button><button class="edge" data-act="toast" data-msg="Opens Roundups and Check-ins.">ROUNDUPS · CHECK-INS <span class="ec">2</span></button><button class="edge" data-act="toast" data-msg="Opens Keep an eye out.">EYE <span class="ec">3</span></button></div>`;
+const legend = () => `<div class="legend"><span>✉ email</span><span>➤ sent</span><span>☎ call</span><span>✓ done</span><span>✎ note</span><span>✸ action</span><span>⇣ low signal</span><span>☑ closed won</span><span class="lg">${light("hot", true)} date in 14 days or less, pulsing</span><span class="lg">${light("warm")} within 30 days, or ASAP with no date</span><span class="lg">▣ files sent</span><span class="lg">${conf("likely")} how sure the read is</span></div>`;
+function frame(cid, inner, shutLabel) {
+  return `<div class="app">${wayfinder()}<div class="roomIn">${chute(cid)}${roomBar(cid, shutLabel)}${inner}${legend()}</div>${edges()}<button class="scratch" data-act="toast" data-msg="Opens the Scratchpaper." title="Scratchpaper">✎</button></div>`;
+}
+function ruleFor(cid, group, count) {
+  if (group === "low") return `<div class="rule">LOW SIGNAL · ${count} · NOT IN YOUR SALESFORCE PIPELINE</div>`;
+  const hid = UI[cid].closedHidden;
+  return `<div class="rule">CLOSED · ${count} · THE RECORD KEEPS EVERYTHING<button data-act="closed" data-cid="${cid}" aria-expanded="${!hid}">${hid ? "SHOW" : "HIDE"}</button></div>`;
+}
+const byRank = (a, b) => a.rank - b.rank;
+const groupsOf = (list) => ({ live: list.filter((a) => a.group === "live"), low: list.filter((a) => a.group === "low"), closed: list.filter((a) => a.group === "closed") });
+const topId = (cid) => ST[cid].filter((a) => a.group === "live").sort(byRank)[0]?.id;
+
+// ── Concept A: the facts panel ─────────────────────────────────────────
+function factsPanel(cid, a) {
+  const u = urgency(a);
+  const g = u.tone === "hot" || u.tone === "past" ? " gauge-hot" : u.tone === "warm" ? " gauge-warm" : "";
+  return `<div class="facts">
+    <div class="fx${g}"><span class="fk">CLIENT'S DATE</span><div>${wAlert(cid, a)}</div></div>
+    <div class="fx"><span class="fk">${esc(firstWord(a.name).toUpperCase())} NEEDS</span>${wNeeds(cid, a, "md")}</div>
+    <div class="fx"><span class="fk">THE CLIENT</span>${wClient(cid, a, "md")}</div>
+    <div class="fx"><span class="fk">WHERE</span>${wCountries(cid, a, "md")}</div>
+    <div class="fx"><span class="fk">HOW MANY</span>${wHeads(cid, a, "md")}</div>
+    <div class="fx"><span class="fk">DEAL</span>${wChair(cid, a, "md")}</div>
+    <div class="fx"><span class="fk">FILES</span>${wFiles(cid, a, "md")}</div>
+  </div>`;
+}
+function renderA() {
+  const cid = "A", ui = UI[cid];
+  const g = groupsOf(ST[cid].slice().sort(byRank));
+  const top = topId(cid);
+  const row = (a) => {
+    const shut = ui.shut.has(a.id);
+    const hid = a.group === "closed" && ui.closedHidden;
+    return `<div class="rowA row ${a.group}${shut ? " shut" : ""}${hid ? " hid" : ""}"><div class="deal">${idLine(cid, a, { shut })}${shut ? "" : moveSlot(cid, a, a.id === top) + meter(a) + emailPane(cid, a)}</div>${shut ? "" : `<div class="rec">${theirsLine(cid, a)}${factsPanel(cid, a)}${drop(cid, a)}${earlier(cid, a)}</div>`}</div>`;
+  };
+  let html = g.live.map(row).join("");
+  if (g.low.length) html += ruleFor(cid, "low", g.low.length) + g.low.map(row).join("");
+  if (g.closed.length) html += ruleFor(cid, "closed", g.closed.length) + g.closed.map(row).join("");
+  const allShut = ST[cid].every((a) => ui.shut.has(a.id));
+  $("#hostA").innerHTML = frame(cid, html, allShut ? "Open all" : "Collapse all");
+}
+
+// ── Concept B: the light board ─────────────────────────────────────────
+function bSorted(cid) {
+  const ui = UI[cid];
+  const list = ST[cid].slice();
+  const days = (a) => (a.date && !a.outcome ? (a.date.asap ? 31 : daysTo(a.date.iso)) : 9999);
+  if (ui.order === "urgent") list.sort((a, b) => days(a) - days(b) || a.rank - b.rank);
+  else if (ui.order === "az") list.sort((a, b) => a.name.localeCompare(b.name));
+  else list.sort(byRank);
+  return list;
+}
+function bPass(cid, a) {
+  const ui = UI[cid];
+  if (ui.fChair !== "all" && chairValue(cid, a) !== ui.fChair) return false;
+  if (ui.fProd && !(a.need?.p ?? []).includes(ui.fProd)) return false;
+  if (ui.fCountry && !countryList(cid, a).some((x) => x.c === ui.fCountry)) return false;
+  return true;
+}
+function strip(cid, a) {
+  const ui = UI[cid];
+  const u = urgency(a);
+  const open = ui.bOpen === a.id || ui.openAll;
+  const name = clientName(cid, a);
+  const cl = a.client?.internal ? `<span class="clx internal">INTERNAL</span>` : name ? `<span class="clx">${esc(name)}</span>` : `<span class="clx unknown">NOT NAMED</span>`;
+  const n = sentFiles(cid, a).length;
+  const g = u.tone === "hot" || u.tone === "past" ? " g-hot" : u.tone === "warm" ? " g-warm" : "";
+  return `<div class="strip bgrid${open ? " isOpen" : ""}${g}" data-act="bopen" data-cid="${cid}" data-id="${a.id}" role="button" tabindex="0" aria-expanded="${open}">
+    <span>${light(u.tone)}</span>
+    <span class="snm"><span class="bf${a.briefed ? " on" : ""}"></span><span class="sname">${esc(a.name)}</span>${a.outcome ? `<span class="stamp">WON</span>` : ""}${isWorked(cid, a) ? `<span class="worked">✓</span>` : ""}</span>
+    <span>${wNeeds(cid, a, "sm")}</span>
+    <span>${cl}</span>
+    <span>${wCountries(cid, a, "sm")}</span>
+    <span>${wHeads(cid, a, "sm")}</span>
+    <span>${wChair(cid, a, "sm")}</span>
+    <span class="fcount">${ICON.folder}${n}</span>
+    <span class="sdate ${u.tone}">${u.days != null ? `<span>${esc(monDay(a.date.iso).toUpperCase())}</span><span class="d">${esc(u.count)}</span>` : u.asap ? `<span>ASAP</span><span class="d">NO DATE</span>` : `<span>${a.date && a.date.iso && a.outcome ? esc(monDay(a.date.iso).toUpperCase()) : "NO DATE"}</span>`}</span>
+  </div>`;
+}
+function bOpenRow(cid, a) {
+  const u = urgency(a);
+  const g = u.tone === "hot" || u.tone === "past" ? " g-hot" : u.tone === "warm" ? " g-warm" : "";
+  return `<div class="bopen">
+    <div style="padding-top:10px">${idLine(cid, a, { caret: false })}</div>
+    <div class="band">
+      <div class="tile${g}"><span class="fk">CLIENT'S DATE</span>${wAlert(cid, a, true)}</div>
+      <div class="tile"><span class="fk">${esc(firstWord(a.name).toUpperCase())} NEEDS</span>${wNeeds(cid, a, "md")}</div>
+      <div class="tile" style="flex:1 1 230px"><span class="fk">THE CLIENT</span>${wClient(cid, a, "md")}</div>
+      <div class="tile"><span class="fk">WHERE</span>${wCountries(cid, a, "md")}</div>
+      <div class="tile"><span class="fk">HOW MANY</span>${wHeads(cid, a, "md")}</div>
+      <div class="tile"><span class="fk">DEAL</span>${wChair(cid, a, "md")}</div>
+      <div class="tile" style="flex:1 1 260px"><span class="fk">FILES</span>${wFiles(cid, a, "md")}</div>
+    </div>
+    ${`<div class="bcols on-white"><div class="deal">${moveSlot(cid, a, a.id === topId(cid))}${meter(a)}${emailPane(cid, a)}</div><div class="rec">${theirsLine(cid, a)}${drop(cid, a)}${earlier(cid, a)}</div></div>`}
+  </div>`;
+}
+function renderB() {
+  const cid = "B", ui = UI[cid];
+  const all = bSorted(cid);
+  const shown = all.filter((a) => bPass(cid, a));
+  const g = groupsOf(shown);
+  const countries = [...new Set(ST[cid].flatMap((a) => countryList(cid, a).map((x) => x.c)))];
+  const bar = `<div class="bbar">
+    <span class="bk">ORDER</span><select class="bsel" data-order="${cid}" aria-label="Order the lines"><option value="urgent"${ui.order === "urgent" ? " selected" : ""}>Nearest client date first</option><option value="rank"${ui.order === "rank" ? " selected" : ""}>The room's own order</option><option value="az"${ui.order === "az" ? " selected" : ""}>A to Z</option></select>
+    <span class="bk">DEAL</span><span class="fgroup">${[["all", "ALL"], ["resale", "RESELLER"], ["referral", "REFERRAL"], ["none", "NOT SAID"]].map(([k, t]) => `<button class="${ui.fChair === k ? "on" : ""}" data-act="fchair" data-cid="${cid}" data-v="${k}">${t}</button>`).join("")}</span>
+    <span class="bk">PRODUCT</span><span class="fgroup">${PRODUCTS.map((p) => `<button class="${ui.fProd === p.k ? "on" : ""}" data-act="fprod" data-cid="${cid}" data-v="${p.k}" title="${esc(p.label)}" aria-label="${esc(p.label)}">${ICON[p.k]}</button>`).join("")}</span>
+    <span class="bk">COUNTRY</span><select class="bsel" data-country="${cid}" aria-label="Filter by country"><option value="">Every country</option>${countries.map((c) => `<option value="${c}"${ui.fCountry === c ? " selected" : ""}>${esc(COUNTRY[c])}</option>`).join("")}</select>
+  </div>`;
+  const head = `<div class="bhead bgrid"><span></span><span>ACCOUNT</span><span>NEEDS</span><span>CLIENT</span><span>WHERE</span><span>HOW MANY</span><span>DEAL</span><span>FILES</span><span>CLIENT'S DATE</span></div>`;
+  const block = (a) => {
+    const hid = a.group === "closed" && ui.closedHidden;
+    if (hid) return "";
+    const open = ui.bOpen === a.id || ui.openAll;
+    return strip(cid, a) + (open ? bOpenRow(cid, a) : "");
+  };
+  let html = bar + head + g.live.map(block).join("");
+  if (g.low.length) html += ruleFor(cid, "low", g.low.length) + g.low.map(block).join("");
+  if (g.closed.length) html += ruleFor(cid, "closed", g.closed.length) + g.closed.map(block).join("");
+  const hidden = all.length - shown.length;
+  if (hidden) html += `<div class="bhid">${hidden} hidden by the filter · <button class="open" data-act="fclear" data-cid="${cid}">clear it</button></div>`;
+  $("#hostB").innerHTML = frame(cid, html, ui.openAll ? "Collapse all" : "Open all");
+}
+
+// ── Concept C: the focus stage ─────────────────────────────────────────
+function railCard(cid, a) {
+  const ui = UI[cid];
+  const u = urgency(a);
+  const name = clientName(cid, a);
+  const flags = countryList(cid, a).map((x) => `<span class="fx2">${flag(x.c, 18)}${esc(COUNTRY[x.c])}</span>`).join("");
+  const v = chairValue(cid, a);
+  return `<button class="rc ${a.group}${ui.cSel === a.id ? " sel" : ""}" data-act="csel" data-cid="${cid}" data-id="${a.id}" aria-pressed="${ui.cSel === a.id}">
+    <span class="rtop">${light(u.tone, ui.cSel === a.id)}<span class="rn">${esc(a.name)}</span><span class="bf${a.briefed ? " on" : ""}"></span></span>
+    <span class="rflags">${flags || `<span class="none">NO COUNTRY SAID</span>`}</span>
+    <span class="rmeta"><span class="dealPill${v === "none" ? "" : " set"}">${v === "resale" ? "RESELLER" : v === "referral" ? "REFERRAL" : "NOT SAID"}</span>${!a.client?.internal && !name ? `<span class="ru">CLIENT NOT NAMED</span>` : ""}${u.days != null ? `<span class="rd ${u.tone}">${esc(monDay(a.date.iso).toUpperCase())} · ${esc(u.count)}</span>` : u.asap ? `<span class="rd">ASAP · NO DATE</span>` : ""}${isWorked(cid, a) ? `<span class="worked">✓ WORKED</span>` : ""}${a.outcome ? `<span class="stamp">WON</span>` : ""}</span>
+  </button>`;
+}
+function banner(cid, a) {
+  const u = urgency(a);
+  const k = dateEv(a, u);
+  const name = clientName(cid, a) || (a.client?.internal ? a.name : "The client");
+  if (u.asap) return `<button class="banner warm${fl(cid, a.id, "date")}" data-ev="${k}">${light(u.tone)}<span class="bnum">!</span><span class="bt"><b>${esc(u.top)}</b><span>${esc(a.date.ev.q)}</span></span></button>`;
+  if (u.days == null) return `<button class="banner none" data-ev="${k}">${light(u.tone)}<span class="bt"><b>${esc(u.top)}</b></span></button>`;
+  const big = u.days < 0 ? -u.days : u.days;
+  const line = u.days < 0 ? `${a.date.what} ${monDay(a.date.iso)} has passed.` : `${name} · ${a.date.what.toLowerCase()} ${monDay(a.date.iso)}.`;
+  return `<button class="banner ${u.tone}${fl(cid, a.id, "date")}" data-ev="${k}">${light(u.tone)}<span class="bnum">${big}</span><span class="bt"><b>${u.days < 0 ? "DAYS PAST THE CLIENT'S DATE" : "DAYS TO THE CLIENT'S DATE"}</b><span>${esc(line)}</span></span></button>`;
+}
+function renderC() {
+  const cid = "C", ui = UI[cid];
+  const list = ST[cid].slice().sort((a, b) => {
+    const d = (x) => (x.date && !x.outcome ? (x.date.asap ? 31 : daysTo(x.date.iso)) : 9999);
+    return d(a) - d(b) || a.rank - b.rank;
+  });
+  const g = groupsOf(list);
+  let rail = `<div class="railK">LIVE · ${g.live.length}</div>` + g.live.map((a) => railCard(cid, a)).join("");
+  if (g.low.length) rail += `<div class="railK">LOW SIGNAL · ${g.low.length}</div>` + g.low.map((a) => railCard(cid, a)).join("");
+  if (g.closed.length) rail += `<div class="railK">CLOSED · ${g.closed.length} <button data-act="closed" data-cid="${cid}" aria-expanded="${!ui.closedHidden}">${ui.closedHidden ? "SHOW" : "HIDE"}</button></div>` + (ui.closedHidden ? "" : g.closed.map((a) => railCard(cid, a)).join(""));
+  const a = acct(cid, ui.cSel) ?? list[0];
+  const u = urgency(a);
+  const lowerShut = ui.lowerShut || ui.shut.has(a.id);
+  const stage = `<div class="cstage">
+    ${idLine(cid, a, { big: true, shut: lowerShut })}
+    ${banner(cid, a)}
+    ${moveSlot(cid, a, true)}
+    <div class="cgrid">
+      <div class="ctile"><span class="fk">${esc(firstWord(a.name).toUpperCase())} NEEDS</span>${wNeeds(cid, a, "lg")}</div>
+      <div class="ctile"><span class="fk">THE CLIENT</span>${wClient(cid, a, "lg")}</div>
+      <div class="ctile"><span class="fk">WHERE</span>${wCountries(cid, a, "lg")}</div>
+      <div class="ctile"><span class="fk">HOW MANY</span>${wHeads(cid, a, "lg")}</div>
+      <div class="ctile"><span class="fk">RESELLER OR REFERRAL</span>${wChair(cid, a, "lg")}</div>
+      <div class="ctile"><span class="fk">FILES</span>${wFiles(cid, a, "md")}</div>
+    </div>
+    ${meter(a)}
+    ${lowerShut ? "" : `<div class="clower"><div class="deal">${emailPane(cid, a)}</div><div class="rec" style="margin-top:20px">${theirsLine(cid, a)}${drop(cid, a)}${earlier(cid, a)}</div></div>`}
+  </div>`;
+  $("#hostC").innerHTML = frame(cid, `<div class="cwrap"><nav class="rail" aria-label="Accounts">${rail}</nav>${stage}</div>`, ui.lowerShut ? "Open all" : "Collapse all");
+}
+
+// ── Rendering and the demos ────────────────────────────────────────────
+const RENDER = { A: renderA, B: renderB, C: renderC };
+function render(cid) { RENDER[cid](); }
+function flash(cid, keys) {
+  keys.forEach((k) => UI[cid].flash.add(k));
+  render(cid);
+  setTimeout(() => { keys.forEach((k) => UI[cid].flash.delete(k)); }, 1300);
+}
+function demo(cid, which) {
+  if (which === "reset") { ST[cid] = clone(BOOK); UI[cid] = freshUI(); render(cid); toast("Reset to the sample book."); return; }
+  if (which === "name") {
+    const a = acct(cid, "regis");
+    a.client = { name: "Harbor Point Clinics", sure: "likely", need: "3 nurses in Puerto Rico before year end.", ev: { k: "EMAIL · 11/3 · LEILANI GONZALEZ", q: "The client is Harbor Point Clinics. They're thinking three nurses, but that could still change." } };
+    a.heads = [{ n: 3, kind: "ee", c: "PR", ev: { q: "They're thinking three nurses, but that could still change." } }];
+    UI[cid].chute.unshift({ who: "Regis HR Group", what: "1 email · names a client", day: TODAY_MD, rung: "contact email" });
+    if (cid === "B") UI[cid].bOpen = "regis";
+    if (cid === "C") UI[cid].cSel = "regis";
+    flash(cid, ["regis:client", "chute"]);
+    toast("The drop named Regis's client. The client, its need and the headcount filled in from the email.");
+    return;
+  }
+  if (which === "date") {
+    const a = acct(cid, "xcel");
+    a.date = { iso: "2026-11-13", what: "Payroll by", ev: { k: "EMAIL · 11/3 · MARCO RUIZ", q: "Northgate moved it up. They want the first Mexico payroll by November 13." } };
+    if (cid === "B") UI[cid].bOpen = "xcel";
+    if (cid === "C") UI[cid].cSel = "xcel";
+    flash(cid, ["xcel:date"]);
+    toast("XcelHR's date is now 10 days out, so two lights pulse on this page. The brand's motion rule allows one.");
+  }
+}
+
+// ── One listener for every click ───────────────────────────────────────
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-ev],[data-act]");
+  if (!t) { hidePop(); return; }
+  if (t.dataset.ev) { e.preventDefault(); showPop(t, t.dataset.ev); return; }
+  hidePop();
+  const { act, cid, id } = t.dataset;
+  if (act === "toast") { e.preventDefault(); toast(t.dataset.msg); return; }
+  if (act === "demo") { demo(cid, t.dataset.demo); return; }
+  const ui = UI[cid];
+  if (!ui) return;
+  const a = id ? acct(cid, id) : null;
+  switch (act) {
+    case "fold": ui.shut.has(id) ? ui.shut.delete(id) : ui.shut.add(id); break;
+    case "shutall":
+      if (cid === "A") { const all = ST.A.every((x) => ui.shut.has(x.id)); ui.shut = all ? new Set() : new Set(ST.A.map((x) => x.id)); }
+      else if (cid === "B") { ui.openAll = !ui.openAll; if (!ui.openAll) ui.bOpen = null; }
+      else ui.lowerShut = !ui.lowerShut;
+      break;
+    case "closed": ui.closedHidden = !ui.closedHidden; break;
+    case "multi": ui.multi = ui.multi === id ? null : id; break;
+    case "door": {
+      const d = t.dataset.door;
+      ui.door[id] = ui.door[id] === d ? null : d;
+      if (cid === "C" && d === "zap") ui.lowerShut = false;
+      break;
+    }
+    case "readfile": {
+      const kind = ui.door[id] === "act" ? "1 action" : ui.door[id] === "note" ? "1 note" : "1 paste";
+      ui.dropRcpt[id] = `Filed to ${a.name} · ${kind} · ${TODAY_MD}`;
+      ui.door[id] = null; ui.text[id] = "";
+      flash(cid, [`${id}:rcpt`]);
+      toast("Filed. The receipt sits right under the Drop now that TODAY is gone.");
+      return;
+    }
+    case "earlier": ui.earlier.has(id) ? ui.earlier.delete(id) : ui.earlier.add(id); break;
+    case "whole": ui.whole.has(id) ? ui.whole.delete(id) : ui.whole.add(id); break;
+    case "theirs": ui.theirs.has(id) ? ui.theirs.delete(id) : ui.theirs.add(id); break;
+    case "done": ui.worked.add(id); toast("Marked done. The day is worked."); break;
+    case "unwork": ui.worked.delete(id); a.worked = false; break;
+    case "won": ui.askWon = id; break;
+    case "wonno": ui.askWon = null; break;
+    case "wonyes": a.outcome = { status: "won" }; a.group = "closed"; a.meter = { frac: 1, cur: 6, cap: "ok", label: "CLOSED WON" }; ui.askWon = null; toast(`${a.name} is Closed Won. The row moved to the closed ledger.`); break;
+    case "chair": {
+      const v = t.dataset.v;
+      if ((a.chair?.v ?? "none") === v) delete ui.chair[id]; else ui.chair[id] = v;
+      flash(cid, [`${id}:chair`]);
+      return;
+    }
+    case "unchair": delete ui.chair[id]; break;
+    case "name": ui.naming = id; render(cid); setTimeout(() => $(`[data-name="${cid}:${id}"]`)?.focus(), 0); return;
+    case "unname": delete ui.clientName[id]; break;
+    case "addc": ui.adding = ui.adding === id ? null : id; render(cid); setTimeout(() => $(`[data-addc="${cid}:${id}"]`)?.focus(), 0); return;
+    case "files": ui.filesOpen.has(id) ? ui.filesOpen.delete(id) : ui.filesOpen.add(id); break;
+    case "pick": ui.pickOpen.has(id) ? ui.pickOpen.delete(id) : ui.pickOpen.add(id); break;
+    case "send": {
+      const picks = ui.picks[id] ?? [];
+      if (!picks.length) { toast("Tick a file first."); return; }
+      ui.sentNow[id] = [...picks.map((f) => ({ id: f, day: TODAY_MD, to: a.email?.from === "you" ? a.email.to : a.email?.from, now: true })), ...(ui.sentNow[id] ?? [])];
+      ui.picks[id] = []; ui.pickOpen.delete(id); ui.filesOpen.add(id);
+      flash(cid, [`${id}:files`]);
+      toast(`Downloaded the Outlook draft with ${picks.length} file${picks.length === 1 ? "" : "s"}. The folder shows ${picks.length === 1 ? "it" : "them"} as sent today.`);
+      return;
+    }
+    case "bopen":
+      if (ui.openAll) { ui.openAll = false; ui.bOpen = id; }
+      else ui.bOpen = ui.bOpen === id ? null : id;
+      break;
+    case "fchair": ui.fChair = t.dataset.v; break;
+    case "fprod": ui.fProd = ui.fProd === t.dataset.v ? null : t.dataset.v; break;
+    case "fclear": ui.fChair = "all"; ui.fProd = null; ui.fCountry = ""; break;
+    case "csel": ui.cSel = id; break;
+    default: return;
+  }
+  render(cid);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { hidePop(); return; }
+  const strip = e.target.closest?.(".strip");
+  if (strip && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); strip.click(); return; }
+  const inp = e.target.closest?.("[data-name]");
+  if (inp && e.key === "Enter") {
+    const [cid, id] = inp.dataset.name.split(":");
+    const v = inp.value.trim();
+    if (v) UI[cid].clientName[id] = v;
+    UI[cid].naming = null;
+    flash(cid, [`${id}:client`]);
+  }
+  if (inp && e.key === "Escape") { const [cid] = inp.dataset.name.split(":"); UI[cid].naming = null; render(cid); }
+});
+document.addEventListener("change", (e) => {
+  const t = e.target;
+  if (t.dataset.pick) {
+    const [cid, id, f] = t.dataset.pick.split(":");
+    const s = new Set(UI[cid].picks[id] ?? []);
+    t.checked ? s.add(f) : s.delete(f);
+    UI[cid].picks[id] = [...s];
+    render(cid);
+    return;
+  }
+  if (t.dataset.addc) {
+    const [cid, id] = t.dataset.addc.split(":");
+    if (t.value) { UI[cid].addC[id] = [...(UI[cid].addC[id] ?? []), t.value]; }
+    UI[cid].adding = null;
+    render(cid);
+    return;
+  }
+  if (t.dataset.order) { UI[t.dataset.order].order = t.value; render(t.dataset.order); return; }
+  if (t.dataset.country !== undefined && t.matches("select")) { UI[t.dataset.country].fCountry = t.value; render(t.dataset.country); }
+});
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.dataset.text) { const [cid, id] = t.dataset.text.split(":"); UI[cid].text[id] = t.value; }
+});
+window.addEventListener("resize", hidePop);
+renderA(); renderB(); renderC();
+</script>
+</body>
+</html>
