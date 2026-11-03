@@ -684,7 +684,7 @@ const FILES = [
   { id: "demo-invoices", g: "demo", label: "Invoices, reseller and referral", runs: "2:30", kb: 1860 },
   { id: "demo-settings", g: "demo", label: "Settings and client pricing", runs: "4:30", kb: 2839 },
   { id: "demo-payperiods", g: "demo", label: "Pay periods and gross to net", runs: "3:15", kb: 2580 },
-  { id: "demo-funding", g: "demo", label: "Funding, wallet and approvals", runs: "2:45", kb: 2750 },
+  { id: "demo-funding", g: "demo", label: "Payroll funding and approvals", runs: "2:45", kb: 2750 },
   { id: "demo-team", g: "demo", label: "The team view", runs: "1:15", kb: 1282 },
   { id: "demo-newhire", g: "demo", label: "A new EOR hire", runs: "5:45", kb: 3888 },
   { id: "demo-benefits", g: "demo", label: "Benefits and the offer letter", runs: "7:15", kb: 4629 },
@@ -707,7 +707,7 @@ const fileName = (id) => { const f = FILE[id]; return f.g === "demo" ? `Demo · 
 // ── The sample book: names from the book, every fact a sample ──────────
 const BOOK = [
   {
-    id: "simploy", name: "Simploy", group: "live", rank: 0, shape: "EOR +W", meta: "RESALE · INDIA", multi: "a", briefed: true, research: "10/30",
+    id: "simploy", name: "Simploy", group: "live", rank: 0, shape: "EOR +GP", meta: "RESALE · INDIA", multi: "a", briefed: true, research: "10/30",
     move: { a: "Send Dana the reseller agreement.", r: "She asked Friday." },
     meter: { frac: 0.45, cur: 3, cap: "warn", label: "STAGE 4 OF 7 · PROPOSAL" },
     theirs: { label: "DANA ASKED FOR THE AGREEMENT", act: "Send the reseller agreement.", why: "Dana asked for it on 10/30 so legal can start." },
