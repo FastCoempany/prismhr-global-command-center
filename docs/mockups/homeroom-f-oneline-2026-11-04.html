@@ -490,36 +490,33 @@
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:min(560px,calc(100vw - 32px));z-index:80}
   .toast.on{opacity:1}
 
-  /* ── one line per deal ───────────────────────────────────────────── */
-  .fsent.one{white-space:nowrap;overflow:hidden;font-size:17px;line-height:2.2;-webkit-mask-image:linear-gradient(90deg,#000 94%,transparent);mask-image:linear-gradient(90deg,#000 94%,transparent);min-width:0;flex:1}
-  .fsent.one .tok{font-size:13px;padding:1px 7px}
-  .fsent.one .tok.cliT{font-size:18px}
-  .fsent.one .tok.numT{font-size:19px}
-  .fsent.one .tok.ctryT .flag{width:21px !important;height:14px !important}
-  .fsent.one .tok svg{width:14px;height:14px}
-  .fsent.short{font-size:20px;-webkit-mask-image:none;mask-image:none}
-  .fsent.short .tok{font-size:14px}
-  .fsent.short .tok.cliT{font-size:21px}
-  .fsent.short .sep{color:var(--quiet);margin:0 8px}
+  /* ── one line per deal: every line is sized so the whole of it fits ── */
+  .fsent.one{white-space:nowrap;overflow:hidden;font-size:var(--one,17px);line-height:2.2;min-width:0;flex:1}
+  .fsent.one .tok{font-size:.78em;padding:.08em .45em;gap:.35em;border-radius:.45em}
+  .fsent.one .tok.cliT{font-size:1.05em;padding:0 .05em}
+  .fsent.one .tok.numT{font-size:1.1em;padding:0 .1em}
+  .fsent.one .tok .flag,.cols .tok .flag{width:1.35em !important;height:.9em !important}
+  .fsent.one .tok svg,.cols .tok svg{width:1.05em;height:1.05em}
+  .fsent.short .sep{color:var(--quiet);margin:0 .4em}
   .tok.quietc{border-style:dashed;border-color:var(--amber);background:var(--amber-soft)}
-  .lift{overflow:visible !important;-webkit-mask-image:none !important;mask-image:none !important;white-space:normal}
-  .cols{display:grid;grid-template-columns:18px 170px 150px minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr) 150px;gap:0 12px;align-items:center;font:400 15px/1.4 var(--serif);color:var(--ink)}
-  .cols .cc{min-width:0;white-space:nowrap;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);padding:3px 0}
-  .cols.lift .cc{overflow:visible;-webkit-mask-image:none;mask-image:none}
-  .cols .cn .nmLink{font-size:19px}
-  .cols .tok{font-size:13px;padding:1px 7px}
-  .cols .tok.cliT{font-size:17px}
-  .cols .tok svg{width:14px;height:14px}
+  .lift{overflow:visible !important;white-space:normal}
+  .wrapall .fsent.one{white-space:normal}
+  .cols{display:grid;grid-template-columns:var(--cg,18px 170px 150px 1fr 1fr 1.3fr 150px);gap:0 var(--cgap,14px);align-items:center;font:400 var(--one,15px)/1.5 var(--serif);color:var(--ink)}
+  .cols .cc{min-width:0;white-space:nowrap;overflow:hidden;padding:3px 0}
+  .cols.lift .cc{overflow:visible}
+  .cols .cn .nmLink{font-size:1.25em}
+  .cols .tok{font-size:.86em;padding:.08em .45em;gap:.35em}
+  .cols .tok.cliT{font-size:1.1em}
   .chead{margin:6px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--hair-soft)}
-  .chead .cc{font:700 9px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);-webkit-mask-image:none;mask-image:none}
-  @media (max-width:900px){.cols{grid-template-columns:18px 1fr;row-gap:4px}.cols .cc:not(.cn){grid-column:2}.chead{display:none}}
+  .chead .cc{font:700 9px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  @media (max-width:759px){.fsent.one{white-space:normal}.cols{grid-template-columns:18px 1fr !important;row-gap:4px}.cols .cc:not(.cn){grid-column:2;white-space:normal}.chead{display:none}}
 </style>
 </head>
 <body>
 <div class="page">
   <div class="kick">HomeRoom · concept F · the sentence on one line · 11/4 · not shipped</div>
   <h1>Concept F, One Line</h1>
-  <p class="lede">You asked for each deal's sentence to fit on one line. In F the sentence wraps onto two lines for most deals. These three versions each keep every deal to a single line in a different way. Each deal still rests as its line alone, and the ▸ before it opens the rest.</p>
+  <p class="lede">You asked for each deal's sentence to fit on one line. In F the sentence wraps onto two lines for most deals. These three versions each keep every deal to a single line in a different way, and every line shows whole: nothing is cut off or faded. On a narrow screen, where a whole sentence would have to shrink below a readable size, the line wraps instead of being cut. For F10 that happens below about 1,100 pixels wide; F11 and F12 stay on one line down to tablet width. Each deal still rests as its line alone, and the ▸ before it opens the rest.</p>
   <span class="status">Three versions of F · waiting on your pick · nothing ships without your order</span>
   <ul class="notes">
     <li><b>What opens under the line.</b> All three use F7's layout from the last page when a deal is open: the bar of six labeled facts, then the next move and its buttons. You haven't picked between F7, F8 and F9 yet, so I held that part the same here; any of the three can go under these lines.</li>
@@ -535,8 +532,8 @@
     <div class="kick">Version F10</div>
     <h2>The same sentence, smaller</h2>
     <ul class="why">
-      <li><b>What it is.</b> F's full sentence, word for word, in a smaller size so it fits the width. A sentence that is still too long for the line fades out at the right edge, and opening the deal shows it whole.</li>
-      <li><b>What it costs.</b> The type is smaller than F's, and the longest sentences lose their last words at rest.</li>
+      <li><b>What it is.</b> F's full sentence, word for word. The page measures the longest sentence and sets every sentence to the largest size at which that one fits the width, so every sentence shows whole on one line and all of them share one size.</li>
+      <li><b>What it costs.</b> The type is noticeably smaller than F's, because the size is set by the longest sentence on the page. A deal with a very long sentence makes every line smaller.</li>
     </ul>
     <div class="demos">
       <button class="sim" data-act="demo" data-demo="name" data-cid="F10">Demo · a drop names Regis's client</button>
@@ -549,7 +546,7 @@
     <div class="kick">Version F11</div>
     <h2>The short sentence</h2>
     <ul class="why">
-      <li><b>What it is.</b> The sentence keeps F's look but drops the filler words. Products use their short names, each country and its count share one button, such as India · 2, and the date and its countdown share one button. For example: Simploy resells EOR and Payroll to Lumen Freight · India · 2 · Philippines · 1 · Nov 16 · 13 days.</li>
+      <li><b>What it is.</b> The sentence keeps F's look but drops the filler words, and it is sized the same way as F10, so every line fits whole. Products use their short names, each country and its count share one button, such as India · 2, and the date and its countdown share one button. For example: Simploy resells EOR and Payroll to Lumen Freight · India · 2 · Philippines · 1 · Nov 16 · 13 days.</li>
       <li><b>What it costs.</b> It reads less like a sentence a person would say, because the joining words are gone.</li>
     </ul>
     <div class="demos">
@@ -563,8 +560,8 @@
     <div class="kick">Version F12</div>
     <h2>The sentence in columns</h2>
     <ul class="why">
-      <li><b>What it is.</b> Each part of the sentence sits in its own column, and the columns line up from one deal to the next: the PEO, reseller or referral, the products, the client, the countries with their counts, and the date. A thin header row names the columns once at the top.</li>
-      <li><b>What it costs.</b> It reads as a table more than a sentence. A column that runs out of room fades at its edge, and opening the deal shows everything.</li>
+      <li><b>What it is.</b> Each part of the sentence sits in its own column, and the columns line up from one deal to the next: the PEO, reseller or referral, the products, the client, the countries with their counts, and the date. A thin header row names the columns once at the top. Each column is exactly as wide as its longest entry, and the type is sized so all six columns fit the width with nothing cut off.</li>
+      <li><b>What it costs.</b> It reads as a table more than a sentence.</li>
     </ul>
     <div class="demos">
       <button class="sim" data-act="demo" data-demo="name" data-cid="F12">Demo · a drop names Regis's client</button>
@@ -1509,6 +1506,7 @@ function render(cid) {
     + (low.length ? ruleFor(cid, "low", low.length) + list(low) : "")
     + (closed.length ? ruleFor(cid, "closed", closed.length) + (ui.closedHidden ? "" : list(closed)) : "");
   $("#host" + cid).innerHTML = frame(cid, inner);
+  fitLines(cid);
   if (ui.flash.size) setTimeout(() => ui.flash.clear(), 1400);
 }
 const toggle = (set, v) => (set.has(v) ? set.delete(v) : set.add(v));
@@ -1695,6 +1693,45 @@ function markLive() {
 let livePending = false;
 addEventListener("scroll", () => { if (livePending) return; livePending = true; requestAnimationFrame(() => { livePending = false; markLive(); }); }, { passive: true });
 addEventListener("resize", markLive);
+
+
+// ── Every line fits whole: one size per version, the largest that lets the
+// longest line in it fit the width, measured after each render. ─────────
+const FIT = { F10: [19, 10], F11: [20, 11], F12: [16, 10] };
+function fitLines(cid) {
+  const host = $("#host" + cid);
+  if (!host || window.innerWidth < 760) { host && host.style.removeProperty("--one"); host && host.style.removeProperty("--cg"); return; }
+  const [max, min] = FIT[cid];
+  if (cid === "F12") {
+    const rows = [...host.querySelectorAll(".cols")];
+    const avail = rows[0] ? rows[0].clientWidth : 0;
+    for (let px = max; px >= min; px -= 0.5) {
+      host.style.setProperty("--one", px + "px");
+      host.style.setProperty("--cg", "18px repeat(6, max-content)");
+      const widths = [0, 0, 0, 0, 0, 0];
+      for (const r of rows) [...r.querySelectorAll(".cc")].forEach((c, i) => { widths[i] = Math.max(widths[i], Math.ceil(c.scrollWidth) + 2); });
+      const used = 18 + widths.reduce((x, y) => x + y, 0);
+      const gap = Math.max(10, Math.floor((avail - used) / 6));
+      if (used + 6 * 10 <= avail || px === min) {
+        host.style.setProperty("--cgap", Math.min(gap, 40) + "px");
+        host.style.setProperty("--cg", `18px ${widths.map((w) => w + "px").join(" ")}`);
+        return;
+      }
+    }
+    return;
+  }
+  host.classList.remove("wrapall");
+  const lines = [...host.querySelectorAll(".fsent.one:not(.lift)")];
+  for (let px = max; px >= min; px -= 0.5) {
+    host.style.setProperty("--one", px + "px");
+    if (lines.every((l) => l.scrollWidth <= l.clientWidth + 1)) return;
+  }
+  // Too narrow for the whole sentence at a readable size: wrap rather than cut.
+  host.style.setProperty("--one", max - 2 + "px");
+  host.classList.add("wrapall");
+}
+addEventListener("resize", () => CIDS.forEach(fitLines));
+document.fonts && document.fonts.ready.then(() => CIDS.forEach(fitLines));
 
 CIDS.forEach(render);
 markLive();
