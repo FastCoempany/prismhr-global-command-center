@@ -83,6 +83,55 @@ export function roomRow(over: Partial<RoomRow> = {}): RoomRow {
     name: "Simploy",
     meta: "EOR · PH",
     shape: "Shaping up to be EOR",
+    facts: {
+      products: [
+        {
+          key: "eor",
+          word: "employer of record",
+          day: "9/25",
+          line: "✉ Chassie asked for the invoices.",
+        },
+      ],
+      chair: {
+        v: "resale",
+        hand: false,
+        day: "9/25",
+        line: "✉ We'd resell it under our name.",
+      },
+      client: { name: null, hand: false, day: "" },
+      countries: [
+        {
+          code: "co",
+          name: "Colombia",
+          hand: false,
+          day: "9/25",
+          line: "✉ Two hires in Bogotá.",
+        },
+      ],
+      removed: [],
+      heads: [{ n: 2, country: "co", day: "9/25", line: "✉ Two hires in Bogotá." }],
+      date: {
+        iso: "2026-12-01",
+        phrase: "by December 1",
+        day: "9/25",
+        line: "✉ They start by December 1.",
+      },
+    },
+    deck: [
+      {
+        name: "Chassie Smith",
+        title: "VP Operations",
+        email: "chassie@example.com",
+        phone: "(555) 010-2210",
+        mobile: "",
+        city: "Raleigh, NC",
+        linkedin: null,
+        touches: [
+          { at: "2026-09-25T15:00:00Z", kind: "email", dir: "in" },
+          { at: "2026-09-26T15:00:00Z", kind: "email", dir: "out" },
+        ],
+      },
+    ],
     multiTone: "y",
     people: [{ name: "Chassie Smith", line: "VP Operations · 2 threads" }],
     briefed: false,

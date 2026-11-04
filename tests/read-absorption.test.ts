@@ -554,9 +554,15 @@ describe("the room wires every new mechanism", () => {
   const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
   const actions = roomActionsSource(root);
   const css = readFileSync(join(root, "src/app/room/room.module.css"), "utf8");
+  // The asks' mint and ✕ left the row with UNKNOWN (the F26 face, ship
+  // order 2026-11-04): the server keeps them, the room no longer calls them.
+  for (const retired of ["roomGapDismiss", "roomGapsRefill"]) {
+    test(`${retired} left the row with UNKNOWN`, () =>
+      assert.ok(!client.includes(retired)));
+    test(`${retired} still exists on the server`, () =>
+      assert.ok(actions.includes(`export async function ${retired}`)));
+  }
   for (const wired of [
-    "roomGapDismiss",
-    "roomGapsRefill",
     "roomResearch",
     "roomMarkWon",
     "roomMarkWonByHand",
@@ -655,8 +661,11 @@ describe("the room wires every new mechanism", () => {
     // when neither research store has touched the account. Rewritten in pass
     // 10: this pin used to assert the date lived only in the tooltip. The
     // face is pinned by render in tests/canon/spring.test.ts.
-    assert.ok(client.includes("Last run ${new Date(row.researchAt)"));
-    assert.ok(client.includes("researchChip(row.researchAt)"));
+    // The F26 face (ship order 2026-11-04) moved it into the bar of tools at
+    // the account's name: "⟳ Research 7/2", "never run" when neither store
+    // has touched the account, the run date in the tooltip too.
+    assert.ok(client.includes("`Last run ${researchWord}.`"));
+    assert.ok(client.includes('`⟳ Research ${researchWord || "never run"}`'));
     assert.ok(!client.includes("RESEARCH — NEVER"));
   });
   test("a closed row can still be read, and retired separately", () => {
@@ -920,16 +929,12 @@ describe("the repairs hold", () => {
     const client = readFileSync(join(root, "src/app/room/room-client.tsx"), "utf8");
     // Separate transitions: research must not dress the ask button in its label.
     assert.ok(client.includes("rsrchPending"));
-    assert.ok(client.includes("askPending"));
-    // The gate chip is retired (decreed 2026-08-19): the stage's open
-    // question lives in the UNKNOWN register with its own ✓, and the old
-    // STILL OPEN block stays dead.
-    assert.ok(client.includes("STAGE GATE"));
+    // The gate chip is retired (decreed 2026-08-19), and the UNKNOWN
+    // register that carried the stage's question left with the F26 face
+    // (ship order 2026-11-04); the old STILL OPEN block stays dead.
     assert.ok(!client.includes("GATE · "), "the movewrap gate chip is retired");
     assert.ok(!client.includes("STILL OPEN"), "the STILL OPEN block is retired");
     // The misfile bar dies with its paste.
     assert.ok(client.includes("setMismatch(null)"));
-    // Bringing a held row back returns it to the open list.
-    assert.ok(client.includes("setBackNow"));
   });
 });

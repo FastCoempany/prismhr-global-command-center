@@ -195,20 +195,12 @@
 
 /* ── the row: matte deal left, glass record right ───────────────────── */
 .row {
-  display: grid;
-  grid-template-columns: 1fr 1.08fr;
-  gap: 0 34px;
+  display: block;
   padding: 14px 0 12px;
 }
 .row + .row {
   border-top: 1px solid var(--hair);
   margin-top: 12px;
-}
-@media (max-width: 880px) {
-  .row {
-    grid-template-columns: 1fr;
-    gap: 14px 0;
-  }
 }
 .deal {
   min-width: 0;
@@ -2667,7 +2659,6 @@ button.sdRadio:hover {
   box-shadow: 0 0 0 7px rgba(10, 28, 64, 0.03);
 }
 .rowShut {
-  grid-template-columns: 1fr;
   padding: 8px 0 7px;
 }
 .rowShut .deal > *:not(.nmline) {

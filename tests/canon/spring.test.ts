@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 import { createElement } from "react";
 import {
+  classesOf,
   followUpRow,
   render,
   roomClient,
@@ -18,7 +19,7 @@ import {
   textOf,
   warmRow,
 } from "../helpers/room-render";
-import { researchChip, todayRegister } from "../../src/lib/room/springs";
+import { researchChip } from "../../src/lib/room/springs";
 import { editedSeatBody, editedSheetBody } from "../../src/lib/room/sheet-view";
 import { parseSeatBody, renderSeatBody } from "../../src/lib/act/lane";
 import {
@@ -110,16 +111,6 @@ describe("the move line carries who and when (D25)", () => {
 // emits; nothing else here reads a source file.
 
 const room = await roomClient();
-const css = readFileSync(join(cwd(), "src/app/room/room.module.css"), "utf8").replace(
-  /\/\*[\s\S]*?\*\//g,
-  "",
-);
-/** Every declaration block whose selector is exactly `sel`. */
-const rule = (sel: string): string =>
-  [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
-    .filter((m) => m[1].trim() === sel)
-    .map((m) => m[2])
-    .join("\n");
 
 const ask = (id: string, question: string) => ({
   id,
@@ -153,125 +144,50 @@ const paintRow = (
   render(
     createElement(room.Row, { row, collapsed: false, onToggle: () => {}, defaultSpring }),
   );
-/** Every resting summary line in a render, in order. A summary line holds
- *  spans, buttons and links, never a div, so the first </div> closes it. */
-const restingLines = (html: string): string[] =>
-  [...html.matchAll(/<div class="sumline">([\s\S]*?)<\/div>/g)].map((m) => m[1]);
-const kickerOf = (line: string) => /<span class="sumk">([^<]*)<\/span>/.exec(line)?.[1];
 
-describe("each register rests as one summary line (A6.1)", () => {
-  test("UNKNOWN, COMPARABLE and TODAY each rest as one line, in that order", async () => {
-    const lines = restingLines(await paintRow(springRow(), null));
-    assert.deepEqual(lines.map(kickerOf), ["UNKNOWN", "COMPARABLE", "TODAY"]);
-  });
+// ── The F26 face (ship order 2026-11-04) ───────────────────────────────────
+// The Spring's registers retired with the F26 face: the row rests as its one
+// sentence, and opened it paints the next move, the people in the deal and
+// one door, "Latest email and Chute". What the Spring's attendant decrees
+// still govern is pinned here as the new face paints it: the one legend at
+// the page foot (A6.5), and the account's tools on hover at its name, where
+// the founder's face spells each one out (it replaced the glyph-only rule of
+// A6.6 for these three).
 
-  test("each line is a mono kicker, a live count, the top entry and ⊕", async () => {
-    const row = springRow();
-    const lines = restingLines(await paintRow(row, null));
-    const today = todayRegister({
-      owed: row.owed.map((o) => o.text),
-      open: row.sheetOpen.map((t) => t.body),
-      restCount: 0,
-    });
-    const want = [
-      { count: String(row.gaps.length), top: "Which countries come first?" },
-      {
-        count: String(row.peers.length),
-        top: "PHILIPPINES · How do they handle the thirteenth month?",
-      },
-      { count: `${today.count} · 1 done`, top: "Send the model." },
-    ];
-    lines.forEach((line, i) => {
-      assert.match(line, /<span class="sumk">/, "the kicker");
-      assert.equal(
-        textOf(/<span class="sumn">([\s\S]*?)<\/span>/.exec(line)?.[1] ?? ""),
-        want[i].count,
-      );
-      assert.equal(
-        textOf(/<span class="sumtx">([\s\S]*?)<\/span>/.exec(line)?.[1] ?? ""),
-        want[i].top,
-      );
-      assert.match(
-        line,
-        /<button type="button" class="splayBtn" title="Expand them out">⊕<\/button>/,
-      );
-    });
-  });
-
-  test("COMPARABLE rests only when peers exist", async () => {
-    const html = await paintRow(springRow({ peers: [] }), null);
-    assert.deepEqual(restingLines(html).map(kickerOf), ["UNKNOWN", "TODAY"]);
-    assert.ok(
-      !textOf(html).includes("COMPARABLE"),
-      "a COMPARABLE register with no peers",
+describe("the row rests as its sentence; opened, it paints the move, the deck and one door (F26)", () => {
+  test("folded, the row is its sentence and nothing else", async () => {
+    const html = await render(
+      createElement(room.Row, { row: springRow(), collapsed: true, onToggle: () => {} }),
     );
-    for (const sprung of ["unknown", "today", "peers"] as const)
-      assert.ok(
-        !textOf(await paintRow(springRow({ peers: [] }), sprung)).includes("COMPARABLE"),
-      );
+    const text = textOf(html);
+    assert.ok(text.includes("Simploy"));
+    assert.ok(text.includes("would resell"));
+    // The rest stays mounted, so nothing typed in it is lost; it only stops
+    // painting.
+    assert.match(html, /<div class="body" hidden="">/);
+    assert.ok(!classesOf(html).includes("sumline"), "a register rests on a folded row");
   });
 
-  test("the counts follow the record: an outstanding gate counts in UNKNOWN", async () => {
-    const outstanding = {
-      item: "Book the room",
-      node: "first_meeting",
-      index: 0,
-      doneKey: "k",
-      closedCount: 0,
-    };
-    const [unknown] = restingLines(await paintRow(springRow({ outstanding }), null));
-    assert.equal(
-      textOf(/<span class="sumn">([\s\S]*?)<\/span>/.exec(unknown)?.[1] ?? ""),
-      "3",
-    );
-    assert.equal(
-      textOf(/<span class="sumtx">([\s\S]*?)<\/span>/.exec(unknown)?.[1] ?? ""),
-      "Book the room",
-    );
-  });
-
-  test("one register out at a time: the others keep resting as their one line", async () => {
-    const rest = {
-      unknown: ["COMPARABLE", "TODAY"],
-      peers: ["UNKNOWN", "TODAY"],
-      today: ["UNKNOWN", "COMPARABLE"],
-    };
-    for (const sprung of ["unknown", "peers", "today"] as const) {
-      const html = await paintRow(springRow(), sprung);
-      assert.equal(
-        html.split('class="splayed"').length - 1,
-        1,
-        `${sprung}: one register out`,
-      );
-      assert.deepEqual(restingLines(html).map(kickerOf), rest[sprung], sprung);
-      assert.match(
-        html,
-        /title="Fold them back">⊖<\/button>/,
-        `${sprung} folds back with ⊖`,
-      );
-    }
-  });
-
-  test("the kicker is mono and the top entry trails off", () => {
-    assert.match(rule(".sumk"), /font-family:\s*var\(--f-mono\)/);
-    const tx = rule(".sumtx");
-    for (const d of [
-      /white-space:\s*nowrap/,
-      /overflow:\s*hidden/,
-      /text-overflow:\s*ellipsis/,
-    ])
-      assert.match(tx, d);
+  test("opened, the move, the deck and the door, and no register line", async () => {
+    const html = await paintRow(springRow(), null);
+    for (const c of ["mrow", "ppl", "doorBtn"])
+      assert.ok(classesOf(html).includes(c), `${c} missing`);
+    assert.ok(!classesOf(html).includes("sumline"), "a register still rests");
+    const text = textOf(html);
+    assert.ok(text.includes("Next move"));
+    assert.ok(text.includes("Latest email and Chute"));
+    assert.ok(!/\b(UNKNOWN|COMPARABLE)\b/.test(text));
   });
 });
 
 describe("the per-row keybar is retired; one legend lives at the page foot (A6.5)", () => {
   const KEYS = [
-    "✉ send",
-    "⚑ owed",
+    "✉ email",
+    "➤ sent",
     "✸ action",
-    "⌕ ask the brain",
-    "✕ not this deal",
+    "⟳ research",
     "⇣ low signal",
+    "☑ closed won",
   ];
   const board = (rows: ReturnType<typeof roomRow>[]) =>
     render(
@@ -291,8 +207,8 @@ describe("the per-row keybar is retired; one legend lives at the page foot (A6.5
       }),
     );
 
-  test("a row carries no legend, in any register", async () => {
-    for (const sprung of [null, "unknown", "peers", "today"] as const) {
+  test("a row carries no legend, folded or opened", async () => {
+    for (const sprung of [null, "today"] as const) {
       const text = textOf(await paintRow(springRow(), sprung));
       for (const k of KEYS)
         assert.ok(!text.includes(k), `${sprung ?? "folded"} row keys ${k}`);
@@ -328,106 +244,56 @@ describe("the per-row keybar is retired; one legend lives at the page foot (A6.5
   });
 });
 
-describe("the minimalist controls are glyphs with titles, never words (A6.6)", () => {
-  const WORDS =
-    /ask the brain|mint sharper asks|find the answer|not this deal|low signal|live board|mark closed won/i;
-  const CONTROLS: { glyph: string; title: string; tag: "a" | "button"; cls: string }[] = [
-    { glyph: "⌕", title: "Ask the brain", tag: "a", cls: "sic" },
-    { glyph: "⟳", title: "Mint sharper asks", tag: "button", cls: "sic" },
-    { glyph: "✕", title: "Not this deal", tag: "button", cls: "askX" },
-    { glyph: "→", title: "Find the answer", tag: "a", cls: "askGo" },
-    {
-      glyph: "⇣",
-      title: "Send to low signal. Not in your Salesforce pipeline.",
-      tag: "button",
-      cls: "lowBtn",
-    },
-    { glyph: "☑", title: "Mark Closed Won.", tag: "button", cls: "wonBtn" },
-  ];
+describe("the account's tools ride on hover at its name (F26)", () => {
+  const fcss = readFileSync(join(cwd(), "src/app/room/f.module.css"), "utf8").replace(
+    /\/\*[\s\S]*?\*\//g,
+    "",
+  );
+  const frule = (sel: string): string =>
+    [...fcss.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+      .filter((m) => m[1].trim() === sel)
+      .map((m) => m[2])
+      .join("\n");
+  const toolsOf = (html: string) =>
+    /<span class="nmTools">([\s\S]*?)<\/span><p /.exec(html)?.[1] ?? "";
   /** Every element carrying `title`, with its own text. */
   const carrying = (html: string, title: string) =>
     [...html.matchAll(/<(a|button)\b([^>]*)>([^<]*)<\/\1>/g)].filter((m) =>
       m[2].includes(`title="${title}"`),
     );
 
-  test("each control is its glyph alone, tooltip-titled, wherever its register paints it", async () => {
-    const seen = new Set<string>();
-    for (const sprung of [null, "unknown", "peers"] as const) {
-      const html = await paintRow(springRow(), sprung);
-      for (const c of CONTROLS)
-        for (const m of carrying(html, c.title)) {
-          seen.add(c.title);
-          assert.equal(m[1], c.tag, `${c.title} is a ${c.tag}`);
-          assert.match(m[2], new RegExp(`class="${c.cls}"`), `${c.title}'s class`);
-          assert.equal(m[3], c.glyph, `${c.title} shows only ${c.glyph}`);
-        }
-    }
-    assert.deepEqual(
-      [...seen].sort(),
-      CONTROLS.map((c) => c.title).sort(),
-      "every control painted",
+  test("research, low signal and closed won, each spelled out and tooltip-titled", async () => {
+    const tools = toolsOf(await paintRow(springRow({ researchAt: "" }), null));
+    assert.ok(tools.includes("⟳ Research never run"), tools);
+    assert.ok(tools.includes("⇣ Low signal"));
+    assert.ok(tools.includes("☑ Closed won"));
+    assert.ok(
+      tools.includes('title="Send to low signal. Not in your Salesforce pipeline."'),
     );
+    assert.ok(tools.includes('title="Mark Closed Won."'));
   });
 
-  test("no row spells a control out on its surface", async () => {
-    for (const sprung of [null, "unknown", "peers", "today"] as const)
-      assert.doesNotMatch(
-        textOf(await paintRow(springRow(), sprung)),
-        WORDS,
-        `${sprung ?? "folded"}`,
-      );
+  test("the bar rests hidden and shows on hover or focus at the name", () => {
+    assert.match(frule(".nmTools"), /display:\s*none;/);
+    assert.match(fcss, /\.fline:has\(\.nmLink:hover\) \.nmTools,/);
+    assert.match(fcss, /\.nmTools:focus-within,/);
   });
 
-  test("a read-only session gets ⌕ and →, and neither ⟳ nor ✕", async () => {
-    const html = await paintRow(springRow({ canWrite: false }), "unknown");
-    assert.equal(carrying(html, "Mint sharper asks").length, 0);
-    assert.equal(carrying(html, "Not this deal").length, 0);
-    assert.equal(carrying(html, "Ask the brain").length, 1);
+  test("a low-signal row's tool takes it back", async () => {
+    const tools = toolsOf(await paintRow(springRow({ lowSignal: true }), null));
+    assert.ok(tools.includes("↺ Back to the live deals"), tools);
   });
 
-  test("the ✕ rests hidden and the ask's own row reveals it on hover", () => {
-    assert.match(rule(".askX"), /opacity:\s*0;/);
-    assert.match(rule(".askRow:hover .askX"), /opacity:\s*1;/);
-  });
-
-  test("⇣ rests hidden and its row reveals it on hover or focus; a low-signal row's ↺ takes it back", async () => {
-    assert.match(rule(".lowBtn"), /opacity:\s*0;/);
-    assert.match(rule(".row:hover .lowBtn"), /opacity:\s*1;/);
-    assert.match(rule(".lowBtn:focus-visible"), /opacity:\s*1;/);
-    const back = carrying(
-      await paintRow(springRow({ lowSignal: true }), null),
-      "Return it to the live board.",
-    );
-    assert.equal(back.length, 1);
-    assert.equal(back[0][3], "↺");
-    assert.match(back[0][2], /class="lowBtn"/);
-  });
-
-  test("a closed row and a read-only session carry no low-signal control", async () => {
+  test("a closed row and a read-only session carry no tools; a row with no card has no ☑", async () => {
     const closed = await paintRow(
       springRow({ outcome: { status: "lost", phrase: "", at: "2026-10-01T15:00:00Z" } }),
       null,
     );
     const readOnly = await paintRow(springRow({ canWrite: false }), null);
-    for (const html of [closed, readOnly]) assert.ok(!html.includes('class="lowBtn"'));
-  });
-
-  // Closed Won by hand (founder's order, 2026-10-26).
-  test("☑ rests hidden beside ⇣ and its row reveals it on hover or focus", () => {
-    assert.match(rule(".wonBtn"), /opacity:\s*0;/);
-    assert.match(rule(".row:hover .wonBtn"), /opacity:\s*1;/);
-    assert.match(rule(".wonBtn:focus-visible"), /opacity:\s*1;/);
-  });
-
-  test("a closed row, a read-only session and a row with no card carry no ☑", async () => {
-    const closed = await paintRow(
-      springRow({ outcome: { status: "won", phrase: "", at: "2026-10-01T15:00:00Z" } }),
-      null,
-    );
-    const readOnly = await paintRow(springRow({ canWrite: false }), null);
-    const cardless = await paintRow(springRow({ cardId: "" }), null);
-    for (const html of [closed, readOnly, cardless])
-      assert.ok(!html.includes('class="wonBtn"'));
+    for (const html of [closed, readOnly]) assert.equal(toolsOf(html), "");
+    const cardless = toolsOf(await paintRow(springRow({ cardId: "" }), null));
+    assert.ok(cardless.includes("⇣ Low signal"));
+    assert.ok(!cardless.includes("☑"));
   });
 
   test("a closed row carries ↺, which reopens it; a read-only one does not", async () => {
@@ -442,7 +308,6 @@ describe("the minimalist controls are glyphs with titles, never words (A6.6)", (
     const back = carrying(await closed(true), "Reopen the deal. The stamp comes off.");
     assert.equal(back.length, 1);
     assert.equal(back[0][3], "↺");
-    assert.match(back[0][2], /class="reopenBtn"/);
     assert.equal(
       carrying(await closed(false), "Reopen the deal. The stamp comes off.").length,
       0,
@@ -543,52 +408,30 @@ describe("the research control is a dated chip: RESEARCH 7/2 ⟳", () => {
     );
   });
 
-  test("the row paints the chip with its date, and NEVER on an account nothing touched", async () => {
+  test("the row paints the run's day in the tools at the name, and never run when nothing ran", async () => {
+    // The F26 face (ship order 2026-11-04): "⟳ Research 7/2" in the bar at
+    // the account's name; the chip grammar above still reads the day.
     const ran = await paintRow(roomRow({ researchAt: "2026-07-02T15:00:00Z" }), null);
-    assert.match(
-      ran,
-      /<button type="button" class="rsrchChip"[^>]*>RESEARCH 7\/2 ⟳<\/button>/,
-    );
+    assert.ok(textOf(ran).includes("⟳ Research 7/2"));
     const never = await paintRow(roomRow({ researchAt: "" }), null);
-    assert.match(
-      never,
-      /<button type="button" class="rsrchChip"[^>]*>RESEARCH NEVER ⟳<\/button>/,
-    );
+    assert.ok(textOf(never).includes("⟳ Research never run"));
   });
 });
 
 describe("the row's copy is flat: no dash asides, no antithesis", () => {
-  test("a stakeholder's line, COMPARABLE's top entry and a landed line read flat", async () => {
-    const html = await paintRow(
-      springRow({
-        people: [{ name: "Chassie Smith", line: "VP Operations · 2 threads" }],
-        sheetOpen: [
-          {
-            id: "todo-1",
-            body: "Send the invite.",
-            settled: "they accepted the invitation",
-          },
-        ],
-      }),
-      "today",
-    );
-    const text = textOf(html);
-    assert.ok(
-      text.includes("Chassie Smith · VP Operations · 2 threads"),
-      "the stakeholder line",
-    );
-    assert.ok(
-      text.includes(
-        "The record shows this went out, and they accepted the invitation. Close it when you agree.",
+  test("the opened row, its deck and its door read flat", async () => {
+    const opened = textOf(await paintRow(springRow(), "today"));
+    const folded = textOf(
+      await render(
+        createElement(room.Row, {
+          row: springRow(),
+          collapsed: true,
+          onToggle: () => {},
+        }),
       ),
-      "the landed line",
     );
-    const folded = textOf(await paintRow(springRow(), null));
-    assert.ok(
-      folded.includes("PHILIPPINES · How do they handle"),
-      "COMPARABLE's top entry",
-    );
-    for (const t of [text, folded])
+    assert.ok(opened.includes("Chassie Smith"), "the deck's person");
+    for (const t of [opened, folded])
       assert.ok(!t.includes("—"), `a dash in the row: ${t}`);
   });
 
@@ -684,15 +527,15 @@ describe("the follow-up count and MULTI open one click deep, no hover", () => {
     );
   });
 
-  test("MULTI is a button that opens who is in the deal on a click", async () => {
+  test("MULTI heads the people deck, and the deck shows who is in the deal with no hover", async () => {
+    // The F26 face (ship order 2026-11-04): the deck replaced the hovercard;
+    // the opened row shows the person up front and their contact card.
     const html = await paintRow(roomRow(), null);
     assert.match(
       html,
-      /<button type="button" class="multi m_y" aria-expanded="false" title="Who&#x27;s in this deal">MULTI<span class="hovercard">/,
+      /<span class="multi m_y" title="How many of their people write back">MULTI<\/span>/,
     );
-    assert.match(
-      css,
-      /\.multi:hover \.hovercard,\s*\.multiOpen \.hovercard \{\s*display: block;/,
-    );
+    assert.ok(textOf(html).includes("Chassie Smith"));
+    assert.ok(textOf(html).includes("chassie@example.com"));
   });
 });

@@ -293,6 +293,9 @@ describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
   });
 
   test("the board's only file doors are its rows' Drops; the Chute is one door", async () => {
+    // The F26 face (ship order 2026-11-04): each row's Drop sits in the
+    // Chute section behind "Latest email and Chute", one click down. Opened,
+    // each row has exactly one, under its own account's name.
     const { roomClient, roomRow } = await import("./helpers/room-render");
     const room = await roomClient();
     const rows = [
@@ -319,12 +322,20 @@ describe("the HomeRoom carries one intake at the top: the Chute (A1.1)", () => {
         pipelineStale: "",
       }),
     );
-    const fileInputs = (board.match(/<input[^>]*type="file"/g) ?? []).length;
-    const drops = rows.map(
-      (r) => `THE DROP · FILES TO ${r.name.toUpperCase()}, EVERYWHERE`,
-    );
-    for (const d of drops) assert.ok(textOf(board).includes(d), d);
-    assert.equal(fileInputs, rows.length, "one file door per row, and no other");
+    // At rest each row's Drop is mounted and hidden: one door per row, no other.
+    assert.equal((board.match(/<input[^>]*type="file"/g) ?? []).length, rows.length);
+    for (const r of rows) {
+      const open = await render(
+        createElement(room.Row, {
+          row: r,
+          collapsed: false,
+          onToggle: () => {},
+          defaultSpring: "today",
+        }),
+      );
+      assert.ok(textOf(open).includes(`The Chute Files to ${r.name}`), r.name);
+      assert.equal((open.match(/<input[^>]*type="file"/g) ?? []).length, 1, r.name);
+    }
     const { Chute } = await chute();
     const top = await render(createElement(Chute, { canWrite: true }));
     assert.equal((top.match(/<input[^>]*type="file"/g) ?? []).length, 1);
