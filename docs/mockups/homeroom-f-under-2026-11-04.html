@@ -389,7 +389,11 @@
   .fopen{background:var(--surface);border:1px solid var(--hair-soft)}
   .fopen .pmeta{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
   .rows > .frow:first-child{border-top:0}
-  .handLine{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .handLine{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;padding-left:28px}
+  .fline{display:flex;gap:10px;align-items:baseline}
+  .fline .caret{flex:none;width:18px;font-size:14px;color:var(--faint)}
+  .fline .caret:hover{color:var(--ink)}
+  .frow.shut{padding:12px 0}
 
   /* ── the information under the sentence, larger and labeled ───────── */
   .sk{font:700 9px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
@@ -491,7 +495,8 @@
 <div class="page">
   <div class="kick">HomeRoom · concept F · under the sentence, three ways · 11/4 · not shipped</div>
   <h1>Concept F, Under the Sentence</h1>
-  <p class="lede">You chose the original F and asked me to fix the area under each sentence. In F, that area held the client's confidence, a line of small chips and the next move, all in small grey text, with a lot of empty space to the right. These three versions keep F's sentence and map exactly as they were. They remove what repeats the sentence and give everything else its own labeled place in larger type.</p>
+  <p class="lede"><b>Updated 11/4:</b> every deal now rests as its sentence alone. The ▸ before the sentence opens everything else, and Open all in the HomeRoom bar opens every deal at once. When a deal is open, F7, F8 and F9 show three ways to lay out what sits under the sentence.</p>
+  <p class="lede" style="margin-top:10px">You chose the original F and asked me to fix the area under each sentence. In F, that area held the client's confidence, a line of small chips and the next move, all in small grey text, with a lot of empty space to the right. These three versions keep F's sentence and map exactly as they were. They remove what repeats the sentence and give everything else its own labeled place in larger type.</p>
   <span class="status">Three versions of F · waiting on your pick · nothing ships without your order</span>
 
   <ul class="notes">
@@ -953,7 +958,7 @@ const freshUI = () => ({
   chute: [{ who: "Simploy", what: "1 email · 1 to-do", day: TODAY_MD, rung: "contact email" }],
   flash: new Set(),
   dSel: null, dF: null, dChair: "all", dSort: "move",
-  fCountry: null, fOpen: new Set(),
+  fCountry: null, fOpen: new Set(), rowOpen: new Set(),
 });
 const CIDS = ["F7", "F8", "F9"];
 const ST = Object.fromEntries(CIDS.map((c) => [c, clone(BOOK)]));
@@ -1176,7 +1181,7 @@ function chute(cid) {
   return `<section class="chute"><span class="chuteK">THE CHUTE</span><span class="chuteLine">Throw files here. They find their account.</span><button class="chuteBtn" data-act="toast" data-msg="Opens the file picker for the Chute.">⇪ Files</button></section><ul class="rcpts">${ui.chute.map((r, i) => `<li class="${i === 0 && ui.flash.has("chute") ? "flash" : ""}"><b>${esc(r.who)}</b>${esc(r.what)} · ${esc(r.day)} · ${esc(r.rung)}<span class="x">↺ ✕</span></li>`).join("")}</ul>`;
 }
 function roomBar(cid) {
-  return `<div class="rbar"><span class="ident">${MARK}<span class="roomName">HOMEROOM</span><button class="shutAll" data-act="shutall" data-cid="${cid}">Collapse all</button></span><span class="addWrap"><button class="addBtn" data-act="toast" data-msg="Opens ＋ add: an account to the board, the payroll intake form, and the follow-ups still owed.">＋ add ▾</button><button class="addBadge" data-act="toast" data-msg="Opens the 2 follow-ups still owed.">2</button></span><span class="clock">10:42 AM · CHICAGO</span></div>`;
+  return `<div class="rbar"><span class="ident">${MARK}<span class="roomName">HOMEROOM</span><button class="shutAll" data-act="shutall" data-cid="${cid}">${ST[cid].some((x) => UI[cid].rowOpen.has(x.id)) ? "Collapse all" : "Open all"}</button></span><span class="addWrap"><button class="addBtn" data-act="toast" data-msg="Opens ＋ add: an account to the board, the payroll intake form, and the follow-ups still owed.">＋ add ▾</button><button class="addBadge" data-act="toast" data-msg="Opens the 2 follow-ups still owed.">2</button></span><span class="clock">10:42 AM · CHICAGO</span></div>`;
 }
 const edges = () => `<div class="edges"><button class="edge" data-act="toast" data-msg="Opens the Pipeline tab: every active account's record.">PIPELINE <span class="ec">6</span></button><button class="edge" data-act="toast" data-msg="Opens Roundups and Check-ins.">ROUNDUPS · CHECK-INS <span class="ec">2</span></button><button class="edge" data-act="toast" data-msg="Opens Keep an eye out.">EYE <span class="ec">3</span></button></div>`;
 const swatch = `<span style="display:inline-block;width:18px;height:12px;border:1.5px dashed var(--amber);background:var(--amber-soft);border-radius:3px"></span>`;
@@ -1415,12 +1420,20 @@ const morePanel = (cid, a) => `<div class="fopen onWhite"><div class="pmeta">${a
 const moreToggle = (cid, a, label) => { const open = UI[cid].fOpen.has(a.id); return `<button class="open" style="margin:0" data-act="fmore" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${open ? "Less ▴" : label || "More ▾"}</button>`; };
 const cell = (label, info, cls = "sc") => `<div class="${cls}"><span class="sk">${label}</span><span class="sv">${info.v}</span>${info.s ? `<span class="ss">${info.s}</span>` : ""}</div>`;
 
+// Every row rests as its sentence alone; the caret opens the rest.
+function sentLine(cid, a) {
+  const open = UI[cid].rowOpen.has(a.id);
+  return `<div class="fline"><button class="caret" data-act="rowopen" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}" title="${open ? "Collapse this deal" : "Open this deal"}" aria-label="${open ? "Collapse this deal" : "Open this deal"}">${open ? "▾" : "▸"}</button><p class="fsent">${sentence(cid, a)}</p></div>`;
+}
+const shutRow = (cid, a) => `<article class="frow shut ${a.group}" data-cs="${csOf(cid, a)}">${sentLine(cid, a)}</article>`;
+
 // ── F7: one row of labeled cells, then the next move ───────────────────
 function row7(cid, a, o = {}) {
+  if (!UI[cid].rowOpen.has(a.id)) return shutRow(cid, a);
   const open = UI[cid].fOpen.has(a.id);
   const m = a.email;
   return `<article class="frow ${a.group}" data-cs="${csOf(cid, a)}">
-    <p class="fsent">${sentence(cid, a)}</p>${handLine(cid, a)}
+    ${sentLine(cid, a)}${handLine(cid, a)}
     <div class="srow">${cell(a.client?.internal ? "Internal" : "The client", clientInfo(cid, a))}${cell("People in the deal", peopleInfo(a))}${cell("Partner", partnerInfo(a))}${cell("Research", researchInfo(a))}${cell("Stage", stageInfo(a))}${cell("Salesforce", sfInfo(a))}</div>
     <div class="arow"><div class="amove">${bigMove(cid, a)}${theirsBig(cid, a)}</div><div class="aacts">${moveActs(cid, a, o.top)}${filesHead(cid, a)}${pasteBtn(cid, a)}${hovs(cid, a)}</div></div>
     ${filesPanes(cid, a)}
@@ -1430,10 +1443,11 @@ function row7(cid, a, o = {}) {
 }
 // ── F8: each piece of information as a tile ────────────────────────────
 function row8(cid, a, o = {}) {
+  if (!UI[cid].rowOpen.has(a.id)) return shutRow(cid, a);
   const open = UI[cid].fOpen.has(a.id);
   const tile = (icon, label, info) => `<div class="tile"><span class="th">${icon}<span class="sk">${label}</span></span><span class="sv">${info.v}</span>${info.s ? `<span class="ss">${info.s}</span>` : ""}</div>`;
   return `<article class="frow ${a.group}" data-cs="${csOf(cid, a)}">
-    <p class="fsent">${sentence(cid, a)}</p>${handLine(cid, a)}
+    ${sentLine(cid, a)}${handLine(cid, a)}
     <div class="tiles">
       <div class="tile tmove"><span class="tr">${hovs(cid, a)}</span>${bigMove(cid, a)}${theirsBig(cid, a)}<span class="acts">${moveActs(cid, a, o.top)}${pasteBtn(cid, a)}</span></div>
       ${tile(a.client?.internal ? ICON.people : ICON.org, a.client?.internal ? "Internal" : "The client", clientInfo(cid, a))}
@@ -1452,13 +1466,14 @@ function row8(cid, a, o = {}) {
 }
 // ── F9: the move on the left, the facts on the right ───────────────────
 function row9(cid, a, o = {}) {
+  if (!UI[cid].rowOpen.has(a.id)) return shutRow(cid, a);
   const open = UI[cid].fOpen.has(a.id);
   const m = a.email;
   const fr = (label, info) => `<div class="fr"><span class="sk">${label}</span><span class="frv"><span class="sv">${info.v}</span>${info.s ? `<span class="ss">${info.s}</span>` : ""}</span></div>`;
   const body = m ? m.body.replace(/^(Hi|Hello|Hey)[^\n]*\n+/i, "").split("\n").filter(Boolean).join(" ") : "";
   const mail = m ? `<button class="mailCard" data-act="fmore" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}"><span class="sk">Latest email · ${esc(m.from)} → ${esc(m.to)} · ${esc(m.day)}</span><span class="ms">${esc(m.subj)}</span><span class="mb">${esc(body)}</span><span class="open">${open ? "Close ▴" : "Read the whole email ▾"}</span></button>` : "";
   return `<article class="frow ${a.group}" data-cs="${csOf(cid, a)}">
-    <p class="fsent">${sentence(cid, a)}</p>${handLine(cid, a)}
+    ${sentLine(cid, a)}${handLine(cid, a)}
     <div class="f9grid">
       <div class="f9left"><div>${bigMove(cid, a)}${theirsBig(cid, a)}</div><div class="aacts">${moveActs(cid, a, o.top)}${filesHead(cid, a)}${pasteBtn(cid, a)}${hovs(cid, a)}</div>${filesPanes(cid, a)}${mail}</div>
       <div class="flist2">${fr(a.client?.internal ? "Internal" : "The client", clientInfo(cid, a))}${fr("People", peopleInfo(a))}${fr("Partner", partnerInfo(a))}${fr("Research", researchInfo(a))}${fr("Stage", stageInfo(a))}${fr("Salesforce", sfInfo(a))}</div>
@@ -1539,7 +1554,8 @@ document.addEventListener("click", (e) => {
   switch (act) {
     case "toast": toast(t.dataset.msg); return;
     case "demo": demo(cid, t.dataset.demo); return;
-    case "shutall": ui.fOpen.clear(); ui.filesOpen.clear(); ui.pickOpen.clear(); toast("Every open row is closed."); break;
+    case "shutall": { const anyOpen = ST[cid].some((x) => ui.rowOpen.has(x.id)); if (anyOpen) { ui.rowOpen.clear(); ui.fOpen.clear(); ui.filesOpen.clear(); ui.pickOpen.clear(); } else ST[cid].forEach((x) => ui.rowOpen.add(x.id)); break; }
+    case "rowopen": toggle(ui.rowOpen, id); break;
     case "closed": ui.closedHidden = !ui.closedHidden; break;
     case "multi": ui.multi = ui.multi === id ? null : id; break;
     case "zap": ui.door[id] = "zap"; ui.fOpen.add(id); break;
