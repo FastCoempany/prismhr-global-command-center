@@ -1,0 +1,1848 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Concept F, The Open Deal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* The HomeRoom reform, second set (2026-11-03). Three new structures for
+     the deal facts the founder named: D shows every deal as a card on one
+     wall, E splits every deal into the PEO's side and the client's side,
+     F opens on a map of the countries the deals name and says each deal as
+     one sentence. Same facts and same kept parts as the first set (A, B, C);
+     one theme, the room's own tokens. Flags are the one place colour comes
+     from outside the palette, because a flag is content, not a role colour.
+     One looping pulse per surface (brand motion spec 08): only the light on
+     the nearest client date pulses, and only in the concept on screen. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.08);
+    --green:#22c55e; --green-soft:rgba(34,197,94,.1);
+    --amber:#f59e0b; --amber-soft:rgba(245,158,11,.13);
+    --red:#ef4444; --red-soft:rgba(239,68,68,.09);
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --rest:0 1px 2px rgba(10,28,64,.05);
+    --lift:0 6px 18px rgba(10,28,64,.08),0 1px 2px rgba(10,28,64,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer;background:none;border:0;padding:0}
+  button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+  a{color:inherit}
+  .page{max-width:1320px;margin:0 auto;padding-block:40px 140px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+  /* ── the document's own head ─────────────────────────────────────── */
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,48px)/1.1 var(--serif);margin:10px 0 12px;text-wrap:balance}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .status{display:inline-block;margin-top:16px;padding:6px 12px;border:1px solid var(--hair);border-radius:99px;background:var(--surface);font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+  .notes,.why{margin:18px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li,.why li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before,.why li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b,.why b{color:var(--ink);font-weight:600}
+  .why{margin:0 0 16px}
+  .jump{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+  .jump a{font:600 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--soft);border:1px solid var(--hair);border-radius:99px;padding:8px 12px;background:var(--surface)}
+  .jump a:hover{color:var(--ink);border-color:var(--faint)}
+  section.concept{margin-top:72px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .demos{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+  .sim{border:1px dashed var(--quiet);background:var(--surface);border-radius:6px;padding:6px 10px;font:600 9.5px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+  .sim:hover{color:var(--ink);border-color:var(--faint)}
+  .order{margin:16px 0 0;padding:12px 16px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:10px;max-width:92ch}
+  .order ol{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--soft)}
+  .order ol b{color:var(--ink);font-weight:600}
+  .order p{margin:8px 0 0;font-size:13.5px;color:var(--soft)}
+
+  /* ── the app frame: wayfinder, the room, the edge tabs ────────────── */
+  .app{position:relative;background:var(--field);background-image:radial-gradient(1200px 600px at 85% -10%,rgba(37,99,235,.05),transparent 60%);border:1px solid var(--hair);border-radius:12px;overflow:clip;box-shadow:var(--rest)}
+  .wf{display:flex;align-items:center;gap:18px;height:46px;padding:0 18px;background:rgba(255,255,255,.72);border-bottom:1px solid var(--hair-soft);overflow-x:auto;scrollbar-width:none}
+  .wf::-webkit-scrollbar{display:none}
+  .wfBrand{display:inline-flex;align-items:center;gap:8px;font:700 11px/1 var(--sans);letter-spacing:.22em;flex:none}
+  .wf nav{display:flex;gap:16px;flex:none}
+  .wf nav span{font:600 13px/1 var(--sans);color:var(--faint);padding:15px 0 13px;border-bottom:2px solid transparent;white-space:nowrap}
+  .wf nav span.here{color:var(--ink);border-bottom-color:var(--ink)}
+  .roomIn{padding:16px 52px 22px 22px}
+  @media (max-width:760px){.roomIn{padding:14px 40px 18px 14px}}
+
+  .chute{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1.5px dashed var(--quiet);border-radius:10px;padding:9px 14px;background:rgba(255,255,255,.55)}
+  .chuteK{font:700 9.5px/1 var(--mono);letter-spacing:.18em;color:var(--soft)}
+  .chuteLine{font-size:13.5px;color:var(--soft)}
+  .chuteBtn{margin-left:auto;border:1px solid var(--hair);border-radius:6px;padding:5px 10px;background:var(--surface);font:600 12.5px/1.2 var(--sans)}
+  .rcpts{list-style:none;margin:6px 0 0;padding:0}
+  .rcpts li{display:flex;gap:10px;align-items:baseline;font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft);padding:4px 2px;border-top:1px solid var(--hair-soft)}
+  .rcpts li:first-child{border-top:0}
+  .rcpts li b{color:var(--ink);font-weight:700}
+  .rcpts li .x{margin-left:auto;color:var(--quiet)}
+
+  .rbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 10px}
+  .ident{display:inline-flex;align-items:center;gap:9px}
+  .roomName{font:700 11px/1 var(--mono);letter-spacing:.22em}
+  .shutAll{font:600 9.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hair);border-radius:4px;padding:5px 7px;background:var(--surface)}
+  .shutAll:hover{color:var(--ink)}
+  .addWrap{display:inline-flex;align-items:center;gap:6px}
+  .addBtn{font:600 13px/1 var(--sans);border:1px solid var(--hair);border-radius:6px;padding:6px 10px;background:var(--surface)}
+  .addBadge{font:700 10px/1 var(--mono);color:#fff;background:var(--ink);border-radius:99px;padding:4px 7px}
+  .clock{margin-left:auto;font:600 10px/1 var(--mono);letter-spacing:.12em;color:var(--faint)}
+
+  .edges{position:absolute;right:0;top:150px;display:flex;flex-direction:column;gap:12px;z-index:4}
+  .edge{writing-mode:vertical-rl;font:600 8.5px/1 var(--mono);letter-spacing:.2em;color:var(--quiet);background:rgba(255,255,255,.7);border:1px solid var(--hair-soft);border-right:0;border-radius:6px 0 0 6px;padding:12px 6px;display:flex;align-items:center;gap:8px}
+  .edge:hover{color:var(--ink)}
+  .edge .ec{writing-mode:horizontal-tb;font-size:9px;color:var(--soft)}
+  .scratch{position:absolute;right:16px;bottom:14px;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--hair);box-shadow:var(--lift);font-size:16px;display:grid;place-items:center;z-index:5}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:22px;padding:12px 56px 0 0;border-top:1px solid var(--hair-soft);font:600 9px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .legend .lg{display:inline-flex;align-items:center;gap:6px}
+
+  .rule{display:flex;align-items:center;gap:10px;margin:26px 0 8px;font:600 9.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .rule::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--hair),transparent);order:3}
+  .rule button{font:inherit;letter-spacing:inherit;color:var(--soft);border:1px solid var(--hair);border-radius:4px;padding:3px 6px;background:var(--surface);order:2}
+
+  /* ── the kept identity pieces ─────────────────────────────────────── */
+  .caret{color:var(--faint);font-size:12px;width:14px}
+  .bf{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--quiet);flex:none;display:inline-block}
+  .bf.on{background:var(--green);border-color:var(--green)}
+  .sf{font:700 7.5px/1 var(--mono);color:var(--faint);border:1px solid var(--quiet);border-radius:2px;padding:2px 3px}
+  .nmLink{font:400 21px/1.2 var(--serif);color:var(--ink);text-decoration:none;border-bottom:2px solid rgba(10,28,64,.1)}
+  .stamp{font:700 9px/1 var(--mono);letter-spacing:.14em;border-radius:4px;padding:3px 7px;color:var(--green);border:1px solid rgba(34,197,94,.45);white-space:nowrap}
+  .chips{display:inline-flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .chip{font:700 10px/1.9 var(--mono);letter-spacing:.08em;border:1px solid var(--hair);border-radius:4px;padding:0 6px;background:var(--surface)}
+  .metaIn{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .multi{position:relative;font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:#fff;border-radius:4px;padding:5px 8px}
+  .multi.g{background:var(--green)} .multi.a{background:var(--amber)} .multi.r{background:var(--red)}
+  .hover{position:absolute;left:0;top:calc(100% + 6px);z-index:20;width:260px;background:var(--surface);border:1px solid var(--hair);border-radius:8px;box-shadow:var(--lift);padding:10px 12px;color:var(--ink);text-align:left;letter-spacing:0;font:400 12.5px/1.5 var(--sans)}
+  .hover .hk{display:block;font:600 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--faint);margin-bottom:4px}
+  .zap{color:var(--faint);font-size:14px}
+  .zap:hover{color:var(--ink)}
+  .rsrch{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--blue)}
+  .worked{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--green)}
+  .hov{color:var(--quiet);font-size:13px;opacity:0;transition:opacity .12s}
+  .dcard:hover .hov,.erow:hover .hov,.frow:hover .hov,.drawer:hover .hov,.hov:focus-visible{opacity:1}
+  .hov:hover{color:var(--ink)}
+
+  /* ── the kept move slot ───────────────────────────────────────────── */
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .move{font:600 16px/1.45 var(--sans);margin:2px 0 0}
+  .move .r{font-weight:400;color:var(--soft)}
+  .go,.ghost{border-radius:8px;padding:7px 14px;font-weight:600;font-size:14px;white-space:nowrap}
+  .go{background:var(--orange);color:#fff;box-shadow:0 4px 14px rgba(230,112,30,.2)}
+  .ghost{border:1.5px solid var(--ink);background:var(--surface)}
+  .wonYes{border:1px solid rgba(34,197,94,.55);background:var(--green-soft);border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px}
+  .acts{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .reopen{color:var(--quiet);font-size:15px}
+  .reopen:hover{color:var(--ink)}
+
+  /* ── the kept stage meter ─────────────────────────────────────────── */
+  .meterZone{position:relative;height:5px}
+  .track{position:absolute;inset:0;border-radius:3px;overflow:hidden;background:repeating-linear-gradient(-60deg,rgba(10,28,64,.05) 0 6px,transparent 6px 12px)}
+  .gain{position:absolute;inset:0 auto 0 0;border-radius:3px 0 0 3px;background:var(--faint)}
+  .cap{position:absolute;top:0;bottom:0;width:4px;z-index:2}
+  .cap.ok{background:var(--green)} .cap.warn{background:var(--amber)} .cap.risk{background:var(--red)}
+  .node{position:absolute;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;border:1.2px solid rgba(10,28,64,.28);background:rgba(255,255,255,.85);z-index:3}
+  .node.done{background:var(--ink);border-color:rgba(255,255,255,.8)}
+  .node.cur{width:9px;height:9px;background:#fff;border:2px solid var(--ink)}
+  .climbCap{font:700 9px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:8px}
+
+  /* ── the kept latest email ────────────────────────────────────────── */
+  .mail{min-width:0}
+  .mailK{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .mailK .lbl{color:var(--soft)}
+  .mailWho{font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .mailSubj{font:600 15px/1.4 var(--sans);margin:6px 0 0}
+  .mailBody{margin:8px 0 0;font-size:14px;line-height:1.6;color:var(--ink);white-space:pre-wrap;max-width:66ch}
+  .capped{position:relative;max-height:126px;overflow:hidden}
+  .capped::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(rgba(245,247,251,0),var(--field))}
+  .onWhite .capped::after{background:linear-gradient(rgba(255,255,255,0),#fff)}
+  .open{margin-top:6px;font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+  .open:hover{color:var(--ink)}
+
+  /* ── the kept Salesforce line, the Drop, EARLIER ──────────────────── */
+  .theirs{font:600 10px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+  .theirs button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;text-decoration:underline dotted;text-underline-offset:3px;text-align:left}
+  .theirsFold{margin:6px 0 0;padding:8px 12px;border-left:2px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0;font-size:13px}
+  .theirsFold .t{font:600 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue)}
+  .drop{min-width:0}
+  .dropK{font:600 9px/1.4 var(--mono);letter-spacing:.16em;color:var(--faint);text-transform:uppercase}
+  .doors{display:flex;gap:8px;margin:8px 0 4px}
+  .door{width:32px;height:30px;border:1px solid var(--hair);border-radius:7px;background:var(--surface);display:grid;place-items:center;color:var(--soft);font-size:13px}
+  .door.on{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+  .pane{margin-top:6px}
+  .pane textarea{width:100%;min-height:70px;border:1px solid var(--hair);border-radius:8px;padding:8px 10px;font:400 13.5px/1.5 var(--sans);background:var(--surface);resize:vertical}
+  .paneRow{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+  .paneRow button{font:600 12.5px/1 var(--sans);border-radius:6px;padding:7px 11px;border:1px solid var(--hair);background:var(--surface)}
+  .paneRow .file{border-color:var(--ink)}
+  .dropRcpt{margin-top:6px;font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft);display:flex;gap:10px;align-items:baseline}
+  .dropRcpt b{color:var(--green)}
+  .dayrule{display:flex;align-items:center;gap:8px;width:100%;margin:10px 0 4px;font:600 8.5px/1 var(--mono);letter-spacing:.14em;color:var(--quiet);text-transform:uppercase}
+  .dayrule::after{content:"";flex:1;border-top:1px solid var(--hair-soft)}
+  .dayrule:hover{color:var(--ink)}
+  .ent{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;padding:6px 2px;border-top:1px solid var(--hair-soft);font-size:13px;align-items:baseline}
+  .ent:first-of-type{border-top:0}
+  .ent .g{color:var(--blue);font-size:12px}
+  .ent .g.out{color:var(--soft)}
+  .ent .kk{display:block;font:600 9px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .ent .s{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .more{display:flex;gap:16px;margin-top:8px;font-size:11.5px;font-weight:600;color:var(--faint)}
+
+  /* ── the facts: shared widgets ────────────────────────────────────── */
+  .fk{font:700 8.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .light{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;border:1.5px solid transparent;--ring:rgba(239,68,68,.6);--ring0:rgba(239,68,68,0)}
+  .light.hot,.light.past{background:var(--red)}
+  .light.warm{background:var(--amber)}
+  .light.later{background:var(--surface);border-color:var(--faint)}
+  .light.none{background:transparent;border-color:var(--quiet)}
+  .light.won{background:var(--green)}
+  .onRed .light.hot,.onRed .light.past{background:#fff;--ring:rgba(255,255,255,.75);--ring0:rgba(255,255,255,0)}
+  /* The one loop on the surface: only in the concept on screen. */
+  .concept.live .light.pulse{animation:pulse 1.6s cubic-bezier(.2,0,0,1) infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--ring)}70%{box-shadow:0 0 0 9px var(--ring0)}100%{box-shadow:0 0 0 0 var(--ring0)}}
+  @media (prefers-reduced-motion:reduce){.concept.live .light.pulse{animation:none}}
+
+  .prods{display:inline-flex;gap:5px;flex-wrap:wrap}
+  .prod{width:34px;height:34px;border:1px solid var(--hair);border-radius:8px;background:var(--surface);display:inline-grid;place-items:center;color:var(--quiet)}
+  .prod svg{width:19px;height:19px}
+  .prod.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .prod:hover{border-color:var(--faint)}
+  .pnames{font:700 9.5px/1.3 var(--mono);letter-spacing:.1em}
+  .who{font:700 8.5px/1 var(--mono);letter-spacing:.14em;border-radius:99px;padding:5px 9px;border:1px solid var(--hair);color:var(--soft);background:var(--surface);white-space:nowrap}
+  .who.client{color:var(--ink);border-color:var(--ink)}
+
+  .client{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .clTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cl{font:400 21px/1.2 var(--serif);text-align:left}
+  .cl.named{border-bottom:2px solid rgba(10,28,64,.12)}
+  .cl.unknown{font:700 10px/1 var(--mono);letter-spacing:.12em;color:var(--ink);border:1.5px dashed var(--amber);background:var(--amber-soft);border-radius:6px;padding:7px 9px}
+  .cl.internal{font:700 10px/1 var(--mono);letter-spacing:.12em;color:var(--soft);border:1px solid var(--hair);border-radius:6px;padding:7px 9px;background:var(--surface)}
+  .cneed{font-size:13.5px;line-height:1.45;color:var(--ink);text-align:left}
+  .conf{display:inline-flex;align-items:center;gap:4px;font:700 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--blue)}
+  .conf i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--blue);display:inline-block}
+  .conf i.on{background:var(--blue)}
+  .conf.thin{color:var(--ink)}
+  .conf.thin i{border-color:var(--amber)}
+  .conf.thin i.on{background:var(--amber)}
+  .conf span{margin-left:3px}
+  .namer{font:600 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);border:1px solid var(--hair);border-radius:4px;padding:6px 7px;background:var(--surface);white-space:nowrap}
+  .namer:hover{color:var(--ink)}
+  .nameIn{border:1px solid var(--ink);border-radius:6px;padding:5px 8px;font:500 13px/1.2 var(--sans);width:210px;max-width:100%}
+  .src{font:600 8.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  button.src{text-decoration:underline dotted;text-underline-offset:2px}
+  button.src:hover{color:var(--ink)}
+  .src.hand{color:var(--ink)}
+  .src.hand button{color:var(--soft);margin-left:4px;font-size:12px}
+
+  .flag{display:inline-block;flex:none;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(10,28,64,.14);line-height:0;vertical-align:middle}
+  .flag svg{width:100%;height:100%;display:block}
+  .ctrys{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+  .ctry{display:inline-flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--hair);border-radius:9px;padding:8px 9px 6px;background:var(--surface);font:600 12px/1.15 var(--sans);text-align:center}
+  .ctry:hover{border-color:var(--faint)}
+  .ctry.hand{border-style:dashed}
+  .ctry.row{flex-direction:row;padding:4px 9px 4px 5px;font-size:13px}
+  .cadd{position:relative;display:inline-flex;align-items:center}
+  .cadd > button{width:28px;height:28px;border:1px dashed var(--quiet);border-radius:7px;color:var(--soft);font-size:14px;line-height:1}
+  .cadd > button.namer{width:auto;height:auto;border:1px solid var(--hair);border-radius:4px;color:var(--soft);font:600 9px/1 var(--mono);letter-spacing:.1em;padding:6px 7px}
+  .cadd select{margin-left:6px;border:1px solid var(--ink);border-radius:6px;padding:3px 6px;background:var(--surface);font-size:12.5px}
+  .nil{font:600 9px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--quiet)}
+
+  .heads{display:flex;gap:8px;flex-wrap:wrap}
+  .hc{display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;border:1px solid var(--hair);border-radius:9px;padding:7px 11px 7px 10px;background:var(--surface);color:var(--ink);text-align:left}
+  .hc .hrow{display:inline-flex;align-items:center;gap:6px}
+  .hc svg{width:17px;height:17px;color:var(--soft)}
+  .hc .hn{font:400 30px/1 var(--serif)}
+  .hc .hl{font:700 8.5px/1.2 var(--mono);letter-spacing:.12em;color:var(--soft)}
+  .hc .hab{font:700 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--soft)}
+  .hc.none{border-style:dashed;color:var(--faint)}
+  .hc.none svg{color:var(--faint)}
+  .hc.none .ns{font:700 8.5px/1.2 var(--mono);letter-spacing:.12em;color:var(--faint)}
+
+  .chair{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .lever{display:inline-flex;border:1px solid var(--hair);border-radius:99px;padding:2px;background:var(--surface)}
+  .lever button{font:700 9px/1 var(--mono);letter-spacing:.12em;color:var(--faint);border-radius:99px;padding:7px 10px;white-space:nowrap}
+  .lever button:hover{color:var(--ink)}
+  .lever button.on{background:var(--ink);color:#fff}
+  .lever.vert{flex-direction:column;border-radius:12px}
+  .lever.vert button{border-radius:10px}
+  .lever.notsaid{border:1.5px dashed var(--amber);background:var(--amber-soft)}
+
+  .files{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .filesTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .folder{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair);border-radius:8px;padding:6px 10px;background:var(--surface)}
+  .folder svg{width:18px;height:18px;color:var(--ink)}
+  .folder b{font:400 19px/1 var(--serif)}
+  .folder span{font:700 9px/1.2 var(--mono);letter-spacing:.12em;color:var(--soft);white-space:nowrap}
+  .folder.empty svg,.folder.empty b{color:var(--quiet)}
+  .sendf{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--ink);border-radius:8px;padding:6px 11px;background:var(--surface);font:600 13px/1 var(--sans);white-space:nowrap}
+  .sendf svg{width:15px;height:15px}
+  .flist{border:1px solid var(--hair-soft);border-radius:8px;background:var(--surface);padding:4px 10px}
+  .fl{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--hair-soft);font-size:13px}
+  .fl:first-child{border-top:0}
+  .fl svg{width:15px;height:15px;color:var(--soft)}
+  .fl .fd{font:600 8.5px/1.3 var(--mono);letter-spacing:.1em;color:var(--faint);text-align:right}
+  .fl.new .fd{color:var(--green)}
+  .picker{border:1px solid var(--hair);border-radius:10px;background:var(--surface);padding:10px 12px;box-shadow:var(--rest)}
+  .pk{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--faint);margin:8px 0 2px}
+  .pk:first-child{margin-top:0}
+  .pi{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:3px 0;font-size:13px;cursor:pointer}
+  .pi input{accent-color:var(--ink);margin:0;transform:translateY(1px)}
+  .pi .ps{font:600 9px/1.3 var(--mono);letter-spacing:.08em;color:var(--faint);white-space:nowrap}
+  .pi .was{font:700 8px/1 var(--mono);letter-spacing:.1em;color:var(--green);border:1px solid rgba(34,197,94,.45);border-radius:3px;padding:2px 4px;margin-left:6px}
+  .pfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px solid var(--hair-soft)}
+  .ptotal{font-size:12.5px;color:var(--soft)}
+  .psend{margin-left:auto;background:var(--ink);color:#fff;border-radius:8px;padding:8px 13px;font:600 13px/1 var(--sans)}
+  .pnote{font-size:12px;color:var(--faint);margin:6px 0 0}
+
+  .flash{animation:flash 1.2s cubic-bezier(.2,0,0,1)}
+  @keyframes flash{0%{background-color:var(--blue-soft);box-shadow:0 0 0 3px var(--blue-soft)}100%{box-shadow:0 0 0 0 transparent}}
+  @media (prefers-reduced-motion:reduce){.flash{animation:none}}
+</style>
+<style>
+  /* Concept F, under the sentence (2026-11-04). The founder chose the
+     original F and asked for the area under each sentence to use its empty
+     width: the shape chip and the meta line go, because the sentence already
+     says them, and the client's confidence, MULTI with its people, the
+     partner mark, research, the stage, Salesforce and the confirmed
+     Salesforce fact come forward as labeled facts. F7 lays them in one bar
+     of cells, F8 as tiles, F9 as a list beside the move and the latest
+     email. F's sentence and map are unchanged. */
+  /* ── Concept F: the map, and each deal said as a sentence ─────────── */
+  .fmap{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(250px,1fr);background:var(--surface);border:1px solid var(--hair-soft);border-radius:14px;box-shadow:var(--rest);margin:4px 0 6px;overflow:clip}
+  .fmapL{padding:12px 14px 14px;min-width:0;display:flex;flex-direction:column}
+  .mapbox{position:relative;width:100%;aspect-ratio:162/58;margin:auto 0}
+  .mapbox svg.dots{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .pinDot{position:absolute;width:9px;height:9px;transform:translate(-50%,-50%);border:2px solid #fff;box-sizing:content-box;pointer-events:none;z-index:2}
+  .pinDot.later{background:var(--ink);border-color:#fff}
+  .pinDot.none{background:var(--ink);border-color:#fff}
+  .pin{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 9px));display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1.5px solid var(--hair);border-radius:7px;padding:3px 7px 3px 4px;box-shadow:var(--lift);font:700 10px/1 var(--mono);letter-spacing:.06em;white-space:nowrap}
+  .pin.hot,.pin.past{border-color:var(--red)}
+  .pin.warm{border-color:var(--amber)}
+  .pin.won{border-color:rgba(34,197,94,.7)}
+  .pin.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .pin.dim{opacity:.35}
+  .pin.ping{box-shadow:0 0 0 3px var(--blue-soft),var(--lift);border-color:var(--blue)}
+  .fmapR{border-left:1px solid var(--hair-soft);padding:12px 12px 12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .crow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:5px 8px;border-radius:9px;text-align:left;width:100%}
+  .crow:hover{background:rgba(10,28,64,.035)}
+  .crow.sel{background:var(--ink);color:#fff}
+  .crow.sel .cs,.crow.sel .cw{color:rgba(255,255,255,.75)}
+  .crow .cn{font:600 14px/1.2 var(--sans)}
+  .crow .cs{display:block;font:700 8.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--soft);margin-top:2px;text-transform:uppercase}
+  .crow .cw{font:700 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .showAll{align-self:flex-start;margin-top:6px;font:600 9.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);border:1px solid var(--hair);border-radius:6px;padding:7px 9px;background:var(--surface)}
+  .fnote{font-size:12.5px;color:var(--soft);margin:8px 0 0}
+  .frow{padding:18px 0 16px;border-top:1px solid var(--hair)}
+  .frow:first-of-type{border-top:0}
+  .frow{position:relative}
+  .frow.ping::before{content:"";position:absolute;left:-12px;top:16px;bottom:16px;width:3px;border-radius:2px;background:var(--blue)}
+  .frow.low,.frow.closed{opacity:.9}
+  .fsent{margin:0;font:400 23px/1.75 var(--serif);color:var(--ink);text-wrap:pretty}
+  .fsent .nmLink{font-size:inherit}
+  .tok{position:relative;display:inline-flex;align-items:center;gap:6px;vertical-align:1px;border-radius:8px;padding:2px 9px;border:1px solid var(--hair);background:var(--surface);font:600 15px/1.5 var(--sans);color:var(--ink);white-space:nowrap}
+  button.tok:hover{border-color:var(--faint)}
+  .tok svg{width:17px;height:17px}
+  .tok.prodT{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+  .tok.chairT{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tok.chairT.none{background:var(--amber-soft);color:var(--ink);border:1.5px dashed var(--amber)}
+  .tok.cliT{font:400 inherit/1.2 var(--serif);font-size:24px;border:0;border-bottom:2px solid rgba(10,28,64,.16);border-radius:0;padding:0 1px;background:none}
+  .tok.cliT.hand{border-bottom-style:dashed}
+  .tok.unk{font:700 11px/1.9 var(--mono);letter-spacing:.1em;border:1.5px dashed var(--amber);background:var(--amber-soft);text-transform:uppercase}
+  .tok.numT{font:400 26px/1 var(--serif);border:0;background:none;padding:0 2px}
+  .tok.ctryT .flag{width:27px !important;height:18px !important}
+  .tok.quiet{font:700 10.5px/1.9 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border-style:dashed}
+  .tok.dateT.hot,.tok.dateT.past{background:var(--red);color:#fff;border-color:var(--red)}
+  .tok.dateT.warm{background:var(--amber-soft);border-color:rgba(245,158,11,.6)}
+  .tok.addT{font-size:14px;color:var(--soft);border-style:dashed;padding:2px 7px}
+  .nb{white-space:nowrap}
+  .menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;display:flex;flex-direction:column;min-width:190px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;box-shadow:var(--lift);padding:5px;font:600 13px/1.3 var(--sans);color:var(--ink);text-align:left;white-space:normal}
+  .menu button{padding:8px 10px;border-radius:7px;text-align:left}
+  .menu button:hover{background:rgba(10,28,64,.05)}
+  .menu button.on{background:var(--ink);color:#fff}
+  .fchips{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px}
+  .fwork{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 22px;align-items:center;margin-top:12px}
+  .fwork .fm{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+  .fwork .fm .move{margin:0}
+  .fwork .ff{justify-self:end}
+  .fmore{margin-top:10px}
+  .fopen{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0 28px;margin-top:12px;padding:14px 16px;background:rgba(255,255,255,.66);border-radius:12px;box-shadow:var(--rest)}
+  .fopen .rcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .fopen .climb{grid-column:1/-1;margin-top:14px}
+  @media (max-width:1000px){.fmap{grid-template-columns:minmax(0,1fr)}.fmapR{border-left:0;border-top:1px solid var(--hair-soft)}.fopen{grid-template-columns:minmax(0,1fr)}.fwork{grid-template-columns:minmax(0,1fr)}.fwork .ff{justify-self:start}}
+  @media (max-width:640px){.fsent{font-size:19px}.tok.cliT{font-size:20px}.tok.numT{font-size:22px}.pin{display:none}.pinDot{width:7px;height:7px}}
+
+
+  /* ── pieces shared with the earlier pages ─────────────────────────── */
+  .hov{opacity:0}
+  .frow:hover .hov,.hov:focus-visible{opacity:1}
+  .mv{min-width:0}
+  .acts{margin:0}
+  .acts .worked{font-size:10px;border:1px solid rgba(34,197,94,.45);border-radius:6px;padding:8px 10px;background:var(--green-soft)}
+  .addq{font:600 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hair);border-radius:4px;padding:5px 6px;background:var(--surface);white-space:nowrap}
+  .cadd > button.addq{width:auto;height:auto;border:1px solid var(--hair);border-radius:4px;font:600 9px/1 var(--mono);letter-spacing:.1em;padding:5px 6px;color:var(--faint)}
+  .fopen{background:var(--surface);border:1px solid var(--hair-soft)}
+  .fopen .pmeta{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .rows > .frow:first-child{border-top:0}
+  .handLine{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;padding-left:28px}
+  .fline{display:flex;gap:10px;align-items:baseline}
+  .fline .caret{flex:none;width:18px;font-size:14px;color:var(--faint)}
+  .fline .caret:hover{color:var(--ink)}
+  .frow.shut{padding:12px 0}
+
+  /* ── the information under the sentence, larger and labeled ───────── */
+  .sk{font:700 9px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .sv{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:600 15px/1.35 var(--sans);color:var(--ink);min-width:0}
+  .ss{font:400 12.5px/1.45 var(--sans);color:var(--soft);min-width:0}
+  .sbtn{display:inline-flex;align-items:center;gap:8px;font:inherit;color:inherit;text-align:left}
+  .sbtn:hover{text-decoration:underline;text-underline-offset:3px}
+  .sbtn.soft{font:400 12.5px/1.45 var(--sans);color:var(--soft)}
+  .sbtn.unk{text-decoration:underline dashed var(--amber);text-underline-offset:4px;text-decoration-thickness:2px}
+  .bigdots{display:inline-flex;gap:3px}
+  .bigdots i{width:9px;height:9px;border-radius:50%;border:1.6px solid var(--blue)}
+  .bigdots i.on{background:var(--blue)}
+  .bigdots.thin i{border-color:var(--amber)}
+  .bigdots.thin i.on{background:var(--amber)}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
+  .dot.on{background:var(--green)}
+  .dot.off{border:1.6px solid var(--faint)}
+  .mm{position:relative;display:block;width:100%;max-width:170px;height:6px;margin-top:3px;border-radius:3px;overflow:hidden;background:repeating-linear-gradient(-60deg,rgba(10,28,64,.06) 0 6px,transparent 6px 12px)}
+  .mm i{position:absolute;inset:0 auto 0 0;background:var(--faint);border-radius:3px 0 0 3px}
+  .mm b{position:absolute;top:0;bottom:0;width:4px}
+  .mm b.ok{background:var(--green)} .mm b.warn{background:var(--amber)} .mm b.risk{background:var(--red)}
+  .sv .multi{font-size:9.5px;padding:5px 8px}
+  .sfBtn{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--ink);border-radius:8px;padding:7px 11px;font:600 13px/1 var(--sans);background:var(--surface);white-space:nowrap}
+  .sfBtn svg{width:16px;height:16px}
+  .runBtn{font:600 12.5px/1.2 var(--sans);color:var(--blue)}
+  .runBtn:hover{text-decoration:underline}
+  .pasteBtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hair);border-radius:8px;padding:7px 11px;font:600 13px/1 var(--sans);background:var(--surface);white-space:nowrap}
+  .pasteBtn:hover{border-color:var(--faint)}
+  .back{color:var(--soft);font-size:13px;margin-left:2px}
+  .back:hover{color:var(--ink)}
+  .tb{margin:6px 0 0;font:400 14px/1.45 var(--sans);color:var(--ink)}
+  .tb .sk{color:var(--blue);margin-right:6px}
+  .tb button{font:inherit;color:inherit;text-align:left}
+  .tb button:hover{text-decoration:underline;text-underline-offset:3px}
+  .bigmove{margin:2px 0 0;font:600 17px/1.45 var(--sans);color:var(--ink)}
+  .bigmove .r{font-weight:400;color:var(--soft)}
+  .teaser{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:10px}
+
+  /* ── F7: one row of labeled cells, then the next move ─────────────── */
+  .srow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin-top:16px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;box-shadow:var(--rest)}
+  .sc{display:flex;flex-direction:column;gap:6px;padding:12px 14px 13px;border-left:1px solid var(--hair-soft);min-width:0}
+  .sc:first-child{border-left:0}
+  .arow{display:flex;align-items:center;gap:14px 24px;flex-wrap:wrap;margin-top:16px}
+  .amove{flex:1;min-width:300px}
+  .aacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  @media (max-width:1100px){
+    .srow{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .sc:nth-child(4){border-left:0}
+    .sc:nth-child(n+4){border-top:1px solid var(--hair-soft)}
+  }
+  @media (max-width:640px){
+    .srow{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .sc:nth-child(odd){border-left:0}
+    .sc:nth-child(4){border-left:1px solid var(--hair-soft)}
+    .sc:nth-child(n+3){border-top:1px solid var(--hair-soft)}
+  }
+
+  /* ── F8: each piece of information as a tile ──────────────────────── */
+  .tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:16px}
+  .tile{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;padding:12px 14px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;box-shadow:var(--rest)}
+  .tile .th{display:flex;align-items:center;gap:7px}
+  .tile .th svg{width:16px;height:16px;color:var(--soft);flex:none}
+  .tmove{grid-column:span 2;grid-row:span 2;gap:8px}
+  .tmove .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:auto}
+  .tmove .tr{position:absolute;top:10px;right:10px;display:flex;gap:4px}
+  @media (max-width:1100px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.tmove{grid-column:span 3;grid-row:auto}}
+  @media (max-width:640px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tmove{grid-column:span 2}}
+
+  /* ── F9: the move on the left, the facts on the right ─────────────── */
+  .f9grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px 30px;margin-top:16px;align-items:start}
+  .f9left{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .f9left .aacts{margin-top:2px}
+  .mailCard{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;padding:12px 14px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;box-shadow:var(--rest)}
+  .mailCard:hover{border-color:var(--hair)}
+  .mailCard .ms{font:600 14.5px/1.4 var(--sans);color:var(--ink)}
+  .mailCard .mb{font:400 13.5px/1.5 var(--sans);color:var(--soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .mailCard .open{margin:2px 0 0}
+  .flist2{padding:2px 16px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;box-shadow:var(--rest)}
+  .fr{display:grid;grid-template-columns:118px minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:8px 0;border-top:1px solid var(--hair-soft)}
+  .fr:first-child{border-top:0}
+  .fr .frv{display:flex;flex-direction:column;gap:3px;min-width:0}
+  @media (max-width:1000px){.f9grid{grid-template-columns:minmax(0,1fr)}}
+  /* ── the stays table, the popover, the toast ──────────────────────── */
+  table.stays{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;background:var(--surface);border-radius:10px;overflow:hidden;box-shadow:var(--rest)}
+  table.stays th,table.stays td{text-align:left;vertical-align:top;padding:8px 10px;border-top:1px solid var(--hair-soft)}
+  table.stays th{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);border-top:0;background:rgba(10,28,64,.02)}
+  table.stays td:first-child{font-weight:600;color:var(--ink);width:24%}
+  table.stays td{color:var(--soft)}
+  .tablewrap{overflow-x:auto}
+  .pop{pointer-events:none;position:absolute;z-index:60;background:var(--surface);border:1px solid var(--hair);border-radius:10px;box-shadow:var(--lift);padding:10px 12px 12px}
+  .popK{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue);text-transform:uppercase}
+  .popQ{margin:5px 0 0;font-size:13.5px;line-height:1.5;color:var(--ink)}
+  .popN{margin:6px 0 0;font-size:12.5px;line-height:1.5;color:var(--soft)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:min(560px,calc(100vw - 32px));z-index:80}
+  .toast.on{opacity:1}
+
+  /* ── one line per deal: every line is sized so the whole of it fits ── */
+  .fsent.one{white-space:nowrap;overflow:hidden;font-size:var(--one,17px);line-height:2.2;min-width:0;flex:1}
+  .fsent.one .tok{font-size:.78em;padding:.08em .45em;gap:.35em;border-radius:.45em}
+  .fsent.one .tok.cliT{font-size:1.05em;padding:0 .05em}
+  .fsent.one .tok.numT{font-size:1.1em;padding:0 .1em}
+  .fsent.one .tok .flag,.cols .tok .flag{width:1.35em !important;height:.9em !important}
+  .fsent.one .tok svg,.cols .tok svg{width:1.05em;height:1.05em}
+  .fsent.short .sep{color:var(--quiet);margin:0 .4em}
+  .tok.quietc{border-style:dashed;border-color:var(--amber);background:var(--amber-soft)}
+  .lift{overflow:visible !important;white-space:normal}
+  .wrapall .fsent.one{white-space:normal}
+  .cols{display:grid;grid-template-columns:var(--cg,18px 170px 150px 1fr 1fr 1.3fr 150px);gap:0 var(--cgap,14px);align-items:center;font:400 var(--one,15px)/1.5 var(--serif);color:var(--ink)}
+  .cols .cc{min-width:0;white-space:nowrap;overflow:hidden;padding:3px 0}
+  .cols.lift .cc{overflow:visible}
+  .cols .cn .nmLink{font-size:1.25em}
+  .cols .tok{font-size:.86em;padding:.08em .45em;gap:.35em}
+  .cols .tok.cliT{font-size:1.1em}
+  .chead{margin:6px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--hair-soft)}
+  .chead .cc{font:700 9px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  @media (max-width:759px){.fsent.one{white-space:normal}.cols{grid-template-columns:18px 1fr !important;row-gap:4px}.cols .cc:not(.cn){grid-column:2;white-space:normal}.chead{display:none}}
+
+  /* ── the open deal: a line under the sentence, the move, a thin strip ─ */
+  .frow.isopen > .fline{border-bottom:1px solid var(--hair);padding-bottom:12px}
+  .frow.isopen > .teaser,.frow.isopen > .files,.frow.isopen > .fopen{margin-left:28px}
+  .xbody{padding:16px 0 0 28px;display:flex;flex-direction:column;gap:12px}
+  .mt{font:600 19px/1.35 var(--sans);color:var(--ink)}
+  .mt .r{font-weight:400;color:var(--soft)}
+  .done{display:inline-flex;align-items:center;gap:6px;background:var(--green);color:var(--ink);border-radius:8px;padding:6px 13px;font:700 15px/1.2 var(--sans);white-space:nowrap;box-shadow:0 3px 10px rgba(34,197,94,.22)}
+  .done:hover{filter:brightness(.95)}
+  .workedTag{font:700 13px/1.2 var(--sans);color:var(--ink);border:1.5px solid var(--green);background:var(--green-soft);border-radius:8px;padding:5px 11px;white-space:nowrap}
+  .ghost.sm{padding:5px 11px;font-size:13px}
+  .tools{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tools .filesTop{display:inline-flex}
+  .sflogo{width:30px;height:21px;color:var(--ink);flex:none}
+  .sflogo.sm{width:24px;height:17px;color:var(--blue);margin-right:6px;vertical-align:-4px}
+  .sfb{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--hair);border-radius:8px;padding:3px 9px 3px 6px;background:var(--surface);font:600 12.5px/1 var(--sans);white-space:nowrap}
+  .sfb:hover{border-color:var(--faint)}
+  .tb2{margin:0;font:400 14px/1.45 var(--sans);color:var(--ink)}
+  .tb2 button{font:inherit;color:inherit;text-align:left}
+  .tb2 button:hover{text-decoration:underline;text-underline-offset:3px}
+  .strip{display:flex;align-items:center;flex-wrap:wrap;gap:6px 0;font:500 13px/1.3 var(--sans);color:var(--ink)}
+  .strip .si{display:inline-flex;align-items:center;gap:7px;padding:0 14px;border-left:1px solid var(--hair-soft);min-height:24px}
+  .strip .si:first-child{border-left:0;padding-left:0}
+  .strip .sk{font-size:8.5px}
+  .strip .sbtn{gap:6px}
+  .strip .bigdots i{width:7px;height:7px}
+  .strip .dot{width:9px;height:9px}
+  .strip .multi{font-size:8.5px;padding:3px 6px}
+  .strip .runBtn{font-size:13px}
+  .strip svg{width:15px;height:15px;color:var(--soft)}
+  .strip .sflogo{width:26px;height:18px;color:var(--ink)}
+  .mm.sm{width:70px;margin:0}
+  .mv13{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .nm13{font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);background:var(--blue-soft);border-radius:4px;padding:5px 7px}
+  .mv13 .tools{margin-left:auto}
+  .s13{padding:8px 12px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:10px}
+  .band14{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;padding:12px 16px;background:var(--surface);border:1px solid var(--hair-soft);border-left:4px solid var(--ink);border-radius:10px;box-shadow:var(--rest)}
+  .band14 .bm{display:flex;align-items:center;gap:12px;flex:1;min-width:300px}
+  .band14 .bm .nm14{flex:none}
+  .band14 .bm .done,.band14 .bm .workedTag{flex:none}
+  .nm14{font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--soft)}
+  .s14{padding:2px 4px}
+  .mv15{display:flex;flex-direction:column;gap:8px}
+  .nm15{font:700 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+  .mv15 .ml{display:flex;align-items:center;gap:14px}
+  .mv15 .ml .done,.mv15 .ml .workedTag{flex:none}
+  .mv15 .mt{font-size:23px}
+  .mv15 .done{font-size:17px;padding:8px 15px}
+  .s15{border-top:1px solid var(--hair-soft);padding-top:10px}
+  @media (max-width:760px){.xbody{padding-left:0}.mv13 .tools{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="kick">HomeRoom · concept F10 · the open deal, three ways · 11/4 · not shipped</div>
+  <h1>Concept F, The Open Deal</h1>
+  <p class="lede">You picked F10 for the sentence and F7 for what opens under it, with changes. All three versions below make those changes and differ in how they arrange them. Each deal rests as its one-line sentence; click the ▸ to open it. Simploy, the first deal, starts open so each version's layout shows on arrival.</p>
+  <span class="status">Three versions · waiting on your pick · nothing ships without your order</span>
+  <ul class="notes">
+    <li><b>A line under the sentence.</b> When a deal is open, a thin line separates the sentence from everything under it.</li>
+    <li><b>The next move comes first and stands out.</b> The next move is in larger, heavier type than in F7, and Mark it done sits right after its words, sized to match them.</li>
+    <li><b>Mark it done is green.</b> It uses the brand's green, with navy text, because white text on that green is hard to read. This replaces the orange button. Our design rules reserve orange for the one main action on a page, so with this change orange no longer appears on the HomeRoom; I'll write that change into the rules when this ships.</li>
+    <li><b>The six facts are now a thin strip under the move.</b> The client's confidence, the people and MULTI, the partner, research, the stage and Salesforce sit in one thin line below the next move, the files folder, Send files and Paste.</li>
+    <li><b>The SF mark replaces the word Salesforce.</b> It is a small cloud with SF inside, drawn in the brand's navy. I drew it rather than copying Salesforce's own trademarked logo; if you want the official logo, send me the file and I'll put it in.</li>
+    <li><b>Samples as before.</b> Every fact is an invented sample <span class="sample">SAMPLE</span>, and there are no money figures.</li>
+  </ul>
+  <nav class="jump" aria-label="Versions">
+    <a href="#f13">F13 · Move line, labeled strip</a>
+    <a href="#f14">F14 · Move band, icon strip</a>
+    <a href="#f15">F15 · Move as headline, strip as foot</a>
+  </nav>
+  <section class="concept" id="f13" data-cid="F13">
+    <div class="kick">Version F13</div>
+    <h2>The move line and a labeled strip</h2>
+    <ul class="why"><li><b>What it is.</b> Under the sentence, one line holds a NEXT MOVE tag, the move, Mark it done, and at the right the files folder, Send files and Paste. The Salesforce fact sits under it with the SF mark. Under that, a thin white strip holds the six facts, each with a small label.</li><li><b>What it costs.</b> The move line is full; on a narrower screen the files and Paste drop to a second line.</li></ul>
+    <div class="demos">
+      <button class="sim" data-act="demo" data-demo="name" data-cid="F13">Demo · a drop names Regis's client</button>
+      <button class="sim" data-act="demo" data-demo="date" data-cid="F13">Demo · XcelHR's client date moves up</button>
+      <button class="sim" data-act="demo" data-demo="reset" data-cid="F13">Demo · reset</button>
+    </div>
+    <div id="hostF13" data-host></div>
+  </section>
+  <section class="concept" id="f14" data-cid="F14">
+    <div class="kick">Version F14</div>
+    <h2>The move in a band and an icon strip</h2>
+    <ul class="why"><li><b>What it is.</b> The next move sits in a white band with a navy left edge, with Mark it done beside the words and the file buttons at the right of the band. The strip under it drops the labels and shows each fact with its icon or mark alone, so it is the thinnest of the three.</li><li><b>What it costs.</b> Without labels, the strip relies on its icons and on hover text to say what each fact is.</li></ul>
+    <div class="demos">
+      <button class="sim" data-act="demo" data-demo="name" data-cid="F14">Demo · a drop names Regis's client</button>
+      <button class="sim" data-act="demo" data-demo="date" data-cid="F14">Demo · XcelHR's client date moves up</button>
+      <button class="sim" data-act="demo" data-demo="reset" data-cid="F14">Demo · reset</button>
+    </div>
+    <div id="hostF14" data-host></div>
+  </section>
+  <section class="concept" id="f15" data-cid="F15">
+    <div class="kick">Version F15</div>
+    <h2>The move as the headline, the strip as the foot</h2>
+    <ul class="why"><li><b>What it is.</b> The next move is the largest text under the sentence, with a bigger Mark it done beside it. The files, Send files and Paste sit on their own line under the move, and the strip runs along the foot of the open deal behind a thin line, with the SF mark first.</li><li><b>What it costs.</b> It takes the most height of the three, because the move, the buttons and the strip each get a line.</li></ul>
+    <div class="demos">
+      <button class="sim" data-act="demo" data-demo="name" data-cid="F15">Demo · a drop names Regis's client</button>
+      <button class="sim" data-act="demo" data-demo="date" data-cid="F15">Demo · XcelHR's client date moves up</button>
+      <button class="sim" data-act="demo" data-demo="reset" data-cid="F15">Demo · reset</button>
+    </div>
+    <div id="hostF15" data-host></div>
+  </section>
+</div>
+<div class="pop" id="pop" hidden></div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+// ── Helpers ────────────────────────────────────────────────────────────
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const TODAY = new Date("2026-11-03T12:00:00-06:00");
+const TODAY_MD = "11/3";
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const dayOf = (iso) => new Date(iso + "T12:00:00-06:00");
+const daysTo = (iso) => Math.round((dayOf(iso) - TODAY) / 86400000);
+const monDay = (iso) => { const [, m, d] = iso.split("-").map(Number); return `${MON[m - 1]} ${d}`; };
+const longDay = (iso) => { const [, m, d] = iso.split("-").map(Number); return `${WEEKDAY[dayOf(iso).getUTCDay()]}, ${MONTH[m - 1]} ${d}`; };
+const toneOf = (n) => (n == null ? "none" : n < 0 ? "past" : n <= 14 ? "hot" : n <= 30 ? "warm" : "later");
+const TONE_RANK = { past: 5, hot: 4, warm: 3, later: 2, none: 1, won: 0 };
+const firstWord = (s) => String(s).split(/\s+/)[0];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const plural = (n, one, many) => (n === 1 ? one : many);
+const andList = (xs) => (xs.length <= 1 ? xs.join("") : xs.length === 2 ? `${xs[0]} and ${xs[1]}` : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
+let toastT = 0;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove("on"), 2600);
+}
+
+// Evidence: every fact registers what it stands on; hover or focus opens it.
+const EVS = {};
+let evN = 0;
+const ev = (o) => { const k = "e" + ++evN; EVS[k] = o; return k; };
+function showPop(el, k) {
+  const o = EVS[k];
+  if (!o) return;
+  const p = $("#pop");
+  p.innerHTML = `<div class="popK">${esc(o.k)}</div>${o.q ? `<p class="popQ">“${esc(o.q)}”</p>` : ""}${o.n ? `<p class="popN">${esc(o.n)}</p>` : ""}`;
+  p.hidden = false;
+  const r = el.getBoundingClientRect();
+  const w = Math.min(360, window.innerWidth - 24);
+  p.style.width = w + "px";
+  let left = window.scrollX + r.left;
+  const maxLeft = window.scrollX + window.innerWidth - 12 - w;
+  if (left > maxLeft) left = maxLeft;
+  p.style.left = Math.max(window.scrollX + 12, left) + "px";
+  p.style.top = window.scrollY + r.bottom + 6 + "px";
+}
+const hidePop = () => { $("#pop").hidden = true; };
+
+// ── Flags: drawn, so they show on Windows, which draws no flag emoji ────
+function star(cx, cy, R, r) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = (-90 + i * 36) * Math.PI / 180;
+    const rad = i % 2 ? r : R;
+    pts.push(`${(cx + rad * Math.cos(a)).toFixed(2)},${(cy + rad * Math.sin(a)).toFixed(2)}`);
+  }
+  return pts.join(" ");
+}
+const LEAF = [[50,5],[57,20],[65,17],[62,40],[77,25],[80,33],[95,30],[88,47],[95,52],[70,70],[73,80],[52,77],[52,95],[48,95],[48,77],[27,80],[30,70],[5,52],[12,47],[5,30],[20,33],[23,25],[38,40],[35,17],[43,20]]
+  .map(([x, y]) => `${(10 + x * 0.1).toFixed(2)},${(5.3 + y * 0.095).toFixed(2)}`).join(" ");
+const sunRays = (cx, cy) => [0, 45, 90, 135, 180, 225, 270, 315].map((d) => {
+  const a = d * Math.PI / 180;
+  return `<line x1="${(cx + 2.6 * Math.cos(a)).toFixed(2)}" y1="${(cy + 2.6 * Math.sin(a)).toFixed(2)}" x2="${(cx + 3.6 * Math.cos(a)).toFixed(2)}" y2="${(cy + 3.6 * Math.sin(a)).toFixed(2)}" stroke="#FCD116" stroke-width=".7"/>`;
+}).join("");
+const chakra = [0, 30, 60, 90, 120, 150].map((d) => {
+  const a = d * Math.PI / 180;
+  return `<line x1="${(15 - 2.4 * Math.cos(a)).toFixed(2)}" y1="${(10 - 2.4 * Math.sin(a)).toFixed(2)}" x2="${(15 + 2.4 * Math.cos(a)).toFixed(2)}" y2="${(10 + 2.4 * Math.sin(a)).toFixed(2)}" stroke="#000080" stroke-width=".22"/>`;
+}).join("");
+const FLAGSVG = {
+  IN: `<rect width="30" height="6.67" fill="#FF9933"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><rect y="13.33" width="30" height="6.67" fill="#138808"/><circle cx="15" cy="10" r="2.5" fill="none" stroke="#000080" stroke-width=".55"/>${chakra}<circle cx="15" cy="10" r=".55" fill="#000080"/>`,
+  PH: `<rect width="30" height="10" fill="#0038A8"/><rect y="10" width="30" height="10" fill="#CE1126"/><polygon points="0,0 17.32,10 0,20" fill="#fff"/><circle cx="5.8" cy="10" r="2.1" fill="#FCD116"/>${sunRays(5.8, 10)}<circle cx="1.7" cy="2.3" r=".8" fill="#FCD116"/><circle cx="1.7" cy="17.7" r=".8" fill="#FCD116"/><circle cx="14.6" cy="10" r=".8" fill="#FCD116"/>`,
+  PR: `<rect width="30" height="20" fill="#ED0000"/><rect y="4" width="30" height="4" fill="#fff"/><rect y="12" width="30" height="4" fill="#fff"/><polygon points="0,0 17.32,10 0,20" fill="#0050F0"/><polygon points="${star(5.8, 10.3, 2.8, 1.12)}" fill="#fff"/>`,
+  MX: `<rect width="10" height="20" fill="#006847"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#CE1126"/><circle cx="15" cy="10" r="2.3" fill="none" stroke="#8C5A2B" stroke-width=".7"/><path d="M12.9 11.4c1.3 1.4 2.9 1.4 4.2 0" fill="none" stroke="#006847" stroke-width=".6"/><circle cx="15" cy="9.6" r=".9" fill="#8C5A2B"/>`,
+  CA: `<rect width="30" height="20" fill="#fff"/><rect width="7.5" height="20" fill="#D52B1E"/><rect x="22.5" width="7.5" height="20" fill="#D52B1E"/><polygon points="${LEAF}" fill="#D52B1E"/>`,
+  CO: `<rect width="30" height="10" fill="#FCD116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#CE1126"/>`,
+  DE: `<rect width="30" height="6.67" fill="#000"/><rect y="6.67" width="30" height="6.67" fill="#DD0000"/><rect y="13.33" width="30" height="6.67" fill="#FFCE00"/>`,
+  GB: `<rect width="30" height="20" fill="#012169"/><path d="M0,0 L30,20 M30,0 L0,20" stroke="#fff" stroke-width="4"/><path d="M0,0 L30,20 M30,0 L0,20" stroke="#C8102E" stroke-width="1.3"/><path d="M15,0 V20 M0,10 H30" stroke="#fff" stroke-width="6"/><path d="M15,0 V20 M0,10 H30" stroke="#C8102E" stroke-width="3.4"/>`,
+};
+const COUNTRY = { IN: "India", PH: "Philippines", PR: "Puerto Rico", MX: "Mexico", CA: "Canada", CO: "Colombia", DE: "Germany", GB: "United Kingdom" };
+const COUNTRY_IN = { PH: "the Philippines", GB: "the United Kingdom" };
+const inCountry = (c) => COUNTRY_IN[c] || COUNTRY[c];
+const SHORT = { IN: "India", PH: "Philippines", PR: "Puerto Rico", MX: "Mexico", CA: "Canada", CO: "Colombia", DE: "Germany", GB: "UK" };
+const flag = (c, w) => `<span class="flag" style="width:${w}px;height:${Math.round(w * 2 / 3)}px" aria-hidden="true"><svg viewBox="0 0 30 20" preserveAspectRatio="none">${FLAGSVG[c]}</svg></span>`;
+
+// ── The map: land as dots on a 2-degree grid (Natural Earth 50m land) ──
+const MAP = { lon0: -168, lat0: 74, step: 2, cols: 162, rows: 58, mask: "AAADwBQAAP//gAAAAACAAP/gAIAAAADfTC+AH//gAAAAAMBi///+DoH/gYP8w74F//gAAB4AAj///////P///4Zdj8D/wAAAP/5f/v//////f/////+hyD+AeAAf/H/////////D/////9w8B8AcAB+/v/////////P/////wPAA4AAAH5///////////f0P///gDgAIAAAH8D//////////AgC///wD+AAAACA5f////////+ACAAf//+D/AAAACBx/////////4AAAA////n/wAAAZB//////////6AAAAP///3/4AAAbn///////////AAAAH////4IAAAAf//////////+AAAAD////4cAAAD///////////8AAAAB////+gAAAA//9fn//////5EAAAD////0AAAAA+v4PP//////xgAAAD////gAAAAPwz4Hn//////AAAAAD///+AAAAAPoLP/n/////cCAAAAB///8AAAAAPAZv/n/////GCAAAAA///8AAAAAAfAA///////iGAAAAAf//8AAAAAH/AA///////g4AAAAAP//wAAAAAP/zg///////gAAAAAAD/8QAAAAAP////P/////gAAAAAAF/AQAAAAA/////v/////gAAAAAAC/AAAAAAB////fx/////AAAAAAABfAAAAAAB////P2D///+AAAAAAAAPAoAAAAD////v/B/7/4AAAAAAAAPGCAAAAD////n+Afx/AAAAAAAAAH8AEAAAD////3+AfA/AQAAAAAAAAsAAAAAD////z4AeAfggAAAAAAAAHgAAAAD////7AAOAPgAAAAAAAAABgwAAAD////8AAMADgIAAAAAAAAAheAAAA/////wAEABAAAAAAAAAAAH/gAAA/////gACAIAMAAAAAAAAAD/wAAAfn///gAAAEBAAAAAAAAAAD/+AAAAB///AAAAUGAAAAAAAAAAH/+AAAAB//+AAAAKOAAAAAAAAAAP//AAAAB//8AAAAMegAAAAAAAAAP//wAAAB//4AAAAHOhUAAAAAAAAP//+AAAA//wAAAACAwPgAAAAAAAP///gAAAf/wAAAABAAD0AAAAAAAH///gAAAf/wAAAAAMAHQAAAAAAAH///AAAAf/wAAAAAAoAIAAAAAAAD///AAAAf/4AAAAAAARAAAAAAAAD//+AAAAf/4wAAAAABxAAAAAAAAB//+AAAA//5gAAAAAH5gAAAAAAAAf/+AAAA//hgAAAAAP/wAAAAAAAAf/8AAAAf/BgAAAAA//4AAAAAAAAf/8AAAAP/DgAAAAH//4AAAAAAAAf/gAAAAP/DAAAAAH//8AAAAAAAAf/AAAAAP+AAAAAAD//+AAAAAAAAf/AAAAAP+AAAAAAD//+AAAAAAAAf+AAAAAH8AAAAAAD//+AAAAAAAAf+AAAAAD4AAAAAAD+f+AAAAAAAAf8AAAAADgAAAAAADAP8AAAAAAAA/wAAAAAAAAAAAAAAAD8AAAAAAAA/wAAAAAAAAAAAAAAABwAAAAAAAA+AAAAAAAAAAAAAAAAAoA=" };
+const DOTS = (() => {
+  const bin = atob(MAP.mask);
+  let d = "";
+  for (let i = 0; i < MAP.cols * MAP.rows; i++) {
+    if (!(bin.charCodeAt(i >> 3) & (128 >> (i & 7)))) continue;
+    const x = (i % MAP.cols) + 0.5, y = Math.floor(i / MAP.cols) + 0.5;
+    d += `M${(x - 0.3).toFixed(1)} ${y}a.3 .3 0 1 0 .6 0a.3 .3 0 1 0 -.6 0`;
+  }
+  return d;
+})();
+// Where each country's marker sits, by longitude and latitude, and how far
+// a marker is nudged sideways so neighbours do not cover each other.
+const GEO = { IN: [78.9, 22.5], PH: [122.5, 12.5], PR: [-66.5, 18.2], MX: [-102.5, 23.6], CA: [-100, 56.5], CO: [-74.3, 4.6], DE: [10.4, 51.1], GB: [-2.5, 54] };
+const NUDGE = { GB: [-24, 0], DE: [24, 0], PR: [26, 0], CO: [-12, 0] };
+const mapXY = (c) => {
+  const [lon, lat] = GEO[c];
+  return [((lon - MAP.lon0) / MAP.step + 0.5) / MAP.cols * 100, ((MAP.lat0 - lat) / MAP.step + 0.5) / MAP.rows * 100];
+};
+
+// ── Line glyphs: one stroke, currentColor, no fill (brand iconography) ─
+const svg = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+const ICON = {
+  eor: svg(`<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7.5 17.5c1-2.2 2.6-3.2 4.5-3.2s3.5 1 4.5 3.2"/>`),
+  gp: svg(`<path d="M6 3h9l3 3v15H6z"/><path d="M15 3v3h3"/><path d="M9 11h6M9 14h6M9 17h4"/>`),
+  cm: svg(`<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/><path d="M3 12.5h18"/>`),
+  cor: svg(`<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/><path d="M8.8 13.6l2.2 2.2 4-4.4"/>`),
+  tal: svg(`<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/><circle cx="10.5" cy="9" r="2"/><path d="M7.4 13.8c.8-1.3 1.8-1.9 3.1-1.9s2.3.6 3.1 1.9"/>`),
+  people: svg(`<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.8-3 3-4.5 5.5-4.5S13.7 16 14.5 19"/><circle cx="16.5" cy="9" r="2.4"/><path d="M15.2 14.6c2.5-.3 4.4 1.1 5.3 4.4"/>`),
+  brief: svg(`<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/><path d="M3 12.5h18"/>`),
+  folder: svg(`<path d="M3 6.5h6l2 2h10v10.5H3z"/>`),
+  clip: svg(`<path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7-7L13 4.5a3.3 3.3 0 0 1 4.7 4.7L10 17a1.6 1.6 0 0 1-2.3-2.3l7-7"/>`),
+  video: svg(`<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/>`),
+  doc: svg(`<path d="M6 3h9l3 3v15H6z"/><path d="M15 3v3h3"/>`),
+  org: svg(`<path d="M4 21V5.5L12 3v18"/><path d="M12 21h8V9.5L12 7"/><path d="M7.5 9h1.5M7.5 13h1.5M7.5 17h1.5M15 13h1.5M15 17h1.5"/><path d="M3 21h18"/>`),
+  cal: svg(`<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>`),
+};
+const MARK = `<svg viewBox="0 0 48 48" width="20" height="20" fill="none" stroke="#0A1C40" stroke-width="4.4" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M14 38 L24 10 L34 38"/><path d="M18.2 28 h11.6"/><path d="M2 38 h44"/></svg>`;
+
+const PRODUCTS = [
+  { k: "eor", label: "Employer of record", short: "EOR", say: "employer of record" },
+  { k: "gp", label: "Global payroll", short: "PAYROLL", say: "global payroll" },
+  { k: "cm", label: "Contractor management", short: "CONTRACTORS", say: "contractor management" },
+  { k: "cor", label: "Contractor of record", short: "COR", say: "contractor of record" },
+  { k: "tal", label: "Talent", short: "TALENT", say: "talent" },
+];
+
+// The files Send in Outlook already carries on Groundwork (the 10/22 order).
+const FILES = [
+  { id: "demo-whole", g: "demo", label: "The whole platform", runs: "41:21", kb: 4924 },
+  { id: "demo-signin", g: "demo", label: "Sign-in and worker types", runs: "3:00", kb: 2226 },
+  { id: "demo-portal", g: "demo", label: "The worker portal", runs: "3:15", kb: 3579 },
+  { id: "demo-invoices", g: "demo", label: "Invoices, reseller and referral", runs: "2:30", kb: 1860 },
+  { id: "demo-settings", g: "demo", label: "Settings and client pricing", runs: "4:30", kb: 2839 },
+  { id: "demo-payperiods", g: "demo", label: "Pay periods and gross to net", runs: "3:15", kb: 2580 },
+  { id: "demo-funding", g: "demo", label: "Funding, wallet and approvals", runs: "2:45", kb: 2750 },
+  { id: "demo-team", g: "demo", label: "The team view", runs: "1:15", kb: 1282 },
+  { id: "demo-newhire", g: "demo", label: "A new EOR hire", runs: "5:45", kb: 3888 },
+  { id: "demo-benefits", g: "demo", label: "Benefits and the offer letter", runs: "7:15", kb: 4629 },
+  { id: "demo-contractor", g: "demo", label: "Contractor pay and support", runs: "2:30", kb: 1476 },
+  { id: "demo-users", g: "demo", label: "Users and permissions", runs: "3:30", kb: 2878 },
+  { id: "demo-approvals", g: "demo", label: "Approval workflows", runs: "1:50", kb: 1619 },
+  { id: "op-overview", g: "op", label: "PrismHR Global at a glance", kb: 104 },
+  { id: "op-eor", g: "op", label: "Employer of record", kb: 479 },
+  { id: "op-payroll", g: "op", label: "Global payroll", kb: 433 },
+  { id: "op-contractor", g: "op", label: "Contractor solutions", kb: 421 },
+  { id: "op-talent", g: "op", label: "Talent", kb: 492 },
+  { id: "ag-reseller", g: "ag", label: "Reseller agreement, review copy", kb: 138 },
+  { id: "ag-referral", g: "ag", label: "Referral agreement, review copy", kb: 48 },
+];
+const FILE = Object.fromEntries(FILES.map((f) => [f.id, f]));
+const GROUP = { demo: "DEMOS", op: "ONE-PAGERS", ag: "AGREEMENTS" };
+const size = (kb) => (kb >= 1000 ? `${(kb / 1000).toFixed(1)} MB` : `${kb} KB`);
+const fileName = (id) => { const f = FILE[id]; return f.g === "demo" ? `Demo · ${f.label}` : f.g === "op" ? `One-pager · ${f.label}` : f.label; };
+
+// ── The sample book: names from the book, every fact a sample ──────────
+const BOOK = [
+  {
+    id: "simploy", name: "Simploy", group: "live", rank: 0, shape: "EOR +GP", meta: "RESALE · INDIA", multi: "a", briefed: true, research: "10/30",
+    move: { a: "Send Dana the reseller agreement.", r: "She asked Friday." },
+    meter: { frac: 0.45, cur: 3, cap: "warn", label: "STAGE 4 OF 7 · PROPOSAL" },
+    theirs: { label: "DANA ASKED FOR THE AGREEMENT", act: "Send the reseller agreement.", why: "Dana asked for it on 10/30 so their legal team can start." },
+    need: { p: ["eor", "gp"], who: "client", ev: { k: "EMAIL · 10/24 · DANA REYES", q: "We'd want to offer employer of record to a client, and maybe run payroll for them later." } },
+    client: { name: "Lumen Freight", sure: "sure", need: "2 engineers in India, then 1 hire in the Philippines.", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "Lumen Freight came back to us. They'd like both engineers in India starting Monday the 16th, and the Philippines hire after that." } },
+    countries: [
+      { c: "IN", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "They'd like both engineers in India starting Monday the 16th." } },
+      { c: "PH", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "…and the Philippines hire after that, if we can." } },
+    ],
+    heads: [
+      { n: 2, kind: "ee", c: "IN", ev: { q: "both engineers in India" } },
+      { n: 1, kind: "ee", c: "PH", ev: { q: "the Philippines hire" } },
+    ],
+    chair: { v: "resale", day: "10/24", ev: { k: "EMAIL · 10/24 · DANA REYES", q: "We'd resell it under our own name rather than refer it out." } },
+    date: { iso: "2026-11-16", what: "Start date", ev: { k: "EMAIL · 10/30 · DANA REYES", q: "They'd like both engineers in India starting Monday the 16th." } },
+    files: [{ id: "op-eor", day: "10/28", to: "Dana Reyes" }, { id: "demo-whole", day: "10/28", to: "Dana Reyes" }],
+    email: { dir: "in", from: "Dana Reyes", to: "you", day: "10/30", time: "9:12 AM", subj: "Lumen Freight start dates", body: "Hi Antaeus,\n\nLumen Freight came back to us. They'd like both engineers in India starting Monday the 16th, and the Philippines hire after that if we can.\n\nCan you send the reseller agreement over so we can get it in front of our legal team this week? I think that's the last thing holding us up on our side.\n\nThanks,\nDana" },
+    earlier: [
+      { g: "✉", day: "10/30", time: "9:12 AM", who: "Dana Reyes → you", s: "Lumen Freight start dates" },
+      { g: "➤", day: "10/28", time: "2:40 PM", who: "you → Dana Reyes", s: "EOR one-pager and the platform demo", out: true },
+      { g: "☎", day: "10/24", time: "11:00 AM", who: "Call · Dana Reyes, Sam Ortiz", s: "Discovery: Lumen Freight, India first" },
+    ],
+    recTotal: 14,
+  },
+  {
+    id: "regis", name: "Regis HR Group", group: "live", rank: 1, shape: "EOR +CP", meta: "RESALE · PUERTO RICO", multi: "g", briefed: true, research: "10/12",
+    move: { a: "Book the Puerto Rico walkthrough.", r: "Leilani asked for times." },
+    meter: { frac: 0.31, cur: 2, cap: "ok", label: "STAGE 3 OF 7 · PARTNER BRIEFED" },
+    theirs: null,
+    need: { p: ["eor"], who: "client", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "We have a client asking about hiring in Puerto Rico before the end of the year." } },
+    client: { name: null, sure: "thin", need: "Hires in Puerto Rico before year end. Count not said.", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "I don't have the details yet, but can we find time next week to walk through how it works?" } },
+    countries: [{ c: "PR", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "We have a client asking about hiring in Puerto Rico before the end of the year." } }],
+    heads: [],
+    chair: { v: "resale", day: "10/20", ev: { k: "EMAIL · 10/20 · LEILANI GONZALEZ", q: "We talked it through as a team and we'd like to go with the reseller model." } },
+    date: { iso: "2026-12-31", what: "Year end", ev: { k: "EMAIL · 10/29 · LEILANI GONZALEZ", q: "…hiring in Puerto Rico before the end of the year." } },
+    files: [{ id: "op-overview", day: "9/30", to: "Leilani Gonzalez" }, { id: "op-payroll", day: "10/16", to: "Leilani Gonzalez" }, { id: "ag-reseller", day: "10/21", to: "Leilani Gonzalez" }],
+    email: { dir: "in", from: "Leilani Gonzalez", to: "you", day: "10/29", time: "3:05 PM", subj: "Puerto Rico walkthrough", body: "Hi Antaeus,\n\nWe have a client asking about hiring in Puerto Rico before the end of the year. I don't have the details yet, but can we find time next week to walk through how it works?\n\nLeilani" },
+    earlier: [
+      { g: "✉", day: "10/29", time: "3:05 PM", who: "Leilani Gonzalez → you", s: "Puerto Rico walkthrough" },
+      { g: "➤", day: "10/21", time: "10:15 AM", who: "you → Leilani Gonzalez", s: "Reseller agreement, review copy", out: true },
+      { g: "✉", day: "10/20", time: "9:10 AM", who: "Leilani Gonzalez → you", s: "Intro to your Global Business Consultant" },
+    ],
+    recTotal: 22,
+  },
+  {
+    id: "xcel", name: "XcelHR", group: "live", rank: 2, shape: "GP", meta: "REFERRAL · MEXICO", multi: "r", briefed: false, research: "NEVER", worked: true,
+    move: { a: "Send the Mexico payroll timeline.", r: "Promised Thursday." },
+    meter: { frac: 0.2, cur: 1, cap: "warn", label: "STAGE 2 OF 7 · DISCOVERY" },
+    theirs: { label: "MARCO SAID THE CLIENT HAS AN ENTITY IN MEXICO", act: "Confirm the Mexico entity.", why: "Marco said on the 10/27 call that the client already has its own entity in Mexico." },
+    need: { p: ["gp"], who: "client", ev: { k: "CALL NOTES · 10/27", q: "The client already has its own entity in Mexico and wants us to run payroll for it." } },
+    client: { name: "Northgate Dental Group", sure: "likely", need: "Payroll in Mexico through their own entity, and a look at 10 people in Canada.", ev: { k: "CALL NOTES · 10/27", q: "Marco thinks it's Northgate, but he wants to check before he says for sure." } },
+    countries: [
+      { c: "MX", ev: { k: "CALL NOTES · 10/27", q: "The client already has its own entity in Mexico." } },
+      { c: "CA", ev: { k: "EMAIL · 10/9 · MARCO RUIZ", q: "They also have ten people in Canada we'd want to look at." } },
+    ],
+    heads: [{ n: 10, kind: "ee", c: "CA", ev: { q: "They also have ten people in Canada we'd want to look at." } }],
+    chair: { v: "referral", day: "10/9", ev: { k: "EMAIL · 10/9 · MARCO RUIZ", q: "We'd rather refer these over to you than take them on ourselves." } },
+    date: { iso: "2026-12-01", what: "Payroll by", ev: { k: "CALL NOTES · 10/27", q: "They want the first Mexico payroll run by December 1." } },
+    files: [{ id: "op-payroll", day: "10/9", to: "Marco Ruiz" }, { id: "demo-payperiods", day: "10/9", to: "Marco Ruiz" }],
+    email: { dir: "out", from: "you", to: "Marco Ruiz", day: "11/3", time: "8:40 AM", subj: "Mexico payroll timeline", body: "Hi Marco,\n\nHere is how the Mexico payroll would run if the client keeps its own entity. I can walk Northgate through it whenever they're ready.\n\nAntaeus" },
+    earlier: [
+      { g: "➤", day: "11/3", time: "8:40 AM", who: "you → Marco Ruiz", s: "Mexico payroll timeline", out: true },
+      { g: "☎", day: "10/27", time: "1:30 PM", who: "Call · Marco Ruiz", s: "Northgate, Mexico entity" },
+      { g: "✉", day: "10/9", time: "4:02 PM", who: "Marco Ruiz → you", s: "Clients in Canada and Mexico" },
+    ],
+    recTotal: 9,
+  },
+  {
+    id: "advocate", name: "Advocate Pay", group: "live", rank: 3, shape: "CP", meta: "CANADA · COLOMBIA", multi: "a", briefed: true, research: "9/18",
+    move: { a: "Answer Kim's contractor question.", r: "Asked 10/29." },
+    meter: { frac: 0.58, cur: 4, cap: "ok", label: "STAGE 5 OF 7 · CONTRACT" },
+    theirs: null,
+    need: { p: ["cm"], who: "internal", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "For our own contractors in Canada and Colombia, can they all sit on one agreement?" } },
+    client: { internal: true },
+    countries: [
+      { c: "CA", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "For our own contractors in Canada and Colombia…" } },
+      { c: "CO", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "For our own contractors in Canada and Colombia…" } },
+    ],
+    heads: [
+      { n: 4, kind: "ctr", c: "CA", about: true, ev: { q: "We have about six right now, four in Canada and two in Colombia." } },
+      { n: 2, kind: "ctr", c: "CO", about: true, ev: { q: "We have about six right now, four in Canada and two in Colombia." } },
+    ],
+    chair: { v: null },
+    date: { asap: true, what: "ASAP", ev: { k: "EMAIL · 10/29 · KIM ELLIS", q: "We'd like to get this sorted as soon as we can." } },
+    files: [],
+    email: { dir: "in", from: "Kim Ellis", to: "you", day: "10/29", time: "11:48 AM", subj: "One agreement or two?", body: "Quick question. For our own contractors in Canada and Colombia, can they all sit on one agreement, or does each country need its own? We have about six right now, four in Canada and two in Colombia. We'd like to get this sorted as soon as we can.\n\nKim" },
+    earlier: [
+      { g: "✉", day: "10/29", time: "11:48 AM", who: "Kim Ellis → you", s: "One agreement or two?" },
+      { g: "✎", day: "10/22", time: "4:10 PM", who: "Your note", s: "Kim runs the contractor side herself" },
+    ],
+    recTotal: 17,
+  },
+  {
+    id: "sidecar", name: "Sidecar HR", group: "live", rank: 4, shape: "EOR", meta: "REFERRAL · PHILIPPINES", multi: "a", briefed: true, research: "10/21",
+    move: { a: "Send Tasha the EOR one-pager.", r: "She asked 10/31." },
+    meter: { frac: 0.31, cur: 2, cap: "ok", label: "STAGE 3 OF 7 · PARTNER BRIEFED" },
+    theirs: null,
+    need: { p: ["eor", "tal"], who: "client", ev: { k: "CALL NOTES · 10/31", q: "Their client wants help finding people in the Philippines, and then employing them." } },
+    client: { name: "Copperline Health", sure: "sure", need: "5 employees in Manila, found and then employed.", ev: { k: "CALL NOTES · 10/31", q: "Copperline Health needs five people in Manila, and they'd want help finding them too." } },
+    countries: [{ c: "PH", ev: { k: "CALL NOTES · 10/31", q: "Copperline Health needs five people in Manila." } }],
+    heads: [{ n: 5, kind: "ee", c: "PH", ev: { q: "five people in Manila" } }],
+    chair: { v: "referral", day: "10/31", ev: { k: "CALL NOTES · 10/31", q: "Tasha said they'd refer this one rather than resell it." } },
+    date: { iso: "2026-11-30", what: "Start date", ev: { k: "CALL NOTES · 10/31", q: "They want the first people started by the end of November." } },
+    files: [{ id: "op-talent", day: "10/20", to: "Tasha Greene" }],
+    email: { dir: "in", from: "Tasha Greene", to: "you", day: "10/31", time: "4:22 PM", subj: "Copperline follow-up", body: "Thanks for the time today. Could you send the employer of record one-pager? I'd like to forward it to Copperline before they meet with us next week.\n\nTasha" },
+    earlier: [
+      { g: "✉", day: "10/31", time: "4:22 PM", who: "Tasha Greene → you", s: "Copperline follow-up" },
+      { g: "☎", day: "10/31", time: "2:00 PM", who: "Call · Tasha Greene", s: "Copperline Health, Manila hires" },
+      { g: "➤", day: "10/20", time: "9:30 AM", who: "you → Tasha Greene", s: "Talent one-pager", out: true },
+    ],
+    recTotal: 8,
+  },
+  {
+    id: "lonestar", name: "Lone Star PEO", group: "live", rank: 5, shape: "EOR +CP", meta: "RESALE · MEXICO", multi: "r", briefed: false, research: "NEVER",
+    move: { a: "Answer Ruth's Colombia question.", r: "Asked 10/30." },
+    meter: { frac: 0.2, cur: 1, cap: "warn", label: "STAGE 2 OF 7 · DISCOVERY" },
+    theirs: { label: "RUTH ASKED ABOUT THE COLOMBIA CONTRACTORS", act: "Answer the Colombia question.", why: "Ruth asked on 10/30 whether the Colombia contractors can move to employment later without starting over." },
+    need: { p: ["eor", "cor"], who: "client", ev: { k: "EMAIL · 10/30 · RUTH CALLOWAY", q: "Our client has contractors in Colombia and a small team in Mexico." } },
+    client: { name: "Harbor Point Logistics", sure: "likely", need: "3 employees in Mexico and 4 contractors in Colombia.", ev: { k: "EMAIL · 10/30 · RUTH CALLOWAY", q: "It's Harbor Point, I think, though I'd want to confirm before we share their name further." } },
+    countries: [
+      { c: "MX", ev: { k: "EMAIL · 10/30 · RUTH CALLOWAY", q: "…and a small team in Mexico, three people." } },
+      { c: "CO", ev: { k: "EMAIL · 10/30 · RUTH CALLOWAY", q: "Our client has four contractors in Colombia." } },
+    ],
+    heads: [
+      { n: 3, kind: "ee", c: "MX", ev: { q: "a small team in Mexico, three people" } },
+      { n: 4, kind: "ctr", c: "CO", ev: { q: "four contractors in Colombia" } },
+    ],
+    chair: { v: "resale", day: "10/30", ev: { k: "EMAIL · 10/30 · RUTH CALLOWAY", q: "We'd sell it as part of our own service." } },
+    date: { iso: "2027-01-12", what: "Kickoff", ev: { k: "EMAIL · 10/30 · RUTH CALLOWAY", q: "They're planning a kickoff on January 12." } },
+    files: [],
+    email: { dir: "in", from: "Ruth Calloway", to: "you", day: "10/30", time: "10:05 AM", subj: "Colombia contractors", body: "Hi Antaeus,\n\nOur client has four contractors in Colombia and a small team in Mexico, three people. Can the Colombia contractors move to employment later without starting over? They're planning a kickoff on January 12.\n\nRuth" },
+    earlier: [
+      { g: "✉", day: "10/30", time: "10:05 AM", who: "Ruth Calloway → you", s: "Colombia contractors" },
+      { g: "☎", day: "10/14", time: "3:00 PM", who: "Call · Ruth Calloway", s: "First call" },
+    ],
+    recTotal: 5,
+  },
+  {
+    id: "axcet", name: "Axcet HR", group: "low", rank: 6, shape: "GP", meta: "GERMANY", multi: "r", briefed: false, research: "8/30",
+    move: { a: "Answer Priya's Germany question.", r: "Asked 10/8." },
+    meter: { frac: 0.12, cur: 0, cap: "risk", label: "STAGE 1 OF 7 · FIRST CALL" },
+    theirs: null,
+    need: { p: ["tal"], who: "client", ev: { k: "EMAIL · 10/8 · PRIYA NATARAJAN", q: "A client mentioned Germany, but nothing firm." } },
+    client: { name: null, sure: "thin", need: "Something in Germany. Nothing firm yet.", ev: { k: "EMAIL · 10/8 · PRIYA NATARAJAN", q: "Do you have anything on Germany? A client mentioned it but nothing firm." } },
+    countries: [{ c: "DE", ev: { k: "EMAIL · 10/8 · PRIYA NATARAJAN", q: "Do you have anything on Germany?" } }],
+    heads: [],
+    chair: { v: "referral", day: "9/12", ev: { k: "CALL NOTES · 9/12", q: "Priya said they would only ever refer this kind of work." } },
+    date: null,
+    files: [{ id: "op-talent", day: "8/12", to: "Priya Natarajan" }],
+    email: { dir: "in", from: "Priya Natarajan", to: "you", day: "10/8", time: "10:20 AM", subj: "Germany?", body: "Do you have anything on Germany? A client mentioned it but nothing firm.\n\nPriya" },
+    earlier: [{ g: "✉", day: "10/8", time: "10:20 AM", who: "Priya Natarajan → you", s: "Germany?" }],
+    recTotal: 6,
+  },
+  {
+    id: "marvel", name: "Marvel HR", group: "closed", rank: 7, shape: "EOR", meta: "RESALE · UNITED KINGDOM", multi: "g", briefed: true, research: "10/2",
+    outcome: { status: "won" },
+    meter: { frac: 1, cur: 6, cap: "ok", label: "CLOSED WON" },
+    theirs: null,
+    need: { p: ["eor"], who: "client", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "Our first one is a client hiring two people in the UK." } },
+    client: { name: "Brightline Staffing", sure: "sure", need: "2 employees in the United Kingdom.", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "Our first one is Brightline Staffing, hiring two people in the UK." } },
+    countries: [{ c: "GB", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "…hiring two people in the UK." } }],
+    heads: [{ n: 2, kind: "ee", c: "GB", ev: { q: "hiring two people in the UK" } }],
+    chair: { v: "resale", day: "10/2", ev: { k: "EMAIL · 10/2 · JOHN SHARPE", q: "We're going ahead as a reseller." } },
+    date: null,
+    files: [{ id: "op-eor", day: "10/2", to: "John Sharpe" }, { id: "ag-reseller", day: "10/6", to: "John Sharpe" }],
+    email: { dir: "in", from: "John Sharpe", to: "you", day: "10/14", time: "1:15 PM", subj: "Signed agreement", body: "Signed copy attached. Looking forward to getting started.\n\nJohn" },
+    earlier: [{ g: "✉", day: "10/14", time: "1:15 PM", who: "John Sharpe → you", s: "Signed agreement" }],
+    recTotal: 11,
+  },
+];
+
+// The people in each deal, what each research pass found, and the Salesforce
+// facts as plain sentences. All samples, like the rest of the book.
+const EXTRA = {
+  simploy: { people: ["Dana Reyes", "Sam Ortiz"], rnote: "They opened a second office in Dallas and posted two engineering roles in India on 10/28.", theirsText: "Dana asked for the reseller agreement on 10/30 so their legal team can start." },
+  regis: { people: ["Leilani Gonzalez", "Ana Ruiz", "Tom Beck"], rnote: "They added a client services team in San Juan." },
+  xcel: { people: ["Marco Ruiz"], theirsText: "Marco said on the 10/27 call that the client already has its own entity in Mexico." },
+  advocate: { people: ["Kim Ellis", "Raj Patel"], rnote: "They announced a contractor services line for Latin America." },
+  sidecar: { people: ["Tasha Greene", "Omar Diaz"], rnote: "They named a new head of client success." },
+  lonestar: { people: ["Ruth Calloway"], theirsText: "Ruth asked on 10/30 whether the Colombia contractors can move to employment later without starting over." },
+  axcet: { people: ["Priya Natarajan"], rnote: "Nothing new since the pass before." },
+  marvel: { people: ["John Sharpe", "Lena Park", "Chris Hale"], rnote: "They signed with us on 10/14." },
+};
+for (const a of BOOK) Object.assign(a, EXTRA[a.id] || {});
+
+// Each concept runs on its own copy, so a lever thrown in D leaves E alone.
+const freshUI = () => ({
+  shut: new Set(), shutAll: false, closedHidden: false, multi: null, door: {}, dropRcpt: {}, text: {},
+  earlier: new Set(), whole: new Set(), theirs: new Set(), worked: new Set(), askWon: null,
+  chair: {}, chairMenu: null, clientName: {}, naming: null, addC: {}, adding: null,
+  filesOpen: new Set(), pickOpen: new Set(), picks: {}, sentNow: {},
+  chute: [{ who: "Simploy", what: "1 email · 1 to-do", day: TODAY_MD, rung: "contact email" }],
+  flash: new Set(),
+  dSel: null, dF: null, dChair: "all", dSort: "move",
+  fCountry: null, fOpen: new Set(), rowOpen: new Set(["simploy"]),
+});
+const CIDS = ["F13", "F14", "F15"];
+const ST = Object.fromEntries(CIDS.map((c) => [c, clone(BOOK)]));
+const UI = Object.fromEntries(CIDS.map((c) => [c, freshUI()]));
+const acct = (cid, id) => ST[cid].find((a) => a.id === id);
+const isWorked = (cid, a) => a.worked || UI[cid].worked.has(a.id);
+const fl = (cid, id, what) => (UI[cid].flash.has(`${id}:${what}`) ? " flash" : "");
+const byRank = (a, b) => a.rank - b.rank;
+const groupsOf = (list) => ({ live: list.filter((a) => a.group === "live"), low: list.filter((a) => a.group === "low"), closed: list.filter((a) => a.group === "closed") });
+const topId = (cid) => ST[cid].filter((a) => a.group === "live").sort(byRank)[0]?.id;
+
+// ── The facts ──────────────────────────────────────────────────────────
+function urgency(a) {
+  const d = a.date;
+  if (a.outcome) return { tone: "won", top: "CLOSED WON", count: "", days: null };
+  if (!d) return { tone: "none", top: "NO DATE SAID", count: "", days: null };
+  if (d.asap) return { tone: "warm", top: "ASAP · NO DATE SAID", count: "", days: null, asap: true };
+  const n = daysTo(d.iso);
+  const count = n < 0 ? `${-n} ${plural(-n, "DAY", "DAYS")} AGO` : n === 0 ? "TODAY" : `${n} ${plural(n, "DAY", "DAYS")}`;
+  return { tone: toneOf(n), top: `${d.what.toUpperCase()} · ${monDay(d.iso).toUpperCase()}`, count, days: n };
+}
+// The one loop on the surface: the live deal with the nearest red date.
+function pulseId(cid) {
+  let best = null, bd = Infinity;
+  for (const a of ST[cid]) {
+    if (a.group !== "live") continue;
+    const u = urgency(a);
+    if ((u.tone === "hot" || u.tone === "past") && u.days < bd) { bd = u.days; best = a.id; }
+  }
+  return best;
+}
+const light = (t, pulse) => `<span class="light ${t}${pulse ? " pulse" : ""}" aria-hidden="true"></span>`;
+function dateEv(a, u) {
+  if (a.outcome) return ev({ k: "CLOSED WON", n: `${a.name} is closed won, so its date no longer counts down.` });
+  if (!a.date) return ev({ k: "NO DATE ON FILE", n: `No client date or deadline appears in the ${a.recTotal} filed entries for ${a.name}.` });
+  const why = u.asap ? "Urgency was stated without a date, so it shows amber."
+    : u.tone === "hot" ? "It is 14 days away or less, so it shows red. Only the nearest red date on the page pulses."
+    : u.tone === "warm" ? "It is within 30 days, so it shows amber."
+    : u.tone === "past" ? "The date has passed."
+    : "It is more than 30 days away, so it shows plain.";
+  return ev({ k: `FROM THE RECORD · ${a.date.ev.k}`, q: a.date.ev.q, n: why });
+}
+function needEv(a, p) {
+  return a.need?.p?.includes(p.k)
+    ? ev({ k: `FROM THE RECORD · ${a.need.ev.k}`, q: a.need.ev.q })
+    : ev({ k: p.label, n: `${a.name} has not mentioned ${p.label.toLowerCase()} on file.` });
+}
+function prodTiles(a, only) {
+  const lit = new Set(a.need?.p ?? []);
+  return PRODUCTS.filter((p) => (only === "on" ? lit.has(p.k) : only === "off" ? !lit.has(p.k) : true)).map((p) => {
+    const on = lit.has(p.k);
+    return `<button class="prod${on ? " on" : ""}" data-ev="${needEv(a, p)}" title="${esc(p.label)}${on ? "" : ". Not mentioned."}" aria-label="${esc(p.label)}${on ? ", mentioned" : ", not mentioned"}">${ICON[p.k]}</button>`;
+  }).join("");
+}
+const whoPill = (a) => (a.need ? `<span class="who ${a.need.who}">${a.need.who === "client" ? "FOR A CLIENT" : "INTERNAL"}</span>` : "");
+const litNames = (a) => PRODUCTS.filter((p) => (a.need?.p ?? []).includes(p.k));
+const CONF = { sure: { n: 3, t: "SURE" }, likely: { n: 2, t: "LIKELY" }, thin: { n: 1, t: "NOT ENOUGH TO BE SURE" } };
+const conf = (s) => { const c = CONF[s]; return `<span class="conf ${s}">${[0, 1, 2].map((i) => `<i class="${i < c.n ? "on" : ""}"></i>`).join("")}<span>${c.t}</span></span>`; };
+const clientName = (cid, a) => UI[cid].clientName[a.id] || a.client?.name || "";
+const clientNeedEv = (a) => ev({ k: `FROM THE RECORD · ${a.client.ev.k}`, q: a.client.ev.q, n: `${a.client.need} ${a.client.sure === "thin" ? "Not enough to be sure: the record does not hold enough yet." : a.client.sure === "likely" ? "Likely: the record points this way, but nobody has confirmed it." : "Sure: the record states it plainly."}` });
+const handTag = (cid, a, act) => `<span class="src hand">SET BY YOU · ${TODAY_MD}<button data-act="${act}" data-cid="${cid}" data-id="${a.id}" title="Go back to the record's read" aria-label="Go back to the record's read">↺</button></span>`;
+function nameBox(cid, a) {
+  return UI[cid].naming === a.id
+    ? `<input class="nameIn" data-name="${cid}:${a.id}" placeholder="Type the client's name, then Enter" aria-label="Client's name" />`
+    : `<button class="namer" data-act="name" data-cid="${cid}" data-id="${a.id}">Name it ▾</button>`;
+}
+function wClient(cid, a) {
+  const ui = UI[cid];
+  const c = a.client;
+  if (c?.internal) return `<div class="client"><div class="clTop"><button class="cl internal" data-ev="${ev({ k: `FROM THE RECORD · ${a.need.ev.k}`, q: a.need.ev.q, n: "This is the PEO's own need, so no client is involved." })}">INTERNAL · NO CLIENT</button></div><span class="cneed">Their own people.</span></div>`;
+  const hand = ui.clientName[a.id];
+  const name = hand || c?.name;
+  let top;
+  if (name) {
+    const k = hand ? ev({ k: `SET BY YOU · ${TODAY_MD}`, n: "You named this client by hand. The record has not named a client yet." }) : ev({ k: `FROM THE RECORD · ${c.ev.k}`, q: c.ev.q });
+    top = `<button class="cl named" data-ev="${k}">${esc(name)}</button>${hand ? handTag(cid, a, "unname") : ""}`;
+  } else {
+    top = `<button class="cl unknown" data-ev="${ev({ k: "NO CLIENT NAMED", n: `No client name appears in the ${a.recTotal} filed entries for ${a.name}.` })}">CLIENT NOT NAMED YET</button>${a.outcome ? "" : nameBox(cid, a)}`;
+  }
+  return `<div class="client${fl(cid, a.id, "client")}"><div class="clTop">${top}</div><button class="cneed" data-ev="${clientNeedEv(a)}">${esc(c.need)}</button>${conf(c.sure)}</div>`;
+}
+const countryList = (cid, a) => [...a.countries, ...(UI[cid].addC[a.id] ?? []).map((c) => ({ c, hand: true }))];
+const headsIn = (a, c) => a.heads.filter((h) => h.c === c);
+const headWord = (h) => `${h.about ? "about " : ""}${h.n} ${h.kind === "ee" ? plural(h.n, "employee", "employees") : plural(h.n, "contractor", "contractors")}`;
+function ctryEv(cid, a, x) {
+  return x.hand ? ev({ k: `SET BY YOU · ${TODAY_MD}`, n: "You added this country by hand. The record has not mentioned it yet." }) : ev({ k: `FROM THE RECORD · ${x.ev.k}`, q: x.ev.q });
+}
+function addCountry(cid, a, tokenStyle) {
+  if (a.outcome) return "";
+  const ui = UI[cid];
+  const list = countryList(cid, a);
+  const opts = Object.keys(COUNTRY).filter((c) => !list.some((x) => x.c === c)).map((c) => `<option value="${c}">${esc(COUNTRY[c])}</option>`).join("");
+  return `<span class="cadd"><button class="${tokenStyle === "quiet" ? "addq" : tokenStyle === "label" ? "namer" : tokenStyle ? "tok addT" : ""}" data-act="addc" data-cid="${cid}" data-id="${a.id}" title="Add a country by hand" aria-label="Add a country by hand">${tokenStyle === "label" || tokenStyle === "quiet" ? "＋ Add a country" : "＋"}</button>${ui.adding === a.id ? `<select data-addc="${cid}:${a.id}" aria-label="Pick a country"><option value="">Pick a country</option>${opts}</select>` : ""}</span>`;
+}
+// Countries as flag chips, with the count the record ties to each one.
+function wCountries(cid, a, w) {
+  const list = countryList(cid, a);
+  const chips = list.map((x) => {
+    const hs = headsIn(a, x.c);
+    const sub = hs.length ? hs.map((h) => headWord(h).toUpperCase()).join(" · ") : x.hand ? "ADDED BY YOU" : "COUNT NOT SAID";
+    return `<button class="ctry${x.hand ? " hand" : ""}" data-ev="${ctryEv(cid, a, x)}">${flag(x.c, w)}<span>${esc(COUNTRY[x.c])}</span><span class="nil" style="color:${hs.length ? "var(--soft)" : "var(--faint)"}">${esc(sub)}</span></button>`;
+  }).join("");
+  return `<div class="ctrys${fl(cid, a.id, "where")}">${chips}${list.length ? "" : `<span class="nil">NO COUNTRY SAID</span>`}${addCountry(cid, a, false)}</div>`;
+}
+// Totals by kind: only the kinds the record mentions; one NOT SAID box if none.
+function wHeads(cid, a) {
+  const box = (kind) => {
+    const l = a.heads.filter((h) => h.kind === kind);
+    if (!l.length) return "";
+    const total = l.reduce((n, h) => n + h.n, 0);
+    const about = l.some((h) => h.about);
+    const label = kind === "ee" ? plural(total, "EMPLOYEE", "EMPLOYEES") : plural(total, "CONTRACTOR", "CONTRACTORS");
+    const detail = l.map((h) => `${headWord(h)}${h.c ? ` in ${inCountry(h.c)}` : ""}`).join(". ").replace(/^./, (m) => m.toUpperCase()) + ".";
+    const k = ev({ k: "FROM THE RECORD", q: l.map((h) => h.ev.q).join(" … "), n: detail });
+    return `<button class="hc" data-ev="${k}"><span class="hrow">${kind === "ee" ? ICON.people : ICON.brief}${about ? `<span class="hab">ABOUT</span>` : ""}<span class="hn">${total}</span></span><span class="hl">${label}</span></button>`;
+  };
+  const inner = box("ee") + box("ctr");
+  return `<div class="heads${fl(cid, a.id, "heads")}">${inner || `<button class="hc none" data-ev="${ev({ k: "HOW MANY", n: `No number of employees or contractors appears on file for ${a.name}.` })}"><span class="hrow">${ICON.people}<span class="ns">NOT SAID</span></span><span class="hl" style="color:var(--faint)">NO COUNT ON FILE</span></button>`}</div>`;
+}
+const chairValue = (cid, a) => UI[cid].chair[a.id] ?? (a.chair?.v ?? "none");
+function chairSrc(cid, a) {
+  if (UI[cid].chair[a.id] != null) return handTag(cid, a, "unchair");
+  return a.chair?.v
+    ? `<button class="src" data-ev="${ev({ k: `FROM THE RECORD · ${a.chair.ev.k}`, q: a.chair.ev.q })}">FROM THE RECORD · ${esc(a.chair.day)}</button>`
+    : `<span class="src">NOT SAID YET</span>`;
+}
+function wChair(cid, a, opt = {}) {
+  const v = chairValue(cid, a);
+  const btns = [["resale", "RESELLER"], ["referral", "REFERRAL"]].map(([k, t]) => `<button class="${v === k ? "on" : ""}" data-act="chair" data-cid="${cid}" data-id="${a.id}" data-v="${k}" aria-pressed="${v === k}">${t}</button>`).join("");
+  const lever = `<span class="lever${opt.vert ? " vert" : ""}${v === "none" ? " notsaid" : ""}" role="group" aria-label="Reseller or referral">${btns}</span>`;
+  return `<div class="chair${fl(cid, a.id, "chair")}"${opt.vert ? ` style="flex-direction:column"` : ""}>${lever}${opt.noSrc ? "" : chairSrc(cid, a)}</div>`;
+}
+const sentFiles = (cid, a) => [...(UI[cid].sentNow[a.id] ?? []), ...a.files.slice().reverse()];
+function filesHead(cid, a) {
+  const ui = UI[cid];
+  const sent = sentFiles(cid, a);
+  const open = ui.filesOpen.has(a.id);
+  const pick = ui.pickOpen.has(a.id);
+  const head = sent.length
+    ? `<button class="folder" data-act="files" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${ICON.folder}<b>${sent.length}</b><span>SENT · LAST ${esc(sent[0].day)} ${open ? "▾" : "▸"}</span></button>`
+    : `<button class="folder empty" data-act="files" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${ICON.folder}<b>0</b><span>NOTHING SENT YET</span></button>`;
+  const send = a.outcome ? "" : `<button class="sendf" data-act="pick" data-cid="${cid}" data-id="${a.id}" aria-expanded="${pick}">${ICON.clip}Send files</button>`;
+  return `<div class="filesTop${fl(cid, a.id, "files")}">${head}${send}</div>`;
+}
+function filesPanes(cid, a, forceOpen) {
+  const ui = UI[cid];
+  const sent = sentFiles(cid, a);
+  const open = forceOpen || ui.filesOpen.has(a.id);
+  const list = open && sent.length
+    ? `<div class="flist">${sent.map((f) => `<div class="fl${f.now ? " new" : ""}">${FILE[f.id].g === "demo" ? ICON.video : ICON.doc}<span>${esc(fileName(f.id))}</span><span class="fd">SENT ${esc(f.day)}${f.to ? ` · TO ${esc(firstWord(f.to).toUpperCase())}` : ""}</span></div>`).join("")}</div>`
+    : open ? `<p class="pnote">Nothing has been sent to ${esc(a.name)} yet.</p>` : "";
+  let picker = "";
+  if (ui.pickOpen.has(a.id)) {
+    const picks = new Set(ui.picks[a.id] ?? []);
+    const was = new Map(sent.map((f) => [f.id, f.day]));
+    const groups = ["demo", "op", "ag"].map((g) => `<div class="pk">${GROUP[g]}</div>` + FILES.filter((f) => f.g === g).map((f) => `<label class="pi"><input type="checkbox" data-pick="${cid}:${a.id}:${f.id}" ${picks.has(f.id) ? "checked" : ""}/><span>${esc(f.label)}${was.has(f.id) ? `<span class="was">SENT ${esc(was.get(f.id))}</span>` : ""}</span><span class="ps">${f.runs ? `${f.runs} · ` : ""}${size(f.kb)}</span></label>`).join("")).join("");
+    const total = [...picks].reduce((n, id) => n + FILE[id].kb * 1.37, 0);
+    picker = `<div class="picker">${groups}<div class="pfoot"><span class="ptotal">${picks.size ? `About ${size(Math.round(total))} in the email.` : "Tick the files to attach."}${total > 20000 ? " Over 20 MB. Most mail stops there." : ""}</span><button class="psend" data-act="send" data-cid="${cid}" data-id="${a.id}">Send in Outlook</button></div><p class="pnote">The same picker Send in Outlook uses on Groundwork. It downloads an Outlook draft with the files attached, and the folder records what went.</p></div>`;
+  }
+  return list || picker ? `<div class="files">${list}${picker}</div>` : "";
+}
+const wFiles = (cid, a) => `<div class="files">${filesHead(cid, a)}${filesPanes(cid, a)}</div>`;
+
+
+// ── The parts that stay ────────────────────────────────────────────────
+const bfDot = (a) => `<button class="bf${a.briefed ? " on" : ""}" data-act="toast" data-msg="${a.briefed ? "Partner briefed. Click to change it by hand." : "Partner not briefed yet. Click to set it by hand."}" title="${a.briefed ? "Partner briefed" : "Partner not briefed yet"}" aria-label="${a.briefed ? "Partner briefed" : "Partner not briefed yet"}"></button>`;
+const sfMini = (a) => `<button class="sf" data-act="toast" data-msg="Opens ${esc(a.name)} in Salesforce." title="Open in Salesforce" aria-label="Open in Salesforce">SF</button>`;
+const wonStamp = (a) => (a.outcome ? `<span class="stamp">CLOSED WON</span>` : "");
+function chipLine(cid, a) {
+  const ui = UI[cid];
+  const people = a.email ? [a.email.from === "you" ? a.email.to : a.email.from].filter(Boolean) : [];
+  return `<span class="chips"><button class="chip" data-act="toast" data-msg="Opens what the read stands on.">${esc(a.shape)}</button><span class="metaIn">${esc(a.meta)}</span><button class="multi ${a.multi}" data-act="multi" data-cid="${cid}" data-id="${a.id}" aria-expanded="${ui.multi === a.id}">MULTI${ui.multi === a.id ? `<span class="hover"><span class="hk">WHO'S IN THIS DEAL · FROM THE RECORD</span>${people.map((p) => `<b>${esc(p)}</b>`).join("<br/>") || "No stakeholders on file yet."}</span>` : ""}</button><button class="zap" data-act="zap" data-cid="${cid}" data-id="${a.id}" title="Paste. Files to ${esc(a.name)}." aria-label="Paste. Files to ${esc(a.name)}.">⚡</button><button class="rsrch" data-act="toast" data-msg="Runs the deep research pass on ${esc(a.name)}.">RESEARCH ${esc(a.research)} ⟳</button></span>`;
+}
+const hovs = (cid, a) => (a.outcome ? "" : `<button class="hov" data-act="toast" data-msg="Sends ${esc(a.name)} to low signal." title="Send to low signal. Not in your Salesforce pipeline." aria-label="Send to low signal">⇣</button><button class="hov" data-act="won" data-cid="${cid}" data-id="${a.id}" title="Mark Closed Won." aria-label="Mark Closed Won">☑</button>`);
+function meter(a) {
+  const pct = Math.round(Math.max(0.04, a.meter.frac) * 100);
+  const nodes = Array.from({ length: 7 }, (_, i) => `<button class="node${i < a.meter.cur ? " done" : i === a.meter.cur ? " cur" : ""}" style="left:${2 + i * 14.3}%" data-act="toast" data-msg="Opens this stage's checklist and why card." aria-label="Stage ${i + 1}"></button>`).join("");
+  return `<div class="climb"><div class="meterZone"><div class="track"></div><div class="gain" style="width:${pct}%"></div><div class="cap ${a.meter.cap}" style="left:${pct}%"></div>${nodes}</div><div class="climbCap">${esc(a.meter.label)}</div></div>`;
+}
+function emailPane(cid, a) {
+  const m = a.email;
+  if (!m) return "";
+  const whole = UI[cid].whole.has(a.id);
+  const long = m.body.length > 180;
+  return `<div class="mail"><div class="mailK"><span class="lbl">Latest email</span><span class="mailWho">${esc(m.from)} → ${esc(m.to)} · ${esc(m.day)} ${esc(m.time)}</span></div><p class="mailSubj">${esc(m.subj)}</p><div class="${long && !whole ? "capped" : ""}"><p class="mailBody">${esc(m.body)}</p></div>${long ? `<button class="open" data-act="whole" data-cid="${cid}" data-id="${a.id}">${whole ? "Show less ▴" : "Show the whole email ▾"}</button>` : ""}</div>`;
+}
+function theirsLine(cid, a) {
+  if (!a.theirs) return "";
+  const open = UI[cid].theirs.has(a.id);
+  return `<div><div class="theirs">FROM SALESFORCE · <button data-act="theirs" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${esc(a.theirs.label)}</button></div>${open ? `<div class="theirsFold"><div class="t">CONFIRMED IN YOUR SALESFORCE EXPORT</div><b>${esc(a.theirs.act)}</b><div>${esc(a.theirs.why)}</div></div>` : ""}</div>`;
+}
+function dropDoors(cid, a) {
+  const door = UI[cid].door[a.id] ?? null;
+  const d = (k, g, t) => `<button class="door${door === k ? " on" : ""}" data-act="door" data-door="${k}" data-cid="${cid}" data-id="${a.id}" title="${t}" aria-label="${t}">${g}</button>`;
+  return `<div class="doors">${d("zap", "⚡", "The bolt. Paste anything.")}${d("note", "▢", "Note. A line for the record.")}${d("act", "✸", "Action. Open work for this account.")}<button class="door" data-act="toast" data-msg="Opens the file picker. Every file type is taken." title="File. Every file type is taken." aria-label="File">⇪</button></div>`;
+}
+function dropPane(cid, a) {
+  const ui = UI[cid];
+  const door = ui.door[a.id] ?? null;
+  const pane = door === "zap"
+    ? `<div class="pane"><textarea data-text="${cid}:${a.id}" placeholder="Paste the Salesforce capture, an email, or meeting notes. It files to ${esc(a.name)}.">${esc(ui.text[a.id] ?? "")}</textarea><div class="paneRow"><button data-act="door" data-door="zap" data-cid="${cid}" data-id="${a.id}">Cancel</button><button class="file" data-act="readfile" data-cid="${cid}" data-id="${a.id}">✨ Read &amp; file</button></div></div>`
+    : door === "note" || door === "act"
+      ? `<div class="pane"><textarea data-text="${cid}:${a.id}" placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts.">${esc(ui.text[a.id] ?? "")}</textarea><div class="paneRow"><button class="file" data-act="readfile" data-cid="${cid}" data-id="${a.id}">File it</button></div></div>`
+      : "";
+  const rc = ui.dropRcpt[a.id];
+  return pane + (rc ? `<div class="dropRcpt${fl(cid, a.id, "rcpt")}"><b>✓</b>${esc(rc)}<span style="margin-left:auto;color:var(--quiet)">↺ ✕</span></div>` : "");
+}
+const drop = (cid, a) => `<div class="drop"><div class="dropK">The Drop · files to ${esc(a.name)}, everywhere</div>${dropDoors(cid, a)}${dropPane(cid, a)}</div>`;
+const earlierRule = (cid, a) => { const open = UI[cid].earlier.has(a.id); return `<button class="dayrule" data-act="earlier" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">EARLIER · ${a.recTotal} ${open ? "▾" : "▸"}</button>`; };
+const earlierLines = (cid, a) => (UI[cid].earlier.has(a.id) ? a.earlier.map((e) => `<div class="ent"><span class="g${e.out ? " out" : ""}">${e.g}</span><span><span class="kk">${esc(e.day)} ${esc(e.time)} · ${esc(e.who)}</span><span class="s">${esc(e.s)}</span></span></div>`).join("") + `<div class="more"><span>the full record (${a.recTotal}) ▸</span><span>archive →</span></div>` : "");
+const earlier = (cid, a) => earlierRule(cid, a) + earlierLines(cid, a);
+
+// ── The frame every version sits in ────────────────────────────────────
+function wayfinder() {
+  const routes = ["HomeRoom", "Accounts", "Groundwork", "Playbook", "Intranet", "Pricing", "Demos", "Capture"];
+  return `<div class="wf"><span class="wfBrand">${MARK}ANTAEUS</span><nav aria-label="Primary routes">${routes.map((r) => `<span class="${r === "HomeRoom" ? "here" : ""}">${r}</span>`).join("")}</nav></div>`;
+}
+function chute(cid) {
+  const ui = UI[cid];
+  return `<section class="chute"><span class="chuteK">THE CHUTE</span><span class="chuteLine">Throw files here. They find their account.</span><button class="chuteBtn" data-act="toast" data-msg="Opens the file picker for the Chute.">⇪ Files</button></section><ul class="rcpts">${ui.chute.map((r, i) => `<li class="${i === 0 && ui.flash.has("chute") ? "flash" : ""}"><b>${esc(r.who)}</b>${esc(r.what)} · ${esc(r.day)} · ${esc(r.rung)}<span class="x">↺ ✕</span></li>`).join("")}</ul>`;
+}
+function roomBar(cid) {
+  return `<div class="rbar"><span class="ident">${MARK}<span class="roomName">HOMEROOM</span><button class="shutAll" data-act="shutall" data-cid="${cid}">${ST[cid].some((x) => UI[cid].rowOpen.has(x.id)) ? "Collapse all" : "Open all"}</button></span><span class="addWrap"><button class="addBtn" data-act="toast" data-msg="Opens ＋ add: an account to the board, the payroll intake form, and the follow-ups still owed.">＋ add ▾</button><button class="addBadge" data-act="toast" data-msg="Opens the 2 follow-ups still owed.">2</button></span><span class="clock">10:42 AM · CHICAGO</span></div>`;
+}
+const edges = () => `<div class="edges"><button class="edge" data-act="toast" data-msg="Opens the Pipeline tab: every active account's record.">PIPELINE <span class="ec">6</span></button><button class="edge" data-act="toast" data-msg="Opens Roundups and Check-ins.">ROUNDUPS · CHECK-INS <span class="ec">2</span></button><button class="edge" data-act="toast" data-msg="Opens Keep an eye out.">EYE <span class="ec">3</span></button></div>`;
+const swatch = `<span style="display:inline-block;width:18px;height:12px;border:1.5px dashed var(--amber);background:var(--amber-soft);border-radius:3px"></span>`;
+const legend = () => `<div class="legend"><span>✉ email</span><span>➤ sent</span><span>☎ call</span><span>✓ done</span><span>✎ note</span><span>✸ action</span><span>⇣ low signal</span><span>☑ mark closed won</span><span class="lg">${light("hot")} client date in 14 days or less</span><span class="lg">${light("warm")} within 30 days, or ASAP with no date</span><span class="lg">${light("won")} closed won</span><span class="lg">${swatch} not said yet</span><span class="lg">${conf("likely")} how sure the record is about the client</span><span class="lg">▣ files sent</span></div>`;
+function frame(cid, inner) {
+  return `<div class="app">${wayfinder()}<div class="roomIn">${chute(cid)}${roomBar(cid)}${inner}${legend()}</div>${edges()}<button class="scratch" data-act="toast" data-msg="Opens the Scratchpaper." title="Scratchpaper" aria-label="Scratchpaper">✎</button></div>`;
+}
+function ruleFor(cid, group, count) {
+  if (group === "low") return `<div class="rule">LOW SIGNAL · ${count} · NOT IN YOUR SALESFORCE PIPELINE</div>`;
+  const hid = UI[cid].closedHidden;
+  return `<div class="rule">CLOSED · ${count} · THE RECORD KEEPS EVERYTHING<button data-act="closed" data-cid="${cid}" aria-expanded="${!hid}">${hid ? "SHOW" : "HIDE"}</button></div>`;
+}
+
+// ── The map, the same as concept F ─────────────────────────────────────
+function countryIndex(cid) {
+  const m = new Map();
+  for (const a of ST[cid]) {
+    if (a.group === "low") continue;
+    const u = urgency(a);
+    for (const x of countryList(cid, a)) {
+      let e = m.get(x.c);
+      if (!e) { e = { c: x.c, deals: [], ee: 0, ctr: 0, aboutEe: false, aboutCtr: false, unk: 0, tone: null, days: null, asap: false }; m.set(x.c, e); }
+      e.deals.push(a);
+      const hs = headsIn(a, x.c);
+      if (!hs.length) e.unk++;
+      for (const h of hs) {
+        if (h.kind === "ee") { e.ee += h.n; e.aboutEe = e.aboutEe || !!h.about; } else { e.ctr += h.n; e.aboutCtr = e.aboutCtr || !!h.about; }
+      }
+      const t = u.tone;
+      const nearer = t === e.tone && u.days != null && (e.days == null || u.days < e.days);
+      if (e.tone == null || TONE_RANK[t] > TONE_RANK[e.tone] || nearer) { e.tone = t; e.days = u.days; e.asap = !!u.asap; }
+    }
+  }
+  return [...m.values()].sort((x, y) => TONE_RANK[y.tone] - TONE_RANK[x.tone] || (x.days ?? 999) - (y.days ?? 999) || COUNTRY[x.c].localeCompare(COUNTRY[y.c]));
+}
+function peopleLine(e) {
+  const parts = [];
+  if (e.ee) parts.push(`${e.aboutEe ? "ABOUT " : ""}${e.ee} ${plural(e.ee, "EMPLOYEE", "EMPLOYEES")}`);
+  if (e.ctr) parts.push(`${e.aboutCtr ? "ABOUT " : ""}${e.ctr} ${plural(e.ctr, "CONTRACTOR", "CONTRACTORS")}`);
+  if (e.unk) parts.push(parts.length ? (e.unk === 1 ? "ONE DEAL'S COUNT NOT SAID" : `${e.unk} DEALS' COUNTS NOT SAID`) : "COUNT NOT SAID");
+  return parts.join(" · ");
+}
+const toneWord = (e) => (e.tone === "won" ? "WON" : e.days != null ? (e.days < 0 ? `${-e.days} ${plural(-e.days, "DAY", "DAYS")} AGO` : `${e.days} ${plural(e.days, "DAY", "DAYS")}`) : e.asap ? "ASAP" : "NO DATE");
+function dealLine(cid, a, c) {
+  const u = urgency(a);
+  const hs = headsIn(a, c);
+  const who = hs.length ? andList(hs.map(headWord)) : "count not said";
+  const when = a.outcome ? "closed won" : u.asap ? "as soon as they can" : a.date ? `${a.date.what.toLowerCase()} ${monDay(a.date.iso)}, ${u.days < 0 ? `${-u.days} days ago` : `${u.days} days away`}` : "no date said";
+  return `${who}, ${when}.`;
+}
+function mapF(cid, idx, pulseC) {
+  const ui = UI[cid];
+  const pins = idx.map((e) => {
+    const [x, y] = mapXY(e.c);
+    const [dx, dy] = NUDGE[e.c] || [0, 0];
+    const sel = ui.fCountry === e.c;
+    const dim = ui.fCountry && !sel;
+    const k = ev({ k: `${COUNTRY[e.c]} · ${e.deals.length} ${plural(e.deals.length, "DEAL", "DEALS")}`, n: e.deals.map((a) => `${a.name}: ${dealLine(cid, a, e.c)}`).join(" ") });
+    return `<span class="pinDot light ${e.tone}${e.c === pulseC ? " pulse" : ""}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"></span><button class="pin ${e.tone}${sel ? " sel" : ""}${dim ? " dim" : ""}" data-act="fpin" data-cid="${cid}" data-c="${e.c}" data-pin="${e.c}" data-ev="${k}" style="left:calc(${x.toFixed(2)}% + ${dx}px);top:calc(${y.toFixed(2)}% + ${dy}px)" aria-pressed="${sel}" aria-label="${esc(COUNTRY[e.c])}: ${e.deals.length} ${plural(e.deals.length, "deal", "deals")}. Show only these deals.">${flag(e.c, 20)}<span class="pl">${esc(SHORT[e.c])}</span></button>`;
+  }).join("");
+  const rows = idx.map((e) => `<button class="crow${ui.fCountry === e.c ? " sel" : ""}" data-act="fpin" data-cid="${cid}" data-c="${e.c}" data-pin="${e.c}" aria-pressed="${ui.fCountry === e.c}">${flag(e.c, 30)}<span style="min-width:0"><span class="cn">${esc(COUNTRY[e.c])}</span><span class="cs">${esc(peopleLine(e))}</span><span class="cs">${esc(e.deals.map((a) => a.name).join(" · "))}</span></span><span class="cw">${light(e.tone)} ${esc(toneWord(e))}</span></button>`).join("");
+  return `<section class="fmap"><div class="fmapL"><div class="fk">Countries in your deals</div><div class="mapbox"><svg class="dots" viewBox="0 0 ${MAP.cols} ${MAP.rows}" preserveAspectRatio="none" aria-hidden="true"><path d="${DOTS}" fill="rgba(10,28,64,.15)"/></svg>${pins}</div></div><div class="fmapR"><div class="fk" style="margin:0 0 6px 8px">${ui.fCountry ? `Showing the deals in ${esc(COUNTRY[ui.fCountry])}` : "Click a country to show its deals"}</div>${rows}${ui.fCountry ? `<button class="showAll" data-act="fall" data-cid="${cid}">Show every deal</button>` : ""}</div></section>`;
+}
+
+// ── The sentence, exactly as concept F had it ───────────────────────────
+const nameLink = (a) => `<a class="nmLink" href="#" data-act="toast" data-msg="Opens ${esc(a.name)} on the Accounts page.">${esc(a.name)}</a>`;
+const DATE_SAY = { "Start date": "starting", "Year end": "before", "Payroll by": "first payroll by", Kickoff: "kickoff on" };
+function chairTok(cid, a, label) {
+  const v = chairValue(cid, a);
+  const open = UI[cid].chairMenu === a.id;
+  const hand = UI[cid].chair[a.id] != null;
+  const opts = [["resale", "Resell it"], ["referral", "Refer it"], ["none", "Not said yet"]];
+  const menu = open ? `<span class="menu" role="menu">${opts.map(([k, t]) => `<button role="menuitemradio" aria-checked="${v === k}" class="${v === k ? "on" : ""}" data-act="chairset" data-cid="${cid}" data-id="${a.id}" data-v="${k}">${t}</button>`).join("")}${hand ? `<button data-act="unchair" data-cid="${cid}" data-id="${a.id}">↺ Go back to the record's read</button>` : ""}</span>` : "";
+  return `<span style="position:relative;display:inline-block"><button class="tok chairT${v === "none" ? " none" : ""}${fl(cid, a.id, "chair")}" data-act="chairmenu" data-cid="${cid}" data-id="${a.id}" aria-haspopup="menu" aria-expanded="${open}">${esc(label)} ▾</button>${menu}</span>`;
+}
+function clientTok(cid, a) {
+  const ui = UI[cid];
+  if (a.client?.internal) return `<button class="tok" data-ev="${ev({ k: `FROM THE RECORD · ${a.need.ev.k}`, q: a.need.ev.q, n: "This is the PEO's own need, so no client is involved." })}">internal use</button>`;
+  const hand = ui.clientName[a.id];
+  const name = hand || a.client?.name;
+  if (name) {
+    const k = hand ? ev({ k: `SET BY YOU · ${TODAY_MD}`, n: "You named this client by hand. The record has not named a client yet." }) : clientNeedEv(a);
+    return `<button class="tok cliT${hand ? " hand" : ""}${fl(cid, a.id, "client")}" data-ev="${k}">${esc(name)}</button>`;
+  }
+  if (ui.naming === a.id) return `<input class="nameIn" data-name="${cid}:${a.id}" placeholder="Type the client's name, then Enter" aria-label="Client's name" />`;
+  if (a.outcome) return `<span class="tok unk">a client not named</span>`;
+  return `<button class="tok unk${fl(cid, a.id, "client")}" data-act="name" data-cid="${cid}" data-id="${a.id}" title="The record has not named the client. Click to name it by hand.">a client not named yet ▾</button>`;
+}
+function whereToks(cid, a, punct = "") {
+  const list = countryList(cid, a);
+  const nb = (h) => (punct ? `<span class="nb">${h}${punct}</span>` : h);
+  if (!list.length) return nb(`<span class="tok quiet">no country said yet</span>`);
+  const parts = list.map((x, i) => {
+    const end = i === list.length - 1;
+    const tokC = `<button class="tok ctryT" data-ctok="${x.c}" data-ev="${ctryEv(cid, a, x)}">${flag(x.c, 27)}${esc(COUNTRY[x.c])}</button>`;
+    const hs = headsIn(a, x.c);
+    if (!hs.length) { const q = `<span class="tok quiet">count not said</span>`; return `${tokC}, ${end ? nb(q) : q}`; }
+    const k = ev({ k: "FROM THE RECORD", q: hs.map((h) => h.ev.q).join(" … ") });
+    const counts = andList(hs.map((h) => `${h.about ? "about " : ""}<button class="tok numT" data-ev="${k}">${h.n}</button> ${h.kind === "ee" ? plural(h.n, "employee", "employees") : plural(h.n, "contractor", "contractors")}`));
+    return `${counts} in ${COUNTRY_IN[x.c] ? "the " : ""}${end ? nb(tokC) : tokC}`;
+  });
+  return `<span class="${fl(cid, a.id, "where").trim()}">${andList(parts)}</span>`;
+}
+function dateParts(cid, a) {
+  if (a.outcome) return null;
+  const u = urgency(a);
+  const k = dateEv(a, u);
+  if (!a.date) return { word: "", tok: `<button class="tok quiet" data-ev="${k}">no date said</button>` };
+  if (u.asap) return { word: "", tok: `<button class="tok dateT warm${fl(cid, a.id, "date")}" data-ev="${k}">as soon as they can</button>` };
+  return { word: DATE_SAY[a.date.what] || a.date.what.toLowerCase(), tok: `<button class="tok dateT ${u.tone}${fl(cid, a.id, "date")}" data-ev="${k}">${monDay(a.date.iso)} · ${u.count.toLowerCase()}</button>` };
+}
+// The sentence keeps each colon and the final period on the token before
+// it, so a line never starts with punctuation.
+function sentence(cid, a) {
+  const v = chairValue(cid, a);
+  const glue = (h) => `<span class="nb">${h}:</span>`;
+  const toks = litNames(a).map((p) => `<button class="tok prodT" data-ev="${needEv(a, p)}">${ICON[p.k]}${esc(p.say)}</button>`);
+  const none = `<span class="tok unk">nothing named yet</span>`;
+  const prods = (colon) => (toks.length ? andList(colon ? [...toks.slice(0, -1), glue(toks[toks.length - 1])] : toks) : colon ? glue(none) : none);
+  const client = clientTok(cid, a);
+  const peo = nameLink(a);
+  const d = dateParts(cid, a);
+  const rest = d ? `${whereToks(cid, a)}, ${d.word ? `${d.word} ` : ""}<span class="nb">${d.tok}.</span>` : whereToks(cid, a, ".");
+  if (a.client?.internal) return `${peo} wants ${prods(false)} for ${glue(client)} ${rest} ${chairTok(cid, a, v === "resale" ? "Set as reseller" : v === "referral" ? "Set as referral" : "Reseller or referral not said yet")}`;
+  const verb = (k) => (a.outcome ? (k === "resale" ? "resells" : "refers") : k === "resale" ? "would resell" : "would refer");
+  if (v === "resale") return `${peo} ${chairTok(cid, a, verb("resale"))} ${prods(false)} to ${glue(client)} ${rest}`;
+  if (v === "referral") return `${peo} ${chairTok(cid, a, verb("referral"))} ${client} to us for ${prods(true)} ${rest}`;
+  return `${peo} wants ${prods(false)} for ${glue(client)} ${rest} ${chairTok(cid, a, "Reseller or referral not said yet")}`;
+}
+
+// ── The small grey line, the move, the open panel ──────────────────────
+function handMarks(cid, a) {
+  const ui = UI[cid];
+  const back = (act) => `<button data-act="${act}" data-cid="${cid}" data-id="${a.id}" title="Go back to the record's read" aria-label="Go back to the record's read">↺</button>`;
+  const out = [];
+  if (ui.clientName[a.id]) out.push(`<span class="src hand">CLIENT NAMED BY YOU · ${TODAY_MD}${back("unname")}</span>`);
+  if (ui.chair[a.id] != null) out.push(`<span class="src hand">RESELLER OR REFERRAL SET BY YOU · ${TODAY_MD}${back("unchair")}</span>`);
+  const added = ui.addC[a.id] ?? [];
+  if (added.length) out.push(`<span class="src hand">${esc(added.map((c) => COUNTRY[c]).join(", ").toUpperCase())} ADDED BY YOU · ${TODAY_MD}${back("unaddc")}</span>`);
+  return out.join("");
+}
+function metaLine(cid, a, o = {}) {
+  return `<div class="meta">${bfDot(a)}${sfMini(a)}${wonStamp(a)}${chipLine(cid, a)}${handMarks(cid, a)}${a.outcome ? "" : addCountry(cid, a, "quiet")}${o.hovs === false ? "" : `<span class="gap"></span>${hovs(cid, a)}`}</div>`;
+}
+function moveText(cid, a) {
+  if (a.outcome) return `<span class="lbl">Closed won</span><p class="move" style="font-weight:400;color:var(--soft)">Closed by your call. The record keeps everything.</p>`;
+  if (UI[cid].askWon === a.id) return `<span class="lbl">Mark it closed won</span><p class="move">Your call: stamp the meter, or keep working it.</p>`;
+  return `<span class="lbl">Next move</span><p class="move">${esc(a.move.a)} <span class="r">${esc(a.move.r)}</span></p>`;
+}
+function moveActs(cid, a, orange) {
+  if (a.outcome) return `<span class="acts"><button class="ghost" data-act="toast" data-msg="Retires ${esc(a.name)} from the board.">Retire the row</button><button class="reopen" data-act="toast" data-msg="Reopens the deal. The stamp comes off." title="Reopen the deal. The stamp comes off." aria-label="Reopen the deal">↺</button></span>`;
+  if (UI[cid].askWon === a.id) return `<span class="acts"><button class="wonYes" data-act="wonyes" data-cid="${cid}" data-id="${a.id}">Confirm Closed Won</button><button class="ghost" data-act="wonno" data-cid="${cid}">Not yet</button></span>`;
+  if (isWorked(cid, a)) return `<span class="acts"><button class="worked" data-act="unwork" data-cid="${cid}" data-id="${a.id}" title="Worked today. Click to take the mark back.">✓ WORKED</button></span>`;
+  return `<span class="acts"><button class="${orange ? "go" : "ghost"}" data-act="done" data-cid="${cid}" data-id="${a.id}">Mark it done ✓</button></span>`;
+}
+const openPanel = (cid, a, withMeta) => `<div class="panel onWhite">${withMeta ? metaLine(cid, a, { hovs: false }) : ""}<div style="min-width:0">${emailPane(cid, a)}</div><div class="rcol">${theirsLine(cid, a)}${drop(cid, a)}<div>${earlier(cid, a)}</div></div>${meter(a)}</div>`;
+const csOf = (cid, a) => countryList(cid, a).map((x) => x.c).join(" ");
+
+// ── The information under the sentence, each piece labeled ────────────
+Object.assign(ICON, {
+  check: svg(`<circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.5 2.5 4.9-5.2"/>`),
+  search: svg(`<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>`),
+  stage: svg(`<path d="M4 19h4v-5H4zM10 19h4V9h-4zM16 19h4V5h-4z"/>`),
+  cloud: svg(`<path d="M7 18h10.5a3.5 3.5 0 0 0 .4-7 5.5 5.5 0 0 0-10.6-1.2A4 4 0 0 0 7 18z"/>`),
+  mail: svg(`<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>`),
+});
+const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const titleCase = (s) => s.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m, p, c) => p + c.toUpperCase());
+// "EMAIL · 10/30 · DANA REYES" said as words: "Email from Dana Reyes, 10/30".
+function srcWords(k) {
+  const [kind, day, who] = String(k).split(" · ");
+  const kindW = kind === "EMAIL" ? "Email" : kind === "CALL NOTES" ? "Call notes" : cap1(kind.toLowerCase());
+  return `${kindW}${who ? ` from ${titleCase(who)}` : ""}${day ? `, ${day}` : ""}`;
+}
+const bigdots = (s) => `<span class="bigdots${s === "thin" ? " thin" : ""}" aria-hidden="true">${[0, 1, 2].map((i) => `<i class="${i < CONF[s].n ? "on" : ""}"></i>`).join("")}</span>`;
+function clientInfo(cid, a) {
+  const ui = UI[cid];
+  if (a.client?.internal) return { v: `<span>Internal</span>`, s: "The PEO's own people. No client is involved." };
+  if (ui.clientName[a.id]) return { v: `<span>Named by you</span><button class="back" data-act="unname" data-cid="${cid}" data-id="${a.id}" title="Go back to the record's read" aria-label="Go back to the record's read">↺</button>`, s: `On ${TODAY_MD}. The record has not named a client yet.` };
+  const c = a.client;
+  const label = c.sure === "sure" ? "Sure" : c.sure === "likely" ? "Likely" : "Not enough to be sure";
+  const k = clientNeedEv(a);
+  return { v: `<button class="sbtn" data-ev="${k}">${bigdots(c.sure)}${label}</button>`, s: `<button class="sbtn soft" data-ev="${k}">${esc(srcWords(c.ev.k))}</button>` };
+}
+function peopleInfo(a) {
+  const ppl = a.people || [];
+  return { v: `<button class="multi ${a.multi}" data-act="toast" data-msg="Opens who is in the deal, from the record.">MULTI</button><span>${ppl.length} ${plural(ppl.length, "person", "people")}</span>`, s: esc(ppl.join(", ")) };
+}
+const partnerInfo = (a) => ({ v: `<button class="sbtn" data-act="toast" data-msg="${a.briefed ? "Partner briefed. Click to change it by hand." : "Partner not briefed yet. Click to set it by hand."}"><span class="dot ${a.briefed ? "on" : "off"}"></span>${a.briefed ? "Briefed" : "Not briefed yet"}</button>`, s: "" });
+function researchInfo(a) {
+  const never = a.research === "NEVER";
+  const k = ev({ k: never ? "RESEARCH · NEVER RUN" : `RESEARCH · LAST RUN ${a.research}`, n: never ? `No research pass has run on ${a.name} yet.` : `What changed: ${a.rnote || "nothing new since the pass before."}` });
+  return { v: `<button class="sbtn${never ? " unk" : ""}" data-ev="${k}">${never ? "Never run" : `Last run ${a.research}`}</button>`, s: `<button class="runBtn" data-act="toast" data-msg="Runs the deep research pass on ${esc(a.name)}.">⟳ ${never ? "Run it now" : "Run it again"}</button>` };
+}
+function stageInfo(a) {
+  const m = /STAGE (\d+) OF (\d+) · (.+)/.exec(a.meter.label);
+  const v = m ? `${m[1]} of ${m[2]} · ${cap1(m[3].toLowerCase())}` : cap1(a.meter.label.toLowerCase());
+  const pct = Math.round(Math.max(0.04, a.meter.frac) * 100);
+  return { v: `<button class="sbtn" data-act="toast" data-msg="Opens this stage's checklist and why card.">${esc(v)}</button>`, s: `<span class="mm" aria-hidden="true"><i style="width:${pct}%"></i><b class="${a.meter.cap}" style="left:calc(${pct}% - 2px)"></b></span>` };
+}
+const sfInfo = (a) => ({ v: `<button class="sfBtn" data-act="toast" data-msg="Opens ${esc(a.name)} in Salesforce.">${ICON.cloud}Open the record</button>`, s: "" });
+function filesInfo(cid, a) {
+  const sent = sentFiles(cid, a);
+  const open = UI[cid].filesOpen.has(a.id);
+  return { v: `<button class="sbtn${sent.length ? "" : " unk"}" data-act="files" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${sent.length ? `${sent.length} sent · last ${sent[0].day}` : "Nothing sent yet"}</button>`, s: a.outcome ? "" : `<button class="sendf" data-act="pick" data-cid="${cid}" data-id="${a.id}" aria-expanded="${UI[cid].pickOpen.has(a.id)}">${ICON.clip}Send files</button>` };
+}
+function mailInfo(cid, a) {
+  const m = a.email;
+  if (!m) return { v: `<span class="ss">No email on file yet.</span>`, s: "" };
+  return { v: `<button class="sbtn" data-act="fmore" data-cid="${cid}" data-id="${a.id}">${esc(m.subj)}</button>`, s: `${esc(m.from)} → ${esc(m.to)} · ${esc(m.day)}` };
+}
+const pasteBtn = (cid, a) => `<button class="pasteBtn" data-act="zap" data-cid="${cid}" data-id="${a.id}" title="Paste an email, notes or a capture. It files to ${esc(a.name)}.">⚡ Paste</button>`;
+// The confirmed fact from the Salesforce export, said as a sentence.
+function theirsBig(cid, a) {
+  if (!a.theirsText) return "";
+  const open = UI[cid].theirs.has(a.id);
+  return `<p class="tb"><span class="sk">From Salesforce</span><button data-act="theirs" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${esc(a.theirsText)}</button></p>${open ? `<div class="theirsFold"><div class="t">CONFIRMED IN YOUR SALESFORCE EXPORT</div><b>${esc(a.theirs.act)}</b><div>${esc(a.theirs.why)}</div></div>` : ""}`;
+}
+// Facts set by hand show under the sentence, each with its ↺; the client's
+// shows in its own place instead.
+function handLine(cid, a) {
+  const ui = UI[cid];
+  const back = (act) => `<button data-act="${act}" data-cid="${cid}" data-id="${a.id}" title="Go back to the record's read" aria-label="Go back to the record's read">↺</button>`;
+  const out = [];
+  if (ui.chair[a.id] != null) out.push(`<span class="src hand">RESELLER OR REFERRAL SET BY YOU · ${TODAY_MD}${back("unchair")}</span>`);
+  const added = ui.addC[a.id] ?? [];
+  if (added.length) out.push(`<span class="src hand">${esc(added.map((c) => COUNTRY[c]).join(", ").toUpperCase())} ADDED BY YOU · ${TODAY_MD}${back("unaddc")}</span>`);
+  return out.length ? `<div class="handLine">${out.join("")}</div>` : "";
+}
+const bigMove = (cid, a) => {
+  if (a.outcome) return `<span class="lbl">Closed won</span><p class="bigmove" style="font-weight:400;color:var(--soft)">Closed by your call. The record keeps everything.</p>`;
+  if (UI[cid].askWon === a.id) return `<span class="lbl">Mark it closed won</span><p class="bigmove">Your call: stamp the meter, or keep working it.</p>`;
+  return `<span class="lbl">Next move</span><p class="bigmove">${esc(a.move.a)} <span class="r">${esc(a.move.r)}</span></p>`;
+};
+const morePanel = (cid, a) => `<div class="fopen onWhite"><div class="pmeta">${a.outcome ? "" : addCountry(cid, a, "quiet")}</div><div style="min-width:0">${emailPane(cid, a)}</div><div class="rcol">${drop(cid, a)}<div>${earlier(cid, a)}</div></div>${meter(a)}</div>`;
+const moreToggle = (cid, a, label) => { const open = UI[cid].fOpen.has(a.id); return `<button class="open" style="margin:0" data-act="fmore" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}">${open ? "Less ▴" : label || "More ▾"}</button>`; };
+const cell = (label, info, cls = "sc") => `<div class="${cls}"><span class="sk">${label}</span><span class="sv">${info.v}</span>${info.s ? `<span class="ss">${info.s}</span>` : ""}</div>`;
+
+// Every row rests as its sentence alone; the caret opens the rest.
+const SHORT_P = { eor: "EOR", gp: "Payroll", cm: "Contractors", cor: "COR", tal: "Talent" };
+const caretBtn = (cid, a) => { const open = UI[cid].rowOpen.has(a.id); return `<button class="caret" data-act="rowopen" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}" title="${open ? "Collapse this deal" : "Open this deal"}" aria-label="${open ? "Collapse this deal" : "Open this deal"}">${open ? "▾" : "▸"}</button>`; };
+function shortTokens(cid, a) {
+  const v = chairValue(cid, a);
+  const internal = a.client?.internal;
+  const chairLabel = v === "resale" ? (a.outcome ? "resells" : "resells") : v === "referral" ? "refers" : "resell or refer?";
+  const chair = chairTok(cid, a, chairLabel);
+  const lit = litNames(a);
+  const prods = lit.length ? andList(lit.map((p) => `<button class="tok prodT" data-ev="${needEv(a, p)}">${ICON[p.k]}${SHORT_P[p.k]}</button>`)) : `<span class="tok unk">nothing named</span>`;
+  const hand = UI[cid].clientName[a.id];
+  const name = hand || a.client?.name;
+  const client = internal ? `<span class="tok">internal use</span>`
+    : name ? `<button class="tok cliT${hand ? " hand" : ""}${fl(cid, a.id, "client")}" data-ev="${hand ? ev({ k: `SET BY YOU · ${TODAY_MD}`, n: "You named this client by hand." }) : clientNeedEv(a)}">${esc(name)}</button>`
+    : UI[cid].naming === a.id ? `<input class="nameIn" data-name="${cid}:${a.id}" placeholder="Type the client's name, then Enter" aria-label="Client's name" />`
+    : `<button class="tok unk${fl(cid, a.id, "client")}" data-act="name" data-cid="${cid}" data-id="${a.id}">client not named ▾</button>`;
+  const ctry = countryList(cid, a).map((x) => { const hs = headsIn(a, x.c); const n = hs.length ? hs.map((h) => `${h.about ? "about " : ""}${h.n}`).join(" + ") : "no count"; return `<button class="tok ctryT${hs.length ? "" : " quietc"}" data-ctok="${x.c}" data-ev="${ctryEv(cid, a, x)}">${flag(x.c, 22)}${esc(SHORT[x.c])} · ${n}</button>`; }).join(" ");
+  const u = urgency(a);
+  const date = a.outcome ? "" : !a.date ? `<span class="tok quiet">no date</span>` : u.asap ? `<button class="tok dateT warm" data-ev="${dateEv(a, u)}">ASAP</button>` : `<button class="tok dateT ${u.tone}${fl(cid, a.id, "date")}" data-ev="${dateEv(a, u)}">${monDay(a.date.iso)} · ${u.count.toLowerCase()}</button>`;
+  return { chair, prods, client, ctry: ctry || `<span class="tok quiet">no country</span>`, date, internal };
+}
+function sentLine(cid, a) {
+  const menuOpen = UI[cid].chairMenu === a.id || UI[cid].naming === a.id;
+  if (cid.startsWith("F1")) return `<div class="fline">${caretBtn(cid, a)}<p class="fsent one${menuOpen ? " lift" : ""}">${sentence(cid, a)}</p></div>`;
+  const t = shortTokens(cid, a);
+  if (cid === "F11") {
+    const mid = t.internal ? `wants ${t.prods} for ${t.client}` : `${t.chair} ${t.prods} to ${t.client}`;
+    return `<div class="fline">${caretBtn(cid, a)}<p class="fsent one short${menuOpen ? " lift" : ""}">${nameLink(a)} ${mid}<span class="sep">·</span>${t.ctry}${t.date ? `<span class="sep">·</span>${t.date}` : ""}</p></div>`;
+  }
+  return `<div class="cols${menuOpen ? " lift" : ""}">${caretBtn(cid, a)}<span class="cc cn">${nameLink(a)}</span><span class="cc">${t.internal ? `<span class="tok">internal</span>` : t.chair}</span><span class="cc">${t.prods}</span><span class="cc">${t.client}</span><span class="cc">${t.ctry}</span><span class="cc">${t.date}</span></div>`;
+}
+const shutRow = (cid, a) => `<article class="frow shut ${a.group}" data-cs="${csOf(cid, a)}">${sentLine(cid, a)}</article>`;
+
+// ── F7: one row of labeled cells, then the next move ───────────────────
+function row7(cid, a, o = {}) {
+  if (!UI[cid].rowOpen.has(a.id)) return shutRow(cid, a);
+  const open = UI[cid].fOpen.has(a.id);
+  const m = a.email;
+  return `<article class="frow ${a.group}" data-cs="${csOf(cid, a)}">
+    ${sentLine(cid, a)}${handLine(cid, a)}
+    <div class="srow">${cell(a.client?.internal ? "Internal" : "The client", clientInfo(cid, a))}${cell("People in the deal", peopleInfo(a))}${cell("Partner", partnerInfo(a))}${cell("Research", researchInfo(a))}${cell("Stage", stageInfo(a))}${cell("Salesforce", sfInfo(a))}</div>
+    <div class="arow"><div class="amove">${bigMove(cid, a)}${theirsBig(cid, a)}</div><div class="aacts">${moveActs(cid, a, o.top)}${filesHead(cid, a)}${pasteBtn(cid, a)}${hovs(cid, a)}</div></div>
+    ${filesPanes(cid, a)}
+    <div class="teaser">${moreToggle(cid, a)}${m && !open ? `<span class="mailWho">Latest email · ${esc(m.from)} → ${esc(m.to)} · ${esc(m.day)} · ${esc(m.subj)}</span>` : ""}</div>
+    ${open ? morePanel(cid, a) : ""}
+  </article>`;
+}
+// ── F8: each piece of information as a tile ────────────────────────────
+function row8(cid, a, o = {}) {
+  if (!UI[cid].rowOpen.has(a.id)) return shutRow(cid, a);
+  const open = UI[cid].fOpen.has(a.id);
+  const tile = (icon, label, info) => `<div class="tile"><span class="th">${icon}<span class="sk">${label}</span></span><span class="sv">${info.v}</span>${info.s ? `<span class="ss">${info.s}</span>` : ""}</div>`;
+  return `<article class="frow ${a.group}" data-cs="${csOf(cid, a)}">
+    ${sentLine(cid, a)}${handLine(cid, a)}
+    <div class="tiles">
+      <div class="tile tmove"><span class="tr">${hovs(cid, a)}</span>${bigMove(cid, a)}${theirsBig(cid, a)}<span class="acts">${moveActs(cid, a, o.top)}${pasteBtn(cid, a)}</span></div>
+      ${tile(a.client?.internal ? ICON.people : ICON.org, a.client?.internal ? "Internal" : "The client", clientInfo(cid, a))}
+      ${tile(ICON.people, "People in the deal", peopleInfo(a))}
+      ${tile(ICON.check, "Partner", partnerInfo(a))}
+      ${tile(ICON.search, "Research", researchInfo(a))}
+      ${tile(ICON.stage, "Stage", stageInfo(a))}
+      ${tile(ICON.folder, "Files sent", filesInfo(cid, a))}
+      ${tile(ICON.cloud, "Salesforce", sfInfo(a))}
+      ${tile(ICON.mail, "Latest email", mailInfo(cid, a))}
+    </div>
+    ${filesPanes(cid, a)}
+    <div class="teaser">${moreToggle(cid, a, "More ▾ · the whole email, the Drop, EARLIER")}</div>
+    ${open ? morePanel(cid, a) : ""}
+  </article>`;
+}
+// ── F9: the move on the left, the facts on the right ───────────────────
+function row9(cid, a, o = {}) {
+  if (!UI[cid].rowOpen.has(a.id)) return shutRow(cid, a);
+  const open = UI[cid].fOpen.has(a.id);
+  const m = a.email;
+  const fr = (label, info) => `<div class="fr"><span class="sk">${label}</span><span class="frv"><span class="sv">${info.v}</span>${info.s ? `<span class="ss">${info.s}</span>` : ""}</span></div>`;
+  const body = m ? m.body.replace(/^(Hi|Hello|Hey)[^\n]*\n+/i, "").split("\n").filter(Boolean).join(" ") : "";
+  const mail = m ? `<button class="mailCard" data-act="fmore" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}"><span class="sk">Latest email · ${esc(m.from)} → ${esc(m.to)} · ${esc(m.day)}</span><span class="ms">${esc(m.subj)}</span><span class="mb">${esc(body)}</span><span class="open">${open ? "Close ▴" : "Read the whole email ▾"}</span></button>` : "";
+  return `<article class="frow ${a.group}" data-cs="${csOf(cid, a)}">
+    ${sentLine(cid, a)}${handLine(cid, a)}
+    <div class="f9grid">
+      <div class="f9left"><div>${bigMove(cid, a)}${theirsBig(cid, a)}</div><div class="aacts">${moveActs(cid, a, o.top)}${filesHead(cid, a)}${pasteBtn(cid, a)}${hovs(cid, a)}</div>${filesPanes(cid, a)}${mail}</div>
+      <div class="flist2">${fr(a.client?.internal ? "Internal" : "The client", clientInfo(cid, a))}${fr("People", peopleInfo(a))}${fr("Partner", partnerInfo(a))}${fr("Research", researchInfo(a))}${fr("Stage", stageInfo(a))}${fr("Salesforce", sfInfo(a))}</div>
+    </div>
+    ${open ? morePanel(cid, a) : ""}
+  </article>`;
+}
+
+
+// ── The open deal, three ways: the move first, then a thin strip ───────
+const SFLOGO = (cls = "sflogo") => `<svg class="${cls}" viewBox="0 0 40 28" aria-hidden="true"><path d="M10.5 25h20.5a7.6 7.6 0 0 0 .9-15.2A9.6 9.6 0 0 0 13.7 7.2 7.2 7.2 0 0 0 10.5 25z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><text x="20.6" y="19.6" text-anchor="middle" font-family="Public Sans,Arial,sans-serif" font-weight="700" font-size="9.6" fill="currentColor">SF</text></svg>`;
+const sfBtn = (a, label) => `<button class="sfb" data-act="toast" data-msg="Opens ${esc(a.name)} in Salesforce." title="Open ${esc(a.name)} in Salesforce" aria-label="Open ${esc(a.name)} in Salesforce">${SFLOGO()}${label ? `<span>${label}</span>` : ""}</button>`;
+function doneBtn(cid, a) {
+  if (a.outcome) return `<span class="acts"><button class="ghost sm" data-act="toast" data-msg="Retires ${esc(a.name)} from the board.">Retire the row</button><button class="reopen" data-act="toast" data-msg="Reopens the deal. The stamp comes off." title="Reopen the deal" aria-label="Reopen the deal">↺</button></span>`;
+  if (UI[cid].askWon === a.id) return `<span class="acts"><button class="done" data-act="wonyes" data-cid="${cid}" data-id="${a.id}">Confirm Closed Won</button><button class="ghost sm" data-act="wonno" data-cid="${cid}">Not yet</button></span>`;
+  if (isWorked(cid, a)) return `<button class="workedTag" data-act="unwork" data-cid="${cid}" data-id="${a.id}" title="Worked today. Click to take the mark back.">✓ Worked</button>`;
+  return `<button class="done" data-act="done" data-cid="${cid}" data-id="${a.id}">Mark it done ✓</button>`;
+}
+function moveWords(cid, a) {
+  if (a.outcome) return `Closed by your call. <span class="r">The record keeps everything.</span>`;
+  if (UI[cid].askWon === a.id) return `Mark it Closed Won? <span class="r">Your call.</span>`;
+  return `${esc(a.move.a)} <span class="r">${esc(a.move.r)}</span>`;
+}
+const tools = (cid, a) => `<span class="tools">${filesHead(cid, a)}${pasteBtn(cid, a)}${hovs(cid, a)}</span>`;
+function sfFact(cid, a) {
+  if (!a.theirsText) return "";
+  const open = UI[cid].theirs.has(a.id);
+  return `<p class="tb2">${SFLOGO("sflogo sm")}<button data-act="theirs" data-cid="${cid}" data-id="${a.id}" aria-expanded="${open}" title="Confirmed in your Salesforce export">${esc(a.theirsText)}</button></p>${open ? `<div class="theirsFold"><div class="t">CONFIRMED IN YOUR SALESFORCE EXPORT</div><b>${esc(a.theirs.act)}</b><div>${esc(a.theirs.why)}</div></div>` : ""}`;
+}
+// The six facts, small enough to sit in one thin line.
+function stripParts(cid, a, withLabels) {
+  const ui = UI[cid];
+  const L = (t) => (withLabels ? `<span class="sk">${t}</span>` : "");
+  const c = a.client;
+  const client = c?.internal ? `${L("Client")}<span>Internal</span>`
+    : ui.clientName[a.id] ? `${L("Client")}<span>Named by you</span><button class="back" data-act="unname" data-cid="${cid}" data-id="${a.id}" title="Go back to the record's read" aria-label="Go back to the record's read">↺</button>`
+    : `${L("Client")}<button class="sbtn" data-ev="${clientNeedEv(a)}" title="${esc(srcWords(c.ev.k))}">${bigdots(c.sure)}${c.sure === "sure" ? "Sure" : c.sure === "likely" ? "Likely" : "Not sure yet"}</button>`;
+  const ppl = a.people || [];
+  const people = `${L("People")}<button class="multi ${a.multi}" data-act="toast" data-msg="Opens who is in the deal, from the record.">MULTI</button><span>${esc(ppl.join(", "))}</span>`;
+  const partner = `${L("Partner")}<button class="sbtn" data-act="toast" data-msg="${a.briefed ? "Partner briefed. Click to change it by hand." : "Partner not briefed yet. Click to set it by hand."}"><span class="dot ${a.briefed ? "on" : "off"}"></span>${a.briefed ? "Briefed" : "Not briefed"}</button>`;
+  const never = a.research === "NEVER";
+  const rk = ev({ k: never ? "RESEARCH · NEVER RUN" : `RESEARCH · LAST RUN ${a.research}`, n: never ? `No research pass has run on ${a.name} yet.` : `What changed: ${a.rnote || "nothing new since the pass before."}` });
+  const research = `${L("Research")}${withLabels ? "" : ICON.search}<button class="sbtn${never ? " unk" : ""}" data-ev="${rk}">${never ? "Never run" : a.research}</button><button class="runBtn" data-act="toast" data-msg="Runs the deep research pass on ${esc(a.name)}." title="Run the research pass again" aria-label="Run the research pass again">⟳</button>`;
+  const m = /STAGE (\d+) OF (\d+) · (.+)/.exec(a.meter.label);
+  const pct = Math.round(Math.max(0.04, a.meter.frac) * 100);
+  const stage = `${L("Stage")}<button class="sbtn" data-act="toast" data-msg="Opens this stage's checklist and why card.">${m ? `${m[1]} of ${m[2]} · ${cap1(m[3].toLowerCase())}` : cap1(a.meter.label.toLowerCase())}</button><span class="mm sm" aria-hidden="true"><i style="width:${pct}%"></i><b class="${a.meter.cap}" style="left:calc(${pct}% - 2px)"></b></span>`;
+  return { client, people, partner, research, stage };
+}
+const teaser = (cid, a) => { const m = a.email; const open = UI[cid].fOpen.has(a.id); return `<div class="teaser">${moreToggle(cid, a)}${m && !open ? `<span class="mailWho">Latest email · ${esc(m.from)} → ${esc(m.to)} · ${esc(m.day)} · ${esc(m.subj)}</span>` : ""}</div>`; };
+function rowX(cid, a, o = {}) {
+  if (!UI[cid].rowOpen.has(a.id)) return shutRow(cid, a);
+  const open = UI[cid].fOpen.has(a.id);
+  const head = `${sentLine(cid, a)}${handLine(cid, a)}`;
+  const tail = `${filesPanes(cid, a)}${teaser(cid, a)}${open ? morePanel(cid, a) : ""}`;
+  const p = stripParts(cid, a, cid !== "F14");
+  let body;
+  if (cid === "F13") {
+    // F13: the move as a line with its button, the tools at the right, a labeled strip under it.
+    body = `<div class="mv13"><span class="nm13">Next move</span><span class="mt">${moveWords(cid, a)}</span>${doneBtn(cid, a)}${tools(cid, a)}</div>${sfFact(cid, a)}
+      <div class="strip s13">${[p.client, p.people, p.partner, p.research, p.stage].map((x) => `<span class="si">${x}</span>`).join("")}<span class="si">${sfBtn(a, "Open the record")}</span></div>`;
+  } else if (cid === "F14") {
+    // F14: the move inside a white band with a navy edge, then an icon-only strip.
+    body = `<div class="band14"><div class="bm"><span class="nm14">Next move</span><span class="mt">${moveWords(cid, a)}</span>${doneBtn(cid, a)}</div>${tools(cid, a)}</div>${sfFact(cid, a)}
+      <div class="strip s14">${[p.client, p.people, p.partner, p.research, p.stage].map((x) => `<span class="si">${x}</span>`).join("")}<span class="si">${sfBtn(a, "")}</span></div>`;
+  } else {
+    // F15: the move as the headline, the tools on their own line, the strip as the row's foot.
+    body = `<div class="mv15"><span class="nm15">Next move</span><div class="ml"><span class="mt">${moveWords(cid, a)}</span>${doneBtn(cid, a)}</div>${sfFact(cid, a)}<div class="tl">${tools(cid, a)}</div></div>
+      <div class="strip s15"><span class="si">${sfBtn(a, "")}</span>${[p.client, p.people, p.partner, p.research, p.stage].map((x) => `<span class="si">${x}</span>`).join("")}</div>`;
+  }
+  return `<article class="frow isopen ${a.group}" data-cs="${csOf(cid, a)}">${head}<div class="xbody">${body}</div>${tail}</article>`;
+}
+
+// ── Rendering ──────────────────────────────────────────────────────────
+const ROWS = { F13: rowX, F14: rowX, F15: rowX };
+function render(cid) {
+  hidePop();
+  const ui = UI[cid];
+  const idx = countryIndex(cid);
+  const pid = pulseId(cid);
+  const pa = pid ? acct(cid, pid) : null;
+  const pulseC = pa ? countryList(cid, pa)[0]?.c : null;
+  const g = groupsOf(ST[cid]);
+  const pass = (a) => !ui.fCountry || countryList(cid, a).some((x) => x.c === ui.fCountry);
+  const top = topId(cid);
+  const row = ROWS[cid];
+  const list = (items, opt) => `<div class="rows">${items.map((a) => row(cid, a, opt ? opt(a) : {})).join("")}</div>`;
+  const live = g.live.slice().sort(byRank).filter(pass);
+  const colHead = cid === "F12" ? `<div class="cols chead"><span></span><span class="cc">PEO</span><span class="cc">Resell or refer</span><span class="cc">What they need</span><span class="cc">The client</span><span class="cc">Where and how many</span><span class="cc">When</span></div>` : "";
+  const low = g.low.filter(pass), closed = g.closed.filter(pass);
+  const inner = mapF(cid, idx, pulseC) + colHead
+    + (live.length ? list(live, (a) => ({ top: a.id === top })) : `<p class="fnote">No live deal names ${esc(COUNTRY[ui.fCountry] || "that country")}.</p>`)
+    + (low.length ? ruleFor(cid, "low", low.length) + list(low) : "")
+    + (closed.length ? ruleFor(cid, "closed", closed.length) + (ui.closedHidden ? "" : list(closed)) : "");
+  $("#host" + cid).innerHTML = frame(cid, inner);
+  fitLines(cid);
+  if (ui.flash.size) setTimeout(() => ui.flash.clear(), 1400);
+}
+const toggle = (set, v) => (set.has(v) ? set.delete(v) : set.add(v));
+const personOf = (a) => (a.email ? (a.email.from === "you" ? a.email.to : a.email.from) : "");
+
+function demo(cid, which) {
+  const ui = UI[cid];
+  if (which === "reset") { ST[cid] = clone(BOOK); UI[cid] = freshUI(); render(cid); toast("Back to where it started."); return; }
+  if (which === "name") {
+    const a = acct(cid, "regis");
+    if (a.client.name) { toast("Regis's client is already named."); return; }
+    a.client = { name: "Bayview Clinics", sure: "likely", need: "4 employees in Puerto Rico before year end.", ev: { k: "EMAIL · 11/3 · LEILANI GONZALEZ", q: "The client is Bayview Clinics. They're thinking four people in San Juan to start." } };
+    a.heads = [{ n: 4, kind: "ee", c: "PR", ev: { q: "four people in San Juan to start" } }];
+    ui.chute.unshift({ who: "Regis HR Group", what: "1 email · 2 facts", day: TODAY_MD, rung: "contact email" });
+    ["client", "where"].forEach((w) => ui.flash.add(`regis:${w}`));
+    ui.flash.add("chute");
+    toast("A drop named Regis's client and the headcount. The sentence shows both now.");
+  }
+  if (which === "date") {
+    const a = acct(cid, "xcel");
+    if (a.date?.iso === "2026-11-10") { toast("XcelHR's date has already moved up."); return; }
+    a.date = { iso: "2026-11-10", what: "Payroll by", ev: { k: "CALL NOTES · 11/3", q: "Northgate wants the first Mexico payroll by November 10 now." } };
+    ui.chute.unshift({ who: "XcelHR", what: "1 call note · 1 fact", day: TODAY_MD, rung: "company domain" });
+    ui.flash.add("xcel:date");
+    ui.flash.add("chute");
+    toast("XcelHR's date is now 7 days out, the nearest on the page, so the pulse moves to Mexico on the map.");
+  }
+  render(cid);
+}
+
+// ── Events ─────────────────────────────────────────────────────────────
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-act]");
+  // A click anywhere else closes an open menu or hover card.
+  for (const cid of CIDS) {
+    const ui = UI[cid];
+    const keepMenu = t && (t.dataset.act === "chairmenu" || t.closest(".menu"));
+    const keepMulti = t && t.dataset.act === "multi";
+    let dirty = false;
+    if (ui.chairMenu && !keepMenu) { ui.chairMenu = null; dirty = true; }
+    if (ui.multi && !keepMulti) { ui.multi = null; dirty = true; }
+    if (dirty && (!t || t.dataset.cid !== cid)) render(cid);
+  }
+  if (!t) return;
+  if (t.tagName === "A") e.preventDefault();
+  const { act, cid, id } = t.dataset;
+  const ui = cid ? UI[cid] : null;
+  const a = cid && id ? acct(cid, id) : null;
+  switch (act) {
+    case "toast": toast(t.dataset.msg); return;
+    case "demo": demo(cid, t.dataset.demo); return;
+    case "shutall": { const anyOpen = ST[cid].some((x) => ui.rowOpen.has(x.id)); if (anyOpen) { ui.rowOpen.clear(); ui.fOpen.clear(); ui.filesOpen.clear(); ui.pickOpen.clear(); } else ST[cid].forEach((x) => ui.rowOpen.add(x.id)); break; }
+    case "rowopen": toggle(ui.rowOpen, id); break;
+    case "closed": ui.closedHidden = !ui.closedHidden; break;
+    case "multi": ui.multi = ui.multi === id ? null : id; break;
+    case "zap": ui.door[id] = "zap"; ui.fOpen.add(id); break;
+    case "door": ui.door[id] = ui.door[id] === t.dataset.door ? null : t.dataset.door; break;
+    case "readfile": {
+      const txt = (ui.text[id] || "").trim();
+      if (!txt) { toast("Type or paste something first."); return; }
+      ui.dropRcpt[id] = ui.door[id] === "zap" ? `1 capture filed · ${TODAY_MD} · read and routed` : `1 note filed · ${TODAY_MD} · typed here`;
+      ui.text[id] = ""; ui.door[id] = null; ui.flash.add(`${id}:rcpt`);
+      toast(`Filed to ${a.name}.`);
+      break;
+    }
+    case "whole": toggle(ui.whole, id); break;
+    case "theirs": toggle(ui.theirs, id); break;
+    case "earlier": toggle(ui.earlier, id); break;
+    case "files": toggle(ui.filesOpen, id); break;
+    case "pick": toggle(ui.pickOpen, id); break;
+    case "send": {
+      const picks = ui.picks[id] ?? [];
+      if (!picks.length) { toast("Tick a file first."); return; }
+      ui.sentNow[id] = [...picks.map((fid) => ({ id: fid, day: TODAY_MD, to: personOf(a), now: true })), ...(ui.sentNow[id] ?? [])];
+      ui.picks[id] = []; ui.pickOpen.delete(id); ui.filesOpen.add(id); ui.flash.add(`${id}:files`);
+      toast(`Downloads an Outlook draft with ${picks.length} ${plural(picks.length, "file", "files")} attached. The folder records what went.`);
+      break;
+    }
+    case "done": ui.worked.add(id); toast("Marked done. ✓ WORKED stays on the deal for today."); break;
+    case "unwork": if (a.worked) a.worked = false; ui.worked.delete(id); toast("The mark is off. The move is back."); break;
+    case "won": ui.askWon = id; break;
+    case "wonno": ui.askWon = null; break;
+    case "wonyes":
+      a.outcome = { status: "won" }; a.group = "closed"; a.meter = { frac: 1, cur: 6, cap: "ok", label: "CLOSED WON" }; ui.askWon = null;
+      toast(`${a.name} is closed won. ↺ on the row takes it back.`);
+      break;
+    case "chairmenu": ui.chairMenu = ui.chairMenu === id ? null : id; break;
+    case "chairset": ui.chair[id] = t.dataset.v; ui.chairMenu = null; ui.flash.add(`${id}:chair`); break;
+    case "unchair": delete ui.chair[id]; ui.chairMenu = null; break;
+    case "name": ui.naming = id; render(cid); requestAnimationFrame(() => $(`[data-name="${cid}:${id}"]`)?.focus()); return;
+    case "unname": delete ui.clientName[id]; break;
+    case "addc": ui.adding = ui.adding === id ? null : id; render(cid); requestAnimationFrame(() => $(`[data-addc="${cid}:${id}"]`)?.focus()); return;
+    case "unaddc": delete ui.addC[id]; break;
+    case "fpin": ui.fCountry = ui.fCountry === t.dataset.c ? null : t.dataset.c; break;
+    case "fall": ui.fCountry = null; break;
+    case "fmore": toggle(ui.fOpen, id); break;
+    default: return;
+  }
+  render(cid);
+});
+document.addEventListener("input", (e) => {
+  const ta = e.target.closest("[data-text]");
+  if (ta) { const [cid, id] = ta.dataset.text.split(":"); UI[cid].text[id] = ta.value; }
+});
+function saveName(el) {
+  const [cid, id] = el.dataset.name.split(":");
+  const ui = UI[cid];
+  if (ui.naming !== id) return;
+  const v = el.value.trim();
+  ui.naming = null;
+  if (v) { ui.clientName[id] = v; ui.flash.add(`${id}:client`); }
+  render(cid);
+}
+document.addEventListener("change", (e) => {
+  const el = e.target;
+  if (el.dataset.addc) {
+    const [cid, id] = el.dataset.addc.split(":");
+    if (!el.value) return;
+    const ui = UI[cid];
+    ui.addC[id] = [...(ui.addC[id] ?? []), el.value];
+    ui.adding = null; ui.flash.add(`${id}:where`);
+    render(cid);
+  } else if (el.dataset.pick) {
+    const [cid, id, fid] = el.dataset.pick.split(":");
+    const ui = UI[cid];
+    const s = new Set(ui.picks[id] ?? []);
+    el.checked ? s.add(fid) : s.delete(fid);
+    ui.picks[id] = [...s];
+    render(cid);
+    requestAnimationFrame(() => $(`[data-pick="${el.dataset.pick}"]`)?.focus());
+  } else if (el.dataset.name) {
+    saveName(el);
+  }
+});
+document.addEventListener("keydown", (e) => {
+  const el = e.target;
+  if (el.dataset?.name) {
+    if (e.key === "Enter") { e.preventDefault(); saveName(el); }
+    if (e.key === "Escape") { const [cid] = el.dataset.name.split(":"); UI[cid].naming = null; render(cid); }
+    return;
+  }
+  if (e.key === "Escape") {
+    for (const cid of CIDS) {
+      const ui = UI[cid];
+      if (ui.chairMenu || ui.multi || ui.adding) { ui.chairMenu = null; ui.multi = null; ui.adding = null; render(cid); }
+    }
+  }
+});
+
+// Evidence on hover or focus, and the map's two-way highlight.
+const pingPins = (host, c) => host && host.querySelectorAll(".pin").forEach((p) => p.classList.toggle("ping", !!c && p.dataset.pin === c));
+const pingRows = (host, c) => host && host.querySelectorAll("[data-cs]").forEach((r) => r.classList.toggle("ping", !!c && r.dataset.cs.split(" ").includes(c)));
+document.addEventListener("pointerover", (e) => {
+  const el = e.target.closest("[data-ev]");
+  if (el) showPop(el, el.dataset.ev);
+  const tok = e.target.closest("[data-ctok]");
+  if (tok) pingPins(tok.closest("[data-host]"), tok.dataset.ctok);
+  const pin = e.target.closest("[data-pin]");
+  if (pin) pingRows(pin.closest("[data-host]"), pin.dataset.pin);
+});
+document.addEventListener("pointerout", (e) => {
+  const el = e.target.closest("[data-ev]");
+  if (el && !el.contains(e.relatedTarget)) hidePop();
+  const tok = e.target.closest("[data-ctok]");
+  if (tok) pingPins(tok.closest("[data-host]"), null);
+  const pin = e.target.closest("[data-pin]");
+  if (pin) pingRows(pin.closest("[data-host]"), null);
+});
+document.addEventListener("focusin", (e) => { const el = e.target.closest("[data-ev]"); if (el) showPop(el, el.dataset.ev); });
+document.addEventListener("focusout", (e) => { if (e.target.closest("[data-ev]")) hidePop(); });
+addEventListener("scroll", hidePop, { passive: true });
+
+// One pulse per page: only the version nearest the middle of the screen runs it.
+function markLive() {
+  const mid = window.innerHeight / 2;
+  let best = null, bestD = Infinity;
+  for (const s of $$("section.concept[data-cid]")) {
+    const r = s.getBoundingClientRect();
+    const d = r.top <= mid && r.bottom >= mid ? 0 : Math.min(Math.abs(r.top - mid), Math.abs(r.bottom - mid));
+    if (d < bestD) { bestD = d; best = s; }
+  }
+  $$("section.concept[data-cid]").forEach((s) => s.classList.toggle("live", s === best));
+}
+let livePending = false;
+addEventListener("scroll", () => { if (livePending) return; livePending = true; requestAnimationFrame(() => { livePending = false; markLive(); }); }, { passive: true });
+addEventListener("resize", markLive);
+
+
+// ── Every line fits whole: one size per version, the largest that lets the
+// longest line in it fit the width, measured after each render. ─────────
+const FIT = { F13: [19, 10], F14: [19, 10], F15: [19, 10] };
+function fitLines(cid) {
+  const host = $("#host" + cid);
+  if (!host || window.innerWidth < 760) { host && host.style.removeProperty("--one"); host && host.style.removeProperty("--cg"); return; }
+  const [max, min] = FIT[cid];
+  if (cid === "F12") {
+    const rows = [...host.querySelectorAll(".cols")];
+    const avail = rows[0] ? rows[0].clientWidth : 0;
+    for (let px = max; px >= min; px -= 0.5) {
+      host.style.setProperty("--one", px + "px");
+      host.style.setProperty("--cg", "18px repeat(6, max-content)");
+      const widths = [0, 0, 0, 0, 0, 0];
+      for (const r of rows) [...r.querySelectorAll(".cc")].forEach((c, i) => { widths[i] = Math.max(widths[i], Math.ceil(c.scrollWidth) + 2); });
+      const used = 18 + widths.reduce((x, y) => x + y, 0);
+      const gap = Math.max(10, Math.floor((avail - used) / 6));
+      if (used + 6 * 10 <= avail || px === min) {
+        host.style.setProperty("--cgap", Math.min(gap, 40) + "px");
+        host.style.setProperty("--cg", `18px ${widths.map((w) => w + "px").join(" ")}`);
+        return;
+      }
+    }
+    return;
+  }
+  host.classList.remove("wrapall");
+  const lines = [...host.querySelectorAll(".fsent.one:not(.lift)")];
+  for (let px = max; px >= min; px -= 0.5) {
+    host.style.setProperty("--one", px + "px");
+    if (lines.every((l) => l.scrollWidth <= l.clientWidth + 1)) return;
+  }
+  // Too narrow for the whole sentence at a readable size: wrap rather than cut.
+  host.style.setProperty("--one", max - 2 + "px");
+  host.classList.add("wrapall");
+}
+addEventListener("resize", () => CIDS.forEach(fitLines));
+document.fonts && document.fonts.ready.then(() => CIDS.forEach(fitLines));
+
+CIDS.forEach(render);
+markLive();
+</script>
+</body>
+</html>
