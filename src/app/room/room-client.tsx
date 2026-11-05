@@ -78,7 +78,16 @@ import { boardGroup } from "@/lib/room/low-signal";
 import styles from "./room.module.css";
 import { mapIndex, type DeckPerson, type RowFacts } from "@/lib/room/facts";
 import type { Ladders } from "@/lib/room/ladders";
-import { HandLine, LadderBand, PeopleDeck, RoomMap, Sentence } from "./f-face";
+import {
+  HandLine,
+  LadderBand,
+  PeopleDeck,
+  RoomMap,
+  SendFiles,
+  Sentence,
+  SentList,
+} from "./f-face";
+import type { FilesSent } from "@/lib/room/files-sent";
 import f from "./f.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 import { EarlierLine, LatestEmailPane, type RowLatestEmail } from "./email-row";
@@ -147,6 +156,8 @@ export type RoomRow = {
   deck: DeckPerson[];
   /** The partner and client stage ladders (release two of the F26 face). */
   ladders: Ladders;
+  /** The files Send carried, as the app recorded them (release three). */
+  sent: FilesSent[];
   /** Every filing on the account from today, from the record (decreed
    *  2026-10-13): TODAY shows each one's receipt and its ↺ after a reload,
    *  in any tab, from any door (src/lib/ingest/today-filings.ts). */
@@ -1045,6 +1056,7 @@ export function Row({
   // The move's own door: the built line by default, the whole commitment on
   // a click. Nothing deep ever surfaces uninvited.
   const [moveOpen, setMoveOpen] = useState(false);
+  const [filesOpen, setFilesOpen] = useState<"send" | "sent" | null>(null);
   const [research, setResearch] = useState<{ note: string; changed: string[] } | null>(
     null,
   );
@@ -1268,6 +1280,16 @@ export function Row({
               accountId={row.accountId}
               accountName={row.name}
               clientName={row.facts.client.name}
+              clientRead={
+                row.facts.client.sure && !row.facts.client.hand
+                  ? {
+                      sure: row.facts.client.sure,
+                      seen: row.facts.client.seen ?? 1,
+                      day: row.facts.client.day,
+                      line: row.facts.client.line ?? "",
+                    }
+                  : null
+              }
               ladders={row.ladders}
               canWrite={row.canWrite}
             />
@@ -1471,13 +1493,51 @@ export function Row({
                           >
                             {chuteIcon}Chute
                           </button>
+                          <button
+                            type="button"
+                            className={f.eqb}
+                            aria-expanded={filesOpen === "send"}
+                            title={`Send ${row.name} demos, one-pagers or an agreement's review copy`}
+                            onClick={() =>
+                              setFilesOpen((v) => (v === "send" ? null : "send"))
+                            }
+                          >
+                            Send files
+                          </button>
                         </>
+                      )}
+                      {row.sent.length > 0 && (
+                        <button
+                          type="button"
+                          className={f.eqb}
+                          aria-expanded={filesOpen === "sent"}
+                          title="Every file sent from the app, with its day"
+                          onClick={() =>
+                            setFilesOpen((v) => (v === "sent" ? null : "sent"))
+                          }
+                        >
+                          {`${row.sent.length} Sent ${filesOpen === "sent" ? "▾" : "▸"}`}
+                        </button>
                       )}
                     </span>
                   </div>
                 </>
               )}
             </div>
+            {filesOpen === "send" && row.canWrite && (
+              <SendFiles
+                accountId={row.accountId}
+                deck={row.deck}
+                onClose={() => setFilesOpen(null)}
+              />
+            )}
+            {filesOpen === "sent" && (
+              <SentList
+                accountId={row.accountId}
+                sent={row.sent}
+                canWrite={row.canWrite}
+              />
+            )}
             {research && (
               <div className={styles.rsrchOut}>
                 {research.changed.length > 0 ? (
@@ -1494,7 +1554,13 @@ export function Row({
                 )}
               </div>
             )}
-            <PeopleDeck deck={row.deck} tone={row.multiTone} accountName={row.name} />
+            <PeopleDeck
+              deck={row.deck}
+              tone={row.multiTone}
+              accountName={row.name}
+              accountId={row.accountId}
+              canWrite={row.canWrite}
+            />
             <button
               type="button"
               className={f.doorBtn}

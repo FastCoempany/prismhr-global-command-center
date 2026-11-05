@@ -629,8 +629,7 @@ stays Mark it done.
 
 The founder picked F26 of docs/mockups/homeroom-f-decks-2026-11-04.html
 ("lets go with f26", then "ship f26") and chose to ship it in three
-releases. The first two are live; the third brings the new reads and
-records.
+releases. All three are live.
 
 - **The two stage ladders (release two).** An opened row leads with one band:
   the partner ladder on the left, named for the account, with the agreement
@@ -692,7 +691,7 @@ records.
   front person's contact card: full title, email, office phone, mobile,
   location, and how long since they wrote, which opens every exchange the
   record holds with them (one click, so the row keeps its budget), and a LinkedIn
-  mark, struck in red while no profile is on file. MULTI keeps its ladder
+  mark, struck in red while no page is on file. MULTI keeps its ladder
   and, with the count, opens the list of everyone and how often each side
   wrote.
 - **One door: "Latest email and Chute".** It stays where it is and reads
@@ -706,12 +705,42 @@ records.
   line as a line of its own, the stage meter and its checklist drawer (the
   board's checklist lives on the Accounts board), the partner-briefed
   notifier, and the shape and meta chips, which the sentence says in words.
-- **Not yet built, and shown honestly meanwhile:** the client's name, need,
-  confidence and date as read facts, employees counted apart from
-  contractors, Sent and Send files, the files-sent evidence on the agreement
-  meter, LinkedIn profiles and Add a person (the third release). Until then
-  the client reads "a client not named yet" unless the operator names it,
-  counts read as people, and every LinkedIn mark is struck.
+- **The client the read names (release three).** The Chute's model read
+  names, per entry, the partner's client by the name the text gives it,
+  never the partner itself, our own side or a competitor. Each filing that
+  names one writes a clientread:<account> note linked to its filing, so the
+  undo takes it back (src/lib/room/client-read.ts). The sentence and the
+  client ladder read the client the record names most often, newest on a
+  tie; a name the operator set outranks it, and a click on the read's name
+  corrects it by hand. Beside the name on the band a chip says how sure the
+  record is, and opens to the line it stands on: SURE when two or more
+  entries name it and the newest does not hedge, LIKELY when one does,
+  UNSURE when the newest line hedges.
+- **Employees and contractors (release three).** Each count reads what it
+  counts from the line it stands on, the words just after the figure first,
+  then a line that names only one kind; the sentence and the map say
+  employees or contractors, and people when the line does not say or the
+  kinds are mixed.
+- **Send files and Sent (release three).** The move row carries Send files,
+  and, once anything has gone, "N Sent", at the Chute's size. Send files opens
+  a short form: the deck's people with an email, a subject, a line to go with
+  the files, and the Groundwork letter's catalog by group; it downloads an
+  Outlook draft built in the browser and records the send once the draft is
+  in hand, one filessent:<account> note per send (src/lib/room/files-sent.ts).
+  The Groundwork letter's Send records its files the same way. "N Sent" opens
+  every send with its day, each with ↺. A reseller or referral agreement's
+  review copy sent this way is the agreement going out: the partner ladder
+  reads reviewing and the meter's first dot, on that day.
+- **LinkedIn and Add a person (release three).** The LinkedIn mark opens the
+  person's page: one the operator set, else the lead link a Sales Navigator
+  alert carried (personLinks, src/lib/groundwork/spine.ts). While none is on
+  file the struck mark takes a pasted LinkedIn profile or Sales Navigator
+  lead, and ↺ takes back a page the operator set. "＋ Add a person" under the
+  deck adds someone the record has not named, with whatever the operator
+  has; they join the deck after the record's people, marked ADDED BY YOU
+  with ✕, and the record outranks them the moment it names them (the Ted
+  doctrine). Both live in one people:<account> note, newest wins
+  (src/lib/room/people-store.ts).
 
 ## The Ted doctrine (founder-decreed 2026-08-14)
 

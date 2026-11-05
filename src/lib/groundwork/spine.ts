@@ -549,3 +549,29 @@ export function splitPayload(payload: string): {
     body: (hasHead ? t.slice(gap + 2) : t).trim(),
   };
 }
+
+/** The LinkedIn page each person on an account has, from the Sales Navigator
+ *  links the alert emails filed (the HomeRoom's contact card, the F26 face's
+ *  third release). Only a lead's own page counts, never a search or the
+ *  company's page; the newest link for a person wins. Keyed by personKey. */
+export function personLinks(notes: readonly NoteLike[]): Map<string, string> {
+  const out = new Map<string, { href: string; at: string }>();
+  for (const n of notes) {
+    if (!isSalesNav(n.source)) continue;
+    if (grabKind(n.body) !== "alerts") continue;
+    const { head, rows } = rowsOf(n.body);
+    for (const row of rows) {
+      const lead = linesOf(row)
+        .map(readLinkLine)
+        .find((l) => l !== null && /\/sales\/(?:lead|people)\//.test(l.href));
+      if (!lead) continue;
+      const [person] = parseAlerts(`${head}\n\n${row}`, n.createdAt);
+      const key = person ? personKey(person.name) : "";
+      if (!key) continue;
+      const had = out.get(key);
+      if (!had || n.createdAt > had.at)
+        out.set(key, { href: lead.href, at: n.createdAt });
+    }
+  }
+  return new Map([...out].map(([k, v]) => [k, v.href]));
+}

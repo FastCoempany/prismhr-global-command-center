@@ -71,6 +71,10 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { emailRow } from "@/lib/room/email-row";
 import { FACTS_NS, buildDeck, buildRowFacts, handFactsFrom } from "@/lib/room/facts";
+import { NO_PEOPLE, PEOPLE_NS, peopleFrom } from "@/lib/room/people-store";
+import { FILES_NS, agreementSends, filesSentFrom } from "@/lib/room/files-sent";
+import { CLIENT_READ_NS, readClient } from "@/lib/room/client-read";
+import { personLinks } from "@/lib/groundwork/spine";
 import { readLadders } from "@/lib/room/ladders";
 import { DEMO_HELD_RE } from "@/lib/pipeline/collect";
 import { wholeEmailsFor } from "@/lib/notes/email-text";
@@ -312,12 +316,32 @@ export default async function RoomPage() {
       intel,
       docs,
       hand,
+      readClient: accountId
+        ? readClient(
+            (notesById.get(`${CLIENT_READ_NS}${accountId}`) ?? []).map((n) => ({
+              body: n.body ?? "",
+              createdAt: n.createdAt,
+            })),
+            acct.hidden,
+          )
+        : null,
       todayMd: mmddChicago(now.toISOString()),
     });
     // The two stage ladders (the F26 face, release two): read from the
     // record, the board's stamp and a demo held, the hand on top.
     const stamped = card ? readOutcome(card.notes) : null;
-    const demoNote = rawNotes.find((n) => DEMO_HELD_RE.test(n.body ?? ""));
+    // The files Send carried, as the app recorded them (release three).
+    const sent = accountId
+      ? filesSentFrom(
+          (notesById.get(`${FILES_NS}${accountId}`) ?? []).map((n) => ({
+            id: n.id,
+            body: n.body ?? "",
+            createdAt: n.createdAt,
+          })),
+        )
+      : [];
+    // Only a visible note: hiding a misfiled one takes its demo back too.
+    const demoNote = allNotes.find((n) => DEMO_HELD_RE.test(n.body ?? ""));
     const ladders = readLadders({
       docs,
       facts,
@@ -330,6 +354,7 @@ export default async function RoomPage() {
         : card?.states?.demo === "done"
           ? { at: now.toISOString(), line: "The demo is done on the board." }
           : null,
+      agreementFiles: agreementSends(sent),
       hand: {
         partner: hand.partner,
         client: hand.stage,
@@ -337,10 +362,24 @@ export default async function RoomPage() {
         clientDay: hand.day.stage,
       },
     });
+    // Release three: people the operator added by hand, and LinkedIn pages
+    // (the hand's first, then a Sales Navigator alert's lead link).
+    const handPeople = accountId
+      ? peopleFrom(notesById.get(`${PEOPLE_NS}${accountId}`))
+      : NO_PEOPLE;
     const deck = buildDeck({
       people: acct.people,
       contacts: accountId ? contactsFor(accountId) : [],
       docs,
+      added: handPeople.added,
+      links: handPeople.links,
+      salesNav: personLinks(
+        rawNotes.map((n) => ({
+          body: n.body ?? "",
+          source: n.source ?? "",
+          createdAt: n.createdAt,
+        })),
+      ),
     });
     // MULTI reads the widest count the app holds: filed actors AND the
     // digest's thread roster — a record-quiet deal with a known room must
@@ -726,6 +765,7 @@ export default async function RoomPage() {
       facts,
       deck,
       ladders,
+      sent,
       multiTone,
       people: people.map((p) => ({
         name: p.name,

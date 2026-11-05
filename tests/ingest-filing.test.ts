@@ -508,12 +508,12 @@ describe("every row and todo the filing wrote carries its id (P3/P4)", () => {
       );
     assert.match(
       absorbRead,
-      /filingId\?: string,\n\): Promise<\{/,
+      /filingId\?: string,\n(?:\s*\/\/[^\n]*\n)*(?:\s*entryNoteIds\?: [^\n]+\n)?\): Promise<\{/,
       "absorbRead takes the id",
     );
     assert.match(
       roomPaste,
-      /await absorbRead\(read, \{ id: acct\.id, name: acct\.name \}, now, door, filingId\)/,
+      /await absorbRead\(\s*read,\s*\{ id: acct\.id, name: acct\.name \},\s*now,\s*door,\s*filingId,?\s*(?:entryNoteIds,?\s*)?\)/,
     );
     // The writers of the fan-out's namespaces carry the id through.
     for (const f of ["src/lib/room/gaps.ts", "src/lib/playbook/store.ts"]) {

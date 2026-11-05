@@ -16,6 +16,8 @@
 // puts back what the record shows (the facts: store, src/lib/room/facts.ts).
 // Pure: the page hands in the account read's docs and facts.
 
+import { COMMERCIAL_TERMS, PRODUCT_TERMS } from "@/lib/intel/lexicon";
+import { isMeetingNote } from "@/lib/intel/meeting";
 import type { RowFacts } from "@/lib/room/facts";
 
 export const PARTNER_STAGES = [
@@ -172,7 +174,16 @@ const src = (d: Doc): StageSource => ({
 });
 
 // What each step looks like in the record's own words.
-const MEETING_RE = /meeting held|^\s*✔|CALL TRANSCRIPT|☎|\bcall\b/i;
+// A meeting or call that happened: the tape, a held meeting the meeting
+// read accepts (it vetoes a scheduled, upcoming or chased one), or a logged
+// call. An email asking for a call is never a meeting.
+const LOGGED_CALL_RE = /^\s*☎/;
+const NOT_HELD_RE =
+  /\b(?:follow[- ]?up|awaiting|(?:re)?schedul\w*|upcoming|prep(?:are|ping)? for)\b/i;
+const isHeld = (d: Doc): boolean =>
+  d.tape ||
+  isMeetingNote({ body: d.text }) ||
+  (LOGGED_CALL_RE.test(head(d.text)) && !NOT_HELD_RE.test(head(d.text)));
 const CALL_ASK_RE =
   /\b(?:(?:set|book|find|grab|schedule|get)\s+(?:up\s+)?(?:a\s+)?(?:time|call|meeting|minutes)|(?:hop|jump|get) on a call|a call (?:this|next) week|walk (?:us|me) through|time to (?:talk|chat|connect))\b/i;
 // The agreement going out, not the agreement mentioned: an intro that names
@@ -184,8 +195,9 @@ const REDLINE_RE =
 const SIGNED_RE =
   /\b(?:signed (?:copy|agreement|contract|version|reseller|referral)|counter-?signed|fully executed|executed (?:agreement|copy|contract)|attached (?:is )?the signed|docusign\b[^.\n]{0,40}\bcompleted)\b/i;
 const ORIENT_RE = /\b(?:orientation|implementation|kick-?off|onboarding)\b/i;
+// Numbers that went out, never a question or a promise about sending them.
 const NUMBERS_RE =
-  /\b(?:quote|pricing|proposal|the numbers|cost (?:breakdown|estimate))\b/i;
+  /\b(?:(?:attached|attaching|enclosed|here(?: is|'s| are)|sending(?: you)?|sent(?: you)?|please (?:see|find))[^.\n?]{0,60}\b(?:quote|pricing|proposal|the numbers|cost (?:breakdown|estimate))|(?:quote|pricing|proposal|cost (?:breakdown|estimate))[^.\n?]{0,30}\b(?:attached|enclosed))\b/i;
 
 export function readLadders(args: {
   docs: readonly Doc[];
@@ -194,6 +206,9 @@ export function readLadders(args: {
   outcome: { status: "won" | "lost"; at: string } | null;
   /** A demo held, on the board or in the record. */
   demoHeld: { at: string; line: string } | null;
+  /** The agreements' review copies the app sent as files (release three):
+   *  each is the agreement going out, with its day. */
+  agreementFiles?: readonly { at: string; line: string }[];
   hand: {
     partner?: PartnerKey;
     client?: ClientKey;
@@ -208,7 +223,15 @@ export function readLadders(args: {
     (d) => d.direction === "in" && !d.senderIsHome && !!d.sender,
   );
   const ours = docs.filter((d) => d.direction === "out" || d.senderIsHome);
-  const meetings = docs.filter((d) => d.tape || MEETING_RE.test(head(d.text)));
+  const meetings = docs.filter(isHeld);
+  // A fact stated on their side: the first of their own messages or held
+  // meetings that says it, never our outbound or the digest's seed. Read
+  // from the documents themselves, because a fact's own source is its
+  // newest mention, which can be our follow-up repeating their words.
+  const theirSide = [...theirs.filter((d) => !d.closer), ...meetings].sort((a, b) =>
+    a.at.localeCompare(b.at),
+  );
+  const firstSaying = (re: RegExp) => theirSide.find((d) => re.test(d.text));
   const first = <T>(xs: T[]): T | undefined => xs[0];
 
   // ── the partner ladder, read from the record ──
@@ -229,22 +252,35 @@ export function readLadders(args: {
   }
   const callAsk = first(theirs.filter((d) => CALL_ASK_RE.test(d.text)));
   // A leaning the record states, not the digest's seed (a seed has no line).
+  const chair = args.facts.chair;
   const chairStated =
-    args.facts.chair.v !== "none" && !args.facts.chair.hand && !!args.facts.chair.line;
-  const needNamed = !!engaged && args.facts.products.length > 0;
-  if (chairStated || callAsk || needNamed) {
+    chair.v !== "none" && !chair.hand
+      ? firstSaying(COMMERCIAL_TERMS[chair.v])
+      : undefined;
+  const theirNeed = args.facts.products
+    .map((p) => firstSaying(PRODUCT_TERMS[p.key]))
+    .filter((d): d is Doc => !!d)
+    .sort((a, b) => a.at.localeCompare(b.at))[0];
+  const warmBy = chairStated ?? callAsk ?? (engaged ? theirNeed : undefined);
+  if (warmBy) {
     recordK = "warm";
-    recordSrc = chairStated
-      ? { kind: "record", day: args.facts.chair.day, line: args.facts.chair.line }
-      : callAsk
-        ? src(callAsk)
-        : {
-            kind: "record",
-            day: args.facts.products[0]!.day,
-            line: args.facts.products[0]!.line,
-          };
+    recordSrc = src(warmBy);
   }
-  const sent = first(ours.filter((d) => AGREEMENT_SENT_RE.test(d.text)));
+  const sentDoc = first(ours.filter((d) => AGREEMENT_SENT_RE.test(d.text)));
+  const sentFile = first(
+    [...(args.agreementFiles ?? [])].sort((a, b) => a.at.localeCompare(b.at)),
+  );
+  // Whichever went out first: a send the record reads, or a review copy the
+  // app recorded leaving with Send files.
+  const sent: { at: string; src: StageSource } | undefined =
+    sentDoc && (!sentFile || sentDoc.at <= sentFile.at)
+      ? { at: sentDoc.at, src: src(sentDoc) }
+      : sentFile
+        ? {
+            at: sentFile.at,
+            src: { kind: "record", day: mmdd(sentFile.at), line: sentFile.line },
+          }
+        : undefined;
   const redline = first(
     theirs.filter((d) => REDLINE_RE.test(d.text) && (!sent || d.at >= sent.at)),
   );
@@ -252,8 +288,8 @@ export function readLadders(args: {
   let agreement: Ladders["agreement"] = { n: 0, src: null };
   if (sent) {
     recordK = "review";
-    recordSrc = src(sent);
-    agreement = { n: 1, src: src(sent) };
+    recordSrc = sent.src;
+    agreement = { n: 1, src: sent.src };
   }
   if (redline) agreement = { n: 2, src: src(redline) };
   let signedAt = "";

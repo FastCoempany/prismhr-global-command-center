@@ -21,6 +21,15 @@ import {
   type HandFacts,
 } from "@/lib/room/facts";
 import {
+  HAND_PEOPLE_CAP,
+  PEOPLE_NS,
+  applyPeopleChange,
+  nameKey,
+  parsePeople,
+  renderPeople,
+  type PeopleChange,
+} from "@/lib/room/people-store";
+import {
   isClientKey,
   isPartnerKey,
   type ClientKey,
@@ -152,6 +161,57 @@ export async function setRowFact(
         door: "hand",
         lane: "mine",
         source: "facts",
+      });
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "That didn't save. Try again." };
+  }
+}
+
+/** Add a person to the deal by hand, take one back, or set their LinkedIn
+ *  page (the F26 face, release three). One people:<accountId> note per
+ *  account, newest wins (src/lib/room/people-store.ts). */
+export async function setRowPeople(
+  accountId: string,
+  change: PeopleChange,
+): Promise<{ ok: boolean; reason?: string }> {
+  const acct = bindAccountId(accountId, peos);
+  if (!acct) return { ok: false, reason: "Not a bound row." };
+  if (!hasDatabaseEnv()) return { ok: false, reason: "Read-only session." };
+  const access = await getAppAccess();
+  if (access.status !== "active" || !access.canWrite)
+    return { ok: false, reason: "Read-only session." };
+  const ns = `${PEOPLE_NS}${acct.id}`;
+  try {
+    const prisma = getPrisma();
+    const rows = await prisma.accountNote.findMany({
+      where: { accountId: ns },
+      orderBy: { createdAt: "desc" },
+      take: 1,
+      select: { body: true },
+    });
+    const before = parsePeople(rows[0]?.body);
+    if (
+      change.kind === "add" &&
+      before.added.length >= HAND_PEOPLE_CAP &&
+      !before.added.some((a) => nameKey(a.name) === nameKey(change.person.name))
+    )
+      return {
+        ok: false,
+        reason: `${HAND_PEOPLE_CAP} people are already added by hand. Take one off first.`,
+      };
+    const next = applyPeopleChange(before, change);
+    if (next === before)
+      return { ok: false, reason: "That doesn't read as a person or a LinkedIn page." };
+    await prisma.accountNote.deleteMany({ where: { accountId: ns } });
+    if (next.added.length || Object.keys(next.links).length)
+      await createAccountNoteRow({
+        accountId: ns,
+        kind: "mine",
+        body: renderPeople(next),
+        door: "hand",
+        lane: "mine",
+        source: "people",
       });
     return { ok: true };
   } catch {
