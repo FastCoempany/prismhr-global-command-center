@@ -48,7 +48,7 @@ type Second = {
 // A demo that happened, as the record writes it. "Demo scheduled" and "set up
 // a demo" are not a demo held, so the past tense and the held/ran forms are
 // what count.
-const DEMO_HELD_RE =
+export const DEMO_HELD_RE =
   /\b(?:demo(?:ed|ed to)?\b[^.\n]{0,40}\b(?:held|ran|done|complete[d]?)|(?:held|ran|did|gave|walked (?:them )?through)\s+(?:a|the)\s+demo|demo\s+(?:held|complete[d]?|recap)|on the demo\b|during the demo\b|post-demo\b)/i;
 
 type CollectInput = {

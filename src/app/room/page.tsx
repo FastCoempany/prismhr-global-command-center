@@ -71,6 +71,8 @@ import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { emailRow } from "@/lib/room/email-row";
 import { FACTS_NS, buildDeck, buildRowFacts, handFactsFrom } from "@/lib/room/facts";
+import { readLadders } from "@/lib/room/ladders";
+import { DEMO_HELD_RE } from "@/lib/pipeline/collect";
 import { wholeEmailsFor } from "@/lib/notes/email-text";
 import { settledByRecord } from "@/lib/room/settled";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
@@ -303,13 +305,37 @@ export default async function RoomPage() {
     // facts with the line each stands on, the operator's own hand on top,
     // and the people joined to the book's contact card with every exchange
     // the record holds with each.
+    const hand = accountId
+      ? handFactsFrom(notesById.get(`${FACTS_NS}${accountId}`))
+      : handFactsFrom([]);
     const facts = buildRowFacts({
       intel,
       docs,
-      hand: accountId
-        ? handFactsFrom(notesById.get(`${FACTS_NS}${accountId}`))
-        : handFactsFrom([]),
+      hand,
       todayMd: mmddChicago(now.toISOString()),
+    });
+    // The two stage ladders (the F26 face, release two): read from the
+    // record, the board's stamp and a demo held, the hand on top.
+    const stamped = card ? readOutcome(card.notes) : null;
+    const demoNote = rawNotes.find((n) => DEMO_HELD_RE.test(n.body ?? ""));
+    const ladders = readLadders({
+      docs,
+      facts,
+      outcome: stamped ? { status: stamped.status, at: stamped.at } : null,
+      demoHeld: demoNote
+        ? {
+            at: demoNote.createdAt,
+            line: (demoNote.body ?? "").split("\n")[0]!.slice(0, 160),
+          }
+        : card?.states?.demo === "done"
+          ? { at: now.toISOString(), line: "The demo is done on the board." }
+          : null,
+      hand: {
+        partner: hand.partner,
+        client: hand.stage,
+        partnerDay: hand.day.partner,
+        clientDay: hand.day.stage,
+      },
     });
     const deck = buildDeck({
       people: acct.people,
@@ -699,6 +725,7 @@ export default async function RoomPage() {
       identity,
       facts,
       deck,
+      ladders,
       multiTone,
       people: people.map((p) => ({
         name: p.name,

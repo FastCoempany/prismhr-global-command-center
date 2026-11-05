@@ -72,6 +72,22 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
       ],
     },
   ],
+  ladders: {
+    partner: {
+      k: "warm",
+      recordK: "warm",
+      hand: false,
+      src: { kind: "record", day: "9/25", line: "✉ We'd resell it under our name." },
+    },
+    client: {
+      k: "scoped",
+      recordK: "scoped",
+      hand: false,
+      src: { kind: "record", day: "9/25", line: "✉ They start by December 1." },
+    },
+    agreement: { n: 0, src: null },
+    passed: false,
+  },
   multiTone: "y",
   people: [{ name: "Chassie Smith", line: "VP Operations · 2 threads" }],
   briefed: false,
