@@ -1,11 +1,10 @@
 // The email in the HomeRoom row in a real browser (ship order 2026-10-20;
-// CLAUDE.md, The email in the row; docs/mockups/homeroom-email-row-2026-10-20
-// .html, Concept A): the newest email whole under the meter, never taller
-// than the right panel, one door to the rest; EARLIER's lines read who, when
+// CLAUDE.md, The email in the row). The F26 face (ship order 2026-11-04)
+// moved it behind the row's one door, "Latest email and Chute": opened, the
+// newest email shows whole beside the Chute; EARLIER's lines read who, when
 // and the subject, one open at a time, each opening in place to what the
 // record history holds; the +N door; the line for an email filed before the
-// store; and no orange anywhere in the email, because the one move is Mark
-// it done.
+// store; and no orange anywhere in the email.
 
 import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -24,16 +23,25 @@ after(async () => {
   await browser?.close();
 });
 
-const open = () => mount(browser, FIX, { returns: { chuteBook: [] } });
-const firstRow = (page: Page) => page.locator($("row")).first();
-const bottom = async (page: Page, sel: string) => {
-  const b = await firstRow(page).locator(sel).first().boundingBox();
-  assert.ok(b, `${sel} has no box`);
-  return b.y + b.height;
+const F = (n: string) => cls("f.module.css", n);
+/** Open row `i` and its "Latest email and Chute" door. */
+const openPanel = async (page: Page, i: number) => {
+  const row = page.locator($("row")).nth(i);
+  if ((await row.locator(F("body")).getAttribute("hidden")) !== null)
+    await row.locator(F("caret")).click();
+  const door = row.locator(F("doorBtn"));
+  if ((await door.getAttribute("aria-expanded")) !== "true") await door.click();
+  return row;
 };
+const open = async (viewport?: { width: number; height: number }) => {
+  const page = await mount(browser, FIX, { returns: { chuteBook: [] }, viewport });
+  await openPanel(page, 0);
+  return page;
+};
+const firstRow = (page: Page) => page.locator($("row")).first();
 
-describe("the latest email: whole under the meter, never taller than the right panel", () => {
-  test("it arrives under the meter with who, when and the subject, in mono and the work's face", async () => {
+describe("the latest email: whole beside the Chute, behind the row's one door", () => {
+  test("it opens with who, when and the subject, in mono and the work's face, left of the Chute", async () => {
     const page = await open();
     const mail = firstRow(page).locator($("mail"));
     assert.match(await mail.innerText(), /LATEST EMAIL/);
@@ -49,45 +57,24 @@ describe("the latest email: whole under the meter, never taller than the right p
       await mail.locator($("mailWho")).evaluate((el) => getComputedStyle(el).fontFamily),
       /JetBrains Mono/,
     );
-    const meter = await bottom(page, $("climb"));
-    const top = (await mail.boundingBox())!.y;
-    assert.ok(top > meter, "the email sits under the meter");
+    const m = (await mail.boundingBox())!;
+    const chute = (await firstRow(page).locator(F("panelR")).boundingBox())!;
+    assert.ok(m.x + m.width <= chute.x + 1, "the email sits left of the Chute");
     await page.close();
   });
 
-  test("past the panel's height it fades, and the door opens the rest", async () => {
+  test("opened, the email shows whole, with no door to the rest", async () => {
     const page = await open();
-    const door = firstRow(page).getByRole("button", { name: "Show the whole email" });
-    assert.equal(await door.count(), 1, "a long email has its door");
-    // At rest the panel is short, and the email still shows a few lines.
-    const rest = await firstRow(page).locator($("mailCapped")).boundingBox();
-    assert.ok(rest && rest.height >= 119, "the email shows fewer than a few lines");
-    // Opened, the panel grows, and the email grows to meet it and no further.
-    await firstRow(page)
-      .getByRole("button", { name: /EARLIER/ })
-      .click();
-    await page.waitForTimeout(100);
-    const capped = await bottom(page, $("mailCapped"));
-    const panel = await bottom(page, $("rec"));
-    assert.ok(capped <= panel + 2, "the capped email runs past the right panel");
-    assert.ok(capped > panel - 60, "the email stops short of the panel it can fill");
-    const full = firstRow(page).locator($("mailBody"));
-    assert.ok(
-      await full.evaluate(
-        (el) => el.parentElement!.scrollHeight > el.parentElement!.clientHeight,
-      ),
-      "nothing is held back",
-    );
-    await door.click();
     assert.equal(
-      await firstRow(page).getByRole("button", { name: "Show less" }).count(),
-      1,
+      await firstRow(page).getByRole("button", { name: "Show the whole email" }).count(),
+      0,
     );
+    const full = firstRow(page).locator($("mailBody"));
     assert.ok(
       await full.evaluate(
         (el) => el.parentElement!.scrollHeight <= el.parentElement!.clientHeight + 1,
       ),
-      "the door left part of the email behind",
+      "part of the email is held back",
     );
     assert.match(
       await full.innerText(),
@@ -98,7 +85,7 @@ describe("the latest email: whole under the meter, never taller than the right p
 
   test("an email that fits shows whole with no door, and the old one says why it is the synopsis", async () => {
     const page = await open();
-    const old = page.locator($("row")).nth(1).locator($("mail"));
+    const old = (await openPanel(page, 1)).locator($("mail"));
     assert.equal(
       await old.getByRole("button", { name: "Show the whole email" }).count(),
       0,
@@ -116,10 +103,7 @@ describe("the latest email: whole under the meter, never taller than the right p
   });
 
   test("on a phone the column stacks and the email is never capped", async () => {
-    const page = await mount(browser, FIX, {
-      returns: { chuteBook: [] },
-      viewport: { width: 390, height: 900 },
-    });
+    const page = await open({ width: 390, height: 900 });
     assert.equal(
       await firstRow(page).getByRole("button", { name: "Show the whole email" }).count(),
       0,
@@ -127,34 +111,11 @@ describe("the latest email: whole under the meter, never taller than the right p
     await page.close();
   });
 
-  test("a drawer that closes above the email gives it its room back", async () => {
-    const page = await open();
-    await firstRow(page)
-      .getByRole("button", { name: /EARLIER/ })
-      .click();
-    await page.waitForTimeout(100);
-    const cap = () =>
-      firstRow(page)
-        .locator($("mailCapped"))
-        .evaluate((el) => (el as HTMLElement).getBoundingClientRect().height);
-    const before = await cap();
-    await firstRow(page).getByTitle("First meeting. Open its checklist.").click();
-    await page.waitForTimeout(100);
-    assert.ok((await cap()) < before - 20, "the drawer did not take room from the email");
-    await firstRow(page).locator($("sdClose")).click();
-    await page.waitForTimeout(150);
-    assert.ok(Math.abs((await cap()) - before) <= 2, "the email stayed cut short");
-    await page.close();
-  });
-
   test("a long address in the who line wraps inside its column at phone width", async () => {
-    const page = await mount(browser, FIX, {
-      returns: { chuteBook: [] },
-      viewport: { width: 390, height: 900 },
-    });
-    const who = page.locator($("row")).nth(1).locator($("mailWho"));
+    const page = await open({ width: 390, height: 900 });
+    const who = (await openPanel(page, 1)).locator($("mailWho"));
     const fits = await who.evaluate((el) => {
-      const col = el.closest("[class*='deal']")!.getBoundingClientRect();
+      const col = el.closest("[class*='panel']")!.getBoundingClientRect();
       return el.getBoundingClientRect().right <= col.right + 1;
     });
     assert.ok(fits, "the address runs out of the column");
@@ -271,6 +232,7 @@ describe("EARLIER: who, when and the subject, each opening in place", () => {
     const page = await mount(browser, FIX, {
       returns: { chuteBook: [], roomRecordDelete: { ok: true } },
     });
+    await openPanel(page, 0);
     const lines = await earlier(page);
     await lines.nth(0).hover();
     await lines.nth(0).getByTitle("delete from the record").click();

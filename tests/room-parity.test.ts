@@ -1,6 +1,8 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   cadenceRow,
   checkinRow,
@@ -130,7 +132,24 @@ const checkinsEmpty = await render(
     defaultTab: "checkins",
   }),
 );
-const all = board + drawer + eye + followUps + checkinsEmpty;
+// The F26 face (ship order 2026-11-04) rests every row as its sentence and
+// keeps the Drop, the email and EARLIER behind "Latest email and Chute", so
+// the rows' controls paint here opened, each as a click leaves it.
+const opened = (
+  await Promise.all(
+    rows.map((row) =>
+      render(
+        createElement(room.Row, {
+          row,
+          collapsed: false,
+          onToggle: () => {},
+          defaultSpring: "today",
+        }),
+      ),
+    ),
+  )
+).join("");
+const all = board + opened + drawer + eye + followUps + checkinsEmpty;
 
 // The operator-facing copy of a render: its text plus every title, placeholder
 // and button label the markup carries.
@@ -152,10 +171,6 @@ describe("room client — every absorbed capability is wired", () => {
     shows?: RegExp;
   };
   const wirings: Wiring[] = [
-    // the old board's stage machinery, whisper-sized
-    { what: "stage checklist toggles", action: "toggleCheck", from: "dash" },
-    { what: "stage judgment saves", action: "saveNote", from: "dash" },
-    { what: "evidence suggestions dismiss", action: "dismissSuggestion", from: "dash" },
     // the old day sheet per account
     {
       what: "composer files notes/actions/schedules",
@@ -163,14 +178,6 @@ describe("room client — every absorbed capability is wired", () => {
       from: "room",
       shows: /Action\. Open work on the sheet for Simploy\./,
     },
-    // The TODAY register rests folded (the Spring), so the sheet's own
-    // controls open on a click and keep the server half alone here.
-    {
-      what: "sheet item ops (done/undo/delay/drop)",
-      action: "roomTodoSet",
-      from: "room",
-    },
-    { what: "a capture's receipt can undo", action: "roomUnlog", from: "room" },
     { what: "any note can become an action", action: "roomNoteToAction", from: "room" },
     { what: "record entries edit in place", action: "roomRecordEdit", from: "room" },
     { what: "record entries can be deleted", action: "roomRecordDelete", from: "room" },
@@ -273,12 +280,6 @@ describe("room client — every absorbed capability is wired", () => {
       from: "room",
       shows: /Keep salvaging/,
     },
-    { what: "an owed item can open as work", action: "roomOwedAccept", from: "room" },
-    {
-      what: "an owed suggestion can be dismissed",
-      action: "roomOwedDismiss",
-      from: "room",
-    },
   ];
   for (const { what, action, from, shows } of wirings) {
     test(`${what} — ${action} is wired`, () => {
@@ -290,6 +291,27 @@ describe("room client — every absorbed capability is wired", () => {
       if (shows) assert.match(all, shows, `${action}'s control is missing from the room`);
     });
   }
+
+  // What left the row with TODAY, UNKNOWN, COMPARABLE and the stage meter
+  // (the F26 face, ship order 2026-11-04): the server halves stay, the row
+  // no longer calls them, and the stage checklist lives on the Accounts board.
+  test("the retired registers' actions left the row", () => {
+    const client = readFileSync(
+      join(process.cwd(), "src/app/room/room-client.tsx"),
+      "utf8",
+    );
+    for (const gone of [
+      "roomTodoSet",
+      "roomUnlog",
+      "roomOwedAccept",
+      "roomOwedDismiss",
+      "roomGapsRefill",
+      "toggleCheck",
+      "saveNote",
+      "dismissSuggestion",
+    ])
+      assert.ok(!client.includes(gone), `${gone} is still on the row`);
+  });
 
   test("every cross-page form comes home to /room", () => {
     // Each server-action <form> must carry returnTo=/room or the click
@@ -305,37 +327,38 @@ describe("room client — every absorbed capability is wired", () => {
     }
   });
 
-  test("the one register renders whole: day rules, key, chips, composer", () => {
-    const text = textOf(board);
-    // The day rule and the record's fold, on every row.
-    assert.ok(/\bTODAY\b/.test(text), "the TODAY kicker is missing");
+  test("the Chute section renders whole: its head, the doors, EARLIER and the key", () => {
+    const text = textOf(opened);
+    assert.ok(/The Chute Files to Simploy/.test(text), "the Chute's head is missing");
     assert.ok(/EARLIER · 1/.test(text), "the EARLIER rule is missing");
-    // The doors (decreed 2026-08-18): note and action are icon doors now,
-    // beside the bolt and the file door. Rewritten in pass 9's tail (A12.5):
-    // the label dash went, so each tooltip names its door in a sentence.
+    // The doors (decreed 2026-08-18): note and action are icon doors,
+    // beside the bolt and the file door, each tooltip naming its door.
     for (const door of [
       "The bolt. Paste anything. It reads and files to Simploy.",
       "Note. A line for the record on Simploy.",
       "Action. Open work on the sheet for Simploy.",
       "File. Email, PDF, transcript, spreadsheet, document, or image.",
     ]) {
-      assert.ok(board.includes(`title="${door}"`), `door missing: ${door}`);
+      assert.ok(opened.includes(`title="${door}"`), `door missing: ${door}`);
     }
-    // Today's glyph language, present and keyed once at the foot.
+    // The glyphs the row still paints, keyed once at the foot.
+    const foot = textOf(board);
     for (const key of [
-      "✉ send",
-      "⚖ decide",
-      "⚑ owed",
-      "✸ action",
+      "✉ email",
       "➤ sent",
+      "☎ call",
+      "◷ meeting",
       "✓ done",
-      "⏲ delayed",
       "✎ note",
+      "✸ action",
+      "⟳ research",
+      "⇣ low signal",
+      "☑ closed won",
     ]) {
-      assert.ok(text.includes(key), `glyph missing from the key: ${key}`);
+      assert.ok(foot.includes(key), `glyph missing from the key: ${key}`);
     }
     // The urgency chips are retired — the composer files at default weight.
-    assert.ok(!classesOf(board).includes("urgc"), "urgency chips should be retired");
+    assert.ok(!classesOf(opened).includes("urgc"), "urgency chips should be retired");
   });
 
   test("the drawers keep their decreed names — never Cadence", () => {
@@ -370,59 +393,30 @@ describe("room stylesheet — every class the client asks for exists", () => {
   });
 });
 
-// H5 (pass 8): UNKNOWN's "· N queued" and the STAGE GATE chip opened nothing.
-// The click-depth law: every compression opens, one click deep.
-describe("the UNKNOWN register's compressions open (H5)", () => {
-  const ask = (id: string, question: string) => ({
-    id,
-    question,
-    at: "2026-10-01T15:00:00Z",
-  });
-  const askRow = roomRow({
-    gaps: [ask("g1", "Which countries come first?")],
-    gapsQueued: [
-      ask("g2", "Who signs for the client?"),
-      ask("g3", "When is the first hire?"),
-    ],
-    outstanding: {
-      item: "Book the room",
-      node: "first_meeting",
-      index: 0,
-      doneKey: "morning:1",
-      closedCount: 2,
-    },
-  });
-  const paint = (defaultSpring: "unknown" | null) =>
-    render(
+// H5 (pass 8) pinned UNKNOWN's queued count and STAGE GATE chip as doors.
+// The register left the row with the F26 face (ship order 2026-11-04), and
+// neither control paints any more.
+describe("the UNKNOWN register left the row (F26)", () => {
+  test("no queued count, no stage gate chip, no register line", async () => {
+    const html = await render(
       createElement(room.Row, {
-        row: askRow,
+        row: roomRow({
+          gaps: [
+            {
+              id: "g1",
+              question: "Which countries come first?",
+              at: "2026-10-01T15:00:00Z",
+            },
+          ],
+        }),
         collapsed: false,
         onToggle: () => {},
-        defaultSpring,
+        defaultSpring: "today",
       }),
     );
-
-  test("folded, the queued count is a button that opens the queued asks", async () => {
-    const html = await paint(null);
-    assert.match(html, /<button type="button" class="sumDoor"[^>]*>· 2 queued<\/button>/);
-  });
-
-  test("sprung, the queued count still opens them, and says whether it is open", async () => {
-    const html = await paint("unknown");
-    assert.match(
-      html,
-      /<button type="button" class="sumDoor [^"]*" aria-expanded="false"[^>]*>· 2 queued<\/button>/,
-    );
-    // Shut until asked: the queued asks surface only through the door.
-    assert.ok(!textOf(html).includes("Who signs for the client?"));
-  });
-
-  test("the STAGE GATE chip is a door to the stage's checklist", async () => {
-    const html = await paint("unknown");
-    assert.match(
-      html,
-      /<button type="button" class="gateTag" title="Open the stage&#x27;s checklist">STAGE GATE · 2 BEHIND IT<\/button>/,
-    );
+    for (const c of ["sumDoor", "gateTag", "sumline"])
+      assert.ok(!classesOf(html).includes(c), `${c} painted`);
+    assert.ok(!textOf(html).includes("Which countries come first?"));
   });
 });
 
@@ -431,25 +425,10 @@ describe("the room's marks wear the brand palette (H8, X6)", () => {
   test("no forest stroke anywhere in the markup", () => {
     assert.ok(!/#1E5B46/i.test(all), "the forest green is back in the markup");
   });
-  test("a briefed partner's mark lights by class, the brand's green", async () => {
-    const html = await render(
-      createElement(room.RoomClient, {
-        rows: [roomRow({ briefed: true })],
-        cadence: [],
-        checkins: [],
-        followUps: [],
-        warming: [],
-        later: [],
-        canWrite: true,
-        dbUnavailable: false,
-        boardNames: [],
-        pipeline: [],
-        pipelineDay: "",
-        pipelineStale: "",
-      }),
-    );
-    assert.match(html, /class="briefed briefedOn"/);
-    assert.match(html, /stroke="currentColor" stroke-width="2.4"/);
+  test("the partner-briefed notifier left the row (F26)", () => {
+    // The partner ladder carries whether the partner is briefed from the
+    // second release of the F26 face; the row paints no notifier meanwhile.
+    assert.ok(!classesOf(all).includes("briefed"));
   });
   test("the due count carries its own class so it lights amber on hover", () => {
     assert.match(board, /class="edgeCount edgeDue">2</);
@@ -482,21 +461,22 @@ describe("a row off the board (pass 8 call 1)", () => {
     assert.equal(room.rowKey(roomRow()), "card-simploy", "a board row keys by its card");
   });
 
-  test("it paints in the existing face with no stage nodes", async () => {
+  test("it paints in the F26 face with no stage nodes", async () => {
     const html = await render(
       createElement(room.Row, { row: offBoard, collapsed: false, onToggle: () => {} }),
     );
-    assert.ok(textOf(html).includes("NOT ON THE BOARD"));
+    assert.ok(textOf(html).includes("Gulf Coast PEO"));
     assert.ok(!classesOf(html).includes("node"), "a stage node painted");
     assert.ok(textOf(html).includes("Mark it done ✓"), "the move still answers");
   });
 });
 
-// A4.20, the HomeRoom face shipped 2026-08-20: the THEIRS line is one line
-// atop the register panel, and the move keeps its seat unconditionally. The
-// line takes the palette's blue since C16 (room.module.css .theirs); the
-// stylesheet's color is CSS and stays on the honor list.
-describe("the THEIRS line sits atop the register panel and the move keeps its seat (A4.20)", () => {
+// A4.20, the HomeRoom face shipped 2026-08-20, gave THEIRS a line atop the
+// register panel. The F26 face (ship order 2026-11-04) folds it into the
+// move's own door: the move keeps its seat and its words, its tooltip names
+// the export's fact, and opened, the verified gems unfold under it, each
+// down to its email (the meat law).
+describe("THEIRS rides the move's door, and the move keeps its seat (F26)", () => {
   const theirs = {
     label: "MEXICO ASK · PAT LEE",
     gems: [
@@ -511,44 +491,26 @@ describe("the THEIRS line sits atop the register panel and the move keeps its se
   };
   const paint = (over: Partial<Parameters<typeof roomRow>[0]>) =>
     render(
-      createElement(room.RoomClient, {
-        rows: [roomRow(over)],
-        cadence: [],
-        checkins: [],
-        followUps: [],
-        warming: [],
-        later: [],
-        canWrite: true,
-        dbUnavailable: false,
-        boardNames: [],
-        pipeline: [],
-        pipelineDay: "",
-        pipelineStale: "",
+      createElement(room.Row, {
+        row: roomRow(over),
+        collapsed: false,
+        onToggle: () => {},
       }),
     );
-  // The register panel: from its opening tag to the next row-level block.
-  const panelOf = (html: string) => html.slice(html.indexOf('<div class="rec">'));
+  const moveOf = (html: string) =>
+    textOf(/<p class="mvt[^"]*"[^>]*>([\s\S]*?)<\/p>/.exec(html)?.[1] ?? "");
 
-  test("the line is the panel's first line, one line, before UNKNOWN", async () => {
-    const html = await paint({ theirs });
-    const panel = panelOf(html);
-    assert.ok(
-      panel.startsWith('<div class="rec"><div class="theirs">'),
-      panel.slice(0, 120),
-    );
-    assert.equal((html.match(/class="theirs"/g) ?? []).length, 1, "one line");
-    const line = /<div class="theirs">([\s\S]*?)<\/div>/.exec(panel)?.[1] ?? "";
-    assert.equal(textOf(line), "THEIRS · MEXICO ASK · PAT LEE");
-    assert.ok(textOf(panel).indexOf("THEIRS") < textOf(panel).indexOf("UNKNOWN"));
-  });
-
-  test("the move keeps its seat and its words whether THEIRS speaks or not", async () => {
-    const moveOf = (html: string) =>
-      textOf(/<div class="movewrap">([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "");
+  test("the move keeps its words whether THEIRS speaks or not", async () => {
     const quiet = await paint({});
     const loud = await paint({ theirs });
-    assert.ok(moveOf(quiet).includes("Send the model."), moveOf(quiet));
+    assert.equal(moveOf(quiet), "Send the model.");
     assert.equal(moveOf(loud), moveOf(quiet));
-    assert.ok(!panelOf(quiet).includes('class="theirs"'), "no gem, no line");
+    assert.ok(!quiet.includes('class="theirs"'), "no gem, no line");
+  });
+
+  test("the move's door names the export's fact, and paints no line of its own", async () => {
+    const html = await paint({ theirs });
+    assert.match(html, /title="Your Salesforce export: MEXICO ASK · PAT LEE"/);
+    assert.ok(!html.includes('class="theirs"'), "THEIRS paints only once the door opens");
   });
 });

@@ -417,6 +417,15 @@ rule's own label speaks.
 
 ## The Spring (triptych winner, decided 2026-08-13)
 
+**Retired by the F26 face (ship order 2026-11-04; "The HomeRoom face,
+F26" below).** UNKNOWN, COMPARABLE and TODAY left the row, and with them the
+asks' ✕, ⌕, ⟳ mint and → controls, the stage gate chip, the owed
+suggestions and the sheet's in-row edit. The to-dos are still stored and
+still build the move. Of the attendant decrees below, the court line stays
+retired, the one legend at the page foot holds, and "concepts never ship"
+holds; the research control moved to the bar of tools at the account's name.
+The record of the Spring as it stood follows.
+
 The HomeRoom row's right panel runs on springs. Each register — UNKNOWN,
 COMPARABLE (only when peers exist), TODAY — rests as ONE summary line: mono
 kicker, live count, top entry trailing off, ⊕. Pressing ⊕ springs the register
@@ -443,6 +452,13 @@ land behind a fold. Attendant decrees, permanent:
   amending a face is judging, not shipping. Ask first, every time.
 
 ## The email in the row (ship order 2026-10-20)
+
+**Moved one click down by the F26 face (ship order 2026-11-04).** The newest
+email now sits behind the row's one door, "Latest email and Chute", beside
+the Chute and above EARLIER, and shows whole there with no cap and no door
+of its own; the row's arrival no longer carries it. Everything below about
+which email it is, how its words are kept and cleaned, and EARLIER still
+holds.
 
 Concept A of docs/mockups/homeroom-email-row-2026-10-20.html won and shipped
 on the founder's order ("we're going with A", then "yup ship it"). The
@@ -609,6 +625,68 @@ stays Mark it done.
   it alone. Any other line opens to its note's own body, and every line,
   opened, shows its whole text where it rested trailing off.
 
+## The HomeRoom face, F26 (ship order 2026-11-04)
+
+The founder picked F26 of docs/mockups/homeroom-f-decks-2026-11-04.html
+("lets go with f26", then "ship f26") and chose to ship it in three
+releases. The first release is live; the second brings the two stage
+ladders, and the third the new reads and records.
+
+- **The map.** The room opens on a map of every country the live deals name
+  (src/lib/room/world-map.ts, a fixed table of land and places that reads no
+  record). Each country's light is its nearest client date: red at 14 days or
+  less, amber within 30 or when the record says how urgent with no day,
+  plain otherwise. The one looping pulse on the page is the light on the
+  nearest red date. A click on a country, on the map or in the list beside
+  it, shows only the deals that name it.
+- **Each deal is one sentence.** Every row rests as its sentence on one line,
+  the type stepping down until it fits and wrapping only at its floor; the
+  first row of the board stands open on arrival, and the browser remembers
+  which rows the operator opened (room:open). The sentence names the
+  account, reseller or referral, the products, the client, each country with
+  its flag and count, and the client's date. Every fact carries the record
+  line it came from (src/lib/room/facts.ts), and one the record has never
+  mentioned says so in plain words. Reseller or referral, the client's name,
+  and a country added or removed are the operator's to set from the
+  sentence itself: a click on a country opens one dropdown that removes it
+  or lists every other to add. The hand's facts live in one facts:<account>
+  note, newest wins, are marked as the hand's under the sentence, and ↺ puts
+  back what the record says; the record is never touched.
+- **The account's tools ride on hover at its name:** ⟳ Research with the
+  last run's day, ⇣ Low signal and ☑ Closed won, each spelled out and
+  tooltip-titled. A closed row and a read-only session carry none.
+- **The move row.** Opened, a row leads with NEXT MOVE: the move, Mark it
+  done in the brand's green (no longer the room's orange), a short rule,
+  then the Chute, all at one size. The move opens to the whole commitment
+  behind it, and the second record's verified facts about the account's
+  people (the THEIRS gems, C16) ride the same door, down to their email.
+- **The people in the deal are a deck.** The person up front is a full card
+  and the rest fan out behind it, each showing a tab with their initials and
+  first name; a click brings one forward. Beside the deck, behind a line, the
+  front person's contact card: full title, email, office phone, mobile,
+  location and every exchange the record holds with them, and a LinkedIn
+  mark, struck in red while no profile is on file. MULTI keeps its ladder
+  and, with the count, opens the list of everyone and how often each side
+  wrote.
+- **One door: "Latest email and Chute".** It stays where it is and reads
+  "Minimize" when open. Behind it the newest email shows whole on the left
+  and the Chute on the right, behind a line: the Drop's doors, the held box,
+  the filings' receipts and the composer's lines, and EARLIER. Filing or
+  composing anything opens it, and it opens on arrival when the record holds
+  a filing from today, so receipts never land out of sight. A folded row and
+  a closed door stay mounted, so nothing typed in them is lost.
+- **Retired with it:** the Spring's registers (see The Spring), the THEIRS
+  line as a line of its own, the stage meter and its checklist drawer (the
+  board's checklist lives on the Accounts board), the partner-briefed
+  notifier, and the shape and meta chips, which the sentence says in words.
+- **Not yet built, and shown honestly meanwhile:** the client's name, need,
+  confidence and date as read facts, employees counted apart from
+  contractors, Sent and Send files, the agreement meter, LinkedIn profiles
+  and Add a person (the third release), and the partner and client stage
+  ladders (the second release). Until then the client reads "a client not
+  named yet" unless the operator names it, counts read as people, and every
+  LinkedIn mark is struck.
+
 ## The Ted doctrine (founder-decreed 2026-08-14)
 
 Named for the day the room told the operator to chase Ted — a man the record
@@ -688,7 +766,8 @@ ship order "ship the picks for those 3 rooms and the second ring as well"):
 reason, each chip a door); **Accounts — three columns** (MODEL and PRISMHR
 retire into the drilldown, + Dashboard is a hover glyph at the name, LAST
 HUMAN TOUCH · THE SIGNAL · ACT take the width, the gem folds open beneath
-the row); **HomeRoom — the THEIRS line** (one ochre mono line atop the
+the row); **HomeRoom — the THEIRS line** (since the F26 face, 2026-11-04, it rides the
+move's door instead of a line of its own; one ochre mono line atop the
 register panel; the move keeps its seat unconditionally). The second ring
 shipped with them: the draft desk's one cited line, the Sendbook's org-wide
 warmth (their voice warms whoever's inbox caught it; the operator's outbound
@@ -865,13 +944,15 @@ founder-decreed 2026-09-15.
   It is the HomeRoom's, not the retired Pipeline page. A deal marked low
   signal is not active and drops out of it (founder, 2026-10-16).
 - **Low signal** (founder's order, 2026-10-16, #412): a HomeRoom deal row
-  that isn't in the Salesforce pipeline moves by its hover ⇣ to the LOW
+  that isn't in the Salesforce pipeline moves by its ⇣ (in the bar of tools
+  at the account's name since the F26 face, 2026-11-04) to the LOW
   SIGNAL section above the closed ledger, and back by ↺. The mark is the
   operator's own hand, a namespaced disposition (`lowsig:`) that no queue
   reads; a stamped outcome outranks it. The closed ledger hides and shows
   whole, remembered per browser, and hidden rows stay mounted.
 - **Closed Won by hand** (founder's order, 2026-10-26): a HomeRoom deal
-  row's hover ☑, beside ⇣, asks once in the move's slot ("Confirm Closed
+  row's ☑, beside ⇣ in the bar of tools at the account's name (the F26
+  face, 2026-11-04), asks once in the move's slot ("Confirm Closed
   Won" in green, or "Not yet") and stamps the deal Closed Won on the
   operator's call, with no read to answer; the row then says "Closed by your
   call." A row with no card has no meter and no ☑. A closed row's ↺ reopens

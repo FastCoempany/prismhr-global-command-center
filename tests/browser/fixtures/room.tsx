@@ -1,7 +1,7 @@
 // The HomeRoom for the browser suite: three rows, one per MULTI tone, the
-// first with every register the Spring draws (THEIRS, UNKNOWN with asks,
-// COMPARABLE with a peer, TODAY), and the drawers' edge tabs, in the room's
-// own frame: the Chute at the top, then the board.
+// first with a THEIRS gem on its move, each with its sentence's facts and a
+// people deck (the F26 face, ship order 2026-11-04), and the drawers' edge
+// tabs, in the room's own frame: the Chute at the top, then the board.
 
 import type { RoomRow } from "@/app/room/room-client";
 import { RoomFace } from "@/app/room/face";
@@ -22,6 +22,55 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
       line: "✉ Chassie asked for the invoices.",
     },
     { label: "Peru", day: "9/25", line: "✉ Chassie asked for the invoices." },
+  ],
+  facts: {
+    products: [
+      {
+        key: "eor",
+        word: "employer of record",
+        day: "9/25",
+        line: "✉ Chassie asked for the invoices.",
+      },
+    ],
+    chair: {
+      v: "resale",
+      hand: false,
+      day: "9/25",
+      line: "✉ We'd resell it under our name.",
+    },
+    client: { name: null, hand: false, day: "" },
+    countries: [
+      {
+        code: "co",
+        name: "Colombia",
+        hand: false,
+        day: "9/25",
+        line: "✉ Two hires in Bogotá.",
+      },
+    ],
+    removed: [],
+    heads: [{ n: 2, country: "co", day: "9/25", line: "✉ Two hires in Bogotá." }],
+    date: {
+      iso: "2026-12-01",
+      phrase: "by December 1",
+      day: "9/25",
+      line: "✉ They start by December 1.",
+    },
+  },
+  deck: [
+    {
+      name: "Chassie Smith",
+      title: "VP Operations",
+      email: "chassie@example.com",
+      phone: "(555) 010-2210",
+      mobile: "",
+      city: "Raleigh, NC",
+      linkedin: null,
+      touches: [
+        { at: "2026-09-25T15:00:00Z", kind: "email", dir: "in" },
+        { at: "2026-09-26T15:00:00Z", kind: "email", dir: "out" },
+      ],
+    },
   ],
   multiTone: "y",
   people: [{ name: "Chassie Smith", line: "VP Operations · 2 threads" }],
@@ -150,6 +199,7 @@ const ROWS: RoomRow[] = [
   }),
   row({
     accountId: "001F000000w38OHIAY",
+    cardId: "card-regis",
     name: "Regis HR Group",
     shape: "GP",
     identity: [{ label: "GP", day: "", line: "No product on file. GP is the default." }],
@@ -158,6 +208,7 @@ const ROWS: RoomRow[] = [
   }),
   row({
     accountId: "001F000000w38ZZIAY",
+    cardId: "card-axcet",
     name: "Axcet HR",
     shape: "GP",
     identity: [{ label: "GP", day: "", line: "No product on file. GP is the default." }],

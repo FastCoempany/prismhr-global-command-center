@@ -34,13 +34,9 @@ import {
   snoozeSignal,
   unmuteRoundupPartner,
 } from "./ledger-actions";
-import { dismissSuggestion, saveNote, toggleCheck } from "../accounts/board-actions";
 import {
-  roomBriefedSet,
   roomClose,
   roomCompose,
-  roomGapDismiss,
-  roomGapsRefill,
   roomLossDismiss,
   roomLowSignal,
   roomMarkLost,
@@ -51,14 +47,9 @@ import {
   roomResearch,
   roomRetire,
   roomNoteToAction,
-  roomOwedAccept,
-  roomOwedDismiss,
   roomReadPdf,
   roomRecordDelete,
   roomRecordEdit,
-  roomTodoEdit,
-  roomTodoSet,
-  roomUnlog,
 } from "./actions";
 import type { Window } from "@/lib/ingest/windows";
 import type { TodayFiling } from "@/lib/ingest/today-filings";
@@ -83,9 +74,11 @@ import { chicagoDay } from "@/lib/tz";
 import type { StageView } from "@/lib/room/stages-view";
 import { PipelineDrawer } from "./pipeline-tab";
 import type { PipelineRecord } from "@/lib/pipeline/build";
-import { researchChip, todayRegister } from "@/lib/room/springs";
 import { boardGroup } from "@/lib/room/low-signal";
 import styles from "./room.module.css";
+import { mapIndex, type DeckPerson, type RowFacts } from "@/lib/room/facts";
+import { HandLine, PeopleDeck, RoomMap, Sentence } from "./f-face";
+import f from "./f.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 import { EarlierLine, LatestEmailPane, type RowLatestEmail } from "./email-row";
 import type { RecordLine } from "@/lib/room/email-row";
@@ -95,20 +88,24 @@ import { redactMoneyStrict } from "@/lib/intel/lexicon";
 // The fold, remembered per browser. A no-op subscription is enough for
 // useSyncExternalStore's hydration probe: the server renders every row open,
 // and the stored preference only applies once the client has taken over.
-const SHUT_KEY = "room:shut";
-const EMPTY_SHUT: ReadonlySet<string> = new Set();
+// The F26 face rests every row as its sentence (ship order 2026-11-04): the
+// store keeps the rows the operator opened, and with nothing stored the first
+// row of the board stands open so the face shows on arrival.
+const OPEN_KEY = "room:open";
 
 function subscribeNoop() {
   return () => {};
 }
 
-function readShut(): Set<string> {
-  if (typeof window === "undefined") return new Set();
+function readOpen(): Set<string> | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = JSON.parse(localStorage.getItem(SHUT_KEY) ?? "[]") as unknown;
+    const stored = localStorage.getItem(OPEN_KEY);
+    if (stored === null) return null;
+    const raw = JSON.parse(stored) as unknown;
     return new Set(Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : []);
   } catch {
-    return new Set();
+    return null;
   }
 }
 
@@ -141,6 +138,12 @@ export type RoomRow = {
    *  opens to it (the click-depth law, pass 13). Empty when the read holds
    *  no fact behind them. */
   identity?: { label: string; day: string; line: string }[];
+  /** The F26 sentence's facts (ship order 2026-11-04): products, reseller or
+   *  referral, the client, countries, counts and the client's date, each with
+   *  the record line it stands on, the operator's own hand on top. */
+  facts: RowFacts;
+  /** The people in the deal, as the deck holds them. */
+  deck: DeckPerson[];
   /** Every filing on the account from today, from the record (decreed
    *  2026-10-13): TODAY shows each one's receipt and its ↺ after a reload,
    *  in any tab, from any door (src/lib/ingest/today-filings.ts). */
@@ -259,102 +262,6 @@ export type FollowUpRow = {
 };
 export type WarmRow = { id: string; name: string; why: string; seedNote: string };
 export type LaterRow = { id: string; body: string };
-
-// The partner notifier: green from the stage record OR from the operator's
-// own hand — a click springs a radio (Opp created / Briefed — done / clear)
-// filed durably (founder-decreed 2026-08-19).
-function Briefed({
-  on,
-  manual,
-  accountId,
-  canWrite,
-}: {
-  on: boolean;
-  manual: "opp" | "done" | null;
-  accountId: string;
-  canWrite: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [local, setLocal] = useState<"opp" | "done" | null>(manual);
-  const [pending, start] = useTransition();
-  const router = useRouter();
-  const lit = on || local !== null;
-  const set = (v: "opp" | "done" | "clear") => {
-    setLocal(v === "clear" ? null : v);
-    setOpen(false);
-    start(async () => {
-      // The page derives on request (D15): a status that kept asks the
-      // router for the fresh read here, in the component that set it.
-      const r = await roomBriefedSet(accountId, v);
-      if (r.ok) router.refresh();
-    });
-  };
-  const title = lit
-    ? local === "opp"
-      ? "Opportunity created. Click to change."
-      : "Partner briefed. Click to change."
-    : "Partner not briefed yet. Click to set the status by hand; it also turns green when a partner-brief item closes in the stage record.";
-  return (
-    <span className={styles.bfWrap}>
-      {/* The mark takes the palette by role: green when the partner is
-          briefed, which is real health, quiet ink when not (X6). */}
-      <button
-        type="button"
-        className={`${styles.briefed} ${lit ? styles.briefedOn : ""}`}
-        title={title}
-        onClick={() => canWrite && setOpen((v) => !v)}
-      >
-        <svg
-          viewBox="0 0 20 20"
-          width="13"
-          height="13"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.4"
-          strokeLinecap="butt"
-          strokeLinejoin="miter"
-        >
-          <path d="M5 11 l4 4 7-8" />
-          <path d="M2 18 h16" />
-        </svg>
-      </button>
-      {open && canWrite && (
-        <span className={styles.bfPop}>
-          <label className={styles.bfOpt}>
-            <input
-              type="radio"
-              name={`bf-${accountId}`}
-              checked={local === "opp"}
-              disabled={pending}
-              onChange={() => set("opp")}
-            />
-            Opp created
-          </label>
-          <label className={styles.bfOpt}>
-            <input
-              type="radio"
-              name={`bf-${accountId}`}
-              checked={local === "done"}
-              disabled={pending}
-              onChange={() => set("done")}
-            />
-            Done
-          </label>
-          {local !== null && (
-            <button
-              type="button"
-              className={styles.bfClear}
-              disabled={pending}
-              onClick={() => set("clear")}
-            >
-              clear ↺
-            </button>
-          )}
-        </span>
-      )}
-    </span>
-  );
-}
 
 function firstWord(s: string): string {
   return (s ?? "").trim().split(/\s+/)[0] ?? "";
@@ -491,7 +398,6 @@ export function Row({
   collapsed,
   onToggle,
   defaultSpring = null,
-  defaultMinted = null,
   hidden = false,
 }: {
   row: RoomRow;
@@ -502,8 +408,6 @@ export function Row({
   hidden?: boolean;
   /** The register sprung on first paint, for the suite. */
   defaultSpring?: "unknown" | "peers" | "today" | null;
-  /** The mint's receipt on first paint, for the suite. */
-  defaultMinted?: string | null;
 }) {
   // The shared door (src/app/room/ingest, slice 8 of the Chute brains
   // refactor plan): this row is the Drop, bound to its account, reading
@@ -532,8 +436,11 @@ export function Row({
   });
   // The Spring (triptych winner, 2026-08-13): each register rests as one
   // summary line; ⊕ springs it out in place, one register out at a time.
+  // The F26 face keeps this state as "Latest email and Chute": open is
+  // "today". It opens on arrival when the record holds a filing from today,
+  // so today's receipts are in view without a click (decreed 2026-10-13).
   const [spring, setSpring] = useState<"unknown" | "peers" | "today" | null>(
-    defaultSpring,
+    defaultSpring ?? ((row.todayFilings?.length ?? 0) > 0 ? "today" : null),
   );
   // Each receipt's key, so a backup that lands later finds its filing.
   const receiptSeq = useRef(0);
@@ -619,11 +526,7 @@ export function Row({
     // The account is the row's for its life; the loader runs once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row.accountId]);
-  const [gone, setGone] = useState<Set<string>>(new Set());
-  // Rows the operator just un-held: they belong in the open list until the
-  // server round trip re-partitions them there.
-  const [backNow, setBackNow] = useState<Set<string>>(new Set());
-  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+
   const [promotedNotes, setPromotedNotes] = useState<Set<string>>(new Set());
   const [recOpen, setRecOpen] = useState(false);
   // One EARLIER line open at a time, as the Spring opens one register.
@@ -644,12 +547,7 @@ export function Row({
     setSeenLines(lines);
     if (landedSince(seenLines, lines)) setSpring("today");
   }
-  // The asks queued behind the shown few, opened from "· N queued" (H5).
-  const [queuedOpen, setQueuedOpen] = useState(false);
-  // ✎ on a sheet line — the operator rewrites it in place.
-  const [todoEditId, setTodoEditId] = useState<string | null>(null);
-  const [todoEditText, setTodoEditText] = useState("");
-  const [editedTodos, setEditedTodos] = useState<Map<string, string>>(new Map());
+
   const [editText, setEditText] = useState("");
   const [editedNotes, setEditedNotes] = useState<Map<string, string>>(new Map());
   const [deletedNotes, setDeletedNotes] = useState<Set<string>>(new Set());
@@ -690,16 +588,7 @@ export function Row({
   // a run of closes never stacks a wall of struck lines into the pane.
   const [freshAll, setFreshAll] = useState(false);
   const closed = !!row.outstanding && closedKey === row.outstanding.doneKey;
-  const [stageOpen, setStageOpen] = useState<string | null>(null);
-  // The stage checklist closes on a click anywhere else — the nodes that open it
-  // sit inside this wrapper, so a node still toggles its own drawer.
-  const stageRef = useDismiss<HTMLDivElement>(stageOpen !== null, () =>
-    setStageOpen(null),
-  );
-  // Who's in the deal, opened by a click on MULTI (the click-depth law).
-  const [multiOpen, setMultiOpen] = useState(false);
-  const [identityOpen, setIdentityOpen] = useState(false);
-  const multiRef = useDismiss<HTMLButtonElement>(multiOpen, () => setMultiOpen(false));
+
   const [pending, start] = useTransition();
   // The move button owns its own spinner — a register-row op must never
   // dress the Mark-it-done button in "Saving…".
@@ -749,30 +638,7 @@ export function Row({
       } else if (!r.ok) setNote(r.reason ?? "That didn't save.");
     });
   };
-  const undoCap = (idx: number) => {
-    const c = freshCaps[idx];
-    if (!c?.todoId || pending) return;
-    const todoId = c.todoId;
-    start(async () => {
-      const r = took(await roomUnlog(row.accountId, todoId));
-      if (r.ok) setFreshCaps((f) => f.filter((_, i) => i !== idx));
-      else setNote(r.reason ?? "The undo didn't take.");
-    });
-  };
-  const promoteCap = (idx: number) => {
-    const c = freshCaps[idx];
-    if (!c?.todoId || pending) return;
-    const todoId = c.todoId;
-    start(async () => {
-      const r = took(await roomNoteToAction(row.accountId, { todoId }));
-      if (r.ok) {
-        setFreshCaps((f) =>
-          f.map((x, i) => (i === idx ? { ...x, kind: "action", promoted: true } : x)),
-        );
-        setSpring("today");
-      } else setNote(r.reason ?? "That didn't save.");
-    });
-  };
+
   const promoteNote = (noteId: string, text: string) => {
     if (pending || promotedNotes.has(noteId)) return;
     start(async () => {
@@ -811,51 +677,9 @@ export function Row({
       } else setNote(r.reason ?? "The edit didn't save.");
     });
   };
-  const saveTodoEdit = (todoId: string) => {
-    const text = todoEditText.trim();
-    if (!text || pending) return;
-    start(async () => {
-      const r = took(await roomTodoEdit(row.accountId, todoId, text));
-      if (r.ok) {
-        setEditedTodos((m) => new Map(m).set(todoId, text));
-        setTodoEditId(null);
-      } else setNote(r.reason ?? "The edit didn't save.");
-    });
-  };
-  // ✎ opens the line with the FULL stored text, never the display cap:
-  // saving an untouched row must not truncate it.
-  const startTodoEdit = (t: { id: string; body: string; edit?: string }) => {
-    setTodoEditId(t.id);
-    setTodoEditText(editedTodos.get(t.id) ?? t.edit ?? t.body);
-  };
+
   // The box ✎ opens, one for every TODAY line the operator can rewrite:
   // Enter keeps, Escape puts it back.
-  const todoEditBox = (id: string) => (
-    <div key={id} className={`${styles.it} ${styles.itOpen}`}>
-      <span className={`${styles.ic} ${styles.gAct}`}>✸</span>
-      <span className={styles.recEdit}>
-        <input
-          value={todoEditText}
-          onChange={(ev) => setTodoEditText(ev.target.value)}
-          onKeyDown={(ev) => {
-            if (ev.key === "Enter") saveTodoEdit(id);
-            if (ev.key === "Escape") setTodoEditId(null);
-          }}
-          aria-label="edit this line"
-        />
-        <button type="button" className={styles.sdTag} onClick={() => saveTodoEdit(id)}>
-          save
-        </button>
-        <button
-          type="button"
-          className={styles.sdTag}
-          onClick={() => setTodoEditId(null)}
-        >
-          cancel
-        </button>
-      </span>
-    </div>
-  );
   const deleteNote = (noteId: string) => {
     if (pending) return;
     start(async () => {
@@ -1147,7 +971,7 @@ export function Row({
   // The loss read's two exits + the owed suggestions' two exits — all
   // optimistic, all durable server-side.
   const [lossState, setLossState] = useState<"live" | "lost" | "salvaging">("live");
-  const [owedGone, setOwedGone] = useState<Set<string>>(new Set());
+
   const confirmClose = (status: "lost" | "won") => {
     if (!row.loss || pending) return;
     const l = row.loss;
@@ -1214,7 +1038,7 @@ export function Row({
       else setNote(r.reason ?? "That didn't save.");
     });
   };
-  const [askGone, setAskGone] = useState<Set<string>>(new Set());
+
   // The move's own door: the built line by default, the whole commitment on
   // a click. Nothing deep ever surfaces uninvited.
   const [moveOpen, setMoveOpen] = useState(false);
@@ -1222,7 +1046,7 @@ export function Row({
     null,
   );
   const [rsrchPending, startResearch] = useTransition();
-  const [askPending, startAsk] = useTransition();
+
   const runResearchPass = () => {
     if (rsrchPending) return;
     startResearch(async () => {
@@ -1235,33 +1059,7 @@ export function Row({
       else setNote(r.reason ?? "The research pass didn't complete.");
     });
   };
-  // The mint (⟳) is neither filing nor composing: its result is asks, and
-  // they land in UNKNOWN. So it springs UNKNOWN open, its receipt rides there
-  // with the new asks in view, and TODAY stays the filings' register
-  // (coordinator's call, pass 10).
-  const [minted, setMinted] = useState<string | null>(defaultMinted);
-  const refillAsks = () => {
-    if (askPending) return;
-    startAsk(async () => {
-      const r = took(await roomGapsRefill(row.accountId));
-      if (r.ok) {
-        setMinted(
-          r.added
-            ? `${r.added} new ask${r.added === 1 ? "" : "s"} minted from what the app knows.`
-            : "Nothing new to ask. The list already has it all.",
-        );
-        setSpring("unknown");
-      } else setNote(r.reason ?? "Minting didn't complete.");
-    });
-  };
-  const dismissAsk = (id: string) => {
-    if (askPending) return;
-    startAsk(async () => {
-      const r = took(await roomGapDismiss(row.accountId, id));
-      if (r.ok) setAskGone((sx) => new Set(sx).add(id));
-      else setNote(r.reason ?? "That didn't save.");
-    });
-  };
+
   const keepSalvaging = () => {
     if (!row.loss || pending) return;
     const l = row.loss;
@@ -1271,24 +1069,7 @@ export function Row({
       else setNote(r.reason ?? "That didn't save.");
     });
   };
-  const owedAccept = (o: { key: string; text: string }) => {
-    if (pending) return;
-    start(async () => {
-      const r = took(await roomOwedAccept(row.accountId, o.text, o.key));
-      if (r.ok) {
-        setOwedGone((s) => new Set(s).add(o.key));
-        landToday({ body: o.text, kind: "action", promoted: true });
-      } else setNote(r.reason ?? "That didn't save.");
-    });
-  };
-  const owedDismiss = (o: { key: string }) => {
-    if (pending) return;
-    start(async () => {
-      const r = took(await roomOwedDismiss(row.accountId, o.key));
-      if (r.ok) setOwedGone((s) => new Set(s).add(o.key));
-      else setNote(r.reason ?? "That didn't save.");
-    });
-  };
+
   const lossLive = !!row.loss && lossState === "live";
 
   // ↺ on a filing's receipt takes the whole filing back by its id
@@ -1373,52 +1154,83 @@ export function Row({
       if (r.ok) setWorkedNow(false);
       else setNote(r.reason ?? "That didn't save.");
     });
-  const todoOp = (id: string, op: "done" | "undo" | "tomorrow" | "now" | "drop") =>
-    start(async () => {
-      const r = took(await roomTodoSet(row.accountId, id, op));
-      if (!r.ok) setNote(r.reason ?? "That didn't save.");
-      else if (op === "done") setDoneIds((s) => new Set(s).add(id));
-      else if (op === "undo")
-        setDoneIds((s) => {
-          const n = new Set(s);
-          n.delete(id);
-          return n;
-        });
-      // "now" pulls a held row back into today's work — the row must reappear
-      // as open, not disappear the way a park or a delay does.
-      else if (op === "drop" || op === "tomorrow") setGone((s) => new Set(s).add(id));
-      else if (op === "now") setBackNow((s) => new Set(s).add(id));
-    });
 
-  const openStage = row.stages.find((s) => s.key === stageOpen);
-  const label = row.climb.label;
-
-  // The springs' counts — each numeral is the length of exactly the list its
-  // register shows. One derivation, no second bookkeeping.
-  const liveAsks = row.gaps.filter((g) => !askGone.has(g.id));
-  const liveQueued = row.gapsQueued.filter((g) => !askGone.has(g.id));
-  const liveOpen = row.sheetOpen.filter((t) => !gone.has(t.id) && !doneIds.has(t.id));
-  // The register shows a ranked eight; the rest are a door, never a
-  // disappearance (decreed 2026-09-03).
-  const [restOpen, setRestOpen] = useState(false);
-  const restCount = row.sheetRest.filter(
-    (t) => !gone.has(t.id) && !doneIds.has(t.id),
-  ).length;
-  const liveOwed = row.owed.filter((o) => !owedGone.has(o.key));
-  const doneCount =
-    row.sheetDoneToday.filter((t) => !gone.has(t.id)).length +
-    [...row.sheetOpen, ...(row.sheetReleased ?? [])].filter(
-      (t) => !gone.has(t.id) && doneIds.has(t.id),
-    ).length;
-  // The numeral and the trailing text, from one derivation. They used to come
-  // from two, and a row with an owed line and no todo read "TODAY 0 · TrendHR
-  // follow-up" — a count of nothing beside a thing (2026-09-23).
-  const today = todayRegister({
-    owed: liveOwed.map((o) => o.text),
-    open: liveOpen.map((t) => t.body),
-    restCount,
+  // The F26 face (ship order 2026-11-04): the row rests as its sentence;
+  // opened, the next move with Mark it done and the Chute, the people in the
+  // deal, and one door, "Latest email and Chute", to the email, the Drop, the
+  // receipts and EARLIER. The springs, the THEIRS line and the stage meter
+  // retired with it (docs/mockups/homeroom-f-decks-2026-11-04.html).
+  const panelOpen = spring === "today";
+  const todayIso = new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Chicago",
   });
-  const topToday = today.top;
+  const researchWord = row.researchAt
+    ? new Date(row.researchAt).toLocaleDateString("en-US", {
+        timeZone: "America/Chicago",
+        month: "numeric",
+        day: "numeric",
+      })
+    : "";
+  const nameTools =
+    row.canWrite && !row.outcome ? (
+      <>
+        {row.accountId && (
+          <button
+            type="button"
+            disabled={rsrchPending}
+            onClick={runResearchPass}
+            title={`${
+              researchWord
+                ? `Last run ${researchWord}.`
+                : "Never run. The first pass is the deep one."
+            } Runs the deep pass: their site, their postings, the news, the people on this deal.`}
+          >
+            {rsrchPending ? "Researching…" : `⟳ Research ${researchWord || "never run"}`}
+          </button>
+        )}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={toggleLowSignal}
+          title={lowTitle}
+          aria-label={lowTitle}
+        >
+          {row.lowSignal ? "↺ Back to the live deals" : "⇣ Low signal"}
+        </button>
+        {row.cardId && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setAskWon(true)}
+            title="Mark Closed Won."
+            aria-label="Mark Closed Won."
+          >
+            ☑ Closed won
+          </button>
+        )}
+      </>
+    ) : null;
+  const stamp = row.outcome ? (
+    <span className={row.outcome.status === "won" ? styles.stampWon : styles.stampLost}>
+      {row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}
+    </span>
+  ) : null;
+  const chuteIcon = (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 3h7l7 9" />
+      <path d="M12 9v8" />
+      <path d="M8.5 13.5 12 17l3.5-3.5" />
+      <path d="M3 15l2.5 6h13L21 15" />
+    </svg>
+  );
 
   return (
     <div
@@ -1431,1454 +1243,634 @@ export function Row({
         .filter(Boolean)
         .join(" ")}
     >
-      <div className={styles.deal}>
-        {/* The whole line folds the row — a caret this small can't be the only
-            target. Links, controls, and the MULTI hovercard keep their clicks. */}
-        <div
-          className={styles.nmline}
-          onClick={(e) => {
-            if ((e.target as HTMLElement).closest(`a,button,.${styles.multi}`)) return;
-            onToggle();
-          }}
-        >
-          <button
-            type="button"
-            className={styles.shut}
-            aria-expanded={!collapsed}
-            title={collapsed ? "Open this row" : "Collapse this row"}
-            onClick={onToggle}
-          >
-            {collapsed ? "▸" : "▾"}
-          </button>
-          <span className={styles.nm}>
-            <span className={styles.nmSide}>
-              <Briefed
-                on={row.briefed}
-                manual={row.briefedManual}
-                accountId={row.accountId}
-                canWrite={row.canWrite}
-              />
-              {row.sfUrl && (
-                <a
-                  className={styles.sfMini}
-                  href={row.sfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="Open the account in Salesforce to create the opportunity."
-                >
-                  SF
-                </a>
-              )}
-            </span>
-            <Link href={`/accounts?focus=${row.accountId}`} className={styles.nmLink}>
-              {row.name}
-            </Link>
-            {row.outcome && (
-              <span
-                className={
-                  row.outcome.status === "won" ? styles.stampWon : styles.stampLost
-                }
-              >
-                {row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}
-              </span>
-            )}
-          </span>
-          <span className={styles.chips}>
-            {/* The shape is a compression of the read, so it is a door to
-                the record lines it stands on (the click-depth law). */}
-            {row.identity?.length ? (
-              <button
-                type="button"
-                className={`${styles.chip} ${styles.chipDoor}`}
-                aria-expanded={identityOpen}
-                title="What the read stands on"
-                onClick={() => setIdentityOpen((v) => !v)}
-              >
-                {row.shape}
-              </button>
-            ) : (
-              <span className={styles.chip}>{row.shape}</span>
-            )}
-            {row.meta && <span className={styles.metaIn}>{row.meta}</span>}
-            {/* MULTI opens on a click as well as a hover (the click-depth
-                law): a touch screen has no hover, and the room is one click
-                deep. A click anywhere else folds it. */}
-            <button
-              type="button"
-              ref={multiRef}
-              className={[
-                styles.multi,
-                styles[`m_${row.multiTone}`],
-                multiOpen ? styles.multiOpen : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              aria-expanded={multiOpen}
-              title="Who's in this deal"
-              onClick={() => setMultiOpen((v) => !v)}
-            >
-              MULTI
-              <span className={styles.hovercard}>
-                <span className={styles.hk}>
-                  WHO&apos;S IN THIS DEAL · FROM THE REPOSITORY
-                </span>
-                {row.people.length === 0 && (
-                  <span className={styles.hp}>
-                    No stakeholders on file yet. Paste activity and they appear here.
+      <Sentence
+        accountId={row.accountId}
+        name={row.name}
+        sfUrl={row.sfUrl}
+        facts={row.facts}
+        todayIso={todayIso}
+        canWrite={row.canWrite}
+        collapsed={collapsed}
+        onToggle={onToggle}
+        tools={nameTools}
+        stamp={stamp}
+      />
+      {/* A folded row stays mounted, so nothing typed in it is lost; it only
+          stops painting. The panel below keeps the same promise. */}
+      <div className={f.body} hidden={collapsed}>
+        <>
+          <HandLine accountId={row.accountId} facts={row.facts} canWrite={row.canWrite} />
+          <div className={f.open}>
+            <div className={f.mrow}>
+              {row.outcome ? (
+                <>
+                  <span className={f.mk2}>
+                    {row.outcome.status === "won" ? "Closed won" : "Closed lost"}
                   </span>
-                )}
-                {row.people.map((p) => (
-                  <span key={p.name} className={styles.hp}>
-                    <b>{p.name}</b>
-                    {p.line ? ` · ${p.line}` : ""}
-                  </span>
-                ))}
-              </span>
-            </button>
-            {row.canWrite && (
-              <button
-                type="button"
-                className={styles.zap}
-                title={`Paste. Files to ${row.name}.`}
-                onClick={() => {
-                  setPasteOpen((v) => !v);
-                  setMismatch(null);
-                }}
-              >
-                ⚡
-              </button>
-            )}
-            {/* Research rides the title line as the Spring draws it, a dated
-                mono chip: `RESEARCH 7/2 ⟳`, the latest run of either store on
-                its face, NEVER only when neither store has touched it. */}
-            {row.canWrite && row.accountId && (
-              <button
-                type="button"
-                className={styles.rsrchChip}
-                disabled={rsrchPending}
-                onClick={runResearchPass}
-                title={`${
-                  row.researchAt
-                    ? `Last run ${new Date(row.researchAt).toLocaleDateString("en-US", {
-                        timeZone: "America/Chicago",
-                        month: "numeric",
-                        day: "numeric",
-                      })}.`
-                    : "Never run. The first pass is the deep one."
-                } Runs the deep pass: their site, their postings, the news, the people on this deal.`}
-              >
-                {rsrchPending ? "RESEARCHING…" : researchChip(row.researchAt)}
-              </button>
-            )}
-            {/* The day's mark. It rides the title line so it survives the fold —
-                a folded board still says who has been worked. */}
-            {worked && (
-              <button
-                type="button"
-                className={styles.worked}
-                disabled={closePending}
-                onClick={undoWorked}
-                title="Worked today. Click to take the mark back."
-              >
-                ✓ WORKED
-              </button>
-            )}
-            {/* Low signal: a deal that isn't in the Salesforce pipeline moves
-                to the section above the closed ledger. Revealed under the
-                hand like the other minimal controls; the same seat takes it
-                back. A closed deal belongs to the closed ledger, so it has
-                none. */}
-            {row.canWrite && !row.outcome && (
-              <button
-                type="button"
-                className={styles.lowBtn}
-                disabled={pending}
-                onClick={toggleLowSignal}
-                title={lowTitle}
-                aria-label={lowTitle}
-              >
-                {row.lowSignal ? "↺" : "⇣"}
-              </button>
-            )}
-            {/* Closed Won by hand (founder's order, 2026-10-26): revealed
-                under the hand beside ⇣, it asks once in the move's slot. A
-                row with no card has no meter to stamp. */}
-            {row.canWrite && !row.outcome && row.cardId && (
-              <button
-                type="button"
-                className={styles.wonBtn}
-                disabled={pending}
-                onClick={() => setAskWon(true)}
-                title="Mark Closed Won."
-                aria-label="Mark Closed Won."
-              >
-                ☑
-              </button>
-            )}
-          </span>
-        </div>
-        {identityOpen && row.identity?.length ? (
-          <ul className={styles.identityFold}>
-            {row.identity.map((f, i) => (
-              <li key={i}>
-                <b>{f.label}</b>
-                {f.day ? ` · ${f.day}` : ""} · {f.line}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        {/* The move sits under the identity line, where the research control
-            used to be: the row's one instruction, before the instruments that
-            explain it. The whole slot moves — it carries the closed states
-            too, so it is the row's verdict line, not just its next move. */}
-        <div className={styles.movewrap}>
-          {row.outcome ? (
-            <>
-              <span className={styles.lbl}>
-                {row.outcome.status === "won" ? "CLOSED WON" : "CLOSED LOST"}
-              </span>
-              <p className={`${styles.move} ${styles.thin}`}>
-                {row.outcome.phrase ? `“${row.outcome.phrase}”` : "Closed by your call."}{" "}
-                The record keeps everything.
-              </p>
-              {row.canWrite && (
-                <span className={styles.lossBtns}>
-                  <button
-                    type="button"
-                    className={styles.ghost}
-                    disabled={pending}
-                    onClick={retireRow}
-                  >
-                    Retire the row
-                  </button>
-                  {row.cardId && (
-                    <button
-                      type="button"
-                      className={styles.reopenBtn}
-                      disabled={pending}
-                      onClick={reopenRow}
-                      title="Reopen the deal. The stamp comes off."
-                      aria-label="Reopen the deal. The stamp comes off."
-                    >
-                      ↺
-                    </button>
-                  )}
-                </span>
-              )}
-            </>
-          ) : askWon ? (
-            <>
-              <span className={styles.lbl}>MARK IT CLOSED WON</span>
-              <p className={styles.move}>
-                Your call: stamp the meter, or keep working it.
-              </p>
-              <span className={styles.lossBtns}>
-                <button
-                  type="button"
-                  className={styles.wonConfirm}
-                  disabled={pending}
-                  onClick={markWonByHand}
-                >
-                  Confirm Closed Won
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghost}
-                  disabled={pending}
-                  onClick={() => setAskWon(false)}
-                >
-                  Not yet
-                </button>
-              </span>
-            </>
-          ) : lossLive ? (
-            <>
-              <span className={styles.lbl}>
-                {row.loss!.status === "won"
-                  ? "THE RECORD READS WON"
-                  : "THE RECORD READS LOST"}
-              </span>
-              <p className={styles.move}>
-                Filed {row.loss!.date}: “{row.loss!.phrase}”. Your call: stamp the meter,
-                or keep working it.
-              </p>
-              {row.canWrite && (
-                <span className={styles.lossBtns}>
-                  <button
-                    type="button"
-                    className={styles.lossBtn}
-                    disabled={pending}
-                    onClick={row.loss!.status === "won" ? markWon : markLost}
-                  >
-                    {row.loss!.status === "won"
-                      ? "Confirm Closed Won"
-                      : "Confirm Closed Lost"}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.ghost}
-                    disabled={pending}
-                    onClick={keepSalvaging}
-                  >
-                    {row.loss!.status === "won" ? "Not yet" : "Keep salvaging"}
-                  </button>
-                </span>
-              )}
-            </>
-          ) : lossState === "lost" ? (
-            <>
-              <span className={styles.lbl}>CLOSED</span>
-              <p className={`${styles.move} ${styles.thin}`}>
-                The meter reads it now. The record keeps everything.
-              </p>
-            </>
-          ) : (
-            <>
-              <span className={styles.lbl}>NEXT MOVE</span>
-              {/* The gate chip is retired (founder-decreed 2026-08-19): the
-                  stage's open question lives in the UNKNOWN register with
-                  its own ✓ — the move line carries only the move. */}
-              {/* The move is BUILT from the commitment, not printed as it —
-                  and when the line holds detail back it opens rather than
-                  ending in a dead ellipsis (founder-decreed 2026-09-03). */}
-              {row.moveFull ? (
-                <p
-                  className={`${styles.move} ${row.thin ? styles.thin : ""} ${styles.moveDoor}`}
-                  title={row.moveFull}
-                  onClick={() => setMoveOpen((v) => !v)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setMoveOpen((v) => !v);
-                    }
-                  }}
-                >
-                  {/* A promise line's door holds one line per open promise
-                      (the face approved 2026-10-06); each opens on its own
-                      line. */}
-                  {moveOpen
-                    ? row.moveFull.split("\n").map((line, k) => (
-                        <Fragment key={k}>
-                          {k > 0 && <br />}
-                          {line}
-                        </Fragment>
-                      ))
-                    : row.move}
-                </p>
-              ) : (
-                <p className={`${styles.move} ${row.thin ? styles.thin : ""}`}>
-                  {row.move}
-                </p>
-              )}
-              {/* Every row can answer now. When the move names the staged item
-                  this still closes it; otherwise it marks the day — the case
-                  that used to leave the operator with no reply at all. */}
-              {row.canWrite && !worked && !(closed && !row.outstanding) && (
-                <button
-                  type="button"
-                  className={row.rank === 0 ? styles.go : styles.ghost}
-                  disabled={closePending}
-                  onClick={submitClose}
-                  title={
-                    row.outstanding && !closed
-                      ? `Closes “${row.outstanding.item}” and marks the day worked.`
-                      : "Marks the day worked. Nothing is staged to close."
-                  }
-                >
-                  {closePending ? "Saving…" : "Mark it done ✓"}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-        {research && (
-          <div className={styles.rsrchOut}>
-            {research.changed.length > 0 ? (
-              <>
-                <b>What changed:</b>
-                <ul className={styles.rsrchList}>
-                  {research.changed.map((c) => (
-                    <li key={c}>{c}</li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <span>{research.note}</span>
-            )}
-          </div>
-        )}
-
-        <div className={styles.climb} ref={stageRef}>
-          {/* The bar lives in its own 16px zone so the label below never sits
-              under the fill; hovering the zone opens the why bubble. */}
-          <div className={styles.meterZone}>
-            <div className={styles.track}>
-              <div
-                className={styles.gain}
-                style={{
-                  width: `${Math.round(Math.max(0.04, row.climb.frac) * 100)}%`,
-                }}
-              />
-            </div>
-            <div
-              className={`${styles.cap} ${row.climb.capTone === "risk" ? styles.capRisk : row.climb.capTone === "warn" ? styles.capWarn : styles.capOk}`}
-              style={{ left: `${Math.round(Math.max(0.04, row.climb.frac) * 100)}%` }}
-            />
-            {row.stages.map((s, i) => (
-              <button
-                key={s.key}
-                type="button"
-                className={`${styles.node} ${s.state === "done" ? styles.nodeDone : ""} ${s.state === "cur" ? styles.nodeCur : ""}`}
-                style={{ left: `${2 + i * 14.3}%` }}
-                title={`${s.label}. Open its checklist.`}
-                onClick={() => setStageOpen((k) => (k === s.key ? null : s.key))}
-              />
-            ))}
-            {row.climb.why.length > 0 && (
-              <div className={styles.meterCard}>
-                <span className={styles.hk}>WHY THE METER SITS HERE</span>
-                {row.climb.why.map((w) => (
-                  <span key={w} className={styles.hp}>
-                    {w}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className={styles.climbCap}>{label}</div>
-
-          {openStage && (
-            <div className={styles.stageDrawer}>
-              <div className={styles.sdHead}>
-                <b>{openStage.label}</b>
-                <button
-                  type="button"
-                  className={styles.sdClose}
-                  onClick={() => setStageOpen(null)}
-                >
-                  ✕
-                </button>
-              </div>
-              <ul className={styles.sdList}>
-                {openStage.items.map((it) => (
-                  <li key={it.index} className={it.checked ? styles.sdDone : undefined}>
-                    {row.canWrite ? (
-                      <form action={toggleCheck} className={styles.sdForm}>
-                        <input type="hidden" name="cardId" value={row.cardId} />
-                        <input type="hidden" name="node" value={openStage.key} />
-                        <input type="hidden" name="index" value={it.index} />
-                        <input type="hidden" name="returnTo" value="/room" />
-                        <button
-                          className={`${styles.sdRadio} ${it.checked ? styles.sdRadioOn : ""}`}
-                          aria-label={it.checked ? "uncheck" : "check"}
-                        />
-                      </form>
-                    ) : (
-                      <span
-                        className={`${styles.sdRadio} ${it.checked ? styles.sdRadioOn : ""}`}
-                      />
-                    )}
-                    <span className={styles.sdItem}>{it.item}</span>
-                    {it.note && (
-                      <span className={styles.sdNote} title={it.note}>
-                        ≡
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              {row.suggestions
-                .filter((sg) => sg.node === openStage.key)
-                .slice(0, 2)
-                .map((sg) => (
-                  <div key={`${sg.node}:${sg.index}`} className={styles.sdSugg}>
-                    Check <b>“{sg.item}”</b>. {sg.why}.
+                  <div className={f.mline}>
+                    <p className={`${f.mvt} ${f.thin}`}>
+                      {row.outcome.phrase
+                        ? `“${row.outcome.phrase}”`
+                        : "Closed by your call."}{" "}
+                      The record keeps everything.
+                    </p>
                     {row.canWrite && (
-                      <span className={styles.sdSuggActs}>
-                        <form action={toggleCheck} className={styles.inline}>
-                          <input type="hidden" name="cardId" value={row.cardId} />
-                          <input type="hidden" name="node" value={sg.node} />
-                          <input type="hidden" name="index" value={sg.index} />
-                          <input type="hidden" name="returnTo" value="/room" />
-                          <button className={styles.sdTag}>accept ✓</button>
-                        </form>
-                        <form action={dismissSuggestion} className={styles.inline}>
-                          <input type="hidden" name="cardId" value={row.cardId} />
-                          <input type="hidden" name="node" value={sg.node} />
-                          <input type="hidden" name="index" value={sg.index} />
-                          <input type="hidden" name="returnTo" value="/room" />
-                          <button className={styles.sdTag}>dismiss ✕</button>
-                        </form>
+                      <span className={f.mbtns}>
+                        <button
+                          type="button"
+                          className={f.ghost}
+                          disabled={pending}
+                          onClick={retireRow}
+                        >
+                          Retire the row
+                        </button>
+                        {row.cardId && (
+                          <button
+                            type="button"
+                            className={f.ghost}
+                            disabled={pending}
+                            onClick={reopenRow}
+                            title="Reopen the deal. The stamp comes off."
+                            aria-label="Reopen the deal. The stamp comes off."
+                          >
+                            ↺
+                          </button>
+                        )}
                       </span>
                     )}
                   </div>
-                ))}
-              {row.canWrite ? (
-                <form action={saveNote} className={styles.sdJudg}>
-                  <input type="hidden" name="cardId" value={row.cardId} />
-                  <input type="hidden" name="node" value={openStage.key} />
-                  <input type="hidden" name="returnTo" value="/room" />
-                  <input
-                    name="note"
-                    defaultValue={openStage.judgment}
-                    placeholder="Say why this stage sits where it does…"
-                  />
-                  <button className={styles.sdTag}>save</button>
-                </form>
-              ) : (
-                openStage.judgment && (
-                  <p className={styles.sdJudgRead}>{openStage.judgment}</p>
-                )
-              )}
-            </div>
-          )}
-        </div>
-        {/* The newest email, whole (ship order 2026-10-20). A line ✕-parked
-            below leaves it at once, and a subject edited there reads here,
-            before the page re-derives. */}
-        {row.latestEmail && !deletedNotes.has(row.latestEmail.id) && (
-          <LatestEmailPane
-            key={row.latestEmail.id}
-            email={{
-              ...row.latestEmail,
-              subject: editedNotes.get(row.latestEmail.id) ?? row.latestEmail.subject,
-            }}
-          />
-        )}
-      </div>
-
-      <div className={styles.rec}>
-        {row.theirs && (
-          <TheirsLine
-            accountId={row.accountId}
-            label={row.theirs.label}
-            gems={row.theirs.gems}
-          />
-        )}
-        {spring !== "unknown" && (
-          <div className={styles.sumline}>
-            <span className={styles.sumk}>UNKNOWN</span>
-            <span className={styles.sumn}>
-              {(row.outstanding && !closed ? 1 : 0) + liveAsks.length}
-              {/* The count is a door (the click-depth law; H5): it springs
-                  the register out with the queued asks open. */}
-              {liveQueued.length > 0 && (
+                </>
+              ) : askWon ? (
                 <>
-                  {" "}
-                  <button
-                    type="button"
-                    className={styles.sumDoor}
-                    title="Show the asks waiting behind these"
-                    onClick={() => {
-                      setSpring("unknown");
-                      setQueuedOpen(true);
-                    }}
-                  >
-                    · {liveQueued.length} queued
-                  </button>
+                  <span className={f.mk2}>Mark it closed won</span>
+                  <div className={f.mline}>
+                    <p className={f.mvt}>Your call: stamp it won, or keep working it.</p>
+                    <span className={f.mbtns}>
+                      <button
+                        type="button"
+                        className={f.done}
+                        disabled={pending}
+                        onClick={markWonByHand}
+                      >
+                        Confirm Closed Won
+                      </button>
+                      <button
+                        type="button"
+                        className={f.ghost}
+                        disabled={pending}
+                        onClick={() => setAskWon(false)}
+                      >
+                        Not yet
+                      </button>
+                    </span>
+                  </div>
+                </>
+              ) : lossLive ? (
+                <>
+                  <span className={f.mk2}>
+                    {row.loss!.status === "won"
+                      ? "The record reads won"
+                      : "The record reads lost"}
+                  </span>
+                  <div className={f.mline}>
+                    <p className={f.mvt}>
+                      Filed {row.loss!.date}: “{row.loss!.phrase}”. Your call: stamp it,
+                      or keep working it.
+                    </p>
+                    {row.canWrite && (
+                      <span className={f.mbtns}>
+                        <button
+                          type="button"
+                          className={f.done}
+                          disabled={pending}
+                          onClick={row.loss!.status === "won" ? markWon : markLost}
+                        >
+                          {row.loss!.status === "won"
+                            ? "Confirm Closed Won"
+                            : "Confirm Closed Lost"}
+                        </button>
+                        <button
+                          type="button"
+                          className={f.ghost}
+                          disabled={pending}
+                          onClick={keepSalvaging}
+                        >
+                          {row.loss!.status === "won" ? "Not yet" : "Keep salvaging"}
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </>
+              ) : lossState === "lost" ? (
+                <>
+                  <span className={f.mk2}>Closed</span>
+                  <p className={`${f.mvt} ${f.thin}`}>The record keeps everything.</p>
+                </>
+              ) : (
+                <>
+                  <span className={f.mk2}>Next move</span>
+                  <div className={f.mline}>
+                    {/* The move is BUILT from the commitment, not printed as
+                        it; when the line holds detail back it opens to it,
+                        one click deep (founder-decreed 2026-09-03). */}
+                    {row.moveFull || row.theirs ? (
+                      <p
+                        className={`${f.mvt} ${row.thin ? f.thin : ""} ${f.mvtDoor}`}
+                        title={[
+                          row.moveFull,
+                          row.theirs ? `Your Salesforce export: ${row.theirs.label}` : "",
+                        ]
+                          .filter(Boolean)
+                          .join("\n")}
+                        onClick={() => setMoveOpen((v) => !v)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setMoveOpen((v) => !v);
+                          }
+                        }}
+                      >
+                        {moveOpen && row.moveFull
+                          ? row.moveFull.split("\n").map((line, k) => (
+                              <Fragment key={k}>
+                                {k > 0 && <br />}
+                                {line}
+                              </Fragment>
+                            ))
+                          : row.move}
+                      </p>
+                    ) : (
+                      <p className={`${f.mvt} ${row.thin ? f.thin : ""}`}>{row.move}</p>
+                    )}
+                    {/* The second record's verified facts about the account's
+                        people (C16) ride the move's own door: opened, the
+                        gems unfold under it, each down to its email (the
+                        meat law). They no longer take a line of their own. */}
+                    {moveOpen && row.theirs && (
+                      <div className={f.theirsUnder}>
+                        <TheirsLine
+                          accountId={row.accountId}
+                          label={row.theirs.label}
+                          gems={row.theirs.gems}
+                        />
+                      </div>
+                    )}
+                    <span className={f.mbtns}>
+                      {worked ? (
+                        <button
+                          type="button"
+                          className={f.workedTag}
+                          disabled={closePending}
+                          onClick={undoWorked}
+                          title="Worked today. Click to take the mark back."
+                        >
+                          ✓ Worked
+                        </button>
+                      ) : (
+                        row.canWrite &&
+                        !(closed && !row.outstanding) && (
+                          <button
+                            type="button"
+                            className={f.done}
+                            disabled={closePending}
+                            onClick={submitClose}
+                            title={
+                              row.outstanding && !closed
+                                ? `Closes “${row.outstanding.item}” and marks the day worked.`
+                                : "Marks the day worked. Nothing is staged to close."
+                            }
+                          >
+                            {closePending ? "Saving…" : "Mark it done ✓"}
+                          </button>
+                        )
+                      )}
+                      {row.canWrite && (
+                        <>
+                          <span className={f.vr} aria-hidden="true" />
+                          <button
+                            type="button"
+                            className={`${f.eqb} ${f.chuteb}`}
+                            title={`Paste or drop anything. It files to ${row.name}.`}
+                            onClick={() => {
+                              setPasteOpen(true);
+                              setMismatch(null);
+                              setSpring("today");
+                            }}
+                          >
+                            {chuteIcon}Chute
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  </div>
                 </>
               )}
-            </span>
-            <span className={styles.sumtx}>
-              {row.outstanding && !closed
-                ? row.outstanding.item
-                : (liveAsks[0]?.question ?? "Nothing of this deal's own yet.")}
-            </span>
-            <Link href={row.askHref} className={styles.sic} title="Ask the brain">
-              ⌕
-            </Link>
-            {row.canWrite && (
-              <button
-                type="button"
-                className={styles.sic}
-                disabled={askPending}
-                onClick={refillAsks}
-                title="Mint sharper asks"
-              >
-                {askPending ? "…" : "⟳"}
-              </button>
-            )}
-            <button
-              type="button"
-              className={styles.splayBtn}
-              title="Expand them out"
-              onClick={() => setSpring("unknown")}
-            >
-              ⊕
-            </button>
-          </div>
-        )}
-        {spring === "unknown" && (
-          <div className={styles.splayed}>
-            <div className={`${styles.sumline} ${styles.sumOpen}`}>
-              <span className={`${styles.sumk} ${styles.sumkOn}`}>STILL UNKNOWN</span>
-              <span className={styles.sumn}>
-                {liveAsks.length}
-                {liveQueued.length > 0 && (
+            </div>
+            {research && (
+              <div className={styles.rsrchOut}>
+                {research.changed.length > 0 ? (
                   <>
-                    {" "}
-                    <button
-                      type="button"
-                      className={`${styles.sumDoor} ${queuedOpen ? styles.sumDoorOn : ""}`}
-                      aria-expanded={queuedOpen}
-                      title={
-                        queuedOpen
-                          ? "Hide the asks waiting behind these"
-                          : "Show the asks waiting behind these"
-                      }
-                      onClick={() => setQueuedOpen((v) => !v)}
-                    >
-                      · {liveQueued.length} queued
-                    </button>
+                    <b>What changed:</b>
+                    <ul className={styles.rsrchList}>
+                      {research.changed.map((c) => (
+                        <li key={c}>{c}</li>
+                      ))}
+                    </ul>
                   </>
-                )}
-              </span>
-              <Link href={row.askHref} className={styles.sic} title="Ask the brain">
-                ⌕
-              </Link>
-              {row.canWrite && (
-                <button
-                  type="button"
-                  className={styles.sic}
-                  disabled={askPending}
-                  onClick={refillAsks}
-                  title="Mint sharper asks"
-                >
-                  {askPending ? "…" : "⟳"}
-                </button>
-              )}
-              <button
-                type="button"
-                className={styles.splayBtn}
-                title="Fold them back"
-                onClick={() => setSpring(null)}
-              >
-                ⊖
-              </button>
-            </div>
-            {/* The mint's receipt, above the asks it brought. */}
-            {minted && (
-              <div className={`${styles.it} ${styles.fresh}`}>
-                <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
-                <span className={styles.tx}>{minted}</span>
-              </div>
-            )}
-            {/* The stage's open question leads the register (founder-decreed
-                2026-08-19) — ✓ checks it in the stage record. */}
-            {row.outstanding && !closed && (
-              <div className={styles.askRow}>
-                <span className={styles.askQ}>
-                  {row.outstanding.item}
-                  {/* The chip is a door (the click-depth law; H5): it opens
-                      the stage's own checklist, the gate and the ones
-                      behind it. */}
-                  <button
-                    type="button"
-                    className={styles.gateTag}
-                    title="Open the stage's checklist"
-                    onClick={() => setStageOpen(row.outstanding?.node ?? null)}
-                  >
-                    STAGE GATE
-                    {row.outstanding.closedCount > 0
-                      ? ` · ${row.outstanding.closedCount} BEHIND IT`
-                      : ""}
-                  </button>
-                </span>
-                {row.canWrite && (
-                  <button
-                    type="button"
-                    className={styles.askX}
-                    disabled={closePending}
-                    onClick={submitClose}
-                    title="Mark it done. It checks the gate in the stage record."
-                  >
-                    {closePending ? "…" : "✓"}
-                  </button>
+                ) : (
+                  <span>{research.note}</span>
                 )}
               </div>
             )}
-            {liveAsks.length === 0 &&
-              !(queuedOpen && liveQueued.length > 0) &&
-              (!row.outstanding || closed) && (
-                <span className={styles.askQ}>
-                  Nothing of this deal&apos;s own yet. File a paste, or mint asks.
-                </span>
-              )}
-            {[...liveAsks, ...(queuedOpen ? liveQueued : [])].map((g, i) => (
-              <div
-                key={g.id}
-                className={`${styles.askRow} ${i >= liveAsks.length ? styles.askQueued : ""}`}
-              >
-                <span className={styles.askQ}>{g.question}</span>
-                {row.canWrite && (
-                  <button
-                    type="button"
-                    className={styles.askX}
-                    disabled={askPending}
-                    onClick={() => dismissAsk(g.id)}
-                    title="Not this deal"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        {row.peers.length > 0 && spring !== "peers" && (
-          <div className={styles.sumline}>
-            <span className={styles.sumk}>COMPARABLE</span>
-            <span className={styles.sumn}>{row.peers.length}</span>
-            <span className={styles.sumtx}>
-              {(row.peers[0].shared || "shared situation").toUpperCase()} ·{" "}
-              {row.peers[0].question}
-            </span>
+            <PeopleDeck deck={row.deck} tone={row.multiTone} accountName={row.name} />
             <button
               type="button"
-              className={styles.splayBtn}
-              title="Expand them out"
-              onClick={() => setSpring("peers")}
+              className={f.doorBtn}
+              aria-expanded={panelOpen}
+              onClick={() => setSpring(panelOpen ? null : "today")}
             >
-              ⊕
+              {panelOpen ? "Minimize ▴" : "Latest email and Chute ▾"}
             </button>
-          </div>
-        )}
-        {row.peers.length > 0 && spring === "peers" && (
-          <div className={styles.splayed}>
-            <div className={`${styles.sumline} ${styles.sumOpen}`}>
-              <span className={`${styles.sumk} ${styles.sumkOn}`}>
-                ASKED ON COMPARABLE DEALS
-              </span>
-              <span className={styles.sumn}>{row.peers.length}</span>
-              <button
-                type="button"
-                className={styles.splayBtn}
-                title="Fold them back"
-                onClick={() => setSpring(null)}
-              >
-                ⊖
-              </button>
-            </div>
-            {row.peers.map((p) => (
-              <div key={p.question} className={styles.askRow}>
-                <span className={styles.askQ}>
-                  <span className={styles.peerCtry}>
-                    {p.shared.toUpperCase() || "SHARED SITUATION"}
-                  </span>
-                  {p.question}
-                </span>
-                <Link href={p.findHref} className={styles.askGo} title="Find the answer">
-                  →
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {spring !== "today" && (
-          <div className={styles.sumline}>
-            <span className={styles.sumk}>TODAY</span>
-            <span className={styles.sumn}>
-              {today.count}
-              {doneCount > 0 ? ` · ${doneCount} done` : ""}
-            </span>
-            <span className={styles.sumtx}>{topToday || "Nothing open today."}</span>
-            <button
-              type="button"
-              className={styles.splayBtn}
-              title="Expand them out"
-              onClick={() => setSpring("today")}
-            >
-              ⊕
-            </button>
-          </div>
-        )}
-        {spring === "today" && (
-          <div className={styles.splayed}>
-            <div className={`${styles.sumline} ${styles.sumOpen}`}>
-              <span className={`${styles.sumk} ${styles.sumkOn}`}>TODAY</span>
-              <span className={styles.sumn}>
-                {today.count}
-                {doneCount > 0 ? ` · ${doneCount} done` : ""}
-              </span>
-              <button
-                type="button"
-                className={styles.splayBtn}
-                title="Fold them back"
-                onClick={() => setSpring(null)}
-              >
-                ⊖
-              </button>
-            </div>
-            {row.owed
-              .filter((o) => !owedGone.has(o.key))
-              .map((o) => (
-                <div key={o.key} className={styles.owedBox}>
-                  <span className={styles.kOwed}>⚑</span> The record says you owe:{" "}
-                  <b>{o.text}</b>. {o.src}.
-                  {row.canWrite && (
-                    <span className={styles.sdSuggActs}>
-                      <button
-                        type="button"
-                        className={styles.sdTag}
-                        disabled={pending}
-                        onClick={() => owedAccept(o)}
-                      >
-                        open it ✓
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.sdTag}
-                        disabled={pending}
-                        onClick={() => owedDismiss(o)}
-                      >
-                        dismiss ✕
-                      </button>
-                    </span>
+            {
+              <div className={f.panel} hidden={!panelOpen}>
+                <div style={{ minWidth: 0 }}>
+                  {/* The newest email, whole (ship order 2026-10-20). A line
+                      ✕-parked below leaves it at once, and a subject edited
+                      there reads here, before the page re-derives. */}
+                  {row.latestEmail && !deletedNotes.has(row.latestEmail.id) ? (
+                    <LatestEmailPane
+                      key={row.latestEmail.id}
+                      email={{
+                        ...row.latestEmail,
+                        subject:
+                          editedNotes.get(row.latestEmail.id) ?? row.latestEmail.subject,
+                      }}
+                    />
+                  ) : (
+                    <p className={f.nil}>No email on the record yet.</p>
                   )}
                 </div>
-              ))}
-            {freshCaps.map((c, i) =>
-              c.kind === "note" && !c.promoted ? (
-                <div key={`fc${i}`}>
-                  <div className={`${styles.it} ${styles.fresh}`}>
-                    <span className={`${styles.ic} ${styles.gNote}`}>✎</span>
-                    <span className={styles.tx}>{c.body}</span>
+                <div className={f.panelR}>
+                  <div className={f.chuteHead}>
+                    <span className={f.chuteMark}>{chuteIcon}</span>
+                    <span className={f.chT}>The Chute</span>
+                    <span className={f.chS}>
+                      Files to <b className={f.acctC}>{row.name}</b>, everywhere
+                    </span>
                   </div>
-                  <div className={styles.rcpt}>
-                    <b>routed → {row.name}&apos;s record</b>
-                    {c.todoId && (
-                      <>
+                  {row.canWrite && (
+                    <div
+                      className={`${styles.logbox} ${dropHot ? styles.dropHot : ""}`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDropHot(true);
+                      }}
+                      onDragLeave={() => setDropHot(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDropHot(false);
+                        handleFiles(e.dataTransfer.files);
+                      }}
+                    >
+                      {/* Four doors, each its own thing (founder-decreed 2026-08-18):
+                          ⚡ the bolt's smart paste; ▢ a quick note; ✸ an action; ⇪ a
+                          file. The composer rests shut and opens on command. */}
+                      <div className={styles.modes}>
                         <button
                           type="button"
-                          className={styles.rcptU}
-                          onClick={() => undoCap(i)}
-                        >
-                          ↩ undo
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.rcptMk}
-                          onClick={() => promoteCap(i)}
-                        >
-                          ✸ make it an action →
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : c.todoId && gone.has(c.todoId) ? null : (
-                (() => {
-                  const did = !!c.todoId && doneIds.has(c.todoId);
-                  return (
-                    <div
-                      key={`fc${i}`}
-                      className={`${styles.it} ${did ? styles.itDid : styles.itOpen} ${styles.fresh}`}
-                    >
-                      <span
-                        className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}
-                      >
-                        {did ? "✓" : "✸"}
-                      </span>
-                      {!did && (
-                        <span className={`${styles.st} ${styles.stOpen}`}>
-                          {c.kind === "scheduled" ? "SOON" : "OPEN"}
-                        </span>
-                      )}
-                      <span className={styles.tx}>{c.body}</span>
-                      {c.todoId && (
-                        <span className={styles.rail}>
-                          {did ? (
-                            <button
-                              onClick={() => todoOp(c.todoId!, "undo")}
-                              title="undo"
-                            >
-                              ↩
-                            </button>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => todoOp(c.todoId!, "done")}
-                                title="done"
-                              >
-                                ✓
-                              </button>
-                              <button
-                                onClick={() => todoOp(c.todoId!, "drop")}
-                                title="park"
-                              >
-                                ✕
-                              </button>
-                            </>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })()
-              ),
-            )}
-            {/* The filing's receipt is the Chute's own line (slice 18a): the
-                to-dos it opened are the real rows below, so the receipt no
-                longer carries chips of them; its line opens to what it
-                wrote. */}
-            {(freshAll ? freshInfo : freshInfo.slice(0, 2)).map((f, i) => {
-              const rc = f.receipt;
-              return rc ? (
-                <div key={`fr${rc.key}`} className={`${styles.rcptItem} ${styles.fresh}`}>
-                  <ReceiptLine
-                    row={rc}
-                    canWrite={row.canWrite}
-                    onTakeBack={takeBackTarget(rc) ? () => takeBack(rc) : undefined}
-                    onClear={() => clearReceipt(rc.key)}
-                  />
-                </div>
-              ) : (
-                <div key={`fi${i}`} className={`${styles.it} ${styles.fresh}`}>
-                  <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
-                  <span className={styles.tx}>{f.text}</span>
-                </div>
-              );
-            })}
-            {freshInfo.length > 2 && (
-              <button
-                type="button"
-                className={styles.moreFresh}
-                onClick={() => setFreshAll((v) => !v)}
-              >
-                {freshAll ? "Collapse ▴" : `Show ${freshInfo.length - 2} more ▸`}
-              </button>
-            )}
-            {[
-              // An un-held row rejoins the open list; it carries no wall of its own
-              // until the server re-reads it.
-              ...row.sheetDelayed
-                .filter((t) => backNow.has(t.id))
-                .map((t) => ({ id: t.id, body: t.body })),
-              ...row.sheetOpen.filter((t) => !backNow.has(t.id)),
-              ...(restOpen ? row.sheetRest.filter((t) => !backNow.has(t.id)) : []),
-            ]
-              .filter((t) => !gone.has(t.id))
-              .map(
-                (t: {
-                  id: string;
-                  body: string;
-                  edit?: string;
-                  wall?: string;
-                  promised?: boolean;
-                  fallback?: string;
-                  settled?: string;
-                }) => {
-                  const did = doneIds.has(t.id);
-                  if (todoEditId === t.id) return todoEditBox(t.id);
-                  return (
-                    <div
-                      key={t.id}
-                      className={`${styles.it} ${did ? styles.itDid : styles.itOpen}`}
-                    >
-                      <span
-                        className={`${styles.ic} ${did ? styles.gDone : styles.gAct}`}
-                      >
-                        {did ? "✓" : "✸"}
-                      </span>
-                      {!did && (
-                        <span
-                          className={`${styles.st} ${
-                            t.settled
-                              ? styles.stLanded
-                              : t.wall
-                                ? styles.stWall
-                                : styles.stOpen
-                          }`}
-                        >
-                          {t.settled
-                            ? "LANDED"
-                            : t.wall
-                              ? t.promised
-                                ? `PROMISED ${t.wall}`
-                                : `${t.wall} PASSED`
-                              : "OPEN"}
-                        </span>
-                      )}
-                      <span className={styles.tx}>
-                        {editedTodos.get(t.id) ?? t.body}
-                        {/* The if/then, run for you: the wall passed, so the
-                      contingency is the move now. */}
-                        {!did && t.settled && (
-                          <span className={styles.settledWhy}>
-                            The record shows this went out, and {t.settled}. Close it when
-                            you agree.
-                          </span>
-                        )}
-                        {!did && !t.settled && t.fallback && (
-                          <span className={styles.fallback}>
-                            ↯ It didn&apos;t land. Go to the fallback: {t.fallback}
-                          </span>
-                        )}
-                      </span>
-                      {row.canWrite && (
-                        <span className={styles.rail}>
-                          {did ? (
-                            <button
-                              disabled={pending}
-                              onClick={() => todoOp(t.id, "undo")}
-                              title="undo"
-                            >
-                              ↩
-                            </button>
-                          ) : (
-                            <>
-                              <button
-                                disabled={pending}
-                                onClick={() => todoOp(t.id, "done")}
-                                title="done"
-                              >
-                                ✓
-                              </button>
-                              <button
-                                disabled={pending}
-                                onClick={() => todoOp(t.id, "tomorrow")}
-                                title="delay to tomorrow"
-                              >
-                                ⏲
-                              </button>
-                              <form action={addFollowUp} className={styles.inline}>
-                                <input
-                                  type="hidden"
-                                  name="label"
-                                  value={t.body.slice(0, 140)}
-                                />
-                                <input type="hidden" name="returnTo" value="/room" />
-                                <button title="Arm a chase. Someone owes this.">⚑</button>
-                              </form>
-                              <button
-                                disabled={pending}
-                                onClick={() => startTodoEdit(t)}
-                                title="edit this line"
-                              >
-                                ✎
-                              </button>
-                              <button
-                                disabled={pending}
-                                onClick={() => todoOp(t.id, "drop")}
-                                title="park"
-                              >
-                                ✕
-                              </button>
-                            </>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  );
-                },
-              )}
-            {/* Whatever the cap held back is a door, never a disappearance —
-                nine open commitments across three accounts were invisible on
-                their own rows before this (decreed 2026-09-03). */}
-            {restCount > 0 && (
-              <button
-                type="button"
-                className={styles.restDoor}
-                onClick={() => setRestOpen((v) => !v)}
-              >
-                {restOpen
-                  ? `fold the other ${restCount} back ⊖`
-                  : `${restCount} more open ⊕`}
-              </button>
-            )}
-            {row.sheetDelayed
-              .filter((t) => !gone.has(t.id) && !backNow.has(t.id))
-              .map((t) => (
-                <div key={t.id} className={`${styles.it} ${styles.itDelayed}`}>
-                  <span className={`${styles.ic} ${styles.gDly}`}>⏲</span>
-                  <span className={`${styles.st} ${styles.stSched}`}>{t.when}</span>
-                  <span className={styles.tx}>{t.body}</span>
-                  {row.canWrite && (
-                    <span className={styles.rail}>
-                      <button
-                        disabled={pending}
-                        onClick={() => todoOp(t.id, "now")}
-                        title="bring it back now"
-                      >
-                        ↩
-                      </button>
-                    </span>
-                  )}
-                </div>
-              ))}
-            {row.sheetDoneToday
-              .filter((t) => !gone.has(t.id))
-              .map((t) => (
-                <div key={t.id} className={`${styles.it} ${styles.itDid}`}>
-                  <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
-                  <span className={`${styles.st} ${styles.stDone}`}>{t.at}</span>
-                  <span className={styles.tx}>{t.body}</span>
-                  {row.canWrite && (
-                    <span className={styles.rail}>
-                      <button onClick={() => todoOp(t.id, "undo")} title="undo">
-                        ↩
-                      </button>
-                    </span>
-                  )}
-                </div>
-              ))}
-            {/* What their side released: closed, outside the count, one quiet
-                line with its why, so a commitment never leaves TODAY without
-                a trace (pass 8 H6; the pass 9 seam, S-2). The stored line is
-                still the operator's: ✓ closes it, ✎ rewrites it. */}
-            {(row.sheetReleased ?? [])
-              .filter((t) => !gone.has(t.id))
-              .map((t) => {
-                if (todoEditId === t.id) return todoEditBox(t.id);
-                const did = doneIds.has(t.id);
-                return (
-                  <div
-                    key={t.id}
-                    className={`${styles.it} ${did ? styles.itDid : styles.itReleased}`}
-                  >
-                    <span className={did ? `${styles.ic} ${styles.gDone}` : styles.ic}>
-                      {did ? "✓" : "✸"}
-                    </span>
-                    <span className={styles.tx}>
-                      {editedTodos.get(t.id) ?? t.body}
-                      {!did && <span className={styles.settledWhy}>{t.why}</span>}
-                    </span>
-                    {row.canWrite && (
-                      <span className={styles.rail}>
-                        {did ? (
-                          <button
-                            disabled={pending}
-                            onClick={() => todoOp(t.id, "undo")}
-                            title="undo"
-                          >
-                            ↩
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              disabled={pending}
-                              onClick={() => todoOp(t.id, "done")}
-                              title="done"
-                            >
-                              ✓
-                            </button>
-                            <button
-                              disabled={pending}
-                              onClick={() => startTodoEdit(t)}
-                              title="edit this line"
-                            >
-                              ✎
-                            </button>
-                          </>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-          </div>
-        )}
-
-        {row.canWrite && (
-          <div
-            className={`${styles.logbox} ${dropHot ? styles.dropHot : ""}`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDropHot(true);
-            }}
-            onDragLeave={() => setDropHot(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDropHot(false);
-              handleFiles(e.dataTransfer.files);
-            }}
-          >
-            <span className={styles.lk}>
-              THE DROP · FILES TO {row.name.toUpperCase()}, EVERYWHERE
-            </span>
-            {/* Four doors, each its own thing (founder-decreed 2026-08-18):
-                ⚡ the bolt's smart paste; ▢ a quick note; ✸ an action; ⇪ a
-                file. The composer rests shut and opens on command. */}
-            <div className={styles.modes}>
-              <button
-                type="button"
-                className={`${styles.door} ${styles.doorZap} ${pasteOpen ? styles.doorOn : ""}`}
-                title={`The bolt. Paste anything. It reads and files to ${row.name}.`}
-                onClick={() => {
-                  setPasteOpen((v) => !v);
-                  setComposerOpen(false);
-                  dropHeldPaste();
-                }}
-              >
-                ⚡
-              </button>
-              <button
-                type="button"
-                className={`${styles.door} ${styles.doorNote} ${composerOpen && mode === "note" ? styles.doorOn : ""}`}
-                title={`Note. A line for the record on ${row.name}.`}
-                onClick={() => {
-                  const on = composerOpen && mode === "note";
-                  setMode("note");
-                  setComposerOpen(!on);
-                  setPasteOpen(false);
-                }}
-              >
-                ▢
-              </button>
-              <button
-                type="button"
-                className={`${styles.door} ${styles.doorAct} ${composerOpen && mode === "action" ? styles.doorOn : ""}`}
-                title={`Action. Open work on the sheet for ${row.name}.`}
-                onClick={() => {
-                  const on = composerOpen && mode === "action";
-                  setMode("action");
-                  setComposerOpen(!on);
-                  setPasteOpen(false);
-                }}
-              >
-                ✸
-              </button>
-              <button
-                type="button"
-                className={`${styles.door} ${styles.doorFile}`}
-                disabled={pending || reading.length > 0}
-                onClick={() => fileInputRef.current?.click()}
-                title="File. Email, PDF, transcript, spreadsheet, document, or image."
-              >
-                ⇪
-              </button>
-              {/* No accept filter: the vault takes every file type, the
-                  reader picks out the ones it can file to the record, and a
-                  misplaced .csv gets its refusal instead of vanishing from
-                  the picker (decided 2026-10-06). */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  handleFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </div>
-            {/* One box at a time: the composer steps aside while the ⚡ pane
-                is open, and comes back on Cancel. */}
-            {!pasteOpen && composerOpen && (
-              <>
-                <span className={styles.hints}>
-                  Enter files to {firstWord(row.name)} · Shift+Enter newline · drop a file
-                  anywhere on the Drop
-                </span>
-                <textarea
-                  className={styles.logta}
-                  value={logText}
-                  onChange={(e) => setLogText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      submitCompose();
-                    }
-                  }}
-                  placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…"
-                  aria-label={`Log to ${row.name}`}
-                />
-                {/* Said before Enter (decided 2026-10-06): notes typed here
-                    file as a typed note; anything else names its own read. */}
-                {mode === "note" && readsRich(logText.trim()) && (
-                  <span className={styles.sniff}>
-                    Reads as{" "}
-                    {sniffPaste(logText).kind === "note"
-                      ? "a typed note"
-                      : sniffPaste(logText).label}
-                    . Enter runs the full read.
-                  </span>
-                )}
-              </>
-            )}
-            {pasteOpen && (
-              <div className={styles.pastepane}>
-                <textarea
-                  value={pasteText}
-                  onChange={(e) => setPasteText(e.target.value)}
-                  placeholder={`Paste the Salesforce capture, an email, or meeting notes. Or drop a .eml, .msg, or .pdf file. It files to ${row.name}.`}
-                />
-                {pasteText.trim().length > 0 && (
-                  <span className={styles.sniff}>
-                    Reads as {sniffPaste(pasteText).label}.
-                  </span>
-                )}
-                <div className={styles.pasteRow}>
-                  <button
-                    type="button"
-                    className={styles.cancel}
-                    onClick={() => {
-                      setPasteOpen(false);
-                      dropHeldPaste();
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.file}
-                    disabled={pending}
-                    onClick={submitPaste}
-                  >
-                    {pending ? "Reading…" : "✨ Read & file"}
-                  </button>
-                </div>
-              </div>
-            )}
-            {/* The held file (slice 18a; the face approved 2026-10-06): the
-                same box the Chute paints. Nothing was written; the reason
-                opens to both sides' grounds, the answer files with force,
-                and the ✕ files nothing and still backs the files up. */}
-            {mismatch && (
-              <HeldBox
-                file={mismatch.files?.[0]?.name ?? mismatch.filename ?? "Paste"}
-                since={mismatch.heldSince}
-                verdict={mismatch}
-                claim={mismatch.claim}
-                bound={{ id: row.accountId, name: row.name }}
-                candidates={mismatch.candidates}
-                busy={pending}
-                onPick={pickHeld}
-                onDismiss={unfileHeld}
-              />
-            )}
-            {reading.length > 0 && (
-              <p className={styles.sniff}>Reading {reading.join(", ")}…</p>
-            )}
-            {queued.length > 0 && (
-              <p className={styles.sniff}>Waiting: {queued.join(", ")}.</p>
-            )}
-            {arch && <p className={styles.sniff}>⇪ {arch.text}</p>}
-            {note && <p className={styles.err}>{note}</p>}
-          </div>
-        )}
-
-        <button
-          type="button"
-          className={`${styles.dayrule} ${styles.dayruleBtn}`}
-          onClick={() => setRecOpen((v) => !v)}
-          title={recOpen ? "collapse the record" : "open the record"}
-        >
-          EARLIER · {row.recordTotal} {recOpen ? "▾" : "▸"}
-        </button>
-        {recOpen && (
-          <>
-            {row.record
-              .filter((e) => !deletedNotes.has(e.id))
-              .map((e) => {
-                const promoted = promotedNotes.has(e.id);
-                // An email line shows (and edits) its subject; any other line
-                // its first line with the glyph gone, as before.
-                const shown = editedNotes.get(e.id) ?? e.line;
-                if (editId === e.id)
-                  return (
-                    <div key={e.id} className={styles.it}>
-                      <span className={`${styles.ic} ${styles.gNote}`}>{e.glyph}</span>
-                      <span className={styles.recEdit}>
-                        <input
-                          value={editText}
-                          onChange={(ev) => setEditText(ev.target.value)}
-                          onKeyDown={(ev) => {
-                            if (ev.key === "Enter") saveEdit(e.id, e.text);
-                            if (ev.key === "Escape") setEditId(null);
+                          className={`${styles.door} ${styles.doorZap} ${pasteOpen ? styles.doorOn : ""}`}
+                          title={`The bolt. Paste anything. It reads and files to ${row.name}.`}
+                          onClick={() => {
+                            setPasteOpen((v) => !v);
+                            setComposerOpen(false);
+                            dropHeldPaste();
                           }}
-                          aria-label="edit this entry"
+                        >
+                          ⚡
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.door} ${styles.doorNote} ${composerOpen && mode === "note" ? styles.doorOn : ""}`}
+                          title={`Note. A line for the record on ${row.name}.`}
+                          onClick={() => {
+                            const on = composerOpen && mode === "note";
+                            setMode("note");
+                            setComposerOpen(!on);
+                            setPasteOpen(false);
+                          }}
+                        >
+                          ▢
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.door} ${styles.doorAct} ${composerOpen && mode === "action" ? styles.doorOn : ""}`}
+                          title={`Action. Open work on the sheet for ${row.name}.`}
+                          onClick={() => {
+                            const on = composerOpen && mode === "action";
+                            setMode("action");
+                            setComposerOpen(!on);
+                            setPasteOpen(false);
+                          }}
+                        >
+                          ✸
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.door} ${styles.doorFile}`}
+                          disabled={pending || reading.length > 0}
+                          onClick={() => fileInputRef.current?.click()}
+                          title="File. Email, PDF, transcript, spreadsheet, document, or image."
+                        >
+                          ⇪
+                        </button>
+                        {/* No accept filter: the vault takes every file type, the
+                            reader picks out the ones it can file to the record, and a
+                            misplaced .csv gets its refusal instead of vanishing from
+                            the picker (decided 2026-10-06). */}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            handleFiles(e.target.files);
+                            e.target.value = "";
+                          }}
                         />
-                        <button
-                          type="button"
-                          className={styles.sdTag}
-                          onClick={() => saveEdit(e.id, e.text)}
-                        >
-                          save
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.sdTag}
-                          onClick={() => setEditId(null)}
-                        >
-                          cancel
-                        </button>
-                      </span>
-                    </div>
-                  );
-                return (
-                  <EarlierLine
-                    key={e.id}
-                    line={e}
-                    shown={shown}
-                    open={lineOpen === e.id}
-                    onToggle={() => setLineOpen((o) => (o === e.id ? null : e.id))}
-                    done={e.struck || promoted}
-                    note={
-                      promoted && (
-                        <span className={styles.promoted}> · now open above</span>
-                      )
-                    }
-                    rail={
-                      row.canWrite && (
-                        <span className={styles.rail}>
-                          {!e.struck && !promoted && e.glyph !== "✓" && (
-                            <button
-                              onClick={() => promoteNote(e.id, shown)}
-                              title="Make it an action. It opens on this register."
-                            >
-                              ✸
-                            </button>
+                      </div>
+                      {/* One box at a time: the composer steps aside while the ⚡ pane
+                          is open, and comes back on Cancel. */}
+                      {!pasteOpen && composerOpen && (
+                        <>
+                          <span className={styles.hints}>
+                            Enter files to {firstWord(row.name)} · Shift+Enter newline ·
+                            drop a file anywhere on the Drop
+                          </span>
+                          <textarea
+                            className={styles.logta}
+                            value={logText}
+                            onChange={(e) => setLogText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                submitCompose();
+                              }
+                            }}
+                            placeholder="Type the second it happens: call notes, Teams pastes, stray thoughts…"
+                            aria-label={`Log to ${row.name}`}
+                          />
+                          {/* Said before Enter (decided 2026-10-06): notes typed here
+                              file as a typed note; anything else names its own read. */}
+                          {mode === "note" && readsRich(logText.trim()) && (
+                            <span className={styles.sniff}>
+                              Reads as{" "}
+                              {sniffPaste(logText).kind === "note"
+                                ? "a typed note"
+                                : sniffPaste(logText).label}
+                              . Enter runs the full read.
+                            </span>
                           )}
-                          {/* A sign-off line shows the sign-off, which ✎
-                              cannot edit, so it carries no ✎. ✎ starts from
-                              what is stored, never the display's copy. */}
-                          {!e.email?.closer && (
+                        </>
+                      )}
+                      {pasteOpen && (
+                        <div className={styles.pastepane}>
+                          <textarea
+                            value={pasteText}
+                            onChange={(e) => setPasteText(e.target.value)}
+                            placeholder={`Paste the Salesforce capture, an email, or meeting notes. Or drop a .eml, .msg, or .pdf file. It files to ${row.name}.`}
+                          />
+                          {pasteText.trim().length > 0 && (
+                            <span className={styles.sniff}>
+                              Reads as {sniffPaste(pasteText).label}.
+                            </span>
+                          )}
+                          <div className={styles.pasteRow}>
                             <button
+                              type="button"
+                              className={styles.cancel}
                               onClick={() => {
-                                setEditId(e.id);
-                                setEditText(e.edit);
+                                setPasteOpen(false);
+                                dropHeldPaste();
                               }}
-                              title="edit this entry"
                             >
-                              ✎
+                              Cancel
                             </button>
-                          )}
-                          <button
-                            onClick={() => deleteNote(e.id)}
-                            title="delete from the record"
-                          >
-                            ✕
-                          </button>
+                            <button
+                              type="button"
+                              className={styles.file}
+                              disabled={pending}
+                              onClick={submitPaste}
+                            >
+                              {pending ? "Reading…" : "✨ Read & file"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {/* The held file (slice 18a; the face approved 2026-10-06): the
+                          same box the Chute paints. Nothing was written; the reason
+                          opens to both sides' grounds, the answer files with force,
+                          and the ✕ files nothing and still backs the files up. */}
+                      {mismatch && (
+                        <HeldBox
+                          file={mismatch.files?.[0]?.name ?? mismatch.filename ?? "Paste"}
+                          since={mismatch.heldSince}
+                          verdict={mismatch}
+                          claim={mismatch.claim}
+                          bound={{ id: row.accountId, name: row.name }}
+                          candidates={mismatch.candidates}
+                          busy={pending}
+                          onPick={pickHeld}
+                          onDismiss={unfileHeld}
+                        />
+                      )}
+                      {reading.length > 0 && (
+                        <p className={styles.sniff}>Reading {reading.join(", ")}…</p>
+                      )}
+                      {queued.length > 0 && (
+                        <p className={styles.sniff}>Waiting: {queued.join(", ")}.</p>
+                      )}
+                      {arch && <p className={styles.sniff}>⇪ {arch.text}</p>}
+                      {note && <p className={styles.err}>{note}</p>}
+                    </div>
+                  )}
+
+                  <div className={f.receipts}>
+                    {/* What this row's composer filed: the line it wrote, so a
+                note or an action never files out of sight. */}
+                    {freshCaps.map((c, i) => (
+                      <div key={`cap${i}`} className={`${styles.it} ${styles.fresh}`}>
+                        <span
+                          className={`${styles.ic} ${c.kind === "action" ? styles.gAct : styles.gDone}`}
+                        >
+                          {c.kind === "action" ? "✸" : "✓"}
                         </span>
-                      )
-                    }
-                  />
-                );
-              })}
-            {row.record.length === 0 && (
-              <div className={`${styles.it} ${styles.itEmpty}`}>
-                <span className={styles.ic}>·</span>
-                <span className={styles.tx}>Nothing on file yet.</span>
+                        <span className={styles.tx}>{c.body}</span>
+                      </div>
+                    ))}
+                    {(freshAll ? freshInfo : freshInfo.slice(0, 2)).map((f, i) => {
+                      const rc = f.receipt;
+                      return rc ? (
+                        <div
+                          key={`fr${rc.key}`}
+                          className={`${styles.rcptItem} ${styles.fresh}`}
+                        >
+                          <ReceiptLine
+                            row={rc}
+                            canWrite={row.canWrite}
+                            onTakeBack={
+                              takeBackTarget(rc) ? () => takeBack(rc) : undefined
+                            }
+                            onClear={() => clearReceipt(rc.key)}
+                          />
+                        </div>
+                      ) : (
+                        <div key={`fi${i}`} className={`${styles.it} ${styles.fresh}`}>
+                          <span className={`${styles.ic} ${styles.gDone}`}>✓</span>
+                          <span className={styles.tx}>{f.text}</span>
+                        </div>
+                      );
+                    })}
+                    {freshInfo.length > 2 && (
+                      <button
+                        type="button"
+                        className={styles.moreFresh}
+                        onClick={() => setFreshAll((v) => !v)}
+                      >
+                        {freshAll ? "Collapse ▴" : `Show ${freshInfo.length - 2} more ▸`}
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className={`${styles.dayrule} ${styles.dayruleBtn}`}
+                    onClick={() => setRecOpen((v) => !v)}
+                    title={recOpen ? "collapse the record" : "open the record"}
+                  >
+                    EARLIER · {row.recordTotal} {recOpen ? "▾" : "▸"}
+                  </button>
+                  {recOpen && (
+                    <>
+                      {row.record
+                        .filter((e) => !deletedNotes.has(e.id))
+                        .map((e) => {
+                          const promoted = promotedNotes.has(e.id);
+                          // An email line shows (and edits) its subject; any other line
+                          // its first line with the glyph gone, as before.
+                          const shown = editedNotes.get(e.id) ?? e.line;
+                          if (editId === e.id)
+                            return (
+                              <div key={e.id} className={styles.it}>
+                                <span className={`${styles.ic} ${styles.gNote}`}>
+                                  {e.glyph}
+                                </span>
+                                <span className={styles.recEdit}>
+                                  <input
+                                    value={editText}
+                                    onChange={(ev) => setEditText(ev.target.value)}
+                                    onKeyDown={(ev) => {
+                                      if (ev.key === "Enter") saveEdit(e.id, e.text);
+                                      if (ev.key === "Escape") setEditId(null);
+                                    }}
+                                    aria-label="edit this entry"
+                                  />
+                                  <button
+                                    type="button"
+                                    className={styles.sdTag}
+                                    onClick={() => saveEdit(e.id, e.text)}
+                                  >
+                                    save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.sdTag}
+                                    onClick={() => setEditId(null)}
+                                  >
+                                    cancel
+                                  </button>
+                                </span>
+                              </div>
+                            );
+                          return (
+                            <EarlierLine
+                              key={e.id}
+                              line={e}
+                              shown={shown}
+                              open={lineOpen === e.id}
+                              onToggle={() =>
+                                setLineOpen((o) => (o === e.id ? null : e.id))
+                              }
+                              done={e.struck || promoted}
+                              note={
+                                promoted && (
+                                  <span className={styles.promoted}>
+                                    {" "}
+                                    · now open above
+                                  </span>
+                                )
+                              }
+                              rail={
+                                row.canWrite && (
+                                  <span className={styles.rail}>
+                                    {!e.struck && !promoted && e.glyph !== "✓" && (
+                                      <button
+                                        onClick={() => promoteNote(e.id, shown)}
+                                        title="Make it an action. It opens on this register."
+                                      >
+                                        ✸
+                                      </button>
+                                    )}
+                                    {/* A sign-off line shows the sign-off, which ✎
+                                        cannot edit, so it carries no ✎. ✎ starts from
+                                        what is stored, never the display's copy. */}
+                                    {!e.email?.closer && (
+                                      <button
+                                        onClick={() => {
+                                          setEditId(e.id);
+                                          setEditText(e.edit);
+                                        }}
+                                        title="edit this entry"
+                                      >
+                                        ✎
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => deleteNote(e.id)}
+                                      title="delete from the record"
+                                    >
+                                      ✕
+                                    </button>
+                                  </span>
+                                )
+                              }
+                            />
+                          );
+                        })}
+                      {row.record.length === 0 && (
+                        <div className={`${styles.it} ${styles.itEmpty}`}>
+                          <span className={styles.ic}>·</span>
+                          <span className={styles.tx}>Nothing on file yet.</span>
+                        </div>
+                      )}
+                      <div className={styles.more}>
+                        <Link href={`/accounts?focus=${row.accountId}`}>
+                          the full record ({row.recordTotal}) ▸
+                        </Link>
+                        {row.backgroundTotal > 0 && (
+                          <Link href={`/accounts?focus=${row.accountId}`}>
+                            case traffic ({row.backgroundTotal}) ▸
+                          </Link>
+                        )}
+                        <Link href="/archive">archive →</Link>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
-            <div className={styles.more}>
-              <Link href={`/accounts?focus=${row.accountId}`}>
-                the full record ({row.recordTotal}) ▸
-              </Link>
-              {row.backgroundTotal > 0 && (
-                <Link href={`/accounts?focus=${row.accountId}`}>
-                  case traffic ({row.backgroundTotal}) ▸
-                </Link>
-              )}
-              <Link href="/archive">archive →</Link>
-            </div>
-          </>
-        )}
+            }
+          </div>
+        </>
       </div>
     </div>
   );
@@ -3299,17 +2291,21 @@ export function RoomClient({
   // The menu opened from the follow-up count, with the list already open.
   const [fuOpen, setFuOpen] = useState(false);
   const [drawer, setDrawer] = useState<"cadence" | "eye" | "pipeline" | null>(null);
-  // Which rows are folded. Kept per browser, not per account: this is how the
+  // Which rows are open. Kept per browser, not per account: this is how the
   // operator wants to READ the board today, not a fact about the deal. The
-  // server paints expanded and the stored preference applies once hydrated, so
-  // the first paint can never disagree with itself.
+  // server paints the first row open and the rest as sentences, and the
+  // stored preference applies once hydrated, so the first paint can never
+  // disagree with itself.
   const hydrated = useSyncExternalStore(
     subscribeNoop,
     () => true,
     () => false,
   );
-  const [shutPref, setShutPref] = useState<Set<string>>(() => readShut());
-  const shut = hydrated ? shutPref : EMPTY_SHUT;
+  const [openPref, setOpenPref] = useState<Set<string> | null>(() => readOpen());
+  const allKeys = rows.map(rowKey);
+  const openKeys =
+    hydrated && openPref ? openPref : new Set(allKeys.length ? [allKeys[0]!] : []);
+  const shut = new Set(allKeys.filter((k) => !openKeys.has(k)));
   const [closedHiddenPref, setClosedHiddenPref] = useState<boolean>(() =>
     readClosedHidden(),
   );
@@ -3321,9 +2317,10 @@ export function RoomClient({
     .map(rowKey);
   const allShut = shownKeys.length > 0 && shownKeys.every((k) => shut.has(k));
   const writeShut = (next: Set<string>) => {
-    setShutPref(next);
+    const open = new Set(allKeys.filter((k) => !next.has(k)));
+    setOpenPref(open);
     try {
-      localStorage.setItem(SHUT_KEY, JSON.stringify([...next]));
+      localStorage.setItem(OPEN_KEY, JSON.stringify([...open]));
     } catch {
       /* private mode — the fold still works, it just won't survive a reload */
     }
@@ -3352,6 +2349,26 @@ export function RoomClient({
       /* private mode — the toggle still works, it just won't survive a reload */
     }
   };
+  // The map (ship order 2026-11-04, F26): every country the live deals name,
+  // its light by the nearest client date there, and a click that shows only
+  // the deals naming it. The one looping pulse on the page is the light on
+  // the nearest red date.
+  const [fCountry, setFCountry] = useState<string | null>(null);
+  const todayIso = new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Chicago",
+  });
+  const countries = mapIndex(
+    rows.map((r) => ({
+      key: rowKey(r),
+      name: r.name,
+      facts: r.facts,
+      live: boardGroup(r) === "live",
+    })),
+    todayIso,
+  );
+  const pulse = countries.find((c) => c.tone === "hot")?.code ?? null;
+  const outOfView = (r: RoomRow) =>
+    !!fCountry && !r.facts.countries.some((c) => c.code === fCountry);
   const lowCount = rows.filter((r) => boardGroup(r) === "low").length;
   const closedCount = rows.filter((r) => boardGroup(r) === "closed").length;
   // Click away (or press Escape) to leave any of them — the trigger lives
@@ -3466,6 +2483,12 @@ export function RoomClient({
           and add the deals you&apos;re working.
         </p>
       )}
+      <RoomMap
+        countries={countries}
+        selected={fCountry}
+        onPick={setFCountry}
+        pulse={pulse}
+      />
       {rows.map((r, i) => {
         // The board runs live, then low signal, then the closed ledger; one
         // mono rule opens each section after the live book.
@@ -3496,7 +2519,7 @@ export function RoomClient({
               row={r}
               collapsed={shut.has(rowKey(r))}
               onToggle={() => toggleRow(rowKey(r))}
-              hidden={group === "closed" && closedHidden}
+              hidden={(group === "closed" && closedHidden) || outOfView(r)}
             />
           </Fragment>
         );
@@ -3507,18 +2530,14 @@ export function RoomClient({
           2026-08-13). No row carries it. */}
       {rows.length > 0 && (
         <div className={styles.footLegend}>
-          <span>✉ send</span>
-          <span>⚖ decide</span>
-          <span className={styles.kOwed}>⚑ owed</span>
-          <span className={styles.kAct}>✸ action</span>
+          <span>✉ email</span>
           <span>➤ sent</span>
+          <span>☎ call</span>
+          <span>◷ meeting</span>
           <span className={styles.kDone}>✓ done</span>
-          <span className={styles.kDly}>⏲ delayed</span>
           <span>✎ note</span>
-          <span>⌕ ask the brain</span>
-          <span>⟳ mint sharper asks</span>
-          <span>→ find the answer</span>
-          <span>✕ not this deal</span>
+          <span className={styles.kAct}>✸ action</span>
+          <span>⟳ research</span>
           <span>⇣ low signal</span>
           <span>☑ closed won</span>
         </div>

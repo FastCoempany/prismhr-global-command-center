@@ -1650,7 +1650,7 @@ describe("a Sales Nav grab's receipt counts every row and opens to the accounts 
     // a grab's receipt takes back the whole grab (use-undo.ts).
     assert.match(
       src,
-      /onTakeBack=\{takeBackTarget\(rc\) \? \(\) => takeBack\(rc\) : undefined\}/,
+      /onTakeBack=\{\s*takeBackTarget\(rc\) \? \(\) => takeBack\(rc\) : undefined\s*\}/,
     );
     assert.deepEqual(takeBackTarget(row)?.grab, row.grab);
     const takeBack = src.slice(

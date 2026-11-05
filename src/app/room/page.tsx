@@ -70,6 +70,7 @@ import { getDemand, researchGeneratedAt } from "@/lib/book/research";
 import { readOutcome } from "@/lib/dashboard/outcome";
 import { owedToMe } from "@/lib/room/owed";
 import { emailRow } from "@/lib/room/email-row";
+import { FACTS_NS, buildDeck, buildRowFacts, handFactsFrom } from "@/lib/room/facts";
 import { wholeEmailsFor } from "@/lib/notes/email-text";
 import { settledByRecord } from "@/lib/room/settled";
 import { askHref, peerQuestions, scopedAsk } from "@/lib/intranet/bridges";
@@ -298,6 +299,23 @@ export default async function RoomPage() {
       });
 
     const people = acct.people.slice(0, 6);
+    // The F26 face's sentence and deck (ship order 2026-11-04): the read's
+    // facts with the line each stands on, the operator's own hand on top,
+    // and the people joined to the book's contact card with every exchange
+    // the record holds with each.
+    const facts = buildRowFacts({
+      intel,
+      docs,
+      hand: accountId
+        ? handFactsFrom(notesById.get(`${FACTS_NS}${accountId}`))
+        : handFactsFrom([]),
+      todayMd: mmddChicago(now.toISOString()),
+    });
+    const deck = buildDeck({
+      people: acct.people,
+      contacts: accountId ? contactsFor(accountId) : [],
+      docs,
+    });
     // MULTI reads the widest count the app holds: filed actors AND the
     // digest's thread roster — a record-quiet deal with a known room must
     // never render "nobody exists."
@@ -679,6 +697,8 @@ export default async function RoomPage() {
       meta,
       shape,
       identity,
+      facts,
+      deck,
       multiTone,
       people: people.map((p) => ({
         name: p.name,

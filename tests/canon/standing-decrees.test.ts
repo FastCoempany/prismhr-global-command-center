@@ -480,8 +480,8 @@ describe("account names are plain links, with no arrow or affordance glyph", () 
       // (split out in pass 10 so the suite can render them).
       "src/app/groundwork/face.tsx",
       "src/app/intranet/intranet-client.tsx",
+      "src/app/room/f-face.tsx",
       "src/app/room/ingest/receipt.tsx",
-      "src/app/room/room-client.tsx",
       "src/app/sendbook/register.tsx",
     ])
       assert.ok(seen.has(f), `the sweep missed ${f}`);
@@ -590,8 +590,10 @@ describe("MULTI reads exactly MULTI, on the one ladder", () => {
       );
       assert.match(
         html,
+        // The F26 face (ship order 2026-11-04): MULTI heads the people
+        // deck, which shows who is in the deal with no hover.
         new RegExp(
-          `<button type="button" class="multi m_${tone}" aria-expanded="false" title="Who&#x27;s in this deal">MULTI<span class="hovercard">`,
+          `<span class="multi m_${tone}" title="How many of their people write back">MULTI</span>`,
         ),
       );
     }
@@ -630,7 +632,7 @@ describe("MULTI reads exactly MULTI, on the one ladder", () => {
     // the browser suite renders it (tests/browser/prep.test.ts).
     assert.deepEqual(painters, [
       "src/app/groundwork/face.tsx",
-      "src/app/room/room-client.tsx",
+      "src/app/room/f-face.tsx",
     ]);
     assert.match(
       readFileSync(join(root, "src/app/groundwork/face.tsx"), "utf8"),
