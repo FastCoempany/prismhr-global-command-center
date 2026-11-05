@@ -261,6 +261,8 @@ describe("F26 · the people deck: one up front, the rest fanned behind, a contac
       [RED, AMBER, GREEN],
     );
     const card = rowBy(page, "Simploy").locator(F("dright"));
+    // The quiet line opens every exchange, one click deep.
+    await card.locator(F("quietDoor")).click();
     const text = await card.innerText();
     assert.match(text, /Chassie Smith/);
     assert.match(text, /VP Operations/);
@@ -297,6 +299,46 @@ describe("F26 · Latest email and Chute: one door that stays where it is", () =>
         .evaluate((el) => getComputedStyle(el).borderLeftStyle),
       "solid",
       "a line divides the email from the Chute",
+    );
+    await page.close();
+  });
+});
+
+describe("F26 release two · the partner and client ladders, each stage with its source", () => {
+  test("the partner names the account with the agreement meter; stages wear their phase's color", async () => {
+    const page = await mount(browser, FIX, { now: "2026-11-04T16:00:00Z" });
+    const band = rowBy(page, "Simploy").locator(F("lband"));
+    const text = await band.innerText();
+    assert.match(text, /PARTNER\s+Simploy/i);
+    assert.match(text, /Not sent yet/);
+    assert.match(text, /Engaged · warm/);
+    assert.match(text, /Scoped/);
+    const stage = band.locator(F("lstg")).first();
+    assert.equal(await stage.evaluate((el) => getComputedStyle(el).color), BLUE);
+    assert.match((await stage.getAttribute("title")) ?? "", /From the record · 9\/25/);
+    assert.equal(
+      await band
+        .locator(F("lad"))
+        .nth(1)
+        .evaluate((el) => getComputedStyle(el).borderLeftStyle),
+      "solid",
+    );
+    await page.close();
+  });
+
+  test("a click on a step sets the stage by hand; live on the partner ladder is never set", async () => {
+    const page = await mount(browser, FIX, {
+      now: "2026-11-04T16:00:00Z",
+      returns: { setRowFact: { ok: true } },
+    });
+    const band = rowBy(page, "Simploy").locator(F("lband"));
+    await band.getByRole("button", { name: "Signed" }).click();
+    await page.waitForTimeout(50);
+    const call = (await callsOf(page)).find(([n]) => n === "setRowFact");
+    assert.deepEqual(call?.[1], [ROW_A, { field: "partner", value: "signed" }]);
+    assert.equal(
+      await band.getByRole("button", { name: "Live" }).first().isDisabled(),
+      true,
     );
     await page.close();
   });

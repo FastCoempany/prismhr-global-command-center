@@ -4,6 +4,7 @@
 // band ranks the same moves the stage will show; the page derives everything
 // else from what this hands back. Nothing here writes.
 
+import { FACTS_NS, handFactsFrom } from "@/lib/room/facts";
 import { csms, getPeo, peos } from "@/lib/book";
 import { contactCount, contactsFor } from "@/lib/book/contacts";
 import type { DealIntel } from "@/lib/intel/types";
@@ -263,6 +264,16 @@ export async function loadGroundworkDay(now: Date) {
       );
       if (late) excludedIds.add(id);
     }
+  }
+  // The partner ladder holds too (the F26 face, release two): an account the
+  // operator marked as reviewing the agreement or further along is being
+  // closed, the HomeRoom's to work, whatever the lagging board says. The
+  // board's own stamps above already cover a deal it shows as won.
+  for (const [id, notes] of notesMap) {
+    if (!id.startsWith(FACTS_NS)) continue;
+    const p = handFactsFrom(notes).partner;
+    if (p && p !== "none" && p !== "cold" && p !== "warm")
+      excludedIds.add(id.slice(FACTS_NS.length));
   }
   // The disposition ledger holds too (Ted doctrine): not-mine is excluded
   // everywhere by decree, parked was shelved by the operator's own hand, and

@@ -20,6 +20,12 @@ import {
   type Chair,
   type HandFacts,
 } from "@/lib/room/facts";
+import {
+  isClientKey,
+  isPartnerKey,
+  type ClientKey,
+  type PartnerKey,
+} from "@/lib/room/ladders";
 
 export type FactChange =
   | { field: "chair"; value: Chair | null }
@@ -27,7 +33,9 @@ export type FactChange =
   | { field: "add"; code: string }
   | { field: "remove"; code: string }
   | { field: "unadd" }
-  | { field: "unremove" };
+  | { field: "unremove" }
+  | { field: "partner"; value: PartnerKey | null }
+  | { field: "stage"; value: ClientKey | null };
 
 const md = (d: Date): string =>
   d.toLocaleDateString("en-US", {
@@ -77,6 +85,23 @@ export async function applyFactChange(
     else delete next.day.add;
     if (next.remove.length) next.day.remove = day;
     else delete next.day.remove;
+  } else if (c.field === "partner") {
+    // Live on the partner ladder is read from the client ladder, never set.
+    if (c.value && isPartnerKey(c.value) && c.value !== "live") {
+      next.partner = c.value;
+      next.day.partner = day;
+    } else {
+      delete next.partner;
+      delete next.day.partner;
+    }
+  } else if (c.field === "stage") {
+    if (c.value && isClientKey(c.value)) {
+      next.stage = c.value;
+      next.day.stage = day;
+    } else {
+      delete next.stage;
+      delete next.day.stage;
+    }
   } else if (c.field === "unadd") {
     next.add = [];
     delete next.day.add;
@@ -112,7 +137,13 @@ export async function setRowFact(
       md(new Date()),
     );
     await prisma.accountNote.deleteMany({ where: { accountId: ns } });
-    const empty = !next.chair && !next.client && !next.add.length && !next.remove.length;
+    const empty =
+      !next.chair &&
+      !next.client &&
+      !next.add.length &&
+      !next.remove.length &&
+      !next.partner &&
+      !next.stage;
     if (!empty)
       await createAccountNoteRow({
         accountId: ns,

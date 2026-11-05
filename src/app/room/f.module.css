@@ -1144,3 +1144,210 @@ button.tok:disabled {
   background: var(--field);
   border-radius: 10px;
 }
+
+/* ── the two stage ladders (release two) ──────────────────────────────── */
+.lband {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px 30px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+}
+.lband > .lad + .lad {
+  border-left: 1px solid var(--hair);
+  padding-left: 26px;
+}
+.lad {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.lh {
+  display: flex;
+  align-items: baseline;
+  gap: 4px 10px;
+  flex-wrap: wrap;
+}
+.lwho {
+  font-weight: 600;
+  font-size: 14.5px;
+  line-height: 1.35;
+}
+.agr {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--soft);
+}
+.agd {
+  display: inline-flex;
+  gap: 3px;
+}
+.agd i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.6px solid var(--quiet);
+}
+.agR {
+  background: var(--red);
+  border-color: var(--red);
+}
+.agA {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+.agG {
+  background: var(--green);
+  border-color: var(--green);
+}
+.lstg {
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+  text-decoration: underline dotted var(--faint);
+  text-underline-offset: 4px;
+  cursor: help;
+}
+.c_t0 {
+  color: var(--ink);
+}
+.c_tb {
+  color: var(--blue);
+}
+.c_tg {
+  color: var(--green);
+}
+.passed {
+  color: var(--red);
+  text-decoration: none;
+  cursor: default;
+}
+.lsrc {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--blue);
+}
+.lsrcHand {
+  color: var(--soft);
+}
+.lback {
+  font-size: 13px;
+  color: var(--soft);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.lback:hover {
+  color: var(--ink);
+}
+.lt,
+.ll {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  max-width: 460px;
+}
+.lp {
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: var(--hair);
+  cursor: pointer;
+}
+.lp:disabled {
+  cursor: default;
+}
+.lp:not(:disabled):hover {
+  outline: 1px solid var(--faint);
+  outline-offset: 1px;
+}
+.t0Done {
+  background: var(--quiet);
+}
+.t0Cur {
+  background: var(--ink);
+}
+.tbDone {
+  background: rgba(37, 99, 235, 0.42);
+}
+.tbCur {
+  background: var(--blue);
+}
+.tgDone {
+  background: rgba(34, 197, 94, 0.5);
+}
+.tgCur {
+  background: var(--green);
+}
+.ll span {
+  font-family: var(--f-mono), Menlo, monospace;
+  font-weight: 600;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lwait {
+  align-self: flex-start;
+  font-weight: 500;
+  font-size: 13.5px;
+  line-height: 1.45;
+  border-bottom: 2px dashed var(--amber);
+}
+.lnone {
+  font-size: 13px;
+  color: var(--soft);
+}
+.lstart {
+  align-self: flex-start;
+  font:
+    600 12.5px/1 var(--f-sans),
+    system-ui,
+    sans-serif;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+@media (max-width: 860px) {
+  .lband {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lband > .lad + .lad {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--hair);
+    padding-top: 12px;
+  }
+}
+
+.lwhere {
+  flex-basis: 100%;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--soft);
+}
+
+.quietDoor {
+  align-self: flex-start;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}

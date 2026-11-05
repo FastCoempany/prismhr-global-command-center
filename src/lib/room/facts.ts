@@ -11,6 +11,12 @@
 
 import type { DealIntel, ProductKey, SourcedFact } from "@/lib/intel/types";
 import { COMMERCIAL_TERMS, COUNTRY_NAME } from "@/lib/intel/lexicon";
+import {
+  isClientKey,
+  isPartnerKey,
+  type ClientKey,
+  type PartnerKey,
+} from "@/lib/room/ladders";
 
 // ── the products, in the words the sentence uses ───────────────────────────
 // The five doors are employer of record, global payroll, contractor
@@ -46,8 +52,13 @@ export type HandFacts = {
   client?: string;
   add: string[];
   remove: string[];
+  /** A stage set by hand on the partner ladder or the client ladder. */
+  partner?: PartnerKey;
+  stage?: ClientKey;
   /** The Chicago day each hand fact was set, by field. */
-  day: Partial<Record<"chair" | "client" | "add" | "remove", string>>;
+  day: Partial<
+    Record<"chair" | "client" | "add" | "remove" | "partner" | "stage", string>
+  >;
 };
 export const NO_HAND: HandFacts = { add: [], remove: [], day: {} };
 
@@ -70,6 +81,8 @@ export function renderHandFacts(h: HandFacts): string {
   if (h.client) put("client", h.client.replace(/[\t\n]+/g, " ").slice(0, 120), "client");
   if (h.add.length) put("add", h.add.join(","), "add");
   if (h.remove.length) put("remove", h.remove.join(","), "remove");
+  if (h.partner) put("partner", h.partner, "partner");
+  if (h.stage) put("stage", h.stage, "stage");
   return lines.join("\n");
 }
 
@@ -91,6 +104,12 @@ export function parseHandFacts(body: string | undefined): HandFacts {
     } else if (k === "remove") {
       out.remove = codes(v);
       out.day.remove = day;
+    } else if (k === "partner" && isPartnerKey(v) && v !== "live") {
+      out.partner = v;
+      out.day.partner = day;
+    } else if (k === "stage" && isClientKey(v)) {
+      out.stage = v;
+      out.day.stage = day;
     }
   }
   return out;

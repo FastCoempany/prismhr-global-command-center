@@ -77,7 +77,8 @@ import type { PipelineRecord } from "@/lib/pipeline/build";
 import { boardGroup } from "@/lib/room/low-signal";
 import styles from "./room.module.css";
 import { mapIndex, type DeckPerson, type RowFacts } from "@/lib/room/facts";
-import { HandLine, PeopleDeck, RoomMap, Sentence } from "./f-face";
+import type { Ladders } from "@/lib/room/ladders";
+import { HandLine, LadderBand, PeopleDeck, RoomMap, Sentence } from "./f-face";
 import f from "./f.module.css";
 import TheirsLine, { type TheirsGem } from "./theirs-line";
 import { EarlierLine, LatestEmailPane, type RowLatestEmail } from "./email-row";
@@ -144,6 +145,8 @@ export type RoomRow = {
   facts: RowFacts;
   /** The people in the deal, as the deck holds them. */
   deck: DeckPerson[];
+  /** The partner and client stage ladders (release two of the F26 face). */
+  ladders: Ladders;
   /** Every filing on the account from today, from the record (decreed
    *  2026-10-13): TODAY shows each one's receipt and its ↺ after a reload,
    *  in any tab, from any door (src/lib/ingest/today-filings.ts). */
@@ -1261,6 +1264,13 @@ export function Row({
         <>
           <HandLine accountId={row.accountId} facts={row.facts} canWrite={row.canWrite} />
           <div className={f.open}>
+            <LadderBand
+              accountId={row.accountId}
+              accountName={row.name}
+              clientName={row.facts.client.name}
+              ladders={row.ladders}
+              canWrite={row.canWrite}
+            />
             <div className={f.mrow}>
               {row.outcome ? (
                 <>

@@ -629,8 +629,34 @@ stays Mark it done.
 
 The founder picked F26 of docs/mockups/homeroom-f-decks-2026-11-04.html
 ("lets go with f26", then "ship f26") and chose to ship it in three
-releases. The first release is live; the second brings the two stage
-ladders, and the third the new reads and records.
+releases. The first two are live; the third brings the new reads and
+records.
+
+- **The two stage ladders (release two).** An opened row leads with one band:
+  the partner ladder on the left, named for the account, with the agreement
+  meter; the client ladder on the right. The partner ladder runs not met,
+  engaged cold, engaged warm, reviewing, signed, oriented, live; the client
+  ladder runs named, scoped, shown, won, onboarding, live. Each stage is read
+  from the record the way the founder defined it (src/lib/room/ladders.ts):
+  cold is their first reply or a call, a closer or machinery engaging nobody;
+  warm is a leaning the record states (never the digest's seed), a named
+  need, or a request for a call; reviewing is the agreement going out, never
+  an intro that only names it; signed is their signed copy or the board's
+  Closed Won, which has meant the agreement signed; oriented is the first
+  orientation, implementation, kickoff or onboarding meeting after signing.
+  Named is a client mentioned or named; scoped needs the country, the
+  product, a count and a date all on file; shown is a demo held or numbers
+  sent; won, onboarding and live are the operator's own marks. Live on the
+  partner ladder is read from the client ladder and is never set. The stage's
+  name is the door to the line it stands on, one click deep; the steps carry
+  their names as tooltips, so the band holds the row's arrival budget (49).
+  A click on a step sets the stage by hand in the facts: note; it reads YOUR MARK, and ↺
+  puts back what the record shows. The colors run by phase: grey and navy
+  before anything concrete, blue while it moves, green once it is real. The
+  agreement meter reads one dot when the agreement went out, two when their
+  redline is back and three when it is signed, red, amber and green. The
+  board's Closed Lost shows Passed. An account the operator marked as
+  reviewing or further along leaves Groundwork's queue.
 
 - **The map.** The room opens on a map of every country the live deals name
   (src/lib/room/world-map.ts, a fixed table of land and places that reads no
@@ -664,7 +690,8 @@ ladders, and the third the new reads and records.
   and the rest fan out behind it, each showing a tab with their initials and
   first name; a click brings one forward. Beside the deck, behind a line, the
   front person's contact card: full title, email, office phone, mobile,
-  location and every exchange the record holds with them, and a LinkedIn
+  location, and how long since they wrote, which opens every exchange the
+  record holds with them (one click, so the row keeps its budget), and a LinkedIn
   mark, struck in red while no profile is on file. MULTI keeps its ladder
   and, with the count, opens the list of everyone and how often each side
   wrote.
@@ -681,11 +708,10 @@ ladders, and the third the new reads and records.
   notifier, and the shape and meta chips, which the sentence says in words.
 - **Not yet built, and shown honestly meanwhile:** the client's name, need,
   confidence and date as read facts, employees counted apart from
-  contractors, Sent and Send files, the agreement meter, LinkedIn profiles
-  and Add a person (the third release), and the partner and client stage
-  ladders (the second release). Until then the client reads "a client not
-  named yet" unless the operator names it, counts read as people, and every
-  LinkedIn mark is struck.
+  contractors, Sent and Send files, the files-sent evidence on the agreement
+  meter, LinkedIn profiles and Add a person (the third release). Until then
+  the client reads "a client not named yet" unless the operator names it,
+  counts read as people, and every LinkedIn mark is struck.
 
 ## The Ted doctrine (founder-decreed 2026-08-14)
 

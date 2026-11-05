@@ -23,6 +23,15 @@ import {
   type RowFacts,
   type Touch,
 } from "@/lib/room/facts";
+import {
+  CLIENT_STAGES,
+  PARTNER_STAGES,
+  stageTone,
+  type ClientKey,
+  type Ladders,
+  type PartnerKey,
+  type StageSource,
+} from "@/lib/room/ladders";
 import { setRowFact, type FactChange } from "./facts-actions";
 import f from "./f.module.css";
 
@@ -284,8 +293,7 @@ export function Sentence(p: SentenceProps) {
         disabled={!write}
         onClick={() => setMenu(menu === "chair" ? null : "chair")}
       >
-        {chairWord}
-        {write ? " ▾" : ""}
+        {`${chairWord}${write ? " ▾" : ""}`}
       </button>
       {menu === "chair" && (
         <span className={f.menu} role="menu">
@@ -360,7 +368,7 @@ export function Sentence(p: SentenceProps) {
           setMenu("client");
         }}
       >
-        a client not named yet{write ? " ▾" : ""}
+        {`a client not named yet${write ? " ▾" : ""}`}
       </button>
     );
 
@@ -460,7 +468,7 @@ export function Sentence(p: SentenceProps) {
           )
         }
       >
-        no country said yet{write ? " ▾" : ""}
+        {`no country said yet${write ? " ▾" : ""}`}
       </button>
       {countryMenu("")}
     </span>
@@ -477,7 +485,7 @@ export function Sentence(p: SentenceProps) {
         className={`${f.tok} ${f.dateTok} ${f[`t_${tone}`]}`}
         title={tipOf(facts.date)}
       >
-        {monDay(facts.date.iso)} · {daysWord(daysTo(facts.date.iso, p.todayIso))}
+        {`${monDay(facts.date.iso)} · ${daysWord(daysTo(facts.date.iso, p.todayIso))}`}
       </span>
     </>
   ) : (
@@ -683,6 +691,7 @@ export function PeopleDeck({
 }) {
   const [at, setAt] = useState(0);
   const [rollOpen, setRollOpen] = useState(false);
+  const [exOpen, setExOpen] = useState(false);
   const now = nowIso();
   if (!deck.length)
     return (
@@ -730,7 +739,7 @@ export function PeopleDeck({
             MULTI
           </span>
           <span className={f.phs}>
-            {deck.length} on the record {rollOpen ? "▾" : "▸"}
+            {`${deck.length} on the record ${rollOpen ? "▾" : "▸"}`}
           </span>
         </button>
       </div>
@@ -777,7 +786,9 @@ export function PeopleDeck({
                       </span>
                       <span className={f.sn}>{p.name}</span>
                       <span className={f.sr}>{p.title || "Title not on file yet"}</span>
-                      <span className={`${f.sq} ${f[`q_${q.tone}`]}`}>{q.word}</span>
+                      {k > 0 && (
+                        <span className={`${f.sq} ${f[`q_${q.tone}`]}`}>{q.word}</span>
+                      )}
                     </span>
                     {k > 0 && (
                       <span className={f.ptab}>
@@ -842,7 +853,17 @@ export function PeopleDeck({
           <div className={`${f.pti} ${front.title ? "" : f.nf}`}>
             {front.title || "Title not on file yet"}
           </div>
-          <div className={`${f.sq} ${f[`q_${info.tone}`]}`}>{info.word}</div>
+          {/* The quiet line is the door to every exchange it counts from
+              (the click-depth law), one click deep. */}
+          <button
+            type="button"
+            className={`${f.sq} ${f.quietDoor} ${f[`q_${info.tone}`]}`}
+            aria-expanded={exOpen}
+            title={`Every exchange with ${front.name.split(" ")[0]}`}
+            onClick={() => setExOpen((v) => !v)}
+          >
+            {`${info.word} ${exOpen ? "▾" : "▸"}`}
+          </button>
           <div className={f.cis}>
             {row("Email", front.email, front.email ? `mailto:${front.email}` : undefined)}
             {row(
@@ -854,8 +875,8 @@ export function PeopleDeck({
               row("Mobile", front.mobile, `tel:${front.mobile.replace(/[^\d+]/g, "")}`)}
             {row("Location", front.city)}
           </div>
-          <div className={f.cil}>Every exchange</div>
-          {front.touches.length ? (
+          {exOpen && <div className={f.cil}>Every exchange</div>}
+          {!exOpen ? null : front.touches.length ? (
             <ol className={f.pdl}>
               {front.touches
                 .slice()
@@ -873,6 +894,215 @@ export function PeopleDeck({
             </p>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── the two stage ladders (release two) ────────────────────────────────────
+// One band under the sentence: the partner on the left, named, with the
+// agreement meter where the client side has its read; the client on the
+// right. Each stage says where it came from; a click on a step sets it by
+// hand, and ↺ puts back what the record shows.
+const AGR_WORD = [
+  "Not sent yet",
+  "Sent at their request",
+  "Their redline is back",
+  "Signed",
+];
+
+function Track({
+  which,
+  cur,
+  canWrite,
+  onSet,
+}: {
+  which: "p" | "c";
+  cur: number;
+  canWrite: boolean;
+  onSet: (k: string) => void;
+}) {
+  const steps = which === "p" ? PARTNER_STAGES : CLIENT_STAGES;
+  const cols = { gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` };
+  return (
+    <>
+      <div className={f.lt} style={cols}>
+        {steps.map((s, i) => {
+          const derived = which === "p" && s.k === "live";
+          return (
+            <button
+              key={s.k}
+              type="button"
+              className={`${f.lp} ${i < cur ? f[`${stageTone(which, s.k)}Done`] : i === cur ? f[`${stageTone(which, s.k)}Cur`] : ""}`}
+              title={`${s.label}: ${s.def}${derived || !canWrite ? "" : " Click to set it by hand."}`}
+              aria-label={`${s.label}${i === cur ? ", the stage now" : ""}`}
+              disabled={derived || !canWrite}
+              onClick={() => onSet(s.k)}
+            />
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function StageHead({
+  label,
+  tone,
+  source,
+  onBack,
+}: {
+  label: string;
+  tone: string;
+  source: StageSource;
+  onBack?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const where =
+    source.kind === "hand"
+      ? `Set by you${source.day ? ` ${source.day}` : ""}. ↺ puts back what the record shows.`
+      : `${source.kind === "board" ? "From the board" : "From the record"}${source.day ? ` · ${source.day}` : ""}: ${source.line}`;
+  // The stage is a door to the line it stands on (the click-depth law):
+  // one click shows where it came from, and the arrival carries only the
+  // stage's name.
+  return (
+    <>
+      <button
+        type="button"
+        className={`${f.lstg} ${f[`c_${tone}`]}`}
+        title={where}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {label}
+      </button>
+      {source.kind === "hand" && (
+        <span className={`${f.lsrc} ${f.lsrcHand}`}>
+          YOUR MARK{source.day ? ` · ${source.day}` : ""}
+        </span>
+      )}
+      {open && <span className={f.lwhere}>{where}</span>}
+      {onBack && (
+        <button
+          type="button"
+          className={f.lback}
+          title="Put back what the record shows"
+          aria-label="Put back what the record shows"
+          onClick={onBack}
+        >
+          ↺
+        </button>
+      )}
+    </>
+  );
+}
+
+export function LadderBand({
+  accountId,
+  accountName,
+  clientName,
+  ladders,
+  canWrite,
+}: {
+  accountId: string;
+  accountName: string;
+  clientName: string | null;
+  ladders: Ladders;
+  canWrite: boolean;
+}) {
+  const router = useRouter();
+  const write = canWrite && !!accountId;
+  const set = (c: FactChange) =>
+    void setRowFact(accountId, c).then((r) => r.ok && router.refresh());
+  const p = ladders.partner;
+  const pi = PARTNER_STAGES.findIndex((s) => s.k === p.k);
+  const ps = PARTNER_STAGES[pi]!;
+  const c = ladders.client;
+  const a = ladders.agreement;
+  const agrTone = ["", f.agR, f.agA, f.agG][a.n];
+  const agrTip = `${a.src ? `${a.src.kind === "board" ? "From the board" : a.src.kind === "hand" ? "From your mark" : "From the record"}${a.src.day ? ` · ${a.src.day}` : ""}: ${a.src.line} ` : ""}Dot 1: sent at their request. Dot 2: their redline is back. Dot 3: signed.`;
+  const waiting = !c && (p.k === "signed" || p.k === "oriented");
+  return (
+    <div className={f.lband}>
+      <div className={f.lad}>
+        <div className={f.lh}>
+          <span className={f.k}>Partner</span>
+          <span className={f.lwho}>{accountName}</span>
+          <span className={f.agr} title={agrTip} tabIndex={0}>
+            <span className={f.agd} aria-hidden="true">
+              {[1, 2, 3].map((i) => (
+                <i key={i} className={i <= a.n ? agrTone : ""} />
+              ))}
+            </span>
+            {AGR_WORD[a.n]}
+          </span>
+        </div>
+        <div className={f.lh}>
+          {ladders.passed ? (
+            <span className={`${f.lstg} ${f.passed}`}>Passed</span>
+          ) : (
+            <StageHead
+              label={ps.label}
+              tone={stageTone("p", p.k)}
+              source={p.src}
+              onBack={
+                p.hand && write ? () => set({ field: "partner", value: null }) : undefined
+              }
+            />
+          )}
+        </div>
+        <Track
+          which="p"
+          cur={ladders.passed ? -1 : pi}
+          canWrite={write}
+          onSet={(k) => set({ field: "partner", value: k as PartnerKey })}
+        />
+      </div>
+      <div className={f.lad}>
+        <div className={f.lh}>
+          <span className={f.k}>Client</span>
+          <span className={f.lwho}>
+            {clientName ?? (c ? "A client not named yet" : "")}
+          </span>
+        </div>
+        {c ? (
+          <>
+            <div className={f.lh}>
+              <StageHead
+                label={CLIENT_STAGES.find((s) => s.k === c.k)!.label}
+                tone={stageTone("c", c.k)}
+                source={c.src}
+                onBack={
+                  c.hand && write ? () => set({ field: "stage", value: null }) : undefined
+                }
+              />
+            </div>
+            <Track
+              which="c"
+              cur={CLIENT_STAGES.findIndex((s) => s.k === c.k)}
+              canWrite={write}
+              onSet={(k) => set({ field: "stage", value: k as ClientKey })}
+            />
+          </>
+        ) : (
+          <>
+            <span className={waiting ? f.lwait : f.lnone}>
+              {waiting
+                ? "No client named yet. Signed and waiting on a first one."
+                : "No client mentioned yet."}
+            </span>
+            {write && (
+              <button
+                type="button"
+                className={f.lstart}
+                title="Mark a client as named by hand"
+                onClick={() => set({ field: "stage", value: "named" })}
+              >
+                Start the client ladder
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
