@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Implementation Run of Show</title>
+<title>Implementation Manual</title>
 <style>
 
   :root{--field:#f5f7fb;--surface:#fff;--surface-sub:#fafbfd;--surface-sunk:#eff2f7;--ink:#0a1c40;--ink-soft:rgba(10,28,64,.66);--ink-faint:rgba(10,28,64,.42);--ink-quiet:rgba(10,28,64,.22);--hair:rgba(10,28,64,.07);--hair-strong:rgba(10,28,64,.14);--rule:rgba(10,28,64,.16);--orange:#e6701e;--orange-strong:#d4661b;--orange-soft:rgba(230,112,30,.1);--orange-tint:rgba(230,112,30,.05);--blue:#2563eb;--blue-soft:rgba(37,99,235,.08);--green:#22c55e;--green-soft:rgba(34,197,94,.1);--amber:#f59e0b;--amber-soft:rgba(245,158,11,.12);--red:#ef4444;--red-soft:rgba(239,68,68,.08);--serif:"DM Serif Display","Iowan Old Style",Georgia,serif;--sans:"Public Sans",-apple-system,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sh-rest:0 1px 2px rgba(10,28,64,.04),0 4px 14px rgba(10,28,64,.05);--sh-lift:0 2px 4px rgba(10,28,64,.05),0 14px 36px rgba(10,28,64,.08)}
@@ -18,123 +18,120 @@
   .main{padding:22px 28px 48px;min-height:720px}
 
   .rung{display:inline-block;font:600 9px/1.5 var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:1px 6px;border-radius:3px;vertical-align:middle;white-space:nowrap} .rung.tape{background:var(--green-soft);color:#15803d} .rung.research{background:var(--surface-sunk);color:var(--ink-faint)} .rung.filed{background:var(--blue-soft);color:#1d4ed8} .rung.none{background:var(--amber-soft);color:#b45309}
-  .rung.est{background:var(--blue-soft);color:#1d4ed8}
-  .way .routes b{color:var(--ink)}
-  /* the playbook chrome */
+  .rung.pb{background:var(--surface-sunk);color:var(--ink-soft)}
   .tabs{display:flex;gap:22px;padding:0 28px;background:var(--surface);border-bottom:1px solid var(--hair-strong)}
-  .tabs span{padding:12px 0 10px;font:600 13px/1 var(--sans);color:var(--ink-faint);border-bottom:2px solid transparent}
+  .tabs span{padding:12px 0 10px;font:600 13px/1 var(--sans);color:var(--ink-faint);border-bottom:2px solid transparent;white-space:nowrap}
   .tabs span.on{color:var(--ink);border-bottom-color:var(--ink)}
-  .lede{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin:0 0 18px}
-  .lede h2{font:400 30px/1.1 var(--serif);margin:0}
-  .lede .why{color:var(--ink-soft);font-size:14.5px}
-  .lede .n{margin-left:auto;font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
   .card{background:var(--surface);border:1px solid var(--hair-strong);border-radius:10px;box-shadow:var(--sh-rest)}
-  .owner{display:inline-block;font:600 9.5px/1.5 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);background:var(--surface-sunk);border-radius:3px;padding:1px 6px}
   .clock{font:600 10.5px/1.4 var(--mono);letter-spacing:.06em;color:var(--ink-faint)}
-  ul.plain{margin:6px 0 0;padding:0;list-style:none} ul.plain li{padding:7px 0 7px 16px;position:relative;border-top:1px solid var(--hair);font-size:14px}
-  ul.plain li:first-child{border-top:0} ul.plain li::before{content:"";position:absolute;left:2px;top:15px;width:5px;height:5px;border-radius:50%;background:var(--ink-quiet)}
-  ul.plain li small{display:block;color:var(--ink-faint);font-size:12.5px;line-height:1.45}
-  .gap{border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:0 6px 6px 0;padding:8px 12px;font-size:13.5px;margin-top:10px}
-  .gap b{font-weight:600}
-  .ask{border-left:3px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0;padding:9px 12px;margin-top:10px;font-size:14px}
-  .ask q{quotes:none;display:block;font-weight:500} .ask small{display:block;color:var(--ink-soft);margin-top:4px;font-size:12.5px}
-  h3.k{margin:16px 0 4px;font:600 10px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
 
-  /* 1 · THE SCRIPT */
-  .script{display:grid;grid-template-columns:280px minmax(0,1fr) 300px;gap:18px;align-items:start}
-  .rail{padding:6px} .rail button{display:grid;grid-template-columns:22px 1fr;gap:2px 8px;width:100%;text-align:left;border:0;background:transparent;border-radius:7px;padding:8px 10px;border-left:3px solid transparent;color:var(--ink)}
-  .rail button:hover{background:var(--surface-sub)} .rail button .no{font:600 11px/1.5 var(--mono);color:var(--ink-faint)}
-  .rail button .t{font:500 13.5px/1.35 var(--sans)} .rail button .m{grid-column:2;font:500 10px/1.4 var(--mono);letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase}
-  .rail button.on{background:var(--orange-tint);border-left-color:var(--orange)} .rail button.on .no{color:var(--orange)}
-  .rail .tape{height:6px;margin:4px 10px 10px;border-radius:3px;background:var(--surface-sunk);position:relative;overflow:hidden}
-  .rail .tape i{position:absolute;top:0;bottom:0;background:var(--ink-quiet)} .rail .tape i.on{background:var(--orange)}
-  .seg-detail{padding:22px 26px}
-  .seg-detail h2{font:400 28px/1.15 var(--serif);margin:6px 0 4px} .seg-detail .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .seg-detail .nav{display:flex;justify-content:space-between;margin-top:22px;padding-top:12px;border-top:1px solid var(--hair)}
-  .seg-detail .nav button{border:1px solid var(--hair-strong);background:var(--surface);border-radius:6px;padding:6px 12px;font:500 13px/1 var(--sans);color:var(--ink-soft)}
-  .side{display:flex;flex-direction:column;gap:14px} .side .card{padding:14px 16px}
-  .side h4{margin:0;font:400 19px/1.2 var(--serif)}
-  .check li{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--hair);font-size:13.5px;list-style:none}
-  .check{margin:6px 0 0;padding:0} .check li:first-child{border-top:0} .check input{margin-top:3px;accent-color:var(--ink)}
+  /* the page of a chapter, shared */
+  .page h2{font:400 34px/1.1 var(--serif);margin:6px 0 8px;text-wrap:balance}
+  .page .sum{font-size:17px;color:var(--ink-soft);margin:0 0 8px;max-width:62ch}
+  .page section{padding:18px 0 4px;border-top:1px solid var(--hair);margin-top:14px}
+  .page section:first-of-type{margin-top:22px}
+  .page h3{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;margin:0 0 6px;font:600 16px/1.35 var(--sans)}
+  .page p{margin:0 0 10px;max-width:68ch;font-size:15px}
+  .page ul{margin:4px 0 10px;padding-left:20px;max-width:66ch} .page ul li{padding:2px 0;font-size:15px}
+  .gap,.conflict{border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:0 6px 6px 0;padding:9px 12px;font-size:14.5px;max-width:68ch;margin:2px 0 10px}
+  .conflict{border-left-color:var(--red);background:var(--red-soft)}
+  .more{margin-top:24px;padding-top:12px;border-top:1px solid var(--hair);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .more button{border:1px solid var(--hair-strong);background:var(--surface);border-radius:6px;padding:7px 12px;font:500 13px/1.2 var(--sans);color:var(--ink-soft);text-align:left}
+  .more button small{display:block;font:600 9.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
 
-  /* 2 · THE BOARD */
-  .board{display:grid;grid-template-columns:150px repeat(3,minmax(0,1fr));gap:10px}
-  .board .ch{font:600 10px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:4px 4px 0}
-  .board .ch.live{color:var(--ink)}
-  .board .rh{padding:12px 6px 0 0} .board .rh b{display:block;font:400 18px/1.15 var(--serif)} .board .rh small{color:var(--ink-faint);font-size:12px}
-  .cell{display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--surface-sub);border:1px solid var(--hair);border-radius:9px;min-height:60px}
-  .cell.empty{background:transparent;border-style:dashed;justify-content:center;align-items:center;color:var(--ink-quiet);font-size:12px}
-  .task{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--hair-strong);border-radius:7px;padding:8px 10px;box-shadow:var(--sh-rest);color:var(--ink)}
-  .task .t{font:500 13.5px/1.35 var(--sans)} .task .s{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap}
-  .task:hover{border-color:var(--ink-quiet)} .task.on{border-color:var(--ink);box-shadow:var(--sh-lift)}
-  .task.gapt{border-left:3px solid var(--amber)}
-  .board-row.mine .rh b{color:var(--orange)} .board-row.mine .cell{background:var(--orange-tint);border-color:rgba(230,112,30,.25)}
-  .board-row{display:contents}
-  .opened{margin-top:16px;padding:18px 22px}
-  .opened h2{font:400 24px/1.2 var(--serif);margin:4px 0 4px}
+  /* 1 · THE HANDBOOK */
+  .hb{display:grid;grid-template-columns:250px minmax(0,1fr) 250px;gap:28px;align-items:start}
+  .toc{position:sticky;top:12px;padding:14px 8px}
+  .toc .p{font:600 9.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:12px 10px 4px}
+  .toc .p:first-child{padding-top:0}
+  .toc button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:5px 10px 5px 12px;border-left:2px solid transparent;font:400 13.5px/1.35 var(--sans);color:var(--ink-soft);border-radius:0 5px 5px 0}
+  .toc button:hover{background:var(--surface-sub);color:var(--ink)}
+  .toc button.on{border-left-color:var(--orange);color:var(--ink);font-weight:600;background:var(--orange-tint)}
+  .hb .page{padding:26px 34px 30px}
+  .margin{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px}
+  .margin .card{padding:14px 16px}
+  .margin ol,.margin ul{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-soft)} .margin li{padding:3px 0}
+  .margin a{color:inherit;text-decoration:none;border-bottom:1px solid var(--hair-strong)} .margin a:hover{color:var(--ink)}
 
-  /* 3 · THE COUNTDOWN */
-  .count{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
-  .anchor{padding:20px 24px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center}
-  .anchor label{display:block}
-  .anchor input[type=date]{font:400 30px/1.1 var(--serif);color:var(--orange);border:0;border-bottom:2px solid var(--orange);background:transparent;padding:2px 0;max-width:100%}
-  .anchor .verdict{font:500 15px/1.4 var(--sans)} .anchor .verdict small{display:block;color:var(--ink-faint);font-size:12.5px;font-weight:400}
-  .verdict.ok{color:#15803d} .verdict.tight{color:#b45309} .verdict.late{color:#b91c1c}
-  .line{margin-top:18px;padding:8px 0;position:relative}
-  .ms{display:grid;grid-template-columns:118px 26px minmax(0,1fr);gap:0 12px;position:relative}
-  .ms .d{text-align:right;padding-top:14px} .ms .d b{display:block;font:600 13px/1.2 var(--sans)} .ms .d span{font:500 10px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
-  .ms .dot{position:relative} .ms .dot::before{content:"";position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--hair-strong)}
-  .ms:first-child .dot::before{top:20px} .ms:last-child .dot::before{bottom:calc(100% - 20px)}
-  .ms .dot i{position:absolute;left:6px;top:15px;width:14px;height:14px;border-radius:50%;background:var(--surface);border:2px solid var(--ink-quiet)}
-  .ms.call .dot i{border-color:var(--ink);background:var(--ink)} .ms.pay .dot i{border-color:var(--orange);background:var(--orange)}
-  .ms.past .dot i{border-color:var(--red)} .ms.past .d b{color:#b91c1c}
-  .ms .body{padding:10px 0 14px}
-  .ms .body .card{padding:12px 14px} .ms .body h4{margin:0;font:500 15px/1.35 var(--sans)} .ms .body p{margin:4px 0 0;font-size:13px;color:var(--ink-soft)}
-  .ms .body .s{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
-  .ms.call .body .card{border-color:var(--ink)}
-  .ms details{margin-top:8px} .ms summary{cursor:pointer;font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
-  .ms details ol{margin:8px 0 0;padding-left:20px;font-size:13px} .ms details ol li{padding:3px 0}
+  /* 2 · THE INDEX */
+  .ix-search{display:flex;align-items:center;gap:12px;padding:6px 4px 6px 18px;margin-bottom:18px}
+  .ix-search input{flex:1;min-width:0;border:0;border-bottom:2px solid var(--orange);font:400 22px/1.3 var(--serif);color:var(--ink);padding:10px 0;background:transparent;outline:none}
+  .ix-search input::placeholder{color:var(--ink-quiet)}
+  .ix-search .n{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding-right:14px;white-space:nowrap}
+  .ix{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start}
+  .qs{padding:6px 0}
+  .qs .g{font:600 9.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:12px 16px 4px}
+  .qs button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 16px;font:400 14px/1.4 var(--sans);color:var(--ink);border-top:1px solid var(--hair)}
+  .qs button small{display:block;font:500 10px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+  .qs button:hover{background:var(--surface-sub)} .qs button.on{background:var(--surface-sunk);font-weight:600}
+  .qs .none{padding:16px;color:var(--ink-faint);font-size:14px}
+  .ix .page{padding:24px 30px 28px;position:sticky;top:12px}
+  .ix .asked{font:400 20px/1.3 var(--serif);color:var(--ink-soft);margin:0 0 4px}
+  mark{background:rgba(37,99,235,.14);color:inherit;border-radius:2px;padding:0 1px}
 
-  .legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:22px;padding-top:12px;border-top:1px solid var(--hair);font-size:12px;color:var(--ink-faint);align-items:center}
+  /* 3 · THE LIFECYCLE */
+  .lc-track{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;margin-bottom:20px;position:relative}
+  .lc-track::before{content:"";position:absolute;left:7%;right:7%;top:15px;height:2px;background:var(--hair-strong)}
+  .lc-track button{position:relative;border:0;background:transparent;padding:0 4px;text-align:center;color:var(--ink-soft);font:500 12.5px/1.3 var(--sans)}
+  .lc-track button i{display:block;width:14px;height:14px;margin:9px auto 8px;border-radius:50%;background:var(--surface);border:2px solid var(--ink-quiet)}
+  .lc-track button small{display:block;font:600 9.5px/1.4 var(--mono);letter-spacing:.12em;color:var(--ink-faint);margin-top:2px}
+  .lc-track button.done i{background:var(--ink-quiet);border-color:var(--ink-quiet)}
+  .lc-track button.on{color:var(--ink);font-weight:600} .lc-track button.on i{background:var(--orange);border-color:var(--orange);box-shadow:0 0 0 4px var(--orange-soft)}
+  .lc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin:0 0 14px}
+  .lc-head h2{font:400 32px/1.1 var(--serif);margin:0} .lc-head span{color:var(--ink-soft)}
+  .lc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start}
+  .lc-grid .page{padding:20px 24px 18px}
+  .lc-grid .page h2{font-size:24px}
+  .lc-grid .page .sum{font-size:15px}
+  .lc-grid .page section{padding:12px 0 0;margin-top:10px}
+  .lc-grid .page section:first-of-type{margin-top:14px}
+  .lc-grid .page h3{font-size:14.5px} .lc-grid .page p,.lc-grid .page li{font-size:14px}
+  .lc-nav{display:flex;justify-content:space-between;margin-top:18px;gap:10px}
+  .lc-nav button{border:1px solid var(--hair-strong);background:var(--surface);border-radius:6px;padding:7px 12px;font:500 13px/1.2 var(--sans);color:var(--ink-soft)}
 
-  @media (max-width:1180px){.script{grid-template-columns:240px minmax(0,1fr)} .script .side{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr 1fr}}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:24px;padding-top:12px;border-top:1px solid var(--hair);font-size:12px;color:var(--ink-faint);align-items:center}
+
+  @media (max-width:1180px){.hb{grid-template-columns:220px minmax(0,1fr)} .margin{display:none}}
   @media (max-width:900px){
     .studio{padding:24px 16px 64px} .main{padding:16px}
-    .script,.count{grid-template-columns:minmax(0,1fr)} .script .side{grid-template-columns:minmax(0,1fr)}
-    .board{grid-template-columns:minmax(0,1fr)} .board .ch{display:none} .board .rh{padding-top:16px}
-    .cell::before{content:attr(data-phase);font:600 9.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+    .hb,.ix{grid-template-columns:minmax(0,1fr)} .toc,.ix .page{position:static}
+    .toc{display:flex;gap:6px;overflow-x:auto;padding:8px} .toc .p{display:none} .toc button{white-space:nowrap;border-left:0;border-bottom:2px solid transparent;border-radius:5px;width:auto}
+    .toc button.on{border-bottom-color:var(--orange)}
+    .hb .page,.ix .page{padding:20px 18px}
+    .page h2{font-size:27px}
     .way .routes{display:none} .tabs{padding:0 16px;gap:14px;overflow-x:auto}
-    .ms{grid-template-columns:84px 26px minmax(0,1fr);gap:0 8px}
-    .lede .n{margin-left:0}
+    .lc-track{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:96px;overflow-x:auto;padding-bottom:6px}
+    .lc-track::before{left:40px;right:40px}
+    .lc-grid{grid-template-columns:minmax(0,1fr)}
+    .ix-search input{font-size:18px}
   }
 </style>
 </head>
 <body>
 <div class="studio">
   <header class="studio-head">
-    <div class="kick">Playbook &middot; implementation triptych &middot; 2026-11-05</div>
-    <h1>A run of show for the first implementation call.</h1>
+    <div class="kick">Playbook &middot; implementation manual triptych &middot; 2026-11-05</div>
+    <h1>The implementation manual. How it works, written down once.</h1>
     <p>
-      One new space in the Playbook, beside the products. It holds what happens on the first call after a
-      partner signs: who is on it, what gets covered in what order, what has to be true before it starts,
-      and what everyone owes after it ends. The first one on tape ran 39 minutes and is the starter for all
-      three. Same content in each. What changes is how it is organized: by time, by who owns what, or by
-      the date the partner promised their client.
+      A manual for everything after a partner signs: getting in, setting up the partner, adding clients,
+      onboarding contractors, the wallet, and how money moves. Anyone on the team can read it and know how
+      implementation works without having been on a call. The first kickoff on tape is the source for all of
+      it, and every section cites the minute it came from. The same nineteen chapters sit in each concept.
+      What changes is how you find your way through them.
     </p>
     <div class="seg" role="tablist" aria-label="Design options">
-      <button role="tab" aria-selected="true" data-opt="1">1 &middot; The Script</button>
-      <button role="tab" aria-selected="false" data-opt="2">2 &middot; The Board</button>
-      <button role="tab" aria-selected="false" data-opt="3">3 &middot; The Countdown</button>
+      <button role="tab" aria-selected="true" data-opt="1">1 &middot; The Handbook</button>
+      <button role="tab" aria-selected="false" data-opt="2">2 &middot; The Index</button>
+      <button role="tab" aria-selected="false" data-opt="3">3 &middot; The Lifecycle</button>
     </div>
-    <p class="opt-note" id="note-1"><span class="ax">Organized by time.</span> <b>The call in the order it runs.</b> Thirteen parts down the left, each with who leads it and when it ran on tape. The open part reads in the middle: what to cover, the question to ask and why, what to listen for, and anything still undecided. Before and after sit on the right as checklists. Best for running the call live.</p>
-    <p class="opt-note" id="note-2" hidden><span class="ax">Organized by owner.</span> <b>Who owns what, before, during and after.</b> Four rows for the four people on the call, three columns for the three phases. Your row is lit. Open any card to read its detail below the board. Best for making sure nothing falls between the seller and the account manager.</p>
-    <p class="opt-note" id="note-3" hidden><span class="ax">Organized by the date.</span> <b>Start from the day the partner promised their client a first payment, and work back.</b> Change the date and every milestone moves: the call, the agreement, the invites, the approval, the payment. The call is one stop on the way. The dates are estimates built from what was said on tape and are marked that way. Best for telling a partner, on the call, whether their date holds.</p>
+    <p class="opt-note" id="note-1"><span class="ax">Read it like a book.</span> <b>Eight parts, nineteen chapters, contents down the left.</b> One chapter reads at a time in the middle, section by section, each with its cite. The margin holds what the chapter covers and the questions it answers. Previous and next at the foot so it reads straight through.</p>
+    <p class="opt-note" id="note-2" hidden><span class="ax">Look it up.</span> <b>Start from the question someone asked.</b> Type, or pick from the questions partners, contractors and sellers actually ask, grouped by who asks. The answer is the manual chapter that holds it, with the match highlighted. Built for the moment a partner emails a question.</p>
+    <p class="opt-note" id="note-3" hidden><span class="ax">Follow the implementation.</span> <b>The manual laid along the order an implementation happens.</b> Seven stages from before the first call to after the first payment. Pick a stage and every chapter that belongs to it opens side by side, in full. Built for knowing what matters at the point a partner is at.</p>
   </header>
 
   <div class="frame">
-    <div class="way"><span class="trail">Playbook</span><span class="here">Implementation <span>&middot; the first call</span></span><span class="routes"><span>Room</span><span>Accounts</span><span>Groundwork</span><b>Playbook</b><span>Intranet</span></span></div>
+    <div class="way"><span class="trail">Playbook</span><span class="here">Implementation <span>&middot; the manual</span></span><span class="routes"><span>Room</span><span>Accounts</span><span>Groundwork</span><b>Playbook</b><span>Intranet</span></span></div>
     <div class="tabs"><span>The products</span><span class="on">Implementation</span><span>What we&rsquo;ve learned</span></div>
-
     <section class="option on main" id="opt-1"></section>
     <section class="option main" id="opt-2"></section>
     <section class="option main" id="opt-3"></section>
@@ -144,233 +141,272 @@
 <script>
 (function () {
   "use strict";
+  // The implementation manual. Built from the first implementation kickoff on tape (11/4).
+  // Universal: no account or person names. No figures for our money.
+  // Section: { h, p: [paragraphs], li: [bullets], c: "mm:ss" cite, gap: "", conflict: "" }
+  var PARTS = [
+    { id: "start", t: "Before you start" },
+    { id: "partner", t: "The partner's account" },
+    { id: "clients", t: "Clients" },
+    { id: "contractors", t: "Contractors" },
+    { id: "wallet", t: "The wallet" },
+    { id: "money", t: "Money and timing" },
+    { id: "call", t: "The first call" },
+    { id: "beyond", t: "Beyond contractors" }
+  ];
+  var CH = [
+    { id: "what", part: "start", stage: 0, t: "What implementation is",
+      sum: "The first stretch after a partner signs, from first login to first payment.",
+      qs: ["Is this a big implementation?", "Who is the partner's go-to after the close?"], who: "Partner",
+      sec: [
+        { h: "It is not a heavy lift", c: "4:20", p: ["The partner turns it on and everything lives in one place. They get a dashboard, all their clients sit inside it, and each client gets its own login. Most of the work after setup is a single approval each pay period. The rest is automated."] },
+        { h: "Who does what after the close", c: "1:02", p: ["The seller keeps the sales side: new quotes, new products, and training the partner's sales team so they can sell it to their own clients. The global account manager takes everything operational and is the partner's go-to from here."] },
+        { h: "People behind the platform", c: "1:02", p: ["The platform sits on a network of HR and payroll people around the world. Contractor programs need less of that than employer of record does, but it is there when a question goes past the software."] }
+      ] },
+    { id: "login", part: "start", stage: 0, t: "Getting in",
+      sum: "One login from Prism, matched on email.",
+      qs: ["Do partners need a separate password?", "Why did single sign-on fail?", "Does reporting combine with Prism?"], who: "Partner",
+      sec: [
+        { h: "Single sign-on from Prism", c: "2:25", p: ["Partners reach Global through single sign-on from their Prism login. There is no second password to keep track of. The partner has to be provisioned for single sign-on before it works."] },
+        { h: "The email has to match", c: "3:16", p: ["The email on the Global account must be the same one the person uses to sign in to Prism. When the two differ, single sign-on runs into trouble. Check it before the invite goes out."] },
+        { h: "Reporting is separate", c: "2:25", p: ["Single sign-on does not combine reporting. Prism reports and Global reports are still read in their own places. Say so before a partner goes looking for it."] }
+      ] },
+    { id: "users", part: "partner", stage: 1, t: "Account owner and users",
+      sum: "The first person in is the owner. They invite everyone else.",
+      qs: ["Who should be the account owner?", "Where does the invite come from?", "What roles are there?"], who: "Partner",
+      sec: [
+        { h: "The account owner", c: "26:08", p: ["The first person to sign up becomes the account owner. It is only a starting point. The owner invites the rest of the team, and the partner decides who that first person is."] },
+        { h: "The invite", c: "28:27", p: ["The invite comes from no-reply@prismhr.com. Tell people to look for it. Clicking it opens the platform to set a password, then asks them to sign in again."] },
+        { h: "Inviting others", c: "30:34", p: ["The owner invites as many people as they need and assigns each a role. Roles set what each person can see and do. The roles are standard and admin."] }
+      ] },
+    { id: "billing", part: "partner", stage: 1, t: "Banking and billing contacts",
+      sum: "ACH banking, up to four billing contacts, and per-client pricing.",
+      qs: ["How many billing contacts can a partner add?", "Can invoices go to accounting?", "Where are client prices set?"], who: "Partner",
+      sec: [
+        { h: "Banking", c: "29:56", p: ["The partner adds the banking we draw from by ACH. Anyone with access can add it after they are invited, so it does not have to be the owner."] },
+        { h: "Billing contacts", c: "30:07", p: ["Up to four billing contacts get invoice information automatically. One of them can be the partner's accounting team."] },
+        { h: "Client pricing", c: "9:00", p: ["Pricing per client lives on the partner's side, including any overrides and monthly fees. The partner can also open our invoice to them here."] }
+      ] },
+    { id: "invoicing", part: "money", stage: 1, t: "Who bills whom",
+      sum: "We bill the partner. The partner bills their client.",
+      qs: ["Do we bill the client?", "Does the partner have to use the client invoice tool?"], who: "Partner",
+      sec: [
+        { h: "Two invoices", c: "9:00", p: ["We invoice the partner. The partner invoices their client with whatever markup they set. We never bill the partner's clients."] },
+        { h: "Ours is required, theirs is their choice", c: "10:54", p: ["Our invoice to the partner is required. How the partner bills their client is up to them. The platform has a client invoice tool, but a partner can just as well add the charge as a line on the invoice they already send."] },
+        { h: "ACH", c: "22:49", p: ["We draw the funds by ACH. Some partners don't allow ACH, and that's fine."] }
+      ] },
+    { id: "addclient", part: "clients", stage: 2, t: "Adding a client",
+      sum: "W-9 details and one owner. The client invites the rest.",
+      qs: ["What does it take to add a client?", "How many people get invited per client?"], who: "Partner",
+      sec: [
+        { h: "Where", c: "31:00", p: ["Under Clients, top right corner."] },
+        { h: "What it asks for", c: "9:00", li: ["The client's W-9 details: address, telephone number and tax ID.", "Who the client's account owner is."] },
+        { h: "One invite per client", c: "9:00", p: ["The partner invites one person, the client's account owner, by email. That person adds the rest of their own team, as many users as they need. The client then shows up on the partner's dashboard."] }
+      ] },
+    { id: "impersonate", part: "clients", stage: 2, t: "Seeing what the client sees",
+      sum: "Impersonate a client to look, or to help them onboard.",
+      qs: ["Can the partner see the client's account?", "What is the banner at the top?"], who: "Partner",
+      sec: [
+        { h: "Impersonating", c: "4:20", p: ["From the dashboard, the partner can open any client's account and see exactly what that client sees. A banner across the top shows they are impersonating. It is a safety feature so nobody mistakes the partner for the client."] },
+        { h: "Getting back", c: "5:39", p: ["Stop impersonating and the partner is back on their own dashboard."] },
+        { h: "Helping a client onboard", c: "36:10", p: ["While impersonating, the partner can do the client's contractor onboarding for them. It helps when a client is new to the platform or short on time."] }
+      ] },
+    { id: "models", part: "contractors", stage: 3, t: "Contractor and Contractor Plus",
+      sum: "The difference is who signs with the contractor.",
+      qs: ["What's the difference between Contractor and Contractor Plus?", "What is agent of record?", "Who is liable in a dispute?"], who: "Partner",
+      sec: [
+        { h: "Contractor", c: "11:09", p: ["The partner or their client is the entity that signs the agreement with the contractor and holds that working relationship."] },
+        { h: "Contractor Plus", c: "11:09", p: ["PrismHR is the entity on the agreement. Some people know this as agent of record. Because we hold the working relationship, the partner and their client get some protection: if a labor dispute or complaint comes up, it comes back to us instead of them."] },
+        { h: "What does not change", c: "11:09", p: ["Contractor Plus is the premium service and carries a higher rate. Both models pay the contractor the same way, through the wallet. For the rates, read the partner's pricing sheet."] }
+      ] },
+    { id: "agreements", part: "contractors", stage: 3, t: "Agreements",
+      sum: "One signed agreement on file before anyone is paid.",
+      qs: ["Does the partner have to use our agreement?", "Can a client keep their own contract?", "Can a contractor's start date be backdated?"], who: "Partner",
+      sec: [
+        { h: "One has to be signed", c: "14:56", p: ["An executed agreement has to be on file before we can invoice and pay a contractor. It can be the partner's, the client's, or ours."] },
+        { h: "Ours or theirs", c: "14:56", p: ["The platform builds a compliant contractor agreement as the contractor is onboarded. If the client already has a signed contract they want on record, it replaces ours."] },
+        { h: "Backdating tenure", c: "38:28", p: ["A contractor's start can be backdated so their time with the client shows on the record. Use it when a client moves contractors over from another provider."] }
+      ] },
+    { id: "onboard", part: "contractors", stage: 3, t: "Onboarding a contractor",
+      sum: "Pay type, a tax form, and an ID check of up to 24 hours.",
+      qs: ["How long does contractor ID verification take?", "Do contractors file a tax form?", "Do we report their income?"], who: "Contractor",
+      sec: [
+        { h: "Fixed or hourly", c: "14:09", p: ["Each contractor is set up on a fixed rate or an hourly rate. The agreement builds from that."] },
+        { h: "The tax form", c: "11:09", p: ["Every contractor signs a tax form. Which one depends on where they live, and most sign a W&#8209;8BEN. We do not report their income to their government. Contractors report their own income, and the form lets us give them a year-end document showing what they were paid, to help them do it."] },
+        { h: "ID verification", c: "38:02", p: ["Every contractor goes through an ID check as part of the wallet's security. It can take up to 24 hours. Once it clears they can withdraw. Invite contractors early so the check is done before the first payday."] }
+      ] },
+    { id: "dash", part: "contractors", stage: 3, t: "What the contractor sees",
+      sum: "Next payment date, wallet balance, an optional time log.",
+      qs: ["Do contractors submit invoices?", "Is the time log required?"], who: "Contractor",
+      sec: [
+        { h: "The dashboard", c: "5:58", p: ["When a contractor logs in, they see their next expected payment date and their wallet balance."] },
+        { h: "The time log", c: "5:58", p: ["Contractors can log hours by day, with a description if the client requires one. It is not a clock-in system. Logged time shows to the client's managers. It is optional, and a client that tracks time elsewhere can skip it."] },
+        { h: "No invoices to submit", c: "14:03", p: ["Contractors never submit an invoice. The platform writes one for every payment, from the client to the contractor, with its own invoice number, and the contractor can view it any time."] }
+      ] },
+    { id: "where", part: "wallet", stage: 4, t: "Where money can go",
+      sum: "Almost every country, many currencies, many ways out.",
+      qs: ["Which countries can we pay into?", "How can a contractor withdraw?"], who: "Contractor",
+      sec: [
+        { h: "Countries", c: "15:50", p: ["We pay into almost every country. We cannot send funds to banks in restricted countries, Venezuela and Russia for example. A few places are harder at the moment, like Ukraine."] },
+        { h: "Ways out", c: "15:50", li: ["A local bank account.", "A Wise account.", "A prepaid Visa card.", "Mobile money wallets popular in the contractor's country.", "Crypto wallets."] },
+        { h: "Currencies", c: "15:50", p: ["Contractors are usually paid in US dollars and can withdraw in many currencies. They pick the currency, then enter their local banking details. They can save more than one account and choose between them each time."] }
+      ] },
+    { id: "local", part: "wallet", stage: 4, t: "Local payout and SWIFT",
+      sum: "Local currency avoids the fees. US dollars abroad means SWIFT.",
+      qs: ["Why are contractors losing money to fees?", "When does SWIFT happen?"], who: "Contractor",
+      sec: [
+        { h: "Local payout", c: "15:50", p: ["A withdrawal in local currency pays out from a bank in that country to the contractor's bank in that country. No intermediary bank fees and no international landing fees."] },
+        { h: "SWIFT", c: "15:50", p: ["If a contractor abroad asks for US dollars into their bank, it becomes a SWIFT transfer, and the wallet warns them. SWIFT is the slowest and costs the most. Intermediary and receiving banks can add their own fees, and we have no visibility into those or control over them. Their bank also has to accept US dollars."] },
+        { h: "What to tell contractors", c: "15:50", p: ["Withdraw in local currency. On tape, a partner's previous provider paid over SWIFT and took ten business days."] }
+      ] },
+    { id: "withdraw", part: "wallet", stage: 4, t: "Making a withdrawal",
+      sum: "Everything shows before they confirm.",
+      qs: ["Will a contractor know the fee before they withdraw?", "Where are receipts?"], who: "Contractor",
+      sec: [
+        { h: "Before they confirm", c: "18:54", p: ["The wallet shows the amount they will receive in their currency, the exchange rate, the fee, and when it should arrive. They give the withdrawal a category, then confirm."] },
+        { h: "Receipts and forms", c: "20:41", p: ["Every deposit and withdrawal has a receipt in the wallet. Their tax forms are there too."] },
+        { h: "More in the wallet", c: "20:41", p: ["Where it is allowed, contractors can set aside part of every payment in a savings account. They get a virtual card they can add to Google Pay or Apple Pay. There is also a newer stock investing option."] }
+      ] },
+    { id: "support", part: "wallet", stage: 4, t: "Payment support",
+      sum: "24-hour support, ticketed from the wallet.",
+      qs: ["Who helps a contractor with a payment problem?", "Is there contractor support at night?"], who: "Contractor",
+      sec: [
+        { h: "Around the clock", c: "18:54", p: ["Payments support runs 24 hours. A contractor who sees a payment marked successful but not in their bank reports it from that transaction. That opens a ticket with the payments team and sends the details by email."] },
+        { h: "What partners worry about", c: "18:36", p: ["Partners ask whether contractors will understand the wallet. Many contractors abroad already use digital wallets. The ones who don't have the support team."] }
+      ] },
+    { id: "timing", part: "money", stage: 5, t: "From approval to paid",
+      sum: "Approve, we bill by ACH, one day to settle, released next morning.",
+      qs: ["How long does a payment take?", "When should the pay period be approved?", "What if they approve a day late?"], who: "Partner",
+      sec: [
+        { h: "The sequence", c: "22:25", li: ["The partner or the client approves the pay period.", "That notifies us to bill the partner by ACH.", "We give the funds one business day to settle.", "The next morning, funds release to the contractor's wallet."] },
+        { h: "Five business days", c: "22:55", p: ["Pay period approvals run on a five business day turnaround, with cushion built in. Approve on Monday and funds release Wednesday, leaving time to withdraw before Friday. Approve on Tuesday and they release Thursday, still in time for Friday."] },
+        { h: "Into their bank", c: "22:55", p: ["A withdrawal made during normal business hours lands in about one business day on average. Timing varies with when they start it."] }
+      ] },
+    { id: "kickoff", part: "call", stage: 0, t: "The kickoff call",
+      sum: "Seller, account manager, partner lead and decision-maker. About 45 minutes.",
+      qs: ["Who should be on the first call?", "How long is the kickoff?", "What should be ready before it?"], who: "Seller",
+      sec: [
+        { h: "Who is on it", c: "0:00", p: ["The seller, the global account manager, the partner's implementation lead, and the partner's decision-maker. Book 45 minutes. The first one ran 39, with setup done live on the call."] },
+        { h: "What it covers", c: "4:20", li: ["Who does what from here.", "Getting in through single sign-on.", "The partner's dashboard and their clients.", "Who bills whom.", "Contractor or Contractor Plus.", "Agreements and contractor invoices.", "The wallet, in the partner's countries.", "Timing from approval to paid.", "Creating the account owner live.", "Anything else they need, like an employer of record quote."] },
+        { h: "Before it", c: "3:16", li: ["Confirm the partner is provisioned for single sign-on.", "Confirm the lead's Prism email.", "Run the demo account first. On tape, reports did not load and a test withdrawal came back unauthorized."] },
+        { h: "After it", c: "36:51", li: ["The account manager sends a walkthrough video of onboarding and of what contractors will see.", "The partner invites their team, adds banking and billing contacts, creates the first client, and invites contractors early.", "The seller follows up on any quote that came up."] }
+      ] },
+    { id: "eor", part: "beyond", stage: 6, t: "Quoting an employer of record move",
+      sum: "What to gather when a contractor should become an employee.",
+      qs: ["What do we need to quote employer of record?", "How long does employer of record take?"], who: "Seller",
+      sec: [
+        { h: "Why it comes up", c: "32:23", p: ["A partner may have contractors they think should be employees, the same question as contractor versus employee in the US. On the first call it came up once setup was done."] },
+        { h: "What to gather", c: "32:58", li: ["Monthly or annual salary.", "Job title.", "Country.", "Hiring company name.", "Industry."] },
+        { h: "What goes back", c: "33:16", p: ["Tier pricing for that country, a suggested markup, and a rough read of what the employer pays on top of salary, like social contributions and tax. Some countries add more, for example employer-provided health insurance in India."] },
+        { h: "Timing", c: "34:38", conflict: "On tape the seller said to plan conservatively on 90 days. The employer of record product page says about two weeks. Settle which is right before it is said again." }
+      ] },
+    { id: "gaps", part: "beyond", stage: 6, t: "Not ready yet",
+      sum: "What partners will ask for that we don't have.",
+      qs: ["Are there contractor-facing guides?", "Why is the demo account broken?"], who: "Seller",
+      sec: [
+        { h: "Contractor-facing documents", c: "37:14", gap: "Partners ask for documents to hand their contractors. They are coming and are not ready. Until then, the account manager records a walkthrough video." },
+        { h: "Combined reporting", c: "2:25", gap: "Reporting does not combine with Prism yet." },
+        { h: "The demo account", c: "5:39", gap: "In the demo account, reports did not load and a test withdrawal showed unauthorized. Check it before a call." }
+      ] }
+  ];
+  var STAGES = ["Before", "Set up the partner", "First client", "Contractors", "The wallet", "First pay", "After"];
+
   var TAPE = "On tape 11/4";
-
-  // The run of show, from the first implementation call on tape. Universal: no account or person names.
-  var SEGS = [
-    { t: "Hand off the account", who: "Seller", at: "0:00", to: "0:41", s: 0, e: 41,
-      cover: ["Say who carries what from here. Sales stays with you. Day-to-day work goes to the account manager.",
-              "Offer to train their sales team so they can sell it to their own clients."],
-      listen: "Who on their side owns the rollout." },
-    { t: "Introduce the account manager", who: "Account manager", at: "0:41", to: "2:19", s: 41, e: 139,
-      cover: ["The people behind the platform: who they call, and that the account manager is their first stop.",
-              "Their background, so the partner knows who is on the other end."] },
-    { t: "Set up the one login", who: "Account manager", at: "2:19", to: "4:13", s: 139, e: 253,
-      cover: ["They get in through single sign-on from Prism. No second password.",
-              "Reporting is not combined with Prism yet. Say so before they look for it."],
-      ask: { q: "Is the email you use for Prism the one you want on this account?", why: "The single sign-on matches on that email. If they differ, the login fails on day one." } },
-    { t: "Walk their view", who: "Account manager", at: "4:20", to: "9:00", s: 260, e: 540,
-      cover: ["The dashboard, then their client list.",
-              "Working inside a client. A banner shows whenever they are viewing as that client.",
-              "Workers, then the contractor dashboard and its time log."] },
-    { t: "Explain clients and billing", who: "Account manager", at: "9:00", to: "11:09", s: 540, e: 669,
-      cover: ["Each client needs a W-9 on file and one account owner.",
-              "We invoice the partner. The partner invoices their client.",
-              "The client invoice tool is there if they want it. They don't have to use it."] },
-    { t: "Pick Contractor or Contractor Plus", who: "Account manager", at: "11:09", to: "13:55", s: 669, e: 835,
-      cover: ["The difference is who signs with the contractor and who carries the risk if the contractor is later found to be an employee.",
-              "With Contractor Plus, we sign the agreement as the entity. That gives the partner and their client some protection if a dispute ever comes up."],
-      ask: { q: "Does this client want us carrying the classification risk, or are they comfortable holding it?", why: "That one answer decides which of the two it is." },
-      gap: "Not decided on the first call. Carry it to the follow-up." },
-    { t: "Cover agreements and invoices", who: "Account manager", at: "14:03", to: "15:31", s: 843, e: 931,
-      cover: ["The platform generates the contractor invoices.",
-              "Nobody gets paid until an agreement is signed. It can be the partner's, the client's, or ours."],
-      gap: "Which agreement they will use was left open (38:20)." },
-    { t: "Show the wallet", who: "Account manager", at: "15:33", to: "22:13", s: 933, e: 1333,
-      cover: ["Ask which countries first, so the walk shows their currencies.",
-              "Local payout where it exists, SWIFT where it doesn't.",
-              "Fees show before the contractor withdraws. Saved accounts make the next one faster.",
-              "Contractors get payment support around the clock and can open a ticket from the wallet."],
-      ask: { q: "Which countries are the contractors in?", why: "Payout options and fees change by country, so the walk is only useful in theirs." },
-      listen: "This drew the strongest reaction on the call." },
-    { t: "Walk the timing", who: "Account manager", at: "22:13", to: "26:02", s: 1333, e: 1562,
-      cover: ["Someone approves the pay period. We bill the partner by ACH. It settles in one business day, and funds release to the wallet the next morning.",
-              "The approval schedule runs on five business days, with cushion built in."],
-      ask: { q: "How does timing work with the provider you use now?", why: "Let them describe it first. The comparison means more in their own terms." } },
-    { t: "Set them up live", who: "Account manager", at: "26:02", to: "31:19", s: 1562, e: 1879,
-      cover: ["Create the account owner on the call: email and address.",
-              "The invite comes from a no-reply address. Tell them to look for it. They set a password.",
-              "Invite the decision-maker. Roles are standard or admin.",
-              "Add banking and up to four billing contacts, then create the first client."] },
-    { t: "Ask what else is coming", who: "Seller", at: "32:16", to: "35:08", s: 1936, e: 2108,
-      cover: ["Ask about needs beside this one, like a full-time hire abroad that needs an employer of record.",
-              "For a quote, gather the salary, title, country, hiring company and industry."],
-      gap: "Timing conflict: 90 days was said on the call (34:38). The employer of record page says about two weeks. Settle which is right before it's said again." },
-    { t: "Answer price from their sheet", who: "Seller", at: "35:09", to: "35:52", s: 2109, e: 2152,
-      cover: ["Answer from the partner's own pricing sheet. No figures live on this page."] },
-    { t: "Close on the client date", who: "Seller", at: "36:04", to: "39:26", s: 2164, e: 2366,
-      cover: ["Ask when they will talk to the client.",
-              "The account manager sends a walkthrough video, including how to backdate tenure.",
-              "ID checks can take up to 24 hours. Tell them to invite contractors early.",
-              "Let them say what this fixes for them. Don't say it for them."],
-      ask: { q: "When are you talking to the client next?", why: "Everything after this call runs back from that conversation." },
-      gap: "There are no contractor-facing documents yet (37:14). They asked." }
-  ];
-  var CALL_LEN = 2366;
-
-  var BEFORE = [
-    { t: "Confirm single sign-on is turned on", who: "Account manager", c: "2:53" },
-    { t: "Match the lead's Prism email to their login", who: "Account manager", c: "3:16" },
-    { t: "Test the demo account end to end", who: "Account manager", c: "5:46 · 20:38", gap: "On tape, reports didn't load and a withdrawal showed unauthorized." },
-    { t: "Ask ahead for the basics", who: "Seller", c: "", list: ["How many contractors", "Which countries", "Who pays them today", "Their pay schedule", "The date they promised the client"] }
-  ];
-  var AFTER = [
-    { t: "Send the walkthrough video", who: "Account manager", c: "36:51" },
-    { t: "Open the adjacent quote", who: "Seller", c: "32:47" },
-    { t: "Book the sales team training", who: "Seller", c: "0:22" },
-    { t: "Invite the decision-maker", who: "Partner lead", c: "26:37" },
-    { t: "Add banking and billing contacts", who: "Decision-maker", c: "30:07" },
-    { t: "Create the first client", who: "Partner lead", c: "31:07" },
-    { t: "Invite contractors early", who: "Partner lead", c: "38:02" },
-    { t: "Work back from the first pay date", who: "Seller", c: "", gap: "Nobody worked the date back on the call." }
-  ];
-  var GAPS = [
-    "Contractor-facing documents don't exist yet.",
-    "Contractor or Contractor Plus is undecided.",
-    "Which agreement they sign is undecided.",
-    "Employer of record timing: 90 days said, about two weeks on the page.",
-    "The demo account threw errors on the call."
-  ];
-
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function hl(s, q) {
+    var e = esc(s); if (!q) return e;
+    var rx = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+    return e.replace(rx, "<mark>$1</mark>");
+  }
   function rung(kind, text) { return '<span class="rung ' + kind + '">' + esc(text) + "</span>"; }
-  function tape(c) { return rung("tape", TAPE + (c ? " · " + c : "")); }
-  function lede(title, why, n) {
-    return '<div class="lede"><h2>' + esc(title) + '</h2><span class="why">' + esc(why) + '</span><span class="n">' + esc(n) + "</span></div>";
-  }
-  function legend() {
-    return '<div class="legend">' + rung("tape", "On tape") + "<span>heard on the call</span>" + rung("none", "∅ gap") +
-      "<span>left open, or nothing on file</span>" + rung("est", "Estimate") + "<span>worked out from what was said</span>" +
-      "<span style=\"margin-left:auto\">One call on tape. 39 of 45 minutes used.</span></div>";
-  }
-  function segBody(sg) {
-    var h = '<h3 class="k">Cover</h3><ul class="plain">' + sg.cover.map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("") + "</ul>";
-    if (sg.ask) h += '<div class="ask"><q>' + esc(sg.ask.q) + "</q><small>" + esc(sg.ask.why) + "</small></div>";
-    if (sg.listen) h += '<h3 class="k">Listen for</h3><p style="margin:0;font-size:14px">' + esc(sg.listen) + "</p>";
-    if (sg.gap) h += '<div class="gap">' + rung("none", "∅ gap") + " " + esc(sg.gap) + "</div>";
+  function partOf(c) { for (var i = 0; i < PARTS.length; i++) if (PARTS[i].id === c.part) return PARTS[i]; }
+  function byId(id) { for (var i = 0; i < CH.length; i++) if (CH[i].id === id) return CH[i]; }
+  function chapterNo(c) { return CH.indexOf(c) + 1; }
+
+  function page(c, q) {
+    var h = '<span class="kick">' + esc(partOf(c).t) + " · Chapter " + chapterNo(c) + "</span><h2>" + hl(c.t, q) + '</h2><p class="sum">' + hl(c.sum, q) + "</p>";
+    c.sec.forEach(function (s, i) {
+      h += '<section id="' + c.id + "-" + i + '"><h3>' + hl(s.h, q) + " " + rung("tape", TAPE + " · " + s.c) + "</h3>";
+      (s.p || []).forEach(function (p) { h += "<p>" + hl(p, q) + "</p>"; });
+      if (s.li) h += "<ul>" + s.li.map(function (x) { return "<li>" + hl(x, q) + "</li>"; }).join("") + "</ul>";
+      if (s.gap) h += '<div class="gap">' + rung("none", "∅ not ready") + " " + hl(s.gap, q) + "</div>";
+      if (s.conflict) h += '<div class="conflict">' + rung("pb", "Conflicts with the EOR page") + " " + hl(s.conflict, q) + "</div>";
+      h += "</section>";
+    });
     return h;
   }
+  function legend() {
+    return '<div class="legend">' + rung("tape", "On tape") + "<span>said on the first kickoff, with the minute</span>" + rung("none", "∅ not ready") +
+      "<span>partners ask for it and we don't have it</span>" + rung("pb", "Conflict") + "<span>two sources disagree</span>" +
+      '<span style="margin-left:auto">One kickoff on tape so far. Each new one adds to it.</span></div>';
+  }
 
-  /* ---------- 1 · THE SCRIPT ---------- */
-  var cur = 0;
-  function drawScript() {
-    var el = document.getElementById("opt-1");
-    var rail = SEGS.map(function (sg, i) {
-      return '<button type="button" data-i="' + i + '" class="' + (i === cur ? "on" : "") + '"><span class="no">' + (i < 9 ? "0" : "") + (i + 1) +
-        '</span><span class="t">' + esc(sg.t) + '</span><span class="m">' + esc(sg.who) + " · " + sg.at + "</span></button>";
+  /* ---------- 1 · THE HANDBOOK ---------- */
+  var hbCur = "what";
+  function drawHandbook() {
+    var el = document.getElementById("opt-1"), c = byId(hbCur), i = CH.indexOf(c);
+    var toc = PARTS.map(function (p) {
+      return '<div class="p">' + esc(p.t) + "</div>" + CH.filter(function (x) { return x.part === p.id; }).map(function (x) {
+        return '<button type="button" data-id="' + x.id + '" class="' + (x.id === hbCur ? "on" : "") + '">' + esc(x.t) + "</button>";
+      }).join("");
     }).join("");
-    var bar = SEGS.map(function (sg, i) {
-      return '<i class="' + (i === cur ? "on" : "") + '" style="left:' + (sg.s / CALL_LEN * 100).toFixed(2) + "%;width:" + Math.max(0.8, (sg.e - sg.s) / CALL_LEN * 100 - 0.4).toFixed(2) + '%"></i>';
-    }).join("");
-    var sg = SEGS[cur];
-    var detail = '<div class="card seg-detail"><div class="meta"><span class="kick">Part ' + (cur + 1) + " of " + SEGS.length + '</span><span class="owner">' + esc(sg.who) +
-      '</span><span class="clock">' + sg.at + "–" + sg.to + "</span>" + tape(sg.at) + "</div><h2>" + esc(sg.t) + ".</h2>" + segBody(sg) +
-      '<div class="nav"><button type="button" data-step="-1"' + (cur === 0 ? " disabled" : "") + ">← " + (cur > 0 ? esc(SEGS[cur - 1].t) : "Start") +
-      '</button><button type="button" data-step="1"' + (cur === SEGS.length - 1 ? " disabled" : "") + ">" + (cur < SEGS.length - 1 ? esc(SEGS[cur + 1].t) : "End") + " →</button></div></div>";
-    function chk(list) {
-      return '<ul class="check">' + list.map(function (b) {
-        return '<li><input type="checkbox" aria-label="' + esc(b.t) + '"><span>' + esc(b.t) + '<small style="display:block;color:var(--ink-faint);font-size:12px">' + esc(b.who) +
-          (b.list ? " · " + esc(b.list.join(", ")) : "") + "</small>" + (b.gap ? '<small style="display:block;color:#b45309;font-size:12px">∅ ' + esc(b.gap) + "</small>" : "") + "</span></li>";
-      }).join("") + "</ul>";
-    }
-    el.innerHTML = lede("Run the kickoff.", "First call after the partner signs.", "Seller · account manager · partner lead · decision-maker") +
-      '<div class="script"><nav class="card rail" aria-label="Run of show"><div class="tape" title="Where each part fell in the 39 minutes">' + bar + "</div>" + rail + "</nav>" + detail +
-      '<aside class="side"><div class="card"><span class="kick">Before</span><h4>Have these true.</h4>' + chk(BEFORE) + '</div><div class="card"><span class="kick">After</span><h4>Who owes what.</h4>' + chk(AFTER) +
-      '</div><div class="card"><span class="kick">Still open</span><h4>' + GAPS.length + " things.</h4><ul class=\"plain\">" + GAPS.map(function (g) { return "<li>" + esc(g) + "</li>"; }).join("") + "</ul></div></aside></div>" + legend();
-    el.querySelectorAll(".rail button").forEach(function (b) { b.onclick = function () { cur = +b.dataset.i; drawScript(); }; });
-    el.querySelectorAll(".nav button").forEach(function (b) { b.onclick = function () { cur = Math.max(0, Math.min(SEGS.length - 1, cur + +b.dataset.step)); drawScript(); }; });
+    var prev = CH[i - 1], next = CH[i + 1];
+    var more = '<div class="more">' + (prev ? '<button type="button" data-id="' + prev.id + '"><small>← Previous</small>' + esc(prev.t) + "</button>" : "<span></span>") +
+      (next ? '<button type="button" data-id="' + next.id + '" style="text-align:right"><small>Next →</small>' + esc(next.t) + "</button>" : "") + "</div>";
+    var margin = '<aside class="margin"><div class="card"><span class="kick">In this chapter</span><ol>' + c.sec.map(function (s, k) { return '<li><a href="#' + c.id + "-" + k + '">' + esc(s.h) + "</a></li>"; }).join("") +
+      '</ol></div><div class="card"><span class="kick">Answers</span><ul>' + c.qs.map(function (q) { return "<li>" + esc(q) + "</li>"; }).join("") + "</ul></div></aside>";
+    el.innerHTML = '<div class="hb"><nav class="card toc" aria-label="Contents">' + toc + '</nav><article class="card page">' + page(c) + more + "</article>" + margin + "</div>" + legend();
+    el.querySelectorAll("button[data-id]").forEach(function (b) { b.onclick = function () { hbCur = b.dataset.id; drawHandbook(); }; });
   }
 
-  /* ---------- 2 · THE BOARD ---------- */
-  var ROLES = [
-    { k: "Seller", b: "You", sub: "The seller", mine: true },
-    { k: "Account manager", b: "Account manager", sub: "Runs the platform walk" },
-    { k: "Partner lead", b: "Their lead", sub: "Runs implementation for the partner" },
-    { k: "Decision-maker", b: "Their decision-maker", sub: "Signs off for the partner" }
-  ];
-  var CARDS = [];
-  BEFORE.forEach(function (b) { CARDS.push({ role: b.who, ph: 0, t: b.t, c: b.c, gap: b.gap, list: b.list }); });
-  SEGS.forEach(function (sg, i) { CARDS.push({ role: sg.who, ph: 1, t: sg.t, c: sg.at, seg: i, gap: sg.gap }); });
-  AFTER.forEach(function (b) { CARDS.push({ role: b.who, ph: 2, t: b.t, c: b.c, gap: b.gap }); });
-  CARDS.push({ role: "Decision-maker", ph: 1, t: "Ask the lead for an invite", c: "27:03", note: "They wanted access in case they need it. The lead is the account owner and sends it." });
-  CARDS.push({ role: "Decision-maker", ph: 2, t: "Accept the invite", c: "29:00", note: "It comes from a no-reply address. Watch for it." });
-  CARDS.push({ role: "Partner lead", ph: 1, t: "Create the first account live", c: "26:02", seg: 9 });
-  var openCard = null;
-  var PHASES = ["Before the call", "On the call", "After the call"];
-  function drawBoard() {
-    var el = document.getElementById("opt-2");
-    var h = '<div class="board" role="grid"><div></div>' + PHASES.map(function (p, i) { return '<div class="ch' + (i === 1 ? " live" : "") + '">' + p + "</div>"; }).join("");
-    ROLES.forEach(function (r) {
-      h += '<div class="board-row' + (r.mine ? " mine" : "") + '"><div class="rh"><b>' + esc(r.b) + "</b><small>" + esc(r.sub) + "</small></div>";
-      for (var ph = 0; ph < 3; ph++) {
-        var cs = CARDS.map(function (c, i) { return [c, i]; }).filter(function (p) { return p[0].role === r.k && p[0].ph === ph; });
-        if (!cs.length) { h += '<div class="cell empty" data-phase="' + PHASES[ph] + '">Nothing owed</div>'; continue; }
-        h += '<div class="cell" data-phase="' + PHASES[ph] + '">' + cs.map(function (p) {
-          var c = p[0];
-          return '<button type="button" class="task' + (c.gap ? " gapt" : "") + (openCard === p[1] ? " on" : "") + '" data-c="' + p[1] + '"><span class="t">' + esc(c.t) + '</span><span class="s">' +
-            (c.c ? '<span class="clock">' + esc(c.c) + "</span>" : "") + (c.gap ? rung("none", "∅ gap") : "") + "</span></button>";
-        }).join("") + "</div>";
-      }
-      h += "</div>";
-    });
-    h += "</div>";
-    if (openCard !== null) {
-      var c = CARDS[openCard], body;
-      if (c.seg !== undefined && !c.note) body = segBody(SEGS[c.seg]);
-      else body = '<p style="margin:6px 0 0;font-size:14px">' + esc(c.note || "") + "</p>" + (c.list ? '<ul class="plain">' + c.list.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") +
-        (c.gap ? '<div class="gap">' + rung("none", "∅ gap") + " " + esc(c.gap) + "</div>" : "");
-      h += '<div class="card opened"><span class="kick">' + esc(PHASES[c.ph]) + " · " + esc(c.role) + "</span> " + (c.c ? tape(c.c) : rung("none", "∅ not on tape")) + "<h2>" + esc(c.t) + ".</h2>" + body + "</div>";
+  /* ---------- 2 · THE INDEX ---------- */
+  var ixQ = "", ixPick = null;
+  var QUEST = [];
+  CH.forEach(function (c) { c.qs.forEach(function (q) { QUEST.push({ q: q, c: c, who: c.who }); }); });
+  function chText(c) { return [c.t, c.sum].concat(c.sec.map(function (s) { return [s.h].concat(s.p || [], s.li || [], s.gap || "", s.conflict || "").join(" "); })).join(" ").toLowerCase(); }
+  function drawIndex(keepFocus) {
+    var el = document.getElementById("opt-2"), q = ixQ.trim().toLowerCase();
+    var hits = QUEST.filter(function (x) { return !q || x.q.toLowerCase().indexOf(q) >= 0 || chText(x.c).indexOf(q) >= 0; });
+    if (!ixPick || hits.indexOf(ixPick) < 0) ixPick = hits[0] || null;
+    var groups = ["Partner", "Contractor", "Seller"];
+    var heads = { Partner: "Partners ask", Contractor: "Contractors ask", Seller: "Sellers ask" };
+    var list = hits.length ? groups.map(function (g) {
+      var gs = hits.filter(function (x) { return x.who === g; }); if (!gs.length) return "";
+      return '<div class="g">' + heads[g] + "</div>" + gs.map(function (x) {
+        return '<button type="button" data-q="' + QUEST.indexOf(x) + '" class="' + (x === ixPick ? "on" : "") + '">' + hl(x.q, q) + "<small>" + esc(x.c.t) + "</small></button>";
+      }).join("");
+    }).join("") : '<div class="none">Nothing in the manual matches yet. Add it to the next kickoff\'s list.</div>';
+    var ans = ixPick ? '<article class="card page"><p class="asked">' + esc(ixPick.q) + "</p>" + page(ixPick.c, q) + "</article>" : "";
+    var shell = el.querySelector(".ix-search");
+    if (!shell) {
+      el.innerHTML = '<div class="card ix-search"><input id="ixq" type="search" placeholder="What did they ask?" aria-label="Search the manual"><span class="n"></span></div><div class="ix"><nav class="card qs"></nav><div class="ans"></div></div>' + legend();
+      el.querySelector("#ixq").oninput = function (e) { ixQ = e.target.value; drawIndex(true); };
     }
-    var mine = CARDS.filter(function (c) { return c.role === "Seller"; }).length;
-    el.innerHTML = lede("Know whose move it is.", "Four people, three phases.", "Your row · " + mine + " moves") + h + legend();
-    el.querySelectorAll(".task").forEach(function (b) { b.onclick = function () { var i = +b.dataset.c; openCard = openCard === i ? null : i; drawBoard(); }; });
+    el.querySelector(".ix-search .n").textContent = hits.length + " of " + QUEST.length + " questions";
+    el.querySelector(".qs").innerHTML = list;
+    el.querySelector(".ans").innerHTML = ans;
+    el.querySelectorAll(".qs button").forEach(function (b) { b.onclick = function () { ixPick = QUEST[+b.dataset.q]; drawIndex(); }; });
   }
 
-  /* ---------- 3 · THE COUNTDOWN ---------- */
-  var TODAY = new Date(2026, 10, 5);
-  function addBD(d, n) {
-    var x = new Date(d), step = n < 0 ? -1 : 1, left = Math.abs(n);
-    while (left > 0) { x.setDate(x.getDate() + step); var w = x.getDay(); if (w !== 0 && w !== 6) left--; }
-    return x;
-  }
-  function bdBetween(a, b) { var n = 0, x = new Date(a); while (x < b) { x.setDate(x.getDate() + 1); var w = x.getDay(); if (w !== 0 && w !== 6) n++; } return n; }
-  function fmt(d) { return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); }
-  function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
-  var payDay = addBD(TODAY, 15);
-  function drawCount() {
+  /* ---------- 3 · THE LIFECYCLE ---------- */
+  var lcCur = 0;
+  function drawLife() {
     var el = document.getElementById("opt-3");
-    var approve = addBD(payDay, -5), invite = addBD(approve, -2), agree = addBD(invite, -1), setup = addBD(agree, -1);
-    var slack = bdBetween(TODAY, setup) - 1;
-    var verdict = slack >= 3 ? ["ok", "The date holds.", slack + " business days of room before setup has to be done."]
-      : slack >= 0 ? ["tight", "The date is tight.", (slack === 0 ? "No" : "Only " + slack) + " spare business day" + (slack === 1 ? "" : "s") + ". Set up the account on this call."]
-      : ["late", "The date does not hold.", "Setup would have needed to finish " + (-slack) + " business day" + (slack === -1 ? "" : "s") + " ago. Tell them today and agree a new date."];
-    var M = [
-      { d: TODAY, cls: "call", t: "The kickoff call", p: "The run of show. Set up the account live and ask when they talk to the client.", r: tape("39 min"), seg: true },
-      { d: setup, t: "Account set up", p: "Decision-maker invited, banking added, first client created.", r: tape("26:02") + rung("est", "Estimate · 1 day") },
-      { d: agree, t: "Agreement signed", p: "Nobody gets paid without one. The partner's, the client's, or ours.", r: tape("14:03") + rung("none", "∅ which one is open") },
-      { d: invite, t: "Contractors invited", p: "ID checks can take up to 24 hours, so this goes early.", r: tape("38:02") + rung("est", "Estimate · 2 days") },
-      { d: approve, t: "First pay period approved", p: "We bill the partner by ACH. It settles in one business day, then payment releases.", r: tape("22:55") + rung("est", "5 business days") },
-      { d: payDay, cls: "pay", t: "First payment lands", p: "The date the partner promised the client. Funds release to the wallet the morning after they settle.", r: tape("36:45") }
-    ];
-    M.sort(function (x, y) { return x.d - y.d || (x.cls === "call" ? -1 : y.cls === "call" ? 1 : 0); });
-    var line = M.map(function (m) {
-      var past = m.cls !== "call" && m.d < TODAY;
-      return '<div class="ms ' + (m.cls || "") + (past ? " past" : "") + '"><div class="d"><b>' + fmt(m.d) + "</b><span>" + (m.cls === "call" ? "Today" : past ? "Already passed" : bdBetween(TODAY, m.d) + " bd out") +
-        '</span></div><div class="dot"><i></i></div><div class="body"><div class="card"><h4>' + esc(m.t) + "</h4><p>" + esc(m.p) + '</p><div class="s">' + m.r + "</div>" +
-        (m.seg ? '<details><summary>The run of show · ' + SEGS.length + " parts</summary><ol>" + SEGS.map(function (s) { return "<li>" + esc(s.t) + ' <span class="clock">' + s.at + "</span></li>"; }).join("") + "</ol></details>" : "") +
-        "</div></div></div>";
+    var track = STAGES.map(function (s, i) {
+      var n = CH.filter(function (c) { return c.stage === i; }).length;
+      return '<button type="button" data-s="' + i + '" class="' + (i === lcCur ? "on" : i < lcCur ? "done" : "") + '"><i></i>' + esc(s) + "<small>" + n + " CH</small></button>";
     }).join("");
-    el.innerHTML = lede("Hold their date.", "First pay date, worked back.", "Weekends skipped · holidays not counted") +
-      '<div class="count"><div><div class="card anchor"><label><span class="kick">They promised the client</span><br><input type="date" id="payday" value="' + iso(payDay) + '"></label>' +
-      '<div class="verdict ' + verdict[0] + '">' + verdict[1] + "<small>" + verdict[2] + "</small></div></div>" + '<div class="line">' + line + "</div></div>" +
-      '<aside class="side"><div class="card"><span class="kick">Ask on the call</span><h4>Get the date.</h4><div class="ask"><q>What date did you give the client for the first payment?</q><small>Everything runs back from that day. If it can\'t hold, they hear it now and not from the client.</small></div></div>' +
-      '<div class="card"><span class="kick">Before the call</span><h4>Have these true.</h4><ul class="plain">' + BEFORE.map(function (b) { return "<li>" + esc(b.t) + "<small>" + esc(b.who) + (b.gap ? " · ∅ " + esc(b.gap) : "") + "</small></li>"; }).join("") + "</ul></div>" +
-      '<div class="card"><span class="kick">Can move the date</span><h4>' + GAPS.length + " open things.</h4><ul class=\"plain\">" + GAPS.map(function (g) { return "<li>" + esc(g) + "</li>"; }).join("") + "</ul></div></aside></div>" + legend();
-    el.querySelector("#payday").onchange = function (e) { var v = e.target.value.split("-"); if (v.length === 3) { payDay = new Date(+v[0], +v[1] - 1, +v[2]); drawCount(); } };
+    var cs = CH.filter(function (c) { return c.stage === lcCur; });
+    var lines = ["What has to be true before the first call, and the call itself.", "The partner gets in and sets up their side.", "The first client goes on the platform.",
+      "Contractors are signed, verified and ready.", "How contractors get their money out.", "The first payment, from approval to their bank.", "What comes after, and what isn't ready yet."];
+    el.innerHTML = '<nav class="lc-track" aria-label="Stages">' + track + '</nav><div class="lc-head"><span class="kick">Stage ' + (lcCur + 1) + " of " + STAGES.length + "</span><h2>" + esc(STAGES[lcCur]) + "</h2><span>" + esc(lines[lcCur]) + "</span></div>" +
+      '<div class="lc-grid">' + cs.map(function (c) { return '<article class="card page">' + page(c) + "</article>"; }).join("") + "</div>" +
+      '<div class="lc-nav">' + (lcCur > 0 ? '<button type="button" data-s="' + (lcCur - 1) + '">← ' + esc(STAGES[lcCur - 1]) + "</button>" : "<span></span>") +
+      (lcCur < STAGES.length - 1 ? '<button type="button" data-s="' + (lcCur + 1) + '">' + esc(STAGES[lcCur + 1]) + " →</button>" : "") + "</div>" + legend();
+    el.querySelectorAll("button[data-s]").forEach(function (b) { b.onclick = function () { lcCur = +b.dataset.s; drawLife(); }; });
   }
 
-  drawScript(); drawBoard(); drawCount();
-
+  drawHandbook(); drawIndex(); drawLife();
   document.querySelectorAll(".seg button").forEach(function (b) {
     b.onclick = function () {
       document.querySelectorAll(".seg button").forEach(function (x) { x.setAttribute("aria-selected", x === b ? "true" : "false"); });
