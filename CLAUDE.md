@@ -661,9 +661,13 @@ releases. All three are live.
   (src/lib/room/world-map.ts, a fixed table of land and places that reads no
   record). Each country's light is its nearest client date: red at 14 days or
   less, amber within 30 or when the record says how urgent with no day,
-  plain otherwise. The one looping pulse on the page is the light on the
-  nearest red date. A click on a country, on the map or in the list beside
-  it, shows only the deals that name it.
+  plain otherwise. Every country's dot pulses at all times in its own color,
+  and reduced motion stills them (founder, 2026-11-05; this replaced the one
+  pulse on the nearest red date). Each dot sits exactly on its country's
+  point, and the dot and its label are one control: every dot sits above
+  every label, so no label hides a dot, and hovering or focusing a dot
+  brings its label in front of the others. A click on a country, on the map
+  or in the list beside it, shows only the deals that name it.
 - **Each deal is one sentence.** Every row rests as its sentence on one line,
   the type stepping down until it fits and wrapping only at its floor; the
   first row of the board stands open on arrival, and the browser remembers

@@ -102,13 +102,10 @@ export function RoomMap({
   countries,
   selected,
   onPick,
-  pulse,
 }: {
   countries: MapCountry[];
   selected: string | null;
   onPick: (code: string | null) => void;
-  /** The one country whose light pulses: the nearest red date. */
-  pulse: string | null;
 }) {
   if (!countries.length) return null;
   const toneWord = (c: MapCountry) =>
@@ -147,24 +144,30 @@ export function RoomMap({
             const xy = mapXY(c.code);
             if (!xy) return null;
             const sel = selected === c.code;
+            // One control per country: the dot sits exactly on the country's
+            // point and pulses in its tone, always; its label rides above it.
+            // Hovering or focusing either brings that pin, label and all, in
+            // front of every other (founder, 2026-11-05).
             return (
-              <Fragment key={c.code}>
+              <button
+                key={c.code}
+                type="button"
+                className={`${f.pinG} ${selected && !sel ? f.pinDim : ""}`}
+                style={{ left: `${xy[0]}%`, top: `${xy[1]}%` }}
+                aria-pressed={sel}
+                aria-label={COUNTRY_NAME[c.code] ?? c.code.toUpperCase()}
+                title={`${COUNTRY_NAME[c.code]}: ${c.deals.map((d) => d.name).join(", ")}`}
+                onClick={() => onPick(sel ? null : c.code)}
+              >
+                <span className={`${f.pinDot} ${f[`d_${c.tone}`]}`} aria-hidden="true" />
                 <span
-                  className={`${f.pinDot} ${f[`t_${c.tone}`]} ${pulse === c.code ? f.pulse : ""}`}
-                  style={{ left: `${xy[0]}%`, top: `${xy[1]}%` }}
-                />
-                <button
-                  type="button"
-                  className={`${f.pin} ${f[`t_${c.tone}`]} ${sel ? f.pinSel : ""} ${selected && !sel ? f.pinDim : ""}`}
-                  style={{ left: `${xy[0]}%`, top: `${xy[1]}%` }}
-                  aria-pressed={sel}
-                  title={`${COUNTRY_NAME[c.code]}: ${c.deals.map((d) => d.name).join(", ")}`}
-                  onClick={() => onPick(sel ? null : c.code)}
+                  className={`${f.pin} ${f[`p_${c.tone}`]} ${sel ? f.pinSel : ""}`}
+                  aria-hidden="true"
                 >
                   <Flag code={c.code} w={16} />
                   {COUNTRY_NAME[c.code] ?? c.code.toUpperCase()}
-                </button>
-              </Fragment>
+                </span>
+              </button>
             );
           })}
         </div>
