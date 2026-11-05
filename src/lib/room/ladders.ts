@@ -194,6 +194,9 @@ export function readLadders(args: {
   outcome: { status: "won" | "lost"; at: string } | null;
   /** A demo held, on the board or in the record. */
   demoHeld: { at: string; line: string } | null;
+  /** The agreements' review copies the app sent as files (release three):
+   *  each is the agreement going out, with its day. */
+  agreementFiles?: readonly { at: string; line: string }[];
   hand: {
     partner?: PartnerKey;
     client?: ClientKey;
@@ -244,7 +247,21 @@ export function readLadders(args: {
             line: args.facts.products[0]!.line,
           };
   }
-  const sent = first(ours.filter((d) => AGREEMENT_SENT_RE.test(d.text)));
+  const sentDoc = first(ours.filter((d) => AGREEMENT_SENT_RE.test(d.text)));
+  const sentFile = first(
+    [...(args.agreementFiles ?? [])].sort((a, b) => a.at.localeCompare(b.at)),
+  );
+  // Whichever went out first: a send the record reads, or a review copy the
+  // app recorded leaving with Send files.
+  const sent: { at: string; src: StageSource } | undefined =
+    sentDoc && (!sentFile || sentDoc.at <= sentFile.at)
+      ? { at: sentDoc.at, src: src(sentDoc) }
+      : sentFile
+        ? {
+            at: sentFile.at,
+            src: { kind: "record", day: mmdd(sentFile.at), line: sentFile.line },
+          }
+        : undefined;
   const redline = first(
     theirs.filter((d) => REDLINE_RE.test(d.text) && (!sent || d.at >= sent.at)),
   );
@@ -252,8 +269,8 @@ export function readLadders(args: {
   let agreement: Ladders["agreement"] = { n: 0, src: null };
   if (sent) {
     recordK = "review";
-    recordSrc = src(sent);
-    agreement = { n: 1, src: src(sent) };
+    recordSrc = sent.src;
+    agreement = { n: 1, src: sent.src };
   }
   if (redline) agreement = { n: 2, src: src(redline) };
   let signedAt = "";

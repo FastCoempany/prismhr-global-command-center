@@ -119,16 +119,57 @@ export function parseHandFacts(body: string | undefined): HandFacts {
 export const handFactsFrom = (rows: readonly { body: string }[] | undefined): HandFacts =>
   parseHandFacts(rows?.[0]?.body);
 
+// ── what a headcount counts (release three) ────────────────────────────────
+export type HeadKind = "employee" | "contractor" | null;
+const CONTRACTOR_RE = /\b(?:contractors?|freelancers?|1099s?|consultants?|contingent)\b/i;
+const EMPLOYEE_RE =
+  /\b(?:employees?|w-?2s?|staff|full[- ]time|hires?|headcount|on (?:their|the) payroll)\b/i;
+
+/** Whether a count on a line counts employees or contractors: the words just
+ *  after the figure first, then the whole line when it names only one kind.
+ *  Null when the line does not say. */
+export function headKind(line: string, n: number): HeadKind {
+  const text = line ?? "";
+  const at = text.search(new RegExp(`(?<![\\d.,])${n}(?![\\d.,]\\d)`));
+  if (at >= 0) {
+    const near = text.slice(at, at + 48);
+    if (CONTRACTOR_RE.test(near)) return "contractor";
+    if (EMPLOYEE_RE.test(near)) return "employee";
+  }
+  const c = CONTRACTOR_RE.test(text);
+  const e = EMPLOYEE_RE.test(text);
+  return c && !e ? "contractor" : e && !c ? "employee" : null;
+}
+
+/** The word a count takes: employees, contractors, or people when the kinds
+ *  are unsaid or mixed. */
+export function headWord(kinds: readonly HeadKind[], n: number): string {
+  const k = kinds.length && kinds.every((x) => x === kinds[0]) ? kinds[0] : null;
+  if (k === "employee") return n === 1 ? "employee" : "employees";
+  if (k === "contractor") return n === 1 ? "contractor" : "contractors";
+  return n === 1 ? "person" : "people";
+}
+
 // ── the sentence's facts ───────────────────────────────────────────────────
 export type FactLine = { day: string; line: string };
 export type RowFacts = {
   products: ({ key: ProductKey; word: string } & FactLine)[];
   chair: { v: Chair; hand: boolean } & FactLine;
-  client: { name: string | null; hand: boolean; day: string };
+  client: {
+    name: string | null;
+    hand: boolean;
+    day: string;
+    /** From the model's read (release three): the line it stands on, how
+     *  sure the record is, and how many entries named it. */
+    line?: string;
+    sure?: "sure" | "likely" | "unsure";
+    seen?: number;
+  };
   countries: ({ code: string; name: string; hand: boolean } & FactLine)[];
   /** Codes the record names that the operator took off the deal by hand. */
   removed: string[];
-  heads: ({ n: number; country: string | null } & FactLine)[];
+  /** Each stated count, with what the people are when the line says so. */
+  heads: ({ n: number; country: string | null; kind: HeadKind } & FactLine)[];
   /** The client's date, when the record names one with its words. */
   date: ({ iso: string | null; phrase: string } & FactLine) | null;
 };
@@ -161,6 +202,14 @@ export function buildRowFacts(args: {
   docs: readonly Doc[];
   hand: HandFacts;
   todayMd: string;
+  /** The client the model's read names most often (src/lib/room/client-read.ts). */
+  readClient?: {
+    name: string;
+    sure: "sure" | "likely" | "unsure";
+    seen: number;
+    day: string;
+    line: string;
+  } | null;
 }): RowFacts {
   const { intel, docs, hand } = args;
   const products = intel.products.map((f) => ({
@@ -207,11 +256,15 @@ export function buildRowFacts(args: {
   ];
 
   const heads = intel.headcounts.map(
-    (f: SourcedFact<{ n: number; country?: string }>) => ({
-      n: f.value.n,
-      country: f.value.country ?? null,
-      ...lineOf(f, docs),
-    }),
+    (f: SourcedFact<{ n: number; country?: string }>) => {
+      const at = lineOf(f, docs);
+      return {
+        n: f.value.n,
+        country: f.value.country ?? null,
+        kind: headKind(at.line, f.value.n),
+        ...at,
+      };
+    },
   );
 
   const t = intel.timing;
@@ -224,7 +277,16 @@ export function buildRowFacts(args: {
     chair,
     client: hand.client
       ? { name: hand.client, hand: true, day: hand.day.client ?? args.todayMd }
-      : { name: null, hand: false, day: "" },
+      : args.readClient
+        ? {
+            name: args.readClient.name,
+            hand: false,
+            day: args.readClient.day,
+            line: args.readClient.line,
+            sure: args.readClient.sure,
+            seen: args.readClient.seen,
+          }
+        : { name: null, hand: false, day: "" },
     countries,
     removed,
     heads,
@@ -255,6 +317,8 @@ export type MapCountry = {
   code: string;
   deals: { key: string; name: string; n: number | null }[];
   people: number;
+  /** What the counted people are, one per counted deal. */
+  kinds: HeadKind[];
   unsaid: number;
   tone: DateTone;
   days: number | null;
@@ -270,14 +334,25 @@ export function mapIndex(deals: readonly MapDeal[], todayIso: string): MapCountr
     for (const c of d.facts.countries) {
       let e = by.get(c.code);
       if (!e) {
-        e = { code: c.code, deals: [], people: 0, unsaid: 0, tone: "none", days: null };
+        e = {
+          code: c.code,
+          deals: [],
+          people: 0,
+          kinds: [],
+          unsaid: 0,
+          tone: "none",
+          days: null,
+        };
         by.set(c.code, e);
       }
       const hs = d.facts.heads.filter((h) => h.country === c.code);
       const n = hs.length ? hs.reduce((s, h) => s + h.n, 0) : null;
       e.deals.push({ key: d.key, name: d.name, n });
       if (n == null) e.unsaid++;
-      else e.people += n;
+      else {
+        e.people += n;
+        e.kinds.push(...hs.map((h) => h.kind));
+      }
       const nearer = tone === e.tone && days != null && (e.days == null || days < e.days);
       if (TONE_RANK[tone] > TONE_RANK[e.tone] || nearer) {
         e.tone = tone;
@@ -306,8 +381,13 @@ export type DeckPerson = {
   phone: string;
   mobile: string;
   city: string;
-  /** A LinkedIn profile on file; null until one is (release 3 fills it). */
+  /** A LinkedIn page: the one the operator set, else a Sales Navigator
+   *  alert's lead link, else null. */
   linkedin: string | null;
+  /** Where the LinkedIn page came from, when there is one. */
+  liFrom: "hand" | "salesnav" | null;
+  /** Added to the deal by the operator's hand; the record has not named them. */
+  hand: boolean;
   touches: Touch[];
 };
 
@@ -372,15 +452,29 @@ export function touchesFor(
   return out.sort((a, b) => a.at.localeCompare(b.at)).slice(-40);
 }
 
-/** The deck: the record's people, joined to the book's contact card. */
+/** The deck: the record's people, joined to the book's contact card, then
+ *  anyone the operator added by hand whom the record has not named yet (the
+ *  record outranks every seed). A LinkedIn page set by hand outranks the one a
+ *  Sales Navigator alert carried. */
 export function buildDeck(args: {
   people: readonly { name: string; title: string; email: string }[];
   contacts: readonly DeckContact[];
   docs: readonly DeckDoc[];
+  added?: readonly { name: string; title: string; email: string; phone: string }[];
+  links?: Readonly<Record<string, string>>;
+  salesNav?: ReadonlyMap<string, string>;
   cap?: number;
 }): DeckPerson[] {
   const byKey = new Map(args.contacts.map((c) => [nameKey(`${c.first} ${c.last}`), c]));
-  return args.people.slice(0, args.cap ?? 8).map((p) => {
+  const li = (name: string): Pick<DeckPerson, "linkedin" | "liFrom"> => {
+    const k = nameKey(name);
+    const hand = k ? args.links?.[k] : undefined;
+    if (hand) return { linkedin: hand, liFrom: "hand" };
+    const nav = k ? args.salesNav?.get(k) : undefined;
+    return nav ? { linkedin: nav, liFrom: "salesnav" } : { linkedin: null, liFrom: null };
+  };
+  const cap = args.cap ?? 8;
+  const fromRecord = args.people.slice(0, cap).map((p) => {
     const c = byKey.get(nameKey(p.name));
     const city = c ? [c.city, c.state].filter(Boolean).join(", ") : "";
     return {
@@ -390,8 +484,29 @@ export function buildDeck(args: {
       phone: (c?.phone ?? "").trim(),
       mobile: (c?.mobile ?? "").trim(),
       city,
-      linkedin: null,
+      ...li(p.name),
+      hand: false,
       touches: touchesFor({ name: p.name, email: p.email || c?.email || "" }, args.docs),
     };
   });
+  const seen = new Set(fromRecord.map((p) => nameKey(p.name)));
+  const fromHand: DeckPerson[] = [];
+  for (const a of args.added ?? []) {
+    const k = nameKey(a.name);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    const c = byKey.get(k);
+    fromHand.push({
+      name: a.name,
+      title: (a.title || c?.title || "").trim(),
+      email: (a.email || c?.email || "").trim(),
+      phone: (a.phone || c?.phone || "").trim(),
+      mobile: (c?.mobile ?? "").trim(),
+      city: c ? [c.city, c.state].filter(Boolean).join(", ") : "",
+      ...li(a.name),
+      hand: true,
+      touches: touchesFor({ name: a.name, email: a.email || c?.email || "" }, args.docs),
+    });
+  }
+  return [...fromRecord, ...fromHand.slice(0, 6)];
 }

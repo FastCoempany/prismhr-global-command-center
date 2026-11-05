@@ -794,3 +794,72 @@ describe("low signal · a section above the closed ledger, and a closed ledger t
     await page.close();
   });
 });
+
+describe("F26 release three · LinkedIn, Add a person, Send files and Sent", () => {
+  test("the struck LinkedIn mark takes a pasted page and files it by hand", async () => {
+    const page = await mount(browser, FIX, {
+      now: "2026-11-04T16:00:00Z",
+      returns: { setRowPeople: { ok: true } },
+    });
+    const row = await openRow(page, "Simploy");
+    await row.getByRole("button", { name: "Add Chassie Smith's LinkedIn page" }).click();
+    const box = row.locator(`input[aria-label="Chassie Smith's LinkedIn page"]`);
+    await box.fill("https://www.linkedin.com/in/chassie-smith");
+    await box.press("Enter");
+    await page.waitForTimeout(50);
+    const call = (await callsOf(page)).find(([n]) => n === "setRowPeople");
+    assert.deepEqual(call?.[1], [
+      ROW_A,
+      {
+        kind: "linkedin",
+        name: "Chassie Smith",
+        url: "https://www.linkedin.com/in/chassie-smith",
+      },
+    ]);
+    await page.close();
+  });
+
+  test("Add a person opens a short form and files the person by hand", async () => {
+    const page = await mount(browser, FIX, {
+      now: "2026-11-04T16:00:00Z",
+      returns: { setRowPeople: { ok: true } },
+    });
+    const row = await openRow(page, "Simploy");
+    await row.getByRole("button", { name: "＋ Add a person" }).click();
+    await row.locator('input[aria-label="Their name"]').fill("Sam Ortiz");
+    await row.locator('input[aria-label="Their title"]').fill("CFO");
+    await row.getByRole("button", { name: "Add them" }).click();
+    await page.waitForTimeout(50);
+    const call = (await callsOf(page)).find(([n]) => n === "setRowPeople");
+    assert.deepEqual(call?.[1], [
+      ROW_A,
+      { kind: "add", person: { name: "Sam Ortiz", title: "CFO", email: "", phone: "" } },
+    ]);
+    await page.close();
+  });
+
+  test("Send files and Sent sit at the Chute's size; the form waits for a file", async () => {
+    const page = await mount(browser, FIX, { now: "2026-11-04T16:00:00Z" });
+    const row = await openRow(page, "Simploy");
+    const send = row.getByRole("button", { name: "Send files" });
+    const sent = row.getByRole("button", { name: /^1 Sent ▸$/ });
+    const chute = row.locator(F("chuteb")).first();
+    const [a, b, c] = await Promise.all([send, sent, chute].map((l) => l.boundingBox()));
+    assert.equal(Math.round(a!.height), Math.round(c!.height));
+    assert.equal(Math.round(b!.height), Math.round(c!.height));
+    await send.click();
+    const to = row.locator('select[aria-label="Who the files go to"]');
+    assert.match(await to.inputValue(), /chassie@example\.com/);
+    const go = row.getByRole("button", { name: "Download the draft" });
+    assert.equal(await go.isDisabled(), true);
+    await row.getByLabel("Reseller agreement, review copy").check();
+    assert.equal(await go.isDisabled(), false);
+    await sent.click();
+    const list = row.locator(F("sentList"));
+    assert.match(
+      (await list.textContent()) ?? "",
+      /11\/2.*To Chassie Smith: Reseller agreement, review copy, PrismHR Global at a glance/,
+    );
+    await page.close();
+  });
+});

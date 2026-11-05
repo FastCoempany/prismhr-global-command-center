@@ -13,6 +13,7 @@
 // that named three pages retired with slice 9 of the Chute brains refactor
 // plan.
 
+import { CLIENT_READ_NS } from "@/lib/room/client-read";
 import { claudeClient, claudeAvailable } from "@/lib/claude/health";
 import { MODEL_TRANSCRIBE } from "@/lib/intranet/doctrine";
 import { getAppAccess } from "@/lib/auth";
@@ -410,7 +411,12 @@ export async function roomPasteUndo(
     // The account's own rows and its asks.
     const r = ids.length
       ? await prisma.accountNote.deleteMany({
-          where: { id: { in: ids }, accountId: { in: [acct.id, gapNs(acct.id)] } },
+          // The client read rides in its own namespace (the F26 face,
+          // release three) and goes with the filing that wrote it.
+          where: {
+            id: { in: ids },
+            accountId: { in: [acct.id, gapNs(acct.id), `${CLIENT_READ_NS}${acct.id}`] },
+          },
         })
       : { count: 0 };
     // The playbook is one namespace for every account, so a line goes only

@@ -37,6 +37,9 @@ export type TimelineEntry = {
   headcounts?: EntryHeadcount[];
   timing?: string; // when they need it, in their words, or ""
   promises?: EntryPromise[];
+  // The partner's client this entry is about, by the name the text gives it,
+  // or "" (the F26 face, release three). Never the partner itself.
+  client?: string;
 };
 
 /** A stated number of people: what they are, and how many. The count is a

@@ -49,7 +49,15 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
       },
     ],
     removed: [],
-    heads: [{ n: 2, country: "co", day: "9/25", line: "✉ Two hires in Bogotá." }],
+    heads: [
+      {
+        n: 2,
+        country: "co",
+        kind: "employee",
+        day: "9/25",
+        line: "✉ Two hires in Bogotá.",
+      },
+    ],
     date: {
       iso: "2026-12-01",
       phrase: "by December 1",
@@ -66,10 +74,20 @@ const row = (over: Partial<RoomRow>): RoomRow => ({
       mobile: "",
       city: "Raleigh, NC",
       linkedin: null,
+      liFrom: null,
+      hand: false,
       touches: [
         { at: "2026-09-25T15:00:00Z", kind: "email", dir: "in" },
         { at: "2026-09-26T15:00:00Z", kind: "email", dir: "out" },
       ],
+    },
+  ],
+  sent: [
+    {
+      id: "fs1",
+      at: "2026-11-02T16:00:00.000Z",
+      to: "Chassie Smith",
+      files: ["agreement-reseller", "onepager-overview"],
     },
   ],
   ladders: {

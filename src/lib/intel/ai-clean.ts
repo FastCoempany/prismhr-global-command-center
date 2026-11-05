@@ -162,6 +162,7 @@ const SCHEMA = {
             },
           },
           timing: { type: "string" },
+          client: { type: "string" },
           promises: {
             type: "array",
             items: {
@@ -192,6 +193,7 @@ const SCHEMA = {
           "products",
           "headcounts",
           "timing",
+          "client",
           "promises",
         ],
         additionalProperties: false,
@@ -282,6 +284,7 @@ Rules:
   - products: which of our five this entry is about, by name — employer of record, global payroll, contractor management, contractor of record, talent — only when the text says so or the need plainly is one.
   - headcounts: every number of people this entry states, as what they are and the count ("workers in Mexico" → 10, "contractors in the UK" → 3). Only numbers the text states; never estimate, never total.
   - timing: when they need it, in this entry's own words ("by January", "before the Q3 review", "no rush, next month"), or "" when the entry says nothing about when.
+  - client: the partner's client this entry is about, by the company name the text gives it ("Acme Logistics"), or "" when the entry names none. The partner is a PEO and its clients are the companies it serves; the accountName itself, our company and a competitor are never the client. Only a name the text states; never infer one.
   - promises: the explicit commitments this entry makes, each with the person it was made TO — what was promised, by "me" (the operator) or "them", hearer = the name of the person who heard it ("" only when the text truly names no one), day = YYYY-MM-DD when a day was named for it, else "". The fulfillment rule applies here exactly as it does to actions: a promise the document later shows kept is history and is not listed.
 - Order entries newest first. At most ${MAX_ENTRIES} entries.`;
 
@@ -417,6 +420,7 @@ export function sanitizeAiResult(raw: unknown): AiCleanResult {
         products: canonList(x.products, canonProduct, MAX_PRODUCTS),
         headcounts: headcountsOf(x.headcounts),
         timing: str(x.timing, 120),
+        client: str(x.client, 80),
         promises: promisesOf(x.promises),
       });
     }

@@ -17,6 +17,7 @@ import { landPath, MAP, mapXY } from "@/lib/room/world-map";
 import {
   dateTone,
   daysTo,
+  headWord,
   inCountry,
   type DeckPerson,
   type MapCountry,
@@ -32,7 +33,18 @@ import {
   type PartnerKey,
   type StageSource,
 } from "@/lib/room/ladders";
-import { setRowFact, type FactChange } from "./facts-actions";
+import { setRowFact, setRowPeople, type FactChange } from "./facts-actions";
+import type { PeopleChange } from "@/lib/room/people-store";
+import { recordFilesSent, takeBackFilesSent } from "./files-actions";
+import type { FilesSent } from "@/lib/room/files-sent";
+import {
+  ATTACHMENTS,
+  ATTACH_GROUPS,
+  attachmentById,
+  sizeLabel,
+} from "@/lib/collateral/attachments";
+import { downloadDraft, fetchAttachment } from "@/lib/collateral/draft-client";
+import { draftWithFiles } from "@/lib/groundwork/eml";
 import f from "./f.module.css";
 
 const LAND = landPath();
@@ -107,7 +119,7 @@ export function RoomMap({
         : "NO DATE";
   const peopleLine = (c: MapCountry) => {
     const parts: string[] = [];
-    if (c.people) parts.push(`${c.people} ${plural(c.people, "PERSON", "PEOPLE")}`);
+    if (c.people) parts.push(`${c.people} ${headWord(c.kinds, c.people).toUpperCase()}`);
     if (c.unsaid)
       parts.push(
         parts.length
@@ -350,13 +362,27 @@ export function Sentence(p: SentenceProps) {
           if (e.key === "Escape") setMenu(null);
         }}
       />
-    ) : facts.client.name ? (
+    ) : facts.client.name && facts.client.hand ? (
       <span
         className={`${f.tok} ${f.clientTok} ${f.hand}`}
         title={tipOf({ day: facts.client.day, line: "" }, true)}
       >
         {facts.client.name}
       </span>
+    ) : facts.client.name ? (
+      // The read named it: a click corrects it by hand.
+      <button
+        type="button"
+        className={`${f.tok} ${f.clientTok}`}
+        disabled={!write}
+        title={`${tipOf({ day: facts.client.day, line: facts.client.line ?? "" })}${write ? " Click to name it yourself." : ""}`}
+        onClick={() => {
+          setDraft(facts.client.name ?? "");
+          setMenu("client");
+        }}
+      >
+        {facts.client.name}
+      </button>
     ) : (
       <button
         type="button"
@@ -448,8 +474,11 @@ export function Sentence(p: SentenceProps) {
             <span className={`${f.tok} ${f.numTok}`} title={tipOf(hs[0]!)}>
               {n}
             </span>{" "}
-            {plural(n, "person", "people")} in{" "}
-            {inCountry(c.code).startsWith("the ") ? "the " : ""}
+            {headWord(
+              hs.map((h) => h.kind),
+              n,
+            )}{" "}
+            in {inCountry(c.code).startsWith("the ") ? "the " : ""}
             {ctryTok(c)}
           </Fragment>
         );
@@ -524,7 +553,11 @@ export function Sentence(p: SentenceProps) {
           <span className={`${f.tok} ${f.numTok}`} title={tipOf(loose[0]!)}>
             {looseN}
           </span>{" "}
-          {plural(looseN, "person", "people")} with no country said
+          {headWord(
+            loose.map((h) => h.kind),
+            looseN,
+          )}{" "}
+          with no country said
         </>
       )}
       , {date}.
@@ -679,20 +712,114 @@ const LI = (
   </svg>
 );
 
+/** Add a person to the deal by hand (release three): a name, then whatever
+ *  else the operator has. Enter on any field adds them; Escape closes. */
+function AddPerson({
+  accountName,
+  onAdd,
+  pending,
+}: {
+  accountName: string;
+  onAdd: (p: { name: string; title: string; email: string; phone: string }) => void;
+  pending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [p, setP] = useState({ name: "", title: "", email: "", phone: "" });
+  if (!open)
+    return (
+      <button
+        type="button"
+        className={f.addPerson}
+        title={`Add someone from ${accountName} the record hasn't named yet`}
+        onClick={() => setOpen(true)}
+      >
+        ＋ Add a person
+      </button>
+    );
+  const submit = () => {
+    if (!p.name.trim()) return;
+    onAdd(p);
+    setP({ name: "", title: "", email: "", phone: "" });
+    setOpen(false);
+  };
+  const field = (k: keyof typeof p, label: string, auto = false) => (
+    <input
+      className={f.nameIn}
+      autoFocus={auto}
+      value={p[k]}
+      disabled={pending}
+      placeholder={label}
+      aria-label={label}
+      onChange={(e) => setP({ ...p, [k]: e.target.value })}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") submit();
+        if (e.key === "Escape") setOpen(false);
+      }}
+    />
+  );
+  return (
+    <div className={f.addForm}>
+      {field("name", "Their name", true)}
+      {field("title", "Their title")}
+      {field("email", "Their email")}
+      {field("phone", "Their phone")}
+      <button
+        type="button"
+        className={f.addGo}
+        disabled={pending || !p.name.trim()}
+        onClick={submit}
+      >
+        Add them
+      </button>
+      <button type="button" className={f.addX} onClick={() => setOpen(false)}>
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 export function PeopleDeck({
   deck,
   tone,
   accountName,
+  accountId = "",
+  canWrite = false,
 }: {
   deck: DeckPerson[];
   /** MULTI's tone, the semantic ladder (red 1 / amber 2 / green 3+). */
   tone: "g" | "y" | "r";
   accountName: string;
+  accountId?: string;
+  canWrite?: boolean;
 }) {
+  const router = useRouter();
   const [at, setAt] = useState(0);
   const [rollOpen, setRollOpen] = useState(false);
   const [exOpen, setExOpen] = useState(false);
+  const [liEdit, setLiEdit] = useState(false);
+  const [liDraft, setLiDraft] = useState("");
+  const [pending, setPending] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
   const now = nowIso();
+  const people = (c: PeopleChange, done?: () => void) => {
+    setPending(true);
+    void setRowPeople(accountId, c).then((r) => {
+      setPending(false);
+      if (r.ok) {
+        setMsg(null);
+        done?.();
+        router.refresh();
+      } else setMsg(r.reason ?? "That didn't save. Try again.");
+    });
+  };
+  const adder =
+    canWrite && accountId ? (
+      <AddPerson
+        accountName={accountName}
+        pending={pending}
+        onAdd={(person) => people({ kind: "add", person })}
+      />
+    ) : null;
   if (!deck.length)
     return (
       <div className={f.ppl}>
@@ -700,6 +827,8 @@ export function PeopleDeck({
           <span className={f.phk}>People in the deal</span>
         </div>
         <p className={f.nil}>Nobody from {accountName} is on the record yet.</p>
+        {adder}
+        {msg && <p className={f.nil}>{msg}</p>}
       </div>
     );
   const front = deck[at % deck.length]!;
@@ -834,11 +963,25 @@ export function PeopleDeck({
                 href={front.linkedin}
                 target="_blank"
                 rel="noreferrer"
-                title={`${front.name} on LinkedIn`}
+                title={`${front.name} on LinkedIn${front.liFrom === "salesnav" ? ", from a Sales Navigator alert" : ""}`}
                 aria-label={`${front.name} on LinkedIn`}
               >
                 {LI}
               </a>
+            ) : canWrite && accountId ? (
+              <button
+                type="button"
+                className={`${f.li} ${f.liNone} ${f.liBtn}`}
+                title={`No LinkedIn on file for ${front.name}. Add their page.`}
+                aria-label={`Add ${front.name}'s LinkedIn page`}
+                onClick={() => {
+                  setLiDraft("");
+                  setLiEdit(true);
+                }}
+              >
+                {LI}
+                <i />
+              </button>
             ) : (
               <span
                 className={`${f.li} ${f.liNone}`}
@@ -849,7 +992,54 @@ export function PeopleDeck({
                 <i />
               </span>
             )}
+            {canWrite && front.liFrom === "hand" && (
+              <button
+                type="button"
+                className={f.liBack}
+                title="Take back the LinkedIn page you set"
+                aria-label="Take back the LinkedIn page you set"
+                onClick={() => people({ kind: "linkedin", name: front.name, url: null })}
+              >
+                ↺
+              </button>
+            )}
+            {canWrite && front.hand && (
+              <span className={f.handMark}>
+                ADDED BY YOU
+                <button
+                  type="button"
+                  title={`Take ${front.name} off the deal`}
+                  aria-label={`Take ${front.name} off the deal`}
+                  onClick={() => {
+                    setAt(0);
+                    people({ kind: "remove", name: front.name });
+                  }}
+                >
+                  ✕
+                </button>
+              </span>
+            )}
           </div>
+          {liEdit && (
+            <input
+              className={f.nameIn}
+              autoFocus
+              value={liDraft}
+              disabled={pending}
+              placeholder={`Paste ${front.name.split(" ")[0]}'s LinkedIn page, then Enter`}
+              aria-label={`${front.name}'s LinkedIn page`}
+              onChange={(e) => setLiDraft(e.target.value)}
+              onBlur={() => !liDraft.trim() && setLiEdit(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && liDraft.trim())
+                  people({ kind: "linkedin", name: front.name, url: liDraft }, () =>
+                    setLiEdit(false),
+                  );
+                if (e.key === "Escape") setLiEdit(false);
+              }}
+            />
+          )}
+          {msg && <p className={f.nil}>{msg}</p>}
           <div className={`${f.pti} ${front.title ? "" : f.nf}`}>
             {front.title || "Title not on file yet"}
           </div>
@@ -895,6 +1085,7 @@ export function PeopleDeck({
           )}
         </div>
       </div>
+      {adder}
     </div>
   );
 }
@@ -997,20 +1188,31 @@ function StageHead({
   );
 }
 
+const SURE_WORD = { sure: "SURE", likely: "LIKELY", unsure: "UNSURE" } as const;
+
 export function LadderBand({
   accountId,
   accountName,
   clientName,
+  clientRead,
   ladders,
   canWrite,
 }: {
   accountId: string;
   accountName: string;
   clientName: string | null;
+  /** How sure the record is of the client the read named (release three). */
+  clientRead?: {
+    sure: "sure" | "likely" | "unsure";
+    seen: number;
+    day: string;
+    line: string;
+  } | null;
   ladders: Ladders;
   canWrite: boolean;
 }) {
   const router = useRouter();
+  const [sureOpen, setSureOpen] = useState(false);
   const write = canWrite && !!accountId;
   const set = (c: FactChange) =>
     void setRowFact(accountId, c).then((r) => r.ok && router.refresh());
@@ -1064,7 +1266,29 @@ export function LadderBand({
           <span className={f.lwho}>
             {clientName ?? (c ? "A client not named yet" : "")}
           </span>
+          {clientName && clientRead && (
+            <button
+              type="button"
+              className={`${f.sure} ${f[`sure_${clientRead.sure}`]}`}
+              aria-expanded={sureOpen}
+              title={
+                clientRead.sure === "unsure"
+                  ? "The newest line naming this client hedges."
+                  : clientRead.seen > 1
+                    ? `Named in ${clientRead.seen} entries on the record.`
+                    : "Named once on the record."
+              }
+              onClick={() => setSureOpen((v) => !v)}
+            >
+              {SURE_WORD[clientRead.sure]}
+            </button>
+          )}
         </div>
+        {sureOpen && clientRead && (
+          <p className={f.sureLine}>
+            {`From the record · ${clientRead.day}: ${clientRead.line || "The read named it."}`}
+          </p>
+        )}
         {c ? (
           <>
             <div className={f.lh}>
@@ -1107,3 +1331,203 @@ export function LadderBand({
     </div>
   );
 }
+
+// ── the files Send carries, from the row (release three) ──────────────────
+// "Send files" opens a short form under the move row: who it goes to (the
+// deck's people with an email on file), a subject, a line to go with the
+// files, and the catalog's files ticked by group. "Download the draft"
+// builds an Outlook draft in the browser that carries them, and records the
+// send once the draft is in hand. A file that fails to load records nothing.
+// "N Sent" opens every send on file, each with ↺.
+
+export function SendFiles({
+  accountId,
+  deck,
+  onClose,
+}: {
+  accountId: string;
+  deck: DeckPerson[];
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const mailable = deck.filter((p) => /\S+@\S+\.\S+/.test(p.email));
+  const [who, setWho] = useState(mailable[0]?.email ?? "");
+  const [typed, setTyped] = useState("");
+  const [subject, setSubject] = useState("PrismHR Global files");
+  const [body, setBody] = useState("");
+  const [picked, setPicked] = useState<string[]>([]);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const to = mailable.length
+    ? (mailable.find((p) => p.email === who) ?? mailable[0]!)
+    : { name: "", email: typed.trim() };
+  const toggle = (id: string) =>
+    setPicked((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
+  const go = async () => {
+    if (busy || !picked.length) return;
+    setBusy(true);
+    setNote(
+      picked.length === 1
+        ? "Packing the file into the draft."
+        : `Packing ${picked.length} files into the draft.`,
+    );
+    try {
+      const files = await Promise.all(picked.map(fetchAttachment));
+      downloadDraft(
+        draftWithFiles({
+          to: { name: to.name, email: to.email },
+          subject,
+          body,
+          files,
+          stamp: new Date(),
+        }),
+        to.name || to.email,
+      );
+    } catch {
+      setNote("A file didn't load. Nothing was recorded. Try again.");
+      setBusy(false);
+      return;
+    }
+    const r = await recordFilesSent(accountId, picked, to.name || to.email).catch(() => ({
+      ok: false,
+    }));
+    setBusy(false);
+    setNote(
+      r.ok
+        ? "Downloaded. Open it and Outlook shows the draft."
+        : "Downloaded, but the send didn't record. Open it to send.",
+    );
+    setPicked([]);
+    router.refresh();
+  };
+  return (
+    <div className={f.sendFiles}>
+      <div className={f.sfRow}>
+        <span className={f.cil}>To</span>
+        {mailable.length ? (
+          <select
+            className={f.nameIn}
+            value={who}
+            aria-label="Who the files go to"
+            onChange={(e) => setWho(e.target.value)}
+          >
+            {mailable.map((p) => (
+              <option key={p.email} value={p.email}>
+                {p.name} · {p.email}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            className={f.nameIn}
+            value={typed}
+            placeholder="No email on file. Type one."
+            aria-label="Who the files go to"
+            onChange={(e) => setTyped(e.target.value)}
+          />
+        )}
+      </div>
+      <div className={f.sfRow}>
+        <span className={f.cil}>Subject</span>
+        <input
+          className={f.nameIn}
+          value={subject}
+          aria-label="Subject"
+          onChange={(e) => setSubject(e.target.value)}
+        />
+      </div>
+      <textarea
+        className={f.sfBody}
+        value={body}
+        rows={3}
+        placeholder="Write a line to go with the files."
+        aria-label="A line to go with the files"
+        onChange={(e) => setBody(e.target.value)}
+      />
+      {ATTACH_GROUPS.map(({ group, kicker }) => (
+        <fieldset key={group} className={f.sfGroup}>
+          <legend className={f.cil}>{kicker}</legend>
+          {ATTACHMENTS.filter((a) => a.group === group).map((a) => (
+            <label key={a.id} className={f.sfItem}>
+              <input
+                type="checkbox"
+                checked={picked.includes(a.id)}
+                onChange={() => toggle(a.id)}
+              />
+              <span>{a.label}</span>
+              <span className={f.nf}>
+                {[a.runs, sizeLabel(a.bytes)].filter(Boolean).join(" · ")}
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      ))}
+      <div className={f.sfFoot}>
+        <button
+          type="button"
+          className={f.addGo}
+          disabled={busy || !picked.length || !/\S+@\S+\.\S+/.test(to.email)}
+          onClick={() => void go()}
+        >
+          Download the draft
+        </button>
+        <button type="button" className={f.addX} onClick={onClose}>
+          Close
+        </button>
+        {note && (
+          <span className={f.nil} role="status">
+            {note}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function SentList({
+  accountId,
+  sent,
+  canWrite,
+}: {
+  accountId: string;
+  sent: FilesSent[];
+  canWrite: boolean;
+}) {
+  const router = useRouter();
+  if (!sent.length) return null;
+  return (
+    <ol className={f.sentList}>
+      {sent.map((s) => (
+        <li key={s.id}>
+          <span className={f.cil}>{mdOf(s.at)}</span>
+          <span>
+            {s.to ? `To ${s.to}: ` : ""}
+            {s.files.map((id) => attachmentById(id)?.label ?? id).join(", ")}
+          </span>
+          {canWrite && (
+            <button
+              type="button"
+              className={f.liBack}
+              title="Take back this record of the send"
+              aria-label="Take back this record of the send"
+              onClick={() =>
+                void takeBackFilesSent(accountId, s.id).then(
+                  (r) => r.ok && router.refresh(),
+                )
+              }
+            >
+              ↺
+            </button>
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+const mdOf = (iso: string): string =>
+  new Date(iso).toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    month: "numeric",
+    day: "numeric",
+  });

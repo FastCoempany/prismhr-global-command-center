@@ -293,8 +293,15 @@ describe("the door is signed in and serves pieces under the cap", () => {
     const letter = read("src/app/groundwork/letter.tsx");
     assert.equal(letter.match(/styles\.btnAccent/g)?.length, 1);
     assert.match(letter, /<AttachPicker picked=\{picked\} onChange=\{setPicked\} \/>/);
+    // The download lives in one browser module the letter and the HomeRoom's
+    // Send files share (the F26 face, release three).
+    assert.match(
+      letter,
+      /import \{ downloadDraft, fetchAttachment \} from "@\/lib\/collateral\/draft-client";/,
+    );
+    const client = read("src/lib/collateral/draft-client.ts");
     // The saved draft keeps the person's name whole: accents and apostrophes stay.
-    assert.ok(!letter.includes("[^\\w .-]"));
-    assert.match(letter, /a\.download = `Note to \$\{name \|\| "them"\}\.eml`;/);
+    assert.ok(!client.includes("[^\\w .-]"));
+    assert.match(client, /a\.download = `Note to \$\{name \|\| "them"\}\.eml`;/);
   });
 });
