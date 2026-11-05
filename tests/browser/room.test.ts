@@ -782,6 +782,18 @@ describe("low signal · a section above the closed ledger, and a closed ledger t
     const page = await mount(browser, SECTIONS_FIX);
     const toggle = page.locator(`${$("lowRule")} button`);
     assert.equal((await toggle.innerText()).trim(), "HIDE");
+    // It reads as a button at a glance (founder, 2026-11-05): a real size
+    // and a border, on both section rules.
+    for (const rule of ["lowRule", "closedRule"]) {
+      const b = page.locator(`${$(rule)} button`);
+      const r = (await b.boundingBox())!;
+      assert.ok(
+        r.height >= 22 && r.width >= 44,
+        `${rule}'s toggle is ${r.width}x${r.height}`,
+      );
+      const border = await b.evaluate((el) => getComputedStyle(el).borderTopWidth);
+      assert.equal(border, "1px", `${rule}'s toggle has no border`);
+    }
     await toggle.click();
     assert.equal(
       await rowOf(page, "Regis HR Group").isVisible(),
