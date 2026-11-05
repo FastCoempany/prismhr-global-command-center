@@ -339,7 +339,8 @@ export default async function RoomPage() {
           })),
         )
       : [];
-    const demoNote = rawNotes.find((n) => DEMO_HELD_RE.test(n.body ?? ""));
+    // Only a visible note: hiding a misfiled one takes its demo back too.
+    const demoNote = allNotes.find((n) => DEMO_HELD_RE.test(n.body ?? ""));
     const ladders = readLadders({
       docs,
       facts,

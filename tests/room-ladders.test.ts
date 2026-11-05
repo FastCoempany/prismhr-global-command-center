@@ -266,3 +266,75 @@ describe("the hand on the ladders", () => {
     );
   });
 });
+
+describe("the ladders read what happened, never what was asked (review of #424)", () => {
+  test("our own email asking for a call engages nobody; an invitation after signing is not orientation", () => {
+    assert.equal(
+      read([ours("10-01", "✉ Can we schedule a call next week?")]).partner.k,
+      "none",
+    );
+    const l = read([
+      doc("10-14", "✉ Signed copy attached."),
+      ours("10-20", "✉ Can we schedule an orientation call next week?"),
+    ]);
+    assert.equal(l.partner.k, "signed");
+    assert.equal(
+      read([
+        doc("10-14", "✉ Signed copy attached."),
+        doc("10-21", "☎ Orientation call with Dana"),
+      ]).partner.k,
+      "oriented",
+    );
+  });
+
+  test("a product only our outbound or the seed names does not warm a neutral reply", () => {
+    const seeded = facts({
+      products: [{ value: "eor", src: "seed", at: "2026-10-01T15:00:00.000Z" }],
+    });
+    assert.equal(
+      read([doc("10-02", "✉ Thanks, noted.")], { facts: seeded }).partner.k,
+      "cold",
+    );
+    const theirs = facts(
+      { products: [{ value: "eor", src: "n", at: "2026-10-02T15:00:00.000Z" }] },
+      [
+        {
+          text: "✉ We need an employer of record in Mexico.",
+          at: "2026-10-02T15:00:00.000Z",
+          src: "n",
+        },
+      ],
+    );
+    const l = read([doc("10-02", "✉ We need an employer of record in Mexico.")], {
+      facts: theirs,
+    });
+    assert.equal(l.partner.k, "warm");
+    assert.equal(l.partner.src.line, "✉ We need an employer of record in Mexico.");
+  });
+
+  test("a question about pricing does not show the client; numbers sent do", () => {
+    const named = facts({
+      countries: [{ value: "in", src: "n", at: "2026-10-30T15:00:00.000Z" }],
+    });
+    assert.equal(
+      read([ours("11-02", "✉ Would you like pricing?")], { facts: named }).client?.k,
+      "named",
+    );
+    assert.equal(
+      read([ours("11-02", "✉ I'll send a quote tomorrow.")], { facts: named }).client?.k,
+      "named",
+    );
+    assert.equal(
+      read([ours("11-02", "✉ Attached is the quote for India.")], { facts: named }).client
+        ?.k,
+      "shown",
+    );
+  });
+});
+
+test("a hidden note is never demo evidence: the page searches the visible notes", async () => {
+  const { readFileSync } = await import("node:fs");
+  const page = readFileSync("src/app/room/page.tsx", "utf8");
+  assert.match(page, /const demoNote = allNotes\.find\(/);
+  assert.doesNotMatch(page, /rawNotes\.find\(\(n\) => DEMO_HELD_RE/);
+});

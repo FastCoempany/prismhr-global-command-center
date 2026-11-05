@@ -16,6 +16,7 @@
 // puts back what the record shows (the facts: store, src/lib/room/facts.ts).
 // Pure: the page hands in the account read's docs and facts.
 
+import { isMeetingNote } from "@/lib/intel/meeting";
 import type { RowFacts } from "@/lib/room/facts";
 
 export const PARTNER_STAGES = [
@@ -172,7 +173,16 @@ const src = (d: Doc): StageSource => ({
 });
 
 // What each step looks like in the record's own words.
-const MEETING_RE = /meeting held|^\s*✔|CALL TRANSCRIPT|☎|\bcall\b/i;
+// A meeting or call that happened: the tape, a held meeting the meeting
+// read accepts (it vetoes a scheduled, upcoming or chased one), or a logged
+// call. An email asking for a call is never a meeting.
+const LOGGED_CALL_RE = /^\s*☎/;
+const NOT_HELD_RE =
+  /\b(?:follow[- ]?up|awaiting|(?:re)?schedul\w*|upcoming|prep(?:are|ping)? for)\b/i;
+const isHeld = (d: Doc): boolean =>
+  d.tape ||
+  isMeetingNote({ body: d.text }) ||
+  (LOGGED_CALL_RE.test(head(d.text)) && !NOT_HELD_RE.test(head(d.text)));
 const CALL_ASK_RE =
   /\b(?:(?:set|book|find|grab|schedule|get)\s+(?:up\s+)?(?:a\s+)?(?:time|call|meeting|minutes)|(?:hop|jump|get) on a call|a call (?:this|next) week|walk (?:us|me) through|time to (?:talk|chat|connect))\b/i;
 // The agreement going out, not the agreement mentioned: an intro that names
@@ -184,8 +194,9 @@ const REDLINE_RE =
 const SIGNED_RE =
   /\b(?:signed (?:copy|agreement|contract|version|reseller|referral)|counter-?signed|fully executed|executed (?:agreement|copy|contract)|attached (?:is )?the signed|docusign\b[^.\n]{0,40}\bcompleted)\b/i;
 const ORIENT_RE = /\b(?:orientation|implementation|kick-?off|onboarding)\b/i;
+// Numbers that went out, never a question or a promise about sending them.
 const NUMBERS_RE =
-  /\b(?:quote|pricing|proposal|the numbers|cost (?:breakdown|estimate))\b/i;
+  /\b(?:(?:attached|attaching|enclosed|here(?: is|'s| are)|sending(?: you)?|sent(?: you)?|please (?:see|find))[^.\n?]{0,60}\b(?:quote|pricing|proposal|the numbers|cost (?:breakdown|estimate))|(?:quote|pricing|proposal|cost (?:breakdown|estimate))[^.\n?]{0,30}\b(?:attached|enclosed))\b/i;
 
 export function readLadders(args: {
   docs: readonly Doc[];
@@ -211,7 +222,12 @@ export function readLadders(args: {
     (d) => d.direction === "in" && !d.senderIsHome && !!d.sender,
   );
   const ours = docs.filter((d) => d.direction === "out" || d.senderIsHome);
-  const meetings = docs.filter((d) => d.tape || MEETING_RE.test(head(d.text)));
+  const meetings = docs.filter(isHeld);
+  // A fact stated on their side: its line is the head of one of their own
+  // messages or of a meeting, never our outbound or the digest's seed.
+  const theirSide = [...theirs.filter((d) => !d.closer), ...meetings];
+  const saidByThem = (x: { day: string; line: string }) =>
+    !!x.line && theirSide.some((d) => head(d.text) === x.line && mmdd(d.at) === x.day);
   const first = <T>(xs: T[]): T | undefined => xs[0];
 
   // ── the partner ladder, read from the record ──
@@ -233,19 +249,18 @@ export function readLadders(args: {
   const callAsk = first(theirs.filter((d) => CALL_ASK_RE.test(d.text)));
   // A leaning the record states, not the digest's seed (a seed has no line).
   const chairStated =
-    args.facts.chair.v !== "none" && !args.facts.chair.hand && !!args.facts.chair.line;
-  const needNamed = !!engaged && args.facts.products.length > 0;
+    args.facts.chair.v !== "none" &&
+    !args.facts.chair.hand &&
+    saidByThem(args.facts.chair);
+  const theirNeed = args.facts.products.find(saidByThem);
+  const needNamed = !!engaged && !!theirNeed;
   if (chairStated || callAsk || needNamed) {
     recordK = "warm";
     recordSrc = chairStated
       ? { kind: "record", day: args.facts.chair.day, line: args.facts.chair.line }
       : callAsk
         ? src(callAsk)
-        : {
-            kind: "record",
-            day: args.facts.products[0]!.day,
-            line: args.facts.products[0]!.line,
-          };
+        : { kind: "record", day: theirNeed!.day, line: theirNeed!.line };
   }
   const sentDoc = first(ours.filter((d) => AGREEMENT_SENT_RE.test(d.text)));
   const sentFile = first(
