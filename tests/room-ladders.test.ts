@@ -310,6 +310,26 @@ describe("the ladders read what happened, never what was asked (review of #424)"
     });
     assert.equal(l.partner.k, "warm");
     assert.equal(l.partner.src.line, "✉ We need an employer of record in Mexico.");
+    // Our follow-up repeating the product is its newest mention; their need still stands.
+    const repeated = facts(
+      { products: [{ value: "eor", src: "o", at: "2026-10-04T15:00:00.000Z" }] },
+      [
+        {
+          text: "✉ Here is more information on EOR.",
+          at: "2026-10-04T15:00:00.000Z",
+          src: "o",
+        },
+      ],
+    );
+    const r = read(
+      [
+        doc("10-02", "✉ We need EOR for a hire in Mexico."),
+        ours("10-04", "✉ Here is more information on EOR."),
+      ],
+      { facts: repeated },
+    );
+    assert.equal(r.partner.k, "warm");
+    assert.equal(r.partner.src.line, "✉ We need EOR for a hire in Mexico.");
   });
 
   test("a question about pricing does not show the client; numbers sent do", () => {

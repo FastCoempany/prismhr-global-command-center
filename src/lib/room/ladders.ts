@@ -16,6 +16,7 @@
 // puts back what the record shows (the facts: store, src/lib/room/facts.ts).
 // Pure: the page hands in the account read's docs and facts.
 
+import { COMMERCIAL_TERMS, PRODUCT_TERMS } from "@/lib/intel/lexicon";
 import { isMeetingNote } from "@/lib/intel/meeting";
 import type { RowFacts } from "@/lib/room/facts";
 
@@ -223,11 +224,14 @@ export function readLadders(args: {
   );
   const ours = docs.filter((d) => d.direction === "out" || d.senderIsHome);
   const meetings = docs.filter(isHeld);
-  // A fact stated on their side: its line is the head of one of their own
-  // messages or of a meeting, never our outbound or the digest's seed.
-  const theirSide = [...theirs.filter((d) => !d.closer), ...meetings];
-  const saidByThem = (x: { day: string; line: string }) =>
-    !!x.line && theirSide.some((d) => head(d.text) === x.line && mmdd(d.at) === x.day);
+  // A fact stated on their side: the first of their own messages or held
+  // meetings that says it, never our outbound or the digest's seed. Read
+  // from the documents themselves, because a fact's own source is its
+  // newest mention, which can be our follow-up repeating their words.
+  const theirSide = [...theirs.filter((d) => !d.closer), ...meetings].sort((a, b) =>
+    a.at.localeCompare(b.at),
+  );
+  const firstSaying = (re: RegExp) => theirSide.find((d) => re.test(d.text));
   const first = <T>(xs: T[]): T | undefined => xs[0];
 
   // ── the partner ladder, read from the record ──
@@ -248,19 +252,19 @@ export function readLadders(args: {
   }
   const callAsk = first(theirs.filter((d) => CALL_ASK_RE.test(d.text)));
   // A leaning the record states, not the digest's seed (a seed has no line).
+  const chair = args.facts.chair;
   const chairStated =
-    args.facts.chair.v !== "none" &&
-    !args.facts.chair.hand &&
-    saidByThem(args.facts.chair);
-  const theirNeed = args.facts.products.find(saidByThem);
-  const needNamed = !!engaged && !!theirNeed;
-  if (chairStated || callAsk || needNamed) {
+    chair.v !== "none" && !chair.hand
+      ? firstSaying(COMMERCIAL_TERMS[chair.v])
+      : undefined;
+  const theirNeed = args.facts.products
+    .map((p) => firstSaying(PRODUCT_TERMS[p.key]))
+    .filter((d): d is Doc => !!d)
+    .sort((a, b) => a.at.localeCompare(b.at))[0];
+  const warmBy = chairStated ?? callAsk ?? (engaged ? theirNeed : undefined);
+  if (warmBy) {
     recordK = "warm";
-    recordSrc = chairStated
-      ? { kind: "record", day: args.facts.chair.day, line: args.facts.chair.line }
-      : callAsk
-        ? src(callAsk)
-        : { kind: "record", day: theirNeed!.day, line: theirNeed!.line };
+    recordSrc = src(warmBy);
   }
   const sentDoc = first(ours.filter((d) => AGREEMENT_SENT_RE.test(d.text)));
   const sentFile = first(
