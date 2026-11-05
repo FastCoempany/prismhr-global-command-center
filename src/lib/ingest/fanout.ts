@@ -235,6 +235,9 @@ export async function absorbRead(
   // (§2.1), so one undo by id reaches the whole filing. Undefined when the
   // table is not there yet.
   filingId?: string,
+  // Each filed entry's own note, by the entry, so a client sighting hides
+  // with the entry it came from.
+  entryNoteIds?: ReadonlyMap<object, string>,
 ): Promise<{
   opened: { id: string; text: string }[];
   // Their loops (D10), by id: the undo's reach, never a receipt chip yet.
@@ -362,7 +365,9 @@ export async function absorbRead(
   // 5. The partner's client, as the read names it per entry (the F26 face,
   // release three). One note per filing, linked to it, so the undo takes it
   // back; the HomeRoom's sentence and client ladder read it.
-  const clientBody = renderClientRead(read.entries, acct.name);
+  const clientBody = renderClientRead(read.entries, acct.name, (e) =>
+    entryNoteIds?.get(e),
+  );
   if (clientBody)
     try {
       const n = await createAccountNoteRow({

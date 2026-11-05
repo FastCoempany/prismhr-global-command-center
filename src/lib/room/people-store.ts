@@ -16,6 +16,8 @@ export type HandPeople = {
   links: Record<string, string>;
 };
 export const NO_PEOPLE: HandPeople = { added: [], links: {} };
+/** The most people the deck holds by hand; a seventh is refused, never hidden. */
+export const HAND_PEOPLE_CAP = 6;
 
 /** The first and last word of a name, lowercased: one person however the
  *  record spells the middle. */
@@ -101,6 +103,11 @@ export function applyPeopleChange(p: HandPeople, c: PeopleChange): HandPeople {
     };
     const key = nameKey(person.name);
     if (!key) return p;
+    if (
+      next.added.length >= HAND_PEOPLE_CAP &&
+      !next.added.some((a) => nameKey(a.name) === key)
+    )
+      return p;
     next.added = [...next.added.filter((a) => nameKey(a.name) !== key), person];
   } else if (c.kind === "remove") {
     next.added = next.added.filter((a) => nameKey(a.name) !== nameKey(c.name));

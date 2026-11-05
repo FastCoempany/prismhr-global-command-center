@@ -10,7 +10,7 @@
 export const CLIENT_READ_NS = "clientread:";
 const HEAD = "✎ CLIENT READ";
 
-export type ClientSighting = { name: string; at: string; line: string };
+export type ClientSighting = { name: string; at: string; line: string; noteId: string };
 export type ClientRead = {
   name: string;
   sure: "sure" | "likely" | "unsure";
@@ -52,6 +52,8 @@ export function renderClientRead(
     subject?: string;
   }[],
   partner: string,
+  /** Each entry's own record note, so hiding that entry hides its sighting. */
+  noteIdOf: (e: (typeof entries)[number]) => string | undefined = () => undefined,
 ): string | null {
   const own = companyKey(partner);
   const lines: string[] = [];
@@ -65,6 +67,7 @@ export function renderClientRead(
         name,
         /^\d{4}-\d{2}-\d{2}$/.test(e.dayIso ?? "") ? e.dayIso : "",
         clean(e.body || e.subject || "", 200),
+        clean(noteIdOf(e) ?? "", 64),
       ].join("\t"),
     );
   }
@@ -79,12 +82,13 @@ export function parseClientRead(note: {
   if (lines[0]?.trim() !== HEAD) return [];
   const out: ClientSighting[] = [];
   for (const l of lines.slice(1)) {
-    const [name = "", day = "", line = ""] = l.split("\t");
+    const [name = "", day = "", line = "", noteId = ""] = l.split("\t");
     if (!companyKey(name)) continue;
     out.push({
       name: name.trim(),
       at: /^\d{4}-\d{2}-\d{2}$/.test(day) ? `${day}T17:00:00.000Z` : note.createdAt,
       line,
+      noteId,
     });
   }
   return out;
@@ -104,10 +108,13 @@ const md = (iso: string): string =>
 /** The client the record names most often, newest on a tie, with its meter. */
 export function readClient(
   notes: readonly { body: string; createdAt: string }[],
+  /** Record notes the operator hid: a sighting on one of them does not count. */
+  hidden: ReadonlySet<string> = new Set(),
 ): ClientRead | null {
   const groups = new Map<string, ClientSighting[]>();
   for (const n of notes)
     for (const s of parseClientRead(n)) {
+      if (s.noteId && hidden.has(s.noteId)) continue;
       const k = companyKey(s.name);
       groups.set(k, [...(groups.get(k) ?? []), s]);
     }

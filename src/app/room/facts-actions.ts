@@ -21,8 +21,10 @@ import {
   type HandFacts,
 } from "@/lib/room/facts";
 import {
+  HAND_PEOPLE_CAP,
   PEOPLE_NS,
   applyPeopleChange,
+  nameKey,
   parsePeople,
   renderPeople,
   type PeopleChange,
@@ -189,6 +191,15 @@ export async function setRowPeople(
       select: { body: true },
     });
     const before = parsePeople(rows[0]?.body);
+    if (
+      change.kind === "add" &&
+      before.added.length >= HAND_PEOPLE_CAP &&
+      !before.added.some((a) => nameKey(a.name) === nameKey(change.person.name))
+    )
+      return {
+        ok: false,
+        reason: `${HAND_PEOPLE_CAP} people are already added by hand. Take one off first.`,
+      };
     const next = applyPeopleChange(before, change);
     if (next === before)
       return { ok: false, reason: "That doesn't read as a person or a LinkedIn page." };

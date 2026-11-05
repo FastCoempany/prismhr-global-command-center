@@ -322,6 +322,7 @@ export default async function RoomPage() {
               body: n.body ?? "",
               createdAt: n.createdAt,
             })),
+            acct.hidden,
           )
         : null,
       todayMd: mmddChicago(now.toISOString()),

@@ -9,6 +9,7 @@
 // being left blank. A fact the operator set by hand is marked as theirs, and
 // ↺ puts back what the record says (the facts: store, below).
 
+import { HAND_PEOPLE_CAP } from "@/lib/room/people-store";
 import type { DealIntel, ProductKey, SourcedFact } from "@/lib/intel/types";
 import { COMMERCIAL_TERMS, COUNTRY_NAME } from "@/lib/intel/lexicon";
 import {
@@ -128,9 +129,18 @@ const EMPLOYEE_RE =
 /** Whether a count on a line counts employees or contractors: the words just
  *  after the figure first, then the whole line when it names only one kind.
  *  Null when the line does not say. */
-export function headKind(line: string, n: number): HeadKind {
+export function headKind(line: string, n: number, country?: string | null): HeadKind {
   const text = line ?? "";
-  const at = text.search(new RegExp(`(?<![\\d.,])${n}(?![\\d.,]\\d)`));
+  // Every place the figure appears; with a country, the one that counts it,
+  // so two equal counts in one line each read their own kind.
+  const hits = [...text.matchAll(new RegExp(`(?<![\\d.,])${n}(?![\\d.,]\\d)`, "g"))].map(
+    (m) => m.index ?? 0,
+  );
+  const place = country ? (COUNTRY_NAME[country] ?? "").toLowerCase() : "";
+  // The figure nearest before the country's name is the one that counts it.
+  const where = place ? text.toLowerCase().indexOf(place) : -1;
+  const named = where >= 0 ? hits.filter((i) => i < where).pop() : undefined;
+  const at = named ?? hits[0] ?? -1;
   if (at >= 0) {
     // The kind word nearest after this figure, so "10 employees and 3
     // contractors" reads each count by its own word.
@@ -268,7 +278,7 @@ export function buildRowFacts(args: {
       return {
         n: f.value.n,
         country: f.value.country ?? null,
-        kind: headKind(whole ?? at.line, f.value.n),
+        kind: headKind(whole ?? at.line, f.value.n, f.value.country),
         ...at,
       };
     },
@@ -515,5 +525,5 @@ export function buildDeck(args: {
       touches: touchesFor({ name: a.name, email: a.email || c?.email || "" }, args.docs),
     });
   }
-  return [...fromRecord, ...fromHand.slice(0, 6)];
+  return [...fromRecord, ...fromHand.slice(0, HAND_PEOPLE_CAP)];
 }

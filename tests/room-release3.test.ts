@@ -74,6 +74,29 @@ describe("people added by hand and LinkedIn pages", () => {
     });
     assert.equal(unlinked.links["dana reyes"], undefined);
     assert.deepEqual(parsePeople("something else"), NO_PEOPLE);
+    // A seventh person is refused, never saved out of sight; an edit to one
+    // already added still goes through.
+    let six = NO_PEOPLE;
+    for (const n of ["Ann Abel", "Ben Bix", "Cy Cole", "Di Dunn", "Ed Ewe", "Flo Fry"])
+      six = applyPeopleChange(six, {
+        kind: "add",
+        person: { name: n, title: "", email: "", phone: "" },
+      });
+    assert.equal(six.added.length, 6);
+    assert.equal(
+      applyPeopleChange(six, {
+        kind: "add",
+        person: { name: "Gus Gray", title: "", email: "", phone: "" },
+      }),
+      six,
+    );
+    assert.equal(
+      applyPeopleChange(six, {
+        kind: "add",
+        person: { name: "Ann Abel", title: "CEO", email: "", phone: "" },
+      }).added.find((a) => a.name === "Ann Abel")?.title,
+      "CEO",
+    );
   });
 
   test("the deck: the record first, the hand after, never twice; the hand's page outranks Sales Navigator's", () => {
@@ -222,6 +245,23 @@ describe("the client the read names", () => {
       "unsure",
     );
     assert.equal(readClient([]), null);
+    // A sighting rides its entry: hiding the entry with ✕ takes it back.
+    const tied = {
+      body: renderClientRead(
+        [
+          {
+            client: "Bolt Logistics",
+            body: "Bolt needs two hires.",
+            dayIso: "2026-10-20",
+          },
+        ],
+        "Acme PEO",
+        () => "note-1",
+      )!,
+      createdAt: "2026-11-01T16:00:00.000Z",
+    };
+    assert.equal(readClient([tied])?.name, "Bolt Logistics");
+    assert.equal(readClient([tied], new Set(["note-1"])), null);
   });
 
   test("the hand's name outranks the read's; the read's names the client ladder", () => {
@@ -273,6 +313,10 @@ describe("what a count counts", () => {
       "employee",
     );
     assert.equal(headKind("✉ Two hires in Bogotá.", 2), "employee");
+    // Two equal counts: each reads the kind beside its own country.
+    const both = "10 employees in Mexico and 10 contractors in the United Kingdom.";
+    assert.equal(headKind(both, 10, "mx"), "employee");
+    assert.equal(headKind(both, 10, "gb"), "contractor");
     assert.equal(
       headKind("10 employees in Mexico and 3 contractors in the UK.", 10),
       "employee",

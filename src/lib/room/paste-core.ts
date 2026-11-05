@@ -622,6 +622,7 @@ async function fileClaimed({
       ? filedEntries.map(() => null)
       : wholeEmails(rawText, filedEntries);
     const kept: NewEmailText[] = [];
+    const entryNoteIds = new Map<object, string>();
     for (const [k, e] of filedEntries.entries()) {
       const actors = actorsLine(e.from ?? "", e.to ?? "", e.others ?? 0);
       // The whole receiving side, which `actors` deliberately does not carry.
@@ -649,6 +650,7 @@ async function fileClaimed({
         filingId,
       });
       noteIds.push(n.id);
+      entryNoteIds.set(e, n.id);
       filed++;
       if (glyph === "✉" && !chat)
         kept.push({ noteId: n.id, accountId: acct.id, filingId, text: wholes[k] ?? "" });
@@ -665,7 +667,14 @@ async function fileClaimed({
     }
     if (noteIds[0]) await stampPasteMark(pasteKey, noteIds[0]);
     const absorbed: Awaited<ReturnType<typeof absorbRead>> = read
-      ? await absorbRead(read, { id: acct.id, name: acct.name }, now, door, filingId)
+      ? await absorbRead(
+          read,
+          { id: acct.id, name: acct.name },
+          now,
+          door,
+          filingId,
+          entryNoteIds,
+        )
       : { opened: [], loops: [], asks: 0, learned: 0, outcome: null, noteIds: [] };
     // Everything the read fanned out rides in the receipt, so the undo can
     // take back the whole filing: the asks, playbook lines and outcome marker
