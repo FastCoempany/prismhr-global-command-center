@@ -669,7 +669,8 @@ releases. All three are live.
   brings its label in front of the others. A click on a country, on the map
   or in the list beside it, shows only the deals that name it.
 - **Each deal is one sentence.** Every row rests as its sentence on one line,
-  the type stepping down until it fits and wrapping only at its floor; the
+  the type stepping down until it fits and wrapping only at its floor, while
+  the account's name holds one size on every row (founder, 2026-11-05); the
   first row of the board stands open on arrival, and the browser remembers
   which rows the operator opened (room:open). The sentence names the
   account, reseller or referral, the products, the client, each country with
