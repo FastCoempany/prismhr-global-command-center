@@ -2353,20 +2353,26 @@ button.sdRadio:hover {
   flex: 1;
   border-top: 1px solid rgba(10, 28, 64, 0.14);
 }
-/* The closed ledger and the low signal section each hide and show whole: one quiet mono word on its rule,
-   ink on hover, no accent (orange is the surface's one move, elsewhere). */
+/* The closed ledger and the low signal section each hide and show whole by
+   a button on their rule. It reads as a button at a glance (founder,
+   2026-11-05: the faint word was missed): a bordered pill in soft ink, ink
+   on hover, no accent (orange is the surface's one move, elsewhere). */
 .ruleToggle {
-  border: 0;
-  background: none;
-  padding: 2px 4px;
+  flex: none;
+  border: 1px solid rgba(10, 28, 64, 0.32);
+  border-radius: 999px;
+  background: #fff;
+  padding: 5px 12px;
   font: inherit;
-  letter-spacing: inherit;
-  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--soft);
   cursor: pointer;
 }
 .ruleToggle:hover,
 .ruleToggle:focus-visible {
   color: var(--ink);
+  border-color: var(--ink);
 }
 
 /* ── low signal (founder's order, 2026-10-16) ───────────────────────────
