@@ -138,9 +138,19 @@ describe("the board's sections", () => {
     assert.ok(textOf(html).includes("Done PEO"), "the server paints the ledger shown");
   });
 
-  test("the low-signal section has no toggle of its own", async () => {
+  test("the low-signal section paints shown, with its own word that hides it (founder, 2026-11-05)", async () => {
     const html = await board([LIVE, LOW_A]);
-    assert.ok(!html.includes('class="ruleToggle"'));
+    const toggles = [
+      ...html.matchAll(/<button[^>]*class="ruleToggle"[^>]*>([^<]*)<\/button>/g),
+    ];
+    assert.equal(
+      toggles.length,
+      1,
+      "the low rule carries one toggle, and no closed rule paints",
+    );
+    assert.equal(toggles[0]![1], "HIDE");
+    assert.match(toggles[0]![0], /title="Hide the low signal deals"/);
+    assert.match(toggles[0]![0], /aria-expanded="true"/);
   });
 
   test("the legend keys ⇣ once, at the foot", async () => {

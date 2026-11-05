@@ -123,15 +123,19 @@ function readOpen(): Set<string> | null {
 // the fold: it is how the operator wants to read the board, not a fact about
 // any deal. The server paints it shown.
 const CLOSED_HIDDEN_KEY = "room:closed-hidden";
+// The low signal section hides and shows whole too (founder, 2026-11-05),
+// remembered per browser like the closed ledger.
+const LOW_HIDDEN_KEY = "room:low-hidden";
 
-function readClosedHidden(): boolean {
+function readHidden(key: string): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return localStorage.getItem(CLOSED_HIDDEN_KEY) === "1";
+    return localStorage.getItem(key) === "1";
   } catch {
     return false;
   }
 }
+const readClosedHidden = () => readHidden(CLOSED_HIDDEN_KEY);
 
 export type RoomRow = {
   accountId: string;
@@ -2386,11 +2390,16 @@ export function RoomClient({
     readClosedHidden(),
   );
   const closedHidden = hydrated && closedHiddenPref;
-  // Collapse all reads only the rows on screen: a hidden closed row keeps its
-  // own fold and never decides what the button says.
-  const shownKeys = rows
-    .filter((r) => !(closedHidden && boardGroup(r) === "closed"))
-    .map(rowKey);
+  const [lowHiddenPref, setLowHiddenPref] = useState<boolean>(() =>
+    readHidden(LOW_HIDDEN_KEY),
+  );
+  const lowHidden = hydrated && lowHiddenPref;
+  const sectionHidden = (r: RoomRow) =>
+    (closedHidden && boardGroup(r) === "closed") ||
+    (lowHidden && boardGroup(r) === "low");
+  // Collapse all reads only the rows on screen: a hidden row keeps its own
+  // fold and never decides what the button says.
+  const shownKeys = rows.filter((r) => !sectionHidden(r)).map(rowKey);
   const allShut = shownKeys.length > 0 && shownKeys.every((k) => shut.has(k));
   const writeShut = (next: Set<string>) => {
     const open = new Set(allKeys.filter((k) => !next.has(k)));
@@ -2414,6 +2423,16 @@ export function RoomClient({
       else next.add(k);
     }
     writeShut(next);
+  };
+  const toggleLow = () => {
+    const next = !lowHidden;
+    setLowHiddenPref(next);
+    try {
+      if (next) localStorage.setItem(LOW_HIDDEN_KEY, "1");
+      else localStorage.removeItem(LOW_HIDDEN_KEY);
+    } catch {
+      /* private mode — the toggle still works, it just won't survive a reload */
+    }
   };
   const toggleClosed = () => {
     const next = !closedHidden;
@@ -2569,6 +2588,17 @@ export function RoomClient({
             {opens && group === "low" && (
               <div className={styles.lowRule}>
                 <span>LOW SIGNAL · {lowCount} · NOT IN YOUR SALESFORCE PIPELINE</span>
+                <button
+                  type="button"
+                  className={styles.ruleToggle}
+                  aria-expanded={!lowHidden}
+                  title={
+                    lowHidden ? "Show the low signal deals" : "Hide the low signal deals"
+                  }
+                  onClick={toggleLow}
+                >
+                  {lowHidden ? "SHOW" : "HIDE"}
+                </button>
               </div>
             )}
             {opens && group === "closed" && (
@@ -2589,7 +2619,7 @@ export function RoomClient({
               row={r}
               collapsed={shut.has(rowKey(r))}
               onToggle={() => toggleRow(rowKey(r))}
-              hidden={(group === "closed" && closedHidden) || outOfView(r)}
+              hidden={sectionHidden(r) || outOfView(r)}
             />
           </Fragment>
         );

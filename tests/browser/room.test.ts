@@ -778,6 +778,46 @@ describe("low signal · a section above the closed ledger, and a closed ledger t
     await again.close();
   });
 
+  test("HIDE takes the low signal deals away and a reload remembers it; SHOW brings them back (founder, 2026-11-05)", async () => {
+    const page = await mount(browser, SECTIONS_FIX);
+    const toggle = page.locator(`${$("lowRule")} button`);
+    assert.equal((await toggle.innerText()).trim(), "HIDE");
+    await toggle.click();
+    assert.equal(
+      await rowOf(page, "Regis HR Group").isVisible(),
+      false,
+      "the low signal row stayed",
+    );
+    assert.equal((await toggle.innerText()).trim(), "SHOW");
+    assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    assert.match(await page.locator($("lowRule")).innerText(), /LOW SIGNAL · 1/);
+    assert.equal(await rowOf(page, "Simploy").isVisible(), true, "the live book stays");
+    assert.equal(
+      await rowOf(page, "Axcet HR").isVisible(),
+      true,
+      "the closed ledger stays",
+    );
+    assert.equal(await page.evaluate(() => localStorage.getItem("room:low-hidden")), "1");
+    await page.close();
+
+    const again = await mount(browser, SECTIONS_FIX, {
+      storage: { "room:low-hidden": "1" },
+    });
+    await again.waitForTimeout(50);
+    assert.equal(
+      await rowOf(again, "Regis HR Group").isVisible(),
+      false,
+      "the reload showed it",
+    );
+    await again.locator(`${$("lowRule")} button`).click();
+    assert.equal(await rowOf(again, "Regis HR Group").isVisible(), true);
+    assert.equal(
+      await again.evaluate(() => localStorage.getItem("room:low-hidden")),
+      null,
+    );
+    await again.close();
+  });
+
   test("a note half-typed in a closed row survives HIDE and SHOW", async () => {
     const page = await mount(browser, SECTIONS_FIX);
     const row = await openPanel(page, "Axcet HR");

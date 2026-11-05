@@ -1009,7 +1009,9 @@ founder-decreed 2026-09-15.
   SIGNAL section above the closed ledger, and back by ↺. The mark is the
   operator's own hand, a namespaced disposition (`lowsig:`) that no queue
   reads; a stamped outcome outranks it. The closed ledger hides and shows
-  whole, remembered per browser, and hidden rows stay mounted.
+  whole, remembered per browser, and hidden rows stay mounted; the LOW
+  SIGNAL section does the same by its own HIDE on its rule (founder,
+  2026-11-05), each section remembered on its own.
 - **Closed Won by hand** (founder's order, 2026-10-26): a HomeRoom deal
   row's ☑, beside ⇣ in the bar of tools at the account's name (the F26
   face, 2026-11-04), asks once in the move's slot ("Confirm Closed
