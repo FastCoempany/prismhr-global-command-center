@@ -66,17 +66,85 @@
   width: 100%;
   height: 100%;
 }
-.pinDot {
+/* One pin per country (founder, 2026-11-05): a dot-sized control centred
+   exactly on the country's point, holding the dot and the label above it.
+   Every dot pulses in its own tone, always; hovering or focusing a pin
+   brings it, label and all, in front of the rest. */
+.pinG {
   position: absolute;
   width: 9px;
   height: 9px;
   margin: -4.5px 0 0 -4.5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+/* Layers: every dot sits above every label, so no label ever hides a dot;
+   the hovered or focused pin's label rises above the other labels. The pin
+   itself opens no stacking context, so these layers compete map-wide. */
+.pinG:focus-visible {
+  outline: none;
+}
+.pinDot {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
   border-radius: 50%;
   background: var(--ink);
+  animation: pulseInk 1.8s ease-in-out infinite;
+}
+.d_hot {
+  background: var(--red);
+  animation-name: pulseRed;
+}
+.d_warm {
+  background: var(--amber);
+  animation-name: pulseAmber;
+}
+.d_cool,
+.d_none {
+  background: var(--ink);
+  animation-name: pulseInk;
+}
+@keyframes pulseRed {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(239, 68, 68, 0);
+  }
+}
+@keyframes pulseAmber {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(245, 158, 11, 0);
+  }
+}
+@keyframes pulseInk {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(10, 28, 64, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(10, 28, 64, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pinDot {
+    animation: none;
+  }
 }
 .pin {
   position: absolute;
-  transform: translate(-50%, calc(-100% - 8px));
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, calc(-100% - 4px));
+  z-index: 5;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -90,32 +158,36 @@
   border: 1px solid var(--hair);
   border-radius: 6px;
   white-space: nowrap;
-  cursor: pointer;
   box-shadow: 0 2px 6px rgba(10, 28, 64, 0.1);
 }
-.pin:hover,
 .pinSel {
+  z-index: 8;
   border-color: var(--ink);
 }
-.pinDim {
+.pinG:hover .pin,
+.pinG:focus-visible .pin {
+  z-index: 9;
+  border-color: var(--ink);
+  box-shadow: 0 4px 14px rgba(10, 28, 64, 0.22);
+}
+/* Dimmed by its children, never the pin: opacity on the pin would trap
+   its dot in a layer of its own, under the other labels. */
+.pinDim .pinDot,
+.pinDim .pin {
   opacity: 0.45;
 }
-.pin.t_hot {
+.p_hot {
   border-color: rgba(239, 68, 68, 0.6);
 }
-.pin.t_warm {
+.p_warm {
   border-color: rgba(245, 158, 11, 0.7);
 }
-.pinDot.t_hot,
 .light.t_hot {
   background: var(--red);
 }
-.pinDot.t_warm,
 .light.t_warm {
   background: var(--amber);
 }
-.pinDot.t_cool,
-.pinDot.t_none,
 .light.t_cool,
 .light.t_none {
   background: var(--ink);
@@ -123,23 +195,6 @@
 .light.t_none {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px var(--faint);
-}
-.pulse {
-  animation: fpulse 1.6s ease-in-out infinite;
-}
-@keyframes fpulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pulse {
-    animation: none;
-  }
 }
 .mapR {
   display: flex;

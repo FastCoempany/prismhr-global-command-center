@@ -2427,8 +2427,8 @@ export function RoomClient({
   };
   // The map (ship order 2026-11-04, F26): every country the live deals name,
   // its light by the nearest client date there, and a click that shows only
-  // the deals naming it. The one looping pulse on the page is the light on
-  // the nearest red date.
+  // the deals naming it. Every country's dot pulses in its own tone
+  // (founder, 2026-11-05).
   const [fCountry, setFCountry] = useState<string | null>(null);
   const todayIso = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Chicago",
@@ -2442,7 +2442,6 @@ export function RoomClient({
     })),
     todayIso,
   );
-  const pulse = countries.find((c) => c.tone === "hot")?.code ?? null;
   const outOfView = (r: RoomRow) =>
     !!fCountry && !r.facts.countries.some((c) => c.code === fCountry);
   const lowCount = rows.filter((r) => boardGroup(r) === "low").length;
@@ -2559,12 +2558,7 @@ export function RoomClient({
           and add the deals you&apos;re working.
         </p>
       )}
-      <RoomMap
-        countries={countries}
-        selected={fCountry}
-        onPick={setFCountry}
-        pulse={pulse}
-      />
+      <RoomMap countries={countries} selected={fCountry} onPick={setFCountry} />
       {rows.map((r, i) => {
         // The board runs live, then low signal, then the closed ledger; one
         // mono rule opens each section after the live book.

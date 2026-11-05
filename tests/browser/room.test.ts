@@ -863,3 +863,102 @@ describe("F26 release three · LinkedIn, Add a person, Send files and Sent", () 
     await page.close();
   });
 });
+
+describe("F26 · the map: every dot pulses, sits on its country, and brings its label forward (founder, 2026-11-05)", () => {
+  const MAP_FIX = "tests/browser/fixtures/room-map.tsx";
+
+  test("every dot pulses in its own tone, and reduced motion stills them", async () => {
+    const page = await mount(browser, MAP_FIX);
+    const dots = page.locator(F("pinDot"));
+    const n = await dots.count();
+    assert.ok(n >= 20, `only ${n} dots`);
+    const names = await dots.evaluateAll((els) =>
+      els.map((el) => getComputedStyle(el).animationName),
+    );
+    assert.ok(
+      names.every((a) => /^pulse(Red|Amber|Ink)/.test(a.replace(/^.*?__/, ""))),
+      names.join(", "),
+    );
+    assert.ok(names.some((a) => /pulseRed/.test(a)));
+    assert.ok(names.some((a) => /pulseAmber/.test(a)));
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    assert.equal(await css(page, F("pinDot"), "animation-name"), "none");
+    await page.close();
+  });
+
+  test("each dot's centre is its country's point on the map", async () => {
+    const page = await mount(browser, MAP_FIX);
+    const off = await page.evaluate(() => {
+      const box = document.querySelector('[class*="mapBox"]')!.getBoundingClientRect();
+      return [...document.querySelectorAll<HTMLElement>('[class*="pinG"]')].map((el) => {
+        const d = el.querySelector('[class*="pinDot"]')!.getBoundingClientRect();
+        const want = [
+          box.left + (parseFloat(el.style.left) / 100) * box.width,
+          box.top + (parseFloat(el.style.top) / 100) * box.height,
+        ];
+        return Math.hypot(
+          d.left + d.width / 2 - want[0]!,
+          d.top + d.height / 2 - want[1]!,
+        );
+      });
+    });
+    assert.ok(off.length >= 20);
+    assert.ok(
+      Math.max(...off) < 1,
+      `a dot sits ${Math.max(...off).toFixed(2)}px off its point`,
+    );
+    await page.close();
+  });
+
+  test("hovering a dot brings its label in front of every other; no label hides a dot", async () => {
+    const page = await mount(browser, MAP_FIX);
+    const topAt = (x: number, y: number) =>
+      page.evaluate(
+        ([px, py]) =>
+          document
+            .elementFromPoint(px!, py!)
+            ?.closest("button")
+            ?.getAttribute("aria-label") ?? "",
+        [x, y],
+      );
+    // No label covers any dot: the centre of every dot hits its own pin.
+    const centres = await page.locator(F("pinDot")).evaluateAll((els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          x: r.left + r.width / 2,
+          y: r.top + r.height / 2,
+          name: el.closest("button")!.getAttribute("aria-label")!,
+        };
+      }),
+    );
+    for (const c of centres)
+      assert.equal(await topAt(c.x, c.y), c.name, `${c.name}'s dot is covered`);
+    // Every dot, hovered, puts its own label on top at the label's centre.
+    for (const c of centres) {
+      await page.mouse.move(c.x, c.y);
+      const label = page
+        .getByRole("button", { name: c.name, exact: true })
+        .locator(F("pin"));
+      const r = (await label.boundingBox())!;
+      assert.equal(
+        await topAt(r.x + r.width / 2, r.y + r.height / 2),
+        c.name,
+        `${c.name}'s label stays behind another`,
+      );
+    }
+    await page.close();
+  });
+
+  test("a click on a dot shows that country's deals", async () => {
+    const page = await mount(browser, MAP_FIX);
+    const pin = page.getByRole("button", { name: "Ireland", exact: true });
+    await pin.click();
+    assert.equal(await pin.getAttribute("aria-pressed"), "true");
+    assert.match(
+      (await page.locator(F("mapR")).textContent()) ?? "",
+      /Showing the deals in Ireland/,
+    );
+    await page.close();
+  });
+});
