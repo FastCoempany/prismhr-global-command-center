@@ -7,6 +7,8 @@
 // once with no hedge is likely, and a hedged line is unsure. A name set by
 // hand outranks every read. Pure: no store is read here.
 
+import { ENTRY_CAP } from "@/lib/ingest/windows";
+
 export const CLIENT_READ_NS = "clientread:";
 const HEAD = "✎ CLIENT READ";
 
@@ -71,7 +73,9 @@ export function renderClientRead(
       ].join("\t"),
     );
   }
-  return lines.length ? [HEAD, ...lines.slice(0, 12)].join("\n") : null;
+  // Every filed entry's sighting counts: the read files up to ENTRY_CAP
+  // entries, and the client is chosen by how often the record names it.
+  return lines.length ? [HEAD, ...lines.slice(0, ENTRY_CAP)].join("\n") : null;
 }
 
 export function parseClientRead(note: {

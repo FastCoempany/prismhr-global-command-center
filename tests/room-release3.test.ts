@@ -245,6 +245,29 @@ describe("the client the read names", () => {
       "unsure",
     );
     assert.equal(readClient([]), null);
+    // Every filed entry counts: 12 naming Alpha, then 28 naming Beta, is Beta.
+    const many = {
+      body: renderClientRead(
+        [
+          ...Array.from({ length: 12 }, () => ({
+            client: "Alpha Co",
+            body: "Alpha.",
+            dayIso: "2026-10-01",
+          })),
+          ...Array.from({ length: 28 }, () => ({
+            client: "Beta Co",
+            body: "Beta.",
+            dayIso: "2026-10-02",
+          })),
+        ],
+        "Acme PEO",
+      )!,
+      createdAt: "2026-11-01T16:00:00.000Z",
+    };
+    assert.deepEqual(
+      [readClient([many])?.name, readClient([many])?.seen],
+      ["Beta Co", 28],
+    );
     // A sighting rides its entry: hiding the entry with ✕ takes it back.
     const tied = {
       body: renderClientRead(
