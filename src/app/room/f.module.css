@@ -330,8 +330,10 @@
 .nameWrap {
   white-space: nowrap;
 }
+/* The account's name holds one size on every row (founder, 2026-11-05):
+   the sentence's fit steps down the rest of the line, never the name. */
 .nmLink {
-  font-size: 1.1em;
+  font-size: 21px;
   color: var(--ink);
   text-decoration: none;
   border-bottom: 2px solid rgba(10, 28, 64, 0.1);

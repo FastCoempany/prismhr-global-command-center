@@ -86,6 +86,25 @@ describe("F26 · each deal rests as one sentence on one line; the first row stan
     await page.close();
   });
 
+  test("every account name holds one size, however far its sentence steps down (founder, 2026-11-05)", async () => {
+    const page = await mount(browser, FIX, { now: "2026-11-04T16:00:00Z" });
+    await page.setViewportSize({ width: 760, height: 900 });
+    await page.waitForTimeout(100);
+    const lines = await page
+      .locator(F("fsent"))
+      .evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
+    assert.ok(
+      lines.some((px) => px < 19),
+      `no sentence stepped down at this width (${lines.join(", ")})`,
+    );
+    const names = await page
+      .locator(F("nmLink"))
+      .evaluateAll((els) => els.map((e) => getComputedStyle(e).fontSize));
+    assert.equal(names.length, 3);
+    assert.deepEqual(new Set(names), new Set(["21px"]), names.join(", "));
+    await page.close();
+  });
+
   test("a click on a folded sentence opens its row, and the fold is remembered", async () => {
     const page = await mount(browser, FIX, { now: "2026-11-04T16:00:00Z" });
     await rowBy(page, "Regis HR Group").locator(F("caret")).click();
