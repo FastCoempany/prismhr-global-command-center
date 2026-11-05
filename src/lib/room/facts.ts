@@ -132,9 +132,13 @@ export function headKind(line: string, n: number): HeadKind {
   const text = line ?? "";
   const at = text.search(new RegExp(`(?<![\\d.,])${n}(?![\\d.,]\\d)`));
   if (at >= 0) {
+    // The kind word nearest after this figure, so "10 employees and 3
+    // contractors" reads each count by its own word.
     const near = text.slice(at, at + 48);
-    if (CONTRACTOR_RE.test(near)) return "contractor";
-    if (EMPLOYEE_RE.test(near)) return "employee";
+    const c = near.search(CONTRACTOR_RE);
+    const e = near.search(EMPLOYEE_RE);
+    if (c >= 0 && (e < 0 || c < e)) return "contractor";
+    if (e >= 0) return "employee";
   }
   const c = CONTRACTOR_RE.test(text);
   const e = EMPLOYEE_RE.test(text);
@@ -258,10 +262,13 @@ export function buildRowFacts(args: {
   const heads = intel.headcounts.map(
     (f: SourcedFact<{ n: number; country?: string }>) => {
       const at = lineOf(f, docs);
+      // The kind reads the whole entry: its first line is often the subject,
+      // and the count's words sit in the body beneath it.
+      const whole = docs.find((d) => d.src === f.src && d.at === f.at)?.text;
       return {
         n: f.value.n,
         country: f.value.country ?? null,
-        kind: headKind(at.line, f.value.n),
+        kind: headKind(whole ?? at.line, f.value.n),
         ...at,
       };
     },

@@ -273,6 +273,14 @@ describe("what a count counts", () => {
       "employee",
     );
     assert.equal(headKind("✉ Two hires in Bogotá.", 2), "employee");
+    assert.equal(
+      headKind("10 employees in Mexico and 3 contractors in the UK.", 10),
+      "employee",
+    );
+    assert.equal(
+      headKind("10 employees in Mexico and 3 contractors in the UK.", 3),
+      "contractor",
+    );
     assert.equal(headKind("Twelve freelancers in Brazil.", 12), "contractor");
     assert.equal(headKind("12 people in Brazil.", 12), null);
     assert.equal(headKind("", 4), null);
@@ -304,5 +312,28 @@ describe("what a count counts", () => {
     assert.equal(facts.heads[0]!.kind, "employee");
     const [mx] = mapIndex([{ key: "a", name: "A", facts, live: true }], "2026-11-04");
     assert.deepEqual([mx!.people, mx!.kinds], [10, ["employee"]]);
+    const body = buildRowFacts({
+      intel: {
+        ...EMPTY_INTEL,
+        headcounts: [
+          { value: { n: 10, country: "mx" }, src: "n2", at: "2026-10-30T15:00:00.000Z" },
+        ],
+      },
+      docs: [
+        {
+          text: "✉ Staffing needs · Dana Reyes\n10 contractors in Mexico by January.",
+          at: "2026-10-30T15:00:00.000Z",
+          src: "n2",
+        },
+      ],
+      hand: NO_HAND,
+      todayMd: "11/4",
+    });
+    assert.equal(
+      body.heads[0]!.kind,
+      "contractor",
+      "the body says what the subject does not",
+    );
+    assert.equal(body.heads[0]!.line, "✉ Staffing needs · Dana Reyes");
   });
 });
