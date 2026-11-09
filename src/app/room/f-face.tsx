@@ -108,12 +108,15 @@ export function RoomMap({
   onPick: (code: string | null) => void;
 }) {
   if (!countries.length) return null;
+  // A passed date says so with its day; it never reads as urgency.
   const toneWord = (c: MapCountry) =>
-    c.days != null
-      ? daysWord(c.days).toUpperCase()
-      : c.tone === "warm"
-        ? "ASAP"
-        : "NO DATE";
+    c.tone === "past" && c.iso
+      ? `PASSED ${monDay(c.iso).toUpperCase()}`
+      : c.days != null
+        ? daysWord(c.days).toUpperCase()
+        : c.tone === "warm"
+          ? "ASAP"
+          : "NO DATE";
   const peopleLine = (c: MapCountry) => {
     const parts: string[] = [];
     if (c.people) parts.push(`${c.people} ${headWord(c.kinds, c.people).toUpperCase()}`);

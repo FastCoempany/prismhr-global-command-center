@@ -312,9 +312,11 @@ export function buildRowFacts(args: {
 }
 
 // ── how near the client's date is ──────────────────────────────────────────
-// Red at 14 days or less (and once it has passed), amber within 30 or when
-// the record says how urgent with no date, plain further out or unsaid.
-export type DateTone = "hot" | "warm" | "cool" | "none";
+// Red at 14 days or less, amber within 30 or when the record says how urgent
+// with no date, plain further out or unsaid. A date that has already passed
+// is its own quiet tone (founder, 2026-11-09): it is history, not urgency,
+// and it never outranks a date still ahead.
+export type DateTone = "hot" | "warm" | "cool" | "past" | "none";
 const DAY = 86_400_000;
 export function daysTo(iso: string, todayIso: string): number {
   return Math.round(
@@ -325,7 +327,7 @@ export function dateTone(date: RowFacts["date"], todayIso: string): DateTone {
   if (!date) return "none";
   if (!date.iso) return "warm";
   const n = daysTo(date.iso, todayIso);
-  return n <= 14 ? "hot" : n <= 30 ? "warm" : "cool";
+  return n < 0 ? "past" : n <= 14 ? "hot" : n <= 30 ? "warm" : "cool";
 }
 
 // ── the map's index: each country, its deals, its nearest date ─────────────
@@ -339,8 +341,21 @@ export type MapCountry = {
   unsaid: number;
   tone: DateTone;
   days: number | null;
+  /** The date the tone and days stand on, YYYY-MM-DD, when there is one. */
+  iso: string | null;
 };
-const TONE_RANK: Record<DateTone, number> = { hot: 3, warm: 2, cool: 1, none: 0 };
+// A date still ahead always outranks one that has passed; a passed date
+// outranks only no date at all.
+const TONE_RANK: Record<DateTone, number> = {
+  hot: 4,
+  warm: 3,
+  cool: 2,
+  past: 1,
+  none: 0,
+};
+// Within a tone the nearest date leads: the soonest ahead, or the most
+// recently passed.
+const nearness = (days: number | null): number => (days == null ? 99999 : Math.abs(days));
 
 export function mapIndex(deals: readonly MapDeal[], todayIso: string): MapCountry[] {
   const by = new Map<string, MapCountry>();
@@ -359,6 +374,7 @@ export function mapIndex(deals: readonly MapDeal[], todayIso: string): MapCountr
           unsaid: 0,
           tone: "none",
           days: null,
+          iso: null,
         };
         by.set(c.code, e);
       }
@@ -370,17 +386,18 @@ export function mapIndex(deals: readonly MapDeal[], todayIso: string): MapCountr
         e.people += n;
         e.kinds.push(...hs.map((h) => h.kind));
       }
-      const nearer = tone === e.tone && days != null && (e.days == null || days < e.days);
+      const nearer = tone === e.tone && days != null && nearness(days) < nearness(e.days);
       if (TONE_RANK[tone] > TONE_RANK[e.tone] || nearer) {
         e.tone = tone;
         e.days = days;
+        e.iso = d.facts.date?.iso ?? null;
       }
     }
   }
   return [...by.values()].sort(
     (a, b) =>
       TONE_RANK[b.tone] - TONE_RANK[a.tone] ||
-      (a.days ?? 9999) - (b.days ?? 9999) ||
+      nearness(a.days) - nearness(b.days) ||
       (COUNTRY_NAME[a.code] ?? a.code).localeCompare(COUNTRY_NAME[b.code] ?? b.code),
   );
 }

@@ -659,9 +659,12 @@ releases. All three are live.
 
 - **The map.** The room opens on a map of every country the live deals name
   (src/lib/room/world-map.ts, a fixed table of land and places that reads no
-  record). Each country's light is its nearest client date: red at 14 days or
-  less, amber within 30 or when the record says how urgent with no day,
-  plain otherwise. Every country's dot pulses at all times in its own color,
+  record). Each country's light is its nearest client date still ahead: red
+  at 14 days or less, amber within 30 or when the record says how urgent
+  with no day, plain otherwise. A date that has passed is history, never
+  urgency (founder, 2026-11-09): it reads "PASSED" with its day in a quiet
+  light, and it counts for a country only when no deal there has a date
+  ahead. Every country's dot pulses at all times in its own color,
   and reduced motion stills them (founder, 2026-11-05; this replaced the one
   pulse on the nearest red date). Each dot sits exactly on its country's
   point, and the dot and its label are one control: every dot sits above

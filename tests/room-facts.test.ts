@@ -189,6 +189,61 @@ describe("the map", () => {
     assert.equal(idx[0]!.unsaid, 1);
   });
 
+  test("a passed date never outranks a date still ahead, and reads as passed (founder, 2026-11-09)", () => {
+    const deal = (key: string, code: string, iso: string | null) => ({
+      key,
+      name: key,
+      live: true,
+      facts: buildRowFacts({
+        intel: intel({
+          countries: [fact(code)],
+          timing: iso ? fact({ phrase: "by then", dateIso: iso }) : null,
+        }),
+        docs: [DOC],
+        hand: NO_HAND,
+        todayMd: "11/9",
+      }),
+    });
+    // One deal's start date passed 103 days ago; it names every country.
+    const stale = (code: string) => deal(`X-${code}`, code, "2026-07-29");
+    const idx = mapIndex(
+      [
+        stale("ca"),
+        deal("O", "ca", "2026-12-20"),
+        stale("ar"),
+        stale("br"),
+        deal("N", "br", null),
+      ],
+      "2026-11-09",
+    );
+    const by = Object.fromEntries(idx.map((c) => [c.code, [c.tone, c.days, c.iso]]));
+    assert.deepEqual(by.ca, ["cool", 41, "2026-12-20"], "the date ahead leads Canada");
+    assert.deepEqual(
+      by.ar,
+      ["past", -103, "2026-07-29"],
+      "a lone passed date reads as passed",
+    );
+    assert.deepEqual(
+      by.br,
+      ["past", -103, "2026-07-29"],
+      "a passed date still beats no date",
+    );
+    assert.equal(
+      idx[0]!.code,
+      "ca",
+      "a country with a date ahead sorts before a passed one",
+    );
+    assert.equal(
+      dateTone({ iso: "2026-07-29", phrase: "", day: "", line: "" }, "2026-11-09"),
+      "past",
+    );
+    assert.equal(
+      dateTone({ iso: "2026-11-09", phrase: "", day: "", line: "" }, "2026-11-09"),
+      "hot",
+      "today is still ahead, and urgent",
+    );
+  });
+
   test("a date with no day is amber; no date at all is plain", () => {
     assert.equal(
       dateTone({ iso: null, phrase: "ASAP", day: "", line: "" }, "2026-11-04"),
