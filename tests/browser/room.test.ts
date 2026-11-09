@@ -1021,6 +1021,14 @@ describe("F26 · the map: every dot pulses, sits on its country, and brings its 
     await page.close();
   });
 
+  test("a passed date reads as passed with its day, in a quiet light (founder, 2026-11-09)", async () => {
+    const page = await mount(browser, MAP_FIX);
+    const list = (await page.locator(F("mapR")).innerText()).replace(/\s+/g, " ");
+    assert.match(list, /PASSED JUL 29/);
+    assert.doesNotMatch(list, /DAYS AGO/);
+    await page.close();
+  });
+
   test("a click on a dot shows that country's deals", async () => {
     const page = await mount(browser, MAP_FIX);
     const pin = page.getByRole("button", { name: "Ireland", exact: true });

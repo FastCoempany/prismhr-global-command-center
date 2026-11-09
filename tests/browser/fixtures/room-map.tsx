@@ -11,14 +11,17 @@ const TONES = ["hot", "warm", "cool", "none"] as const;
 
 export default function Fixture() {
   const [selected, setSelected] = useState<string | null>(null);
+  const last = Object.keys(GEO).length - 1;
   const countries = Object.keys(GEO).map((code, i) => ({
     code,
     deals: [{ key: code, name: `Deal ${code}`, n: 2 }],
     people: 2,
     kinds: [null],
     unsaid: 0,
-    tone: TONES[i % 4]!,
-    days: i % 4 === 0 ? 10 : null,
+    // The last country's date has passed: it reads as passed, never as urgent.
+    tone: i === last ? ("past" as const) : TONES[i % 4]!,
+    days: i === last ? -103 : i % 4 === 0 ? 10 : null,
+    iso: i === last ? "2026-07-29" : i % 4 === 0 ? "2026-11-16" : null,
   }));
   return (
     <div style={{ width: 1360 }}>
