@@ -427,7 +427,9 @@ export function ReceiptLine({
       line = `⇪ Not filed. Backed up. · ${name}${day}`;
       break;
     case "kept":
-      line = `Not filed. Kept in the brain. · ${name}${day}`;
+      // The top Chute's own keep carries its receipt and the read's line; the
+      // held box's ✕ carries none (founder, 2026-11-16).
+      line = `${row.reason || "Not filed. Kept in the brain."} · ${name}${day}`;
       break;
     case "error":
       line = `${name} · ${row.reason ?? ""}`;

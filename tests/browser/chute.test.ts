@@ -1,6 +1,7 @@
 // The Chute in a real browser (pass 11). A1.3: files thrown at it are read
 // on the spot. A drop is a real DOM drop event carrying real File objects:
-// an email is read in the browser and routed at once; a PDF goes to the
+// an email is read in the browser and kept in the brain at once, never
+// routed onto an account (founder, 2026-11-16); a PDF goes to the
 // transcriber at once. Nothing waits on a tick or a button.
 
 import { after, before, describe, test } from "node:test";
@@ -48,23 +49,84 @@ async function drop(page: Page, files: { name: string; type: string; body: strin
 }
 
 describe("A1.3 · files thrown at the Chute are read on the spot", () => {
-  test("a dropped email is read in the browser and routed at once, with its words", async () => {
+  test("a dropped email is read in the browser and kept in the brain at once, never routed (founder, 2026-11-16)", async () => {
     const page = await mount(browser, FIX, {
-      returns: { routeText: { best: null, candidates: [], book: [] }, chuteBook: [] },
+      returns: {
+        intranetKeep: {
+          ok: true,
+          receipt: "Kept in the brain.",
+          captureId: "",
+          space: "",
+          origin: "paste",
+        },
+        chuteBook: [],
+      },
     });
     const t0 = Date.now();
     await drop(page, [{ name: "mexico.eml", type: "message/rfc822", body: EML }]);
     await page.waitForFunction(() =>
       ((window as unknown as { __calls: [string][] }).__calls ?? []).some(
-        ([n]) => n === "routeText",
+        ([n]) => n === "intranetKeep",
       ),
     );
     assert.ok(Date.now() - t0 < 3000, "the read waited");
-    const route = (await callsOf(page)).find(([n]) => n === "routeText");
-    assert.ok(route);
-    assert.match(String(route[1][0]), /Can we talk Mexico next week\?/);
+    const keep = (await callsOf(page)).find(([n]) => n === "intranetKeep");
+    assert.ok(keep);
+    assert.match(String(keep[1][0]), /Can we talk Mexico next week\?/);
+    const names = (await callsOf(page)).map(([n]) => n);
+    // Intelligence only: no route, no filing onto an account.
+    assert.ok(!names.includes("routeText"), "the Chute routed");
+    assert.ok(!names.includes("roomPaste"), "the Chute filed onto an account");
     // No server read of the email itself: the browser read it.
-    assert.ok(!(await callsOf(page)).some(([n]) => n === "chuteReadPdf"));
+    assert.ok(!names.includes("chuteReadPdf"));
+    await page.waitForFunction(
+      (sel) =>
+        (document.querySelector(sel)?.textContent ?? "").includes("Kept in the brain."),
+      $("chute"),
+    );
+    await page.close();
+  });
+
+  test("Paste takes a Teams grab off the clipboard and keeps it in the brain, named for what it is", async () => {
+    const page = await mount(browser, FIX, {
+      returns: {
+        intranetKeep: {
+          ok: true,
+          receipt: "Kept in the brain.",
+          captureId: "",
+          space: "",
+          origin: "teams",
+        },
+        chuteBook: [],
+      },
+    });
+    // A string, so the test runner's name helpers never reach the page.
+    await page.evaluate(`Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        readText: () =>
+          Promise.resolve(
+            "TEAMS THREAD - Chat | Project - captured 11/16/2026\\n\\n⟦MSG⟧ unknown ⟦AT⟧  ⟦BODY⟧\\nHello all",
+          ),
+      },
+    });`);
+    await page.getByRole("button", { name: "⎘ Paste" }).click();
+    await page.waitForFunction(() =>
+      ((window as unknown as { __calls: [string][] }).__calls ?? []).some(
+        ([n]) => n === "intranetKeep",
+      ),
+    );
+    const keep = (await callsOf(page)).find(([n]) => n === "intranetKeep");
+    assert.match(String(keep?.[1][0]), /^TEAMS THREAD - Chat/);
+    const names = (await callsOf(page)).map(([n]) => n);
+    assert.ok(!names.includes("routeText") && !names.includes("roomPaste"));
+    // A paste is not a file: nothing goes to the vault.
+    assert.ok(!names.some((n) => /^vault/.test(n)), names.join(", "));
+    await page.waitForFunction(
+      (sel) =>
+        (document.querySelector(sel)?.textContent ?? "").includes("Teams thread.txt"),
+      $("chute"),
+    );
     await page.close();
   });
 

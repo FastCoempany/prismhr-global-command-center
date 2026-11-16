@@ -1,17 +1,16 @@
 "use client";
 
-// The Chute — the one intake, mounted at the HomeRoom's top and on the
-// Intranet: one component, one roster, the same routing wherever it mounts
-// (ruled 2026-09-25, D1 — CLAUDE.md, The Chute :301). Throw files at it, as
-// many as you like; each one is read on the spot, routed to its account on
-// the server by the book's signals and the record's (a known contact's
-// email, a company domain, a person the record or the book binds to one
-// account, the account's name — C2, D13; the roster never ships here), and
-// filed through the same pipeline a paste takes. The misfile guard runs on
-// the text's own evidence with or without the key; the model's judgment
-// rides when the key is on. Nothing files blind: an unroutable file waits
-// with a picker, and a read that disagrees with the route waits for the
-// operator's call.
+// The Chute — the intake at the top of the HomeRoom and the Intranet: one
+// component that acts the same wherever it mounts (D1). Since 2026-11-16 it
+// is intelligence only, on the founder's order: what is thrown at it, a
+// Teams grab, a call transcript, an email or a document, is read on the
+// spot and kept in the Intranet's memory, which reads it for facts,
+// decisions and questions. It never files onto an account; the row's own
+// Chute on the HomeRoom is the account door. Two feeds keep their own roads
+// because they split across the book: the weekly Salesforce activity export
+// and the Sales Navigator grab. Every dropped file still backs up whole in
+// git (D8), on no account. Rows held before the change, or a held Send-it
+// capture, still show the held box and its picks.
 //
 // The mechanics live in the shared door hooks (./ingest, slice 8 of the
 // Chute brains refactor plan): accept, read, route, file and vault through
@@ -309,7 +308,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         const r = await intranetKeep(plan.text);
         done(
           r.ok
-            ? { state: "kept" }
+            ? { state: "kept", reason: undefined }
             : { state: "error", reason: r.reason ?? "That didn't land." },
         );
         return;
@@ -440,25 +439,61 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     }
   };
 
+  // Intelligence only (founder, 2026-11-16): what the Chute reads is kept
+  // in the Intranet's memory and read there at once, and it never files
+  // onto an account; each row's own Chute is the account door. The file
+  // itself backs up whole in git on no account (D8). A pasted text is a
+  // paste, not a file, and has nothing to back up.
+  const keepRow = async (key: number, text: string, f?: File) => {
+    patch(key, { state: "filing", verdict: undefined });
+    const r = await intranetKeep(text);
+    if (!r.ok) {
+      patch(key, {
+        state: "error",
+        reason: r.reason ?? "That didn't land.",
+        day: today(),
+      });
+      if (f) void backUp(key, f);
+      return;
+    }
+    patch(key, {
+      state: "kept",
+      reason: r.captureId ? `${r.receipt} Reading it now…` : r.receipt,
+      day: today(),
+    });
+    if (f) void backUp(key, f);
+    if (!r.captureId) return;
+    // The Intranet's own reading pass, as a plain POST: a long read must not
+    // lock the tabs (the Send-it box's lesson, 2026-08-22).
+    const g = await fetch("/intranet/read", {
+      method: "POST",
+      cache: "no-store",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ captureId: r.captureId }),
+    })
+      .then(
+        (res) =>
+          res.json() as Promise<{ ok?: boolean; lines?: string[]; reason?: string }>,
+      )
+      .catch(() => null);
+    const read = g?.ok
+      ? (g.lines?.[0] ?? "Read.")
+      : "The Intranet reads it on its next pass.";
+    patch(key, { reason: `${r.receipt} ${read}` });
+  };
+
   // One file, start to finish. `vaultOnly` is the plan's word on a file the
-  // reader cannot open: it skips the read and goes to the vault by its
-  // filename or waits for the pick.
+  // reader cannot open: it skips the read and backs up on no account.
   const swallow = async (f: File, key: number, vaultOnly: boolean) => {
-    // The account the file was filing to, once the route names one: a filing
-    // that breaks backs its file up there (pass 8 call 8).
-    let filingTo: { id: string; name: string } | undefined;
+    const pasted = pastedRef.current.has(f);
     try {
+      // The two feeds that split across the book keep their own roads: the
+      // weekly Salesforce activity export, read for the second record, and
+      // the Sales Navigator grab, filed row by row onto the accounts it names.
       if (/\.csv$/i.test(f.name) && (await probeActivityReport(f))) {
         await swallowActivity(f, key);
         return;
       }
-      // The route runs on the server over the joined roster (C2, D13); what
-      // comes back is the verdict and the picker's names.
-      const routed = async (text: string) => {
-        const r = await ingest.route(text);
-        if (r.book.length) setBook(r.book);
-        return r;
-      };
       const read = vaultOnly ? null : await ingest.read(f);
       // A grab, or a Sales Navigator alert email dropped as .eml or .msg,
       // which files as the alerts grab it carries (2026-10-14).
@@ -467,39 +502,52 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         return;
       }
       if (!read?.ok) {
-        // Not readable — a recording, an archive, a binary, or a read that
-        // came back empty. It still belongs in the vault: route by the
-        // filename (a Teams recording usually carries the meeting's name) and
-        // otherwise wait for the pick.
-        const { best, candidates, refused } = await routed(f.name);
-        if (refused) patch(key, { state: "error", reason: refused });
-        else if (best) await vaultTo(key, { id: best.id, name: best.name }, f, true);
-        else patch(key, { state: "pick", candidates });
+        // Not readable: a recording, an archive, a binary, or a read that
+        // came back empty. Nothing to keep in the brain, so the file backs
+        // up whole on no account, with its receipt.
+        patch(key, { state: "filing", verdict: undefined });
+        const r = await ingest.vaultUnfiled(f, (sent, total) =>
+          patch(key, {
+            vault: { text: `Backing up ${f.name}… ${sent} of ${total}`, going: true },
+          }),
+        );
+        patch(
+          key,
+          r.ok
+            ? { state: "unfiled", vault: { text: r.detail, url: r.url }, day: today() }
+            : { state: "error", reason: r.reason, vault: undefined, day: today() },
+        );
         return;
       }
-      const { best, candidates, refused } = await routed(read.text);
-      if (refused) patch(key, { state: "error", reason: refused });
-      else if (best) {
-        filingTo = { id: best.id, name: best.name };
-        await fileTo(
-          key,
-          read.text,
-          filingTo,
-          best.why,
-          best.rung,
-          false,
-          f,
-          read.windows,
-        );
-      } else
-        patch(key, { state: "pick", text: read.text, candidates, windows: read.windows });
+      await keepRow(key, read.text, pasted ? undefined : f);
     } catch {
-      // Nothing dies silently: a broken filing says so, and its file still
-      // backs up, to the account it was filing to or under accounts/_unfiled/
-      // (pass 8 call 8).
-      patch(key, { state: "error", reason: "The filing broke. Drop it again." });
-      void backUp(key, f, filingTo);
+      // Nothing dies silently: a broken drop says so, and its file still
+      // backs up on no account (pass 8 call 8).
+      patch(key, { state: "error", reason: "The drop broke. Drop it again." });
+      if (!pasted) void backUp(key, f);
     }
+  };
+
+  // The grab lands on the clipboard (the Teams bookmarklet copies the whole
+  // thread), so the Chute takes a paste too: the text becomes one row, read
+  // and kept like a dropped file, and named for what it is.
+  const pastedRef = useRef(new WeakSet<File>());
+  const pasteIn = async () => {
+    let text = "";
+    try {
+      text = await navigator.clipboard.readText();
+    } catch {
+      return;
+    }
+    if (!text.trim()) return;
+    const name = /^TEAMS THREAD\b/.test(text.trimStart())
+      ? "Teams thread.txt"
+      : "Pasted text.txt";
+    const f = new File([text], name, { type: "text/plain" });
+    pastedRef.current.add(f);
+    const list = new DataTransfer();
+    list.items.add(f);
+    handleFiles(list.files);
   };
 
   const batchSeq = useRef(0);
@@ -729,7 +777,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         <div className={styles.chuteBar}>
           <span className={styles.chuteK}>THE CHUTE</span>
           <span className={styles.chuteLine}>
-            Throw files here. They find their account.
+            Drop threads, calls and documents here.
           </span>
           <span className={styles.chuteLine}>Read-only session</span>
         </div>
@@ -753,15 +801,21 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     >
       <div className={styles.chuteBar}>
         <span className={styles.chuteK}>THE CHUTE</span>
-        <span className={styles.chuteLine}>
-          Throw files here. They find their account.
-        </span>
+        <span className={styles.chuteLine}>Drop threads, calls and documents here.</span>
         <button
           type="button"
           className={styles.chuteBtn}
           onClick={() => inputRef.current?.click()}
         >
           ⇪ Files
+        </button>
+        <button
+          type="button"
+          className={styles.chuteBtn}
+          title="Paste what's on your clipboard, such as a Teams grab"
+          onClick={() => void pasteIn()}
+        >
+          ⎘ Paste
         </button>
         <input
           ref={inputRef}
@@ -775,19 +829,17 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
         />
       </div>
 
-      {/* The pact (pass 8, C3): what the pipeline does today, in plain
-          sentences, written to the writing canon and the plain-speech law.
-          Large files go up in pieces the server assembles, and git is the
-          home for every dropped file (D8 as amended 2026-10-05). */}
+      {/* The pact (pass 8, C3; rewritten 2026-11-16 when the Chute became
+          intelligence only): what the pipeline does today, in plain
+          sentences, written to the writing canon and the plain-speech law. */}
       <p className={styles.chutePact}>
-        <b>The pact:</b> Mail, call transcripts, sheets, documents and text read here in
-        the browser. PDFs and images go to the reader. Each file finds its account by a
-        contact&apos;s address, the company&apos;s domain, a known person or the
-        account&apos;s name, and files like a paste. With the API key on, the read also
-        opens to-dos, their promises, asks and playbook lines. A file with no sure
-        account, or one that names another, waits for your pick. Nothing files twice.
-        Every file is backed up whole in git under its account. The day&apos;s receipts
-        survive a reload.
+        <b>The pact:</b> Mail, call transcripts, Teams threads, sheets, documents and
+        pasted text read here in the browser. PDFs and images go to the reader. What you
+        drop here is kept in the Intranet&apos;s memory and read for its facts, decisions
+        and questions. It never files onto an account. To file onto an account, use that
+        row&apos;s own Chute. Two feeds still split across your accounts: the weekly
+        Salesforce activity export and the Sales Navigator grab. Nothing is kept twice.
+        Every file is backed up whole in git. The day&apos;s receipts survive a reload.
       </p>
 
       {ledger}

@@ -37,7 +37,7 @@ import { UNFILED, sendUnfiled, type VaultDoors } from "../src/lib/ingest/vault";
 import { ALREADY_FILING, ALREADY_ON_FILE, wroteFrom } from "../src/lib/ingest/wrote";
 import { vaultAfterVerdict } from "../src/lib/room/drop-plan";
 import { lintAct, lintReason } from "../src/lib/activity/lint";
-import { HELD_LINE, heldLine, keptLine } from "../src/lib/intranet/capture-door";
+import { keptLine } from "../src/lib/intranet/capture-door";
 import type { RouteAccount } from "../src/lib/route-capture";
 import {
   chute,
@@ -751,17 +751,17 @@ describe("the ✕ files nothing and still backs the file up", () => {
     const door = read("src/app/intranet/capture-actions.ts");
     assert.match(
       door,
-      /export async function intranetKeep\(raw: string\): Promise<CaptureReply> \{\s*return intranetCapture\(raw, undefined, \{ keep: true \}\);/,
+      /export async function intranetKeep\(raw: string\): Promise<CaptureReply> \{\s*return intranetCapture\(raw\);/,
     );
+    // Intelligence only (founder, 2026-11-16): every capture takes the
+    // brain's road, so neither the ✕ nor anything else reaches a route or the
+    // pipeline from here.
     const capture = door.slice(door.indexOf("export async function intranetCapture("));
-    const gate = capture.indexOf("if (!opts?.keep) {");
-    const route = capture.indexOf("captureVerdict(await routeText(text))");
-    const paste = capture.indexOf("await roomPaste(");
-    const doc = capture.indexOf("prisma.intranetDoc.create(");
     assert.ok(
-      gate > 0 && gate < route && route < paste && paste < doc,
-      "keep jumps the route and the pipeline",
+      !/routeText\(|await roomPaste\(/.test(capture),
+      "the capture routes or files",
     );
+    assert.ok(capture.includes("prisma.intranetDoc.create("), "the capture keeps no doc");
     assert.equal(keptLine(), "Kept in the brain.");
     assert.equal(
       textOf(
@@ -779,7 +779,7 @@ describe("the ✕ files nothing and still backs the file up", () => {
 
 // ── Send-it's hand-off ──────────────────────────────────────────────────────
 
-describe("Send-it hands a disputed capture to the Chute above", () => {
+describe("a disputed Send-it capture handed to the Chute before 2026-11-16 still waits there", () => {
   const handOff: HandOff = {
     filename: "Send-it paste",
     text: "OUTLOOK THREAD — renewal\nFrom: Chassie Smith\n\nThe renewal is on the 14th.",
@@ -789,20 +789,15 @@ describe("Send-it hands a disputed capture to the Chute above", () => {
     door: "intranet",
   };
 
-  test("Send-it's disputed line is Held in the Chute above.", () => {
-    assert.equal(HELD_LINE, "Held in the Chute above.");
-    assert.equal(heldLine(), HELD_LINE);
-    // The client hands the held capture over before its line lands, and the
-    // line is the reply's receipt, the same seat a filed capture's takes.
+  test("Send-it hands nothing to the Chute now: every capture stays in the brain", () => {
+    // Intelligence only (founder, 2026-11-16): the capture never routes, so
+    // the Send-it box has nothing to hold and hands nothing over. A held row
+    // an earlier day handed over still comes back from the stored ledger,
+    // which the next test pins.
     const client = read("src/app/intranet/intranet-client.tsx");
-    const hand = client.indexOf("if (r.held)");
-    const line = client.indexOf("if (!r.captureId) {");
-    assert.ok(hand > 0 && hand < line, "the hand-off comes first");
-    assert.match(
-      client.slice(hand, line),
-      /handToChute\(\{[\s\S]*?filename: SEND_IT_LABEL,[\s\S]*?text: sent,[\s\S]*?door: "intranet",/,
-    );
-    assert.match(client.slice(line), /lines: \[r\.receipt\]/);
+    assert.ok(!client.includes("handToChute("), "the box hands a capture over");
+    assert.ok(!client.includes("r.held"), "the box reads a held reply");
+    assert.match(client, /lines: \[r\.receipt, "Reading what you sent…"\]/);
   });
 
   test("the capture waits in the Chute as a held row, through a reload, and its pick files with the intranet door", () => {
@@ -837,7 +832,7 @@ describe("Send-it hands a disputed capture to the Chute above", () => {
   });
 });
 
-describe("Send-it hands an unsure capture to the Chute above, as a dispute (ordered 2026-10-06)", () => {
+describe("an unsure Send-it capture handed to the Chute before 2026-11-16 still waits there", () => {
   // One box holds a disputed or unsure file at every door (CLAUDE.md, The
   // held file and the receipt). An unsure capture arrives as a pick row: no
   // verdict, the route's candidates, the intranet door.
@@ -1332,9 +1327,11 @@ describe("a readable file whose filing fails still backs up (pass 8 call 8)", ()
       src,
       /let r = account \? await ingest\.vault\(account\.id, f, progress\) : null;\s*if \(!r\?\.ok\) r = await ingest\.vaultUnfiled\(f, progress\);/,
     );
+    // A drop that broke still backs its file up, on no account now that the
+    // Chute keeps intelligence only (founder, 2026-11-16); a paste is no file.
     assert.match(
       src,
-      /reason: "The filing broke\. Drop it again\." \}\);\s*void backUp\(key, f, filingTo\);/,
+      /reason: "The drop broke\. Drop it again\." \}\);\s*if \(!pasted\) void backUp\(key, f\);/,
     );
   });
 });
@@ -1508,8 +1505,9 @@ describe("the Chute's own copy obeys the writing canon (pass 8, C3, C4, C6, B48)
     assert.ok(!/\bClaude\b/.test(pact), "a model name");
     for (const fact of [
       "git",
-      "Nothing files twice.",
-      "waits for your pick",
+      "Nothing is kept twice.",
+      "It never files onto an account.",
+      "row's own Chute",
       "survive a reload",
     ])
       assert.ok(pact.includes(fact), fact);
@@ -2294,7 +2292,7 @@ describe("the ingest surfaces' action lines keep six words a sentence (pass 11, 
     const lines = [
       ...src.matchAll(/className=\{styles\.chuteLine\}>\s*([^<{]+?)\s*</g),
     ].map((m) => m[1].trim());
-    assert.ok(lines.includes("Throw files here. They find their account."));
+    assert.ok(lines.includes("Drop threads, calls and documents here."));
     assert.ok(lines.includes("Read-only session"));
     for (const l of lines)
       for (const n of words(l)) assert.ok(n <= 6, `"${l}" runs ${n} words`);
