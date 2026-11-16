@@ -740,9 +740,9 @@ describe("the ✕ files nothing and still backs the file up", () => {
     const chute = read("src/app/room/chute.tsx");
     assert.match(
       chute,
-      /import \{ intranetKeep \} from "\.\.\/intranet\/capture-actions";/,
+      /import \{\s*intranetKeep,\s*intranetKeepPiece,[\s\S]*?\} from "\.\.\/intranet\/capture-actions";/,
     );
-    assert.match(chute, /const r = await intranetKeep\(plan\.text\);/);
+    assert.match(chute, /const r = await keepText\(plan\.text\);/);
     assert.match(
       chute,
       /dismissTitle=\{it\.door === "intranet" \? HELD_X_TITLE_BRAIN : HELD_X_TITLE\}/,

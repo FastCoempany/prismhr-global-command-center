@@ -17,6 +17,12 @@
 import { dockRefuses } from "@/app/intranet/grab";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
+import {
+  TEXT_UNFINISHED,
+  takeTextPiece,
+  textPieceBytes,
+  type TextStaged,
+} from "@/lib/ingest/carry";
 import { keptLine } from "@/lib/intranet/capture-door";
 import {
   normalizeCapture,
@@ -187,4 +193,23 @@ export async function intranetCapture(
  *  itself, which never files onto an account. */
 export async function intranetKeep(raw: string): Promise<CaptureReply> {
   return intranetCapture(raw);
+}
+
+/** One piece of a text too heavy for one request, on its way to the keep
+ *  (D4): the pieces stage in the vault's chunk store, and the piece that
+ *  makes the set whole keeps the whole text and answers with the keep's own
+ *  reply. The Chute sends a text this way through carryText. */
+export async function intranetKeepPiece(
+  key: string,
+  index: number,
+  total: number,
+  form: FormData,
+): Promise<TextStaged | CaptureReply> {
+  if (!(await canWrite())) return refused("Read-only session.");
+  return takeTextPiece(
+    getPrisma(),
+    { key, index, total, bytes: await textPieceBytes(form) },
+    (text) => intranetCapture(text),
+    refused(TEXT_UNFINISHED),
+  );
 }

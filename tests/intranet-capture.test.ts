@@ -130,6 +130,27 @@ describe("the Send-it box's action keeps the capture in the brain and never file
     assert.match(reply, /captureId: seen\.id/);
   });
 
+  test("a text too heavy for one request reaches the keep whole, in pieces, and the page re-reads after the read", () => {
+    const piece = slice(door, "export async function intranetKeepPiece(", "\n}\n");
+    assert.match(
+      piece,
+      /if \(!\(await canWrite\(\)\)\) return refused\("Read-only session\."\);/,
+    );
+    assert.match(piece, /takeTextPiece\(/);
+    assert.match(piece, /\(text\) => intranetCapture\(text\)/);
+    const chute = read("src/app/room/chute.tsx");
+    assert.match(
+      chute,
+      /carryText\(text, \{ whole: intranetKeep, piece: intranetKeepPiece \}/,
+    );
+    assert.ok(!/await intranetKeep\(/.test(chute), "a keep skips the carriage");
+    const keepRow = slice(chute, "const keepRow = async", "\n  };\n");
+    assert.ok(
+      keepRow.indexOf('fetch("/intranet/read"') < keepRow.indexOf("router.refresh()"),
+      "the page re-reads after the read",
+    );
+  });
+
   test("the keep is the capture itself", () => {
     assert.match(
       door,

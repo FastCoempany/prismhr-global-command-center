@@ -21,11 +21,17 @@
 // paints too. This file is the door: the bar, the fold and what each row's
 // choices do.
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { chuteReadPdf } from "./actions";
 import { activityRun, activityStage, activityTakeBack } from "../activity/actions";
 import { DOCK_ANCHOR } from "../activity/dock";
-import { intranetKeep } from "../intranet/capture-actions";
+import {
+  intranetKeep,
+  intranetKeepPiece,
+  type CaptureReply,
+} from "../intranet/capture-actions";
+import { carryText } from "@/lib/ingest/carry";
 import { chuteBook, type BookName } from "./route-actions";
 import { probeActivityReport, uploadActivityReport } from "@/lib/activity/upload";
 import { grabsFrom } from "@/lib/ingest/salesnav-email";
@@ -86,6 +92,18 @@ export function ActivityCame({
 
 export function Chute({ canWrite }: { canWrite: boolean }) {
   const ingest = useIngest({ door: "chute", readPdf: chuteReadPdf });
+  const router = useRouter();
+  // Keep a text in the brain, whole at any size (D4): one too heavy for one
+  // request travels in pieces the server assembles before the keep runs.
+  const keepText = (text: string): Promise<CaptureReply> =>
+    carryText(text, { whole: intranetKeep, piece: intranetKeepPiece }, (reason) => ({
+      ok: false,
+      receipt: "",
+      captureId: "",
+      space: "",
+      origin: "",
+      reason,
+    }));
   const receipts = useReceipts();
   const { items, patch } = receipts;
   const { undo } = useUndo();
@@ -305,7 +323,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     };
     try {
       if (plan.kind === "keep") {
-        const r = await intranetKeep(plan.text);
+        const r = await keepText(plan.text);
         done(
           r.ok
             ? { state: "kept", reason: undefined }
@@ -446,7 +464,7 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
   // paste, not a file, and has nothing to back up.
   const keepRow = async (key: number, text: string, f?: File) => {
     patch(key, { state: "filing", verdict: undefined });
-    const r = await intranetKeep(text);
+    const r = await keepText(text);
     if (!r.ok) {
       patch(key, {
         state: "error",
@@ -480,6 +498,9 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
       ? (g.lines?.[0] ?? "Read.")
       : "The Intranet reads it on its next pass.";
     patch(key, { reason: `${r.receipt} ${read}` });
+    // Every page derives on request (D15): on the Intranet the rail, the
+    // ledger and the archive read what the keep just added.
+    router.refresh();
   };
 
   // One file, start to finish. `vaultOnly` is the plan's word on a file the
