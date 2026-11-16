@@ -1103,7 +1103,8 @@ describe("the Sales Nav grab files each row on its own account", () => {
     assert.match(server, /fileGrab\(\s*plan,\s*\{[\s\S]*?\},\s*door,?\s*\)/);
     assert.match(actions, /export async function roomGrab\(/);
     // The Chute tells a grab, or an alert email that files as one, before it
-    // routes and hands it to the split.
+    // keeps the text in the brain (founder, 2026-11-16: the top Chute no
+    // longer routes), and hands it to the split.
     const chute = read("src/app/room/chute.tsx");
     const swallow = chute.slice(
       chute.indexOf("const swallow = async"),
@@ -1111,8 +1112,8 @@ describe("the Sales Nav grab files each row on its own account", () => {
     );
     assert.ok(swallow.indexOf("grabsFrom(read.text)") > 0, "the Chute tells a grab");
     assert.ok(
-      swallow.indexOf("grabsFrom(read.text)") < swallow.indexOf("routed(read.text)"),
-      "before the route",
+      swallow.indexOf("grabsFrom(read.text)") < swallow.indexOf("keepRow(key, read.text"),
+      "before the keep",
     );
     // Rewritten in pass 9's tail: the grab travels through the carriage,
     // whole or in pieces the server assembles, and lands in roomGrab either

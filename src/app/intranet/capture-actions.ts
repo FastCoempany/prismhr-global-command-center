@@ -1,46 +1,29 @@
 "use server";
 
-// The Intranet's capture door (the Chute brains refactor plan, slice 16). The
-// Intranet's capture is a door too (ruled 2026-09-25, P2 — CLAUDE.md, The
-// Chute): what names an account files through the paste pipeline, routed,
-// guarded and picked like the Chute's, and the brain reads it from the record
-// on the next sweep; what names none stays an Intranet doc and is never
-// inbound. One pipeline wherever a capture enters (D1): the filing is
-// roomPaste with the intranet door, so every row it writes carries the door
-// in its own column (P3). Routing runs here, on the server, over the joined
-// roster (D13): the lib's routeText, never the action's, because this already
-// is the server, and the reply carries an account's name and nothing else.
+// The Intranet's capture door. Intelligence only (founder, 2026-11-16): a
+// Teams grab, a transcript or a paste sent here is kept in the brain as
+// Intranet docs and read for what it says, and it never files onto an
+// account. The account door is the row's own Chute on the HomeRoom; the top
+// Chutes on the HomeRoom and the Intranet keep what they are given here too,
+// apart from the two feeds that split across the book (the weekly Salesforce
+// export and the Sales Navigator grab), which the Chute files itself. This
+// replaces the 2026-09-25 rule (P2) that routed a capture naming an account
+// through the paste pipeline.
 //
-// The capture files when routing is sure. One box holds a disputed or unsure
-// file at every door (CLAUDE.md, The held file and the receipt, ship order
-// 2026-10-06), so both are held here: a dispute from either of the guard's
-// rungs (slice 18a), and an unsure route, where the router finds candidate
-// accounts and no sure one (ordered 2026-10-06). Nothing writes here. The
-// reply carries what the held row needs: for a dispute, the routed account
-// and the verdict; for an unsure route, the candidates by id, name and rung
-// (D13). The Send-it box hands them to the Chute mounted above it, whose
-// held box files the pick through roomPaste with the intranet door. The
-// held box's ✕ comes back through intranetKeep, which takes the brain's own
-// road with no route and no filing. A capture that names no account takes
-// that road straight away (P2). The words are the pure half's
-// (src/lib/intranet/capture-door.ts).
-//
-// This is the one module on the Intranet that writes to the record. The
+// This is the one module on the Intranet that writes captures. The
 // ask-and-answer half (actions.ts) still writes only to the Intranet's own
 // tables, and the import-graph test keeps it that way.
 
-import { roomPaste } from "@/app/room/actions";
 import { dockRefuses } from "@/app/intranet/grab";
 import { getAppAccess } from "@/lib/auth";
 import { getPrisma, hasDatabaseEnv } from "@/lib/db";
-import { routeText } from "@/lib/ingest/route";
 import {
-  captureVerdict,
-  filedLine,
-  heldLine,
-  keptLine,
-  type HeldCandidate,
-} from "@/lib/intranet/capture-door";
+  TEXT_UNFINISHED,
+  takeTextPiece,
+  textPieceBytes,
+  type TextStaged,
+} from "@/lib/ingest/carry";
+import { keptLine } from "@/lib/intranet/capture-door";
 import {
   normalizeCapture,
   unseenMessages,
@@ -63,26 +46,12 @@ export type CaptureReply = {
   ok: boolean;
   receipt: string;
   /** What just landed in the brain, so the room can read it immediately
-   *  (IV.3). Empty when the capture filed to the record instead: nothing of
-   *  it waits in the brain to be read, the sweep mirrors it. */
+   *  (IV.3). Set on every capture the brain keeps, a repeat included. */
   captureId: string;
-  /** Provenance for the sent stamp (V): where the paste came from, or the
-   *  account it filed to. */
+  /** Provenance for the sent stamp (V): where the paste came from. */
   space: string;
   origin: string;
   reason?: string;
-  /** Set when the capture is held, for the Chute mounted above the Send-it
-   *  box to hold. A dispute (slice 18a) carries the account the route chose
-   *  and the guard's verdict; an unsure route (ordered 2026-10-06) carries
-   *  the router's candidates, which the held row offers as its choices. The
-   *  text stays with the client that sent it, and the roster never travels
-   *  (D13). */
-  held?:
-    | {
-        account: { id: string; name: string };
-        mismatch: NonNullable<Awaited<ReturnType<typeof roomPaste>>["mismatch"]>;
-      }
-    | { candidates: HeldCandidate[] };
 };
 
 const refused = (reason: string): CaptureReply => ({
@@ -94,17 +63,14 @@ const refused = (reason: string): CaptureReply => ({
   reason,
 });
 
-/** Take a grab or a paste. Routed first: a capture that names an account
- *  files through the pipeline, or is held in the Chute when the guard
- *  disputes it or the route is unsure, and never becomes an Intranet doc on
- *  the way (P2). The rest takes the brain's own road, where redaction
- *  happens inside normalizeCapture, before the first write — there is no
- *  pre-redaction text to leak. With `keep`, the capture takes the brain's
- *  road straight away: the held box's ✕ on a held capture (slice 18a). */
+/** Take a grab or a paste and keep it in the brain: an Intranet doc the
+ *  brain reads, never a filing on an account (founder, 2026-11-16).
+ *  Redaction happens inside normalizeCapture, before the first write, so
+ *  there is no pre-redaction text to leak. A Sales Nav grab is refused here
+ *  and belongs to the Chute, which splits it onto its accounts. */
 export async function intranetCapture(
   raw: string,
   originHint?: "teams" | "meeting" | "demo" | "paste",
-  opts?: { keep?: boolean },
 ): Promise<CaptureReply> {
   if (!(await canWrite())) return refused("Read-only session.");
   const text = (raw ?? "").trim();
@@ -118,61 +84,11 @@ export async function intranetCapture(
 
   const cap = normalizeCapture(text, { origin: originHint });
 
-  let kept = keptLine();
-  if (!opts?.keep) {
-    // The route, on the server over the joined roster (D13, C2). The raw
-    // text routes, as a dropped file's does: the addresses are the
-    // strongest rung.
-    const verdict = captureVerdict(await routeText(text));
-    kept = verdict.file ? "" : verdict.line;
-    if (verdict.file) {
-      // The pipeline the Chute files through, with this door's name (D1,
-      // P3). Its guard runs both rungs; its duplicate check is per account.
-      const r = await roomPaste(verdict.account.id, text, { door: "intranet" });
-      if (r.ok)
-        return {
-          ok: true,
-          receipt: filedLine(verdict.account.name, r.readFailed),
-          captureId: "",
-          space: verdict.account.name,
-          origin: cap.origin,
-        };
-      if (r.duplicate)
-        return {
-          ok: true,
-          receipt: r.reason ?? "Already on file. Nothing filed twice.",
-          captureId: "",
-          space: verdict.account.name,
-          origin: cap.origin,
-        };
-      if (!r.mismatch) return refused(r.reason ?? "That didn't land.");
-      // A dispute at either rung is held, never written here (slice 18a):
-      // the Send-it box hands the verdict to the Chute mounted above it,
-      // and its line says where the capture waits.
-      return {
-        ok: true,
-        receipt: heldLine(),
-        captureId: "",
-        space: "",
-        origin: cap.origin,
-        held: { account: verdict.account, mismatch: r.mismatch },
-      };
-    }
-    // An unsure route is held the way a dispute is (ordered 2026-10-06): the
-    // router found candidate accounts and no sure one, so nothing writes
-    // here until the operator's pick in the Chute, or the ✕ that brings it
-    // back down the brain's road. The candidates travel as ids, names and
-    // rungs (D13).
-    if (verdict.hold)
-      return {
-        ok: true,
-        receipt: verdict.line,
-        captureId: "",
-        space: "",
-        origin: cap.origin,
-        held: { candidates: verdict.candidates },
-      };
-  }
+  // Intelligence only (founder, 2026-11-16): a capture at the Intranet,
+  // whether the Send-it box, a Teams grab or a top Chute drop, is kept in
+  // the brain and never routed onto an account. The row's own Chute is the
+  // account door.
+  const kept = keptLine();
 
   try {
     const prisma = getPrisma();
@@ -272,10 +188,28 @@ export async function intranetCapture(
   }
 }
 
-/** The held box's ✕ on a held Send-it capture, disputed (slice 18a) or
- *  unsure (ordered 2026-10-06): the capture files on no account and takes
- *  the brain's own road, an Intranet doc the brain reads on its next pass
- *  (P2: what is not filed is never inbound). */
+/** Keep a text in the brain: the top Chute's own keep (founder,
+ *  2026-11-16) and the held box's ✕ on a row's Drop. It is the capture
+ *  itself, which never files onto an account. */
 export async function intranetKeep(raw: string): Promise<CaptureReply> {
-  return intranetCapture(raw, undefined, { keep: true });
+  return intranetCapture(raw);
+}
+
+/** One piece of a text too heavy for one request, on its way to the keep
+ *  (D4): the pieces stage in the vault's chunk store, and the piece that
+ *  makes the set whole keeps the whole text and answers with the keep's own
+ *  reply. The Chute sends a text this way through carryText. */
+export async function intranetKeepPiece(
+  key: string,
+  index: number,
+  total: number,
+  form: FormData,
+): Promise<TextStaged | CaptureReply> {
+  if (!(await canWrite())) return refused("Read-only session.");
+  return takeTextPiece(
+    getPrisma(),
+    { key, index, total, bytes: await textPieceBytes(form) },
+    (text) => intranetCapture(text),
+    refused(TEXT_UNFINISHED),
+  );
 }

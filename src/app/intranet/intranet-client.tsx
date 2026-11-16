@@ -30,7 +30,6 @@ import {
   intranetPassage,
 } from "./actions";
 import { intranetCapture } from "./capture-actions";
-import { SEND_IT_LABEL, handToChute } from "../room/ingest/hand-off";
 import type { RunReport } from "./runners";
 import { cleanAskText } from "@/lib/ask/clean";
 import { SELECTION_DOT, selectionDot } from "./selection";
@@ -273,60 +272,10 @@ export function IntranetClient({
         setReceipt(r.reason ?? "That didn't land.");
         return;
       }
-      // A capture the guard disputed, or one the route found no sure match
-      // for, is held in the Chute mounted above this box, with the same held
-      // box every door uses (slice 18a; the unsure route ordered 2026-10-06):
-      // the text goes from here to there in the browser, the verdict or the
-      // candidates came from the server, and the pick files it through the
-      // pipeline with the intranet door. This box keeps its own line, which
-      // says where the capture waits.
-      if (r.held)
-        handToChute({
-          filename: SEND_IT_LABEL,
-          text: sent,
-          door: "intranet",
-          ...("candidates" in r.held
-            ? // Unsure: the held row offers the route's candidates.
-              { candidates: r.held.candidates }
-            : {
-                account: r.held.account,
-                claim: r.held.mismatch.claim,
-                verdict: {
-                  rung: r.held.mismatch.rung,
-                  reason: r.held.mismatch.reason,
-                  why: r.held.mismatch.why,
-                  boundWhy: r.held.mismatch.boundWhy,
-                  reasonBy: r.held.mismatch.reasonBy,
-                  claimId: r.held.mismatch.claimId,
-                  candidates: r.held.mismatch.candidates,
-                },
-              }),
-        });
       setReceipt("");
       setPaste("");
       const id = `fed-${Date.now()}`;
       const at = new Date().toISOString();
-      // A capture that named an account filed to the record through the
-      // pipeline (P2): nothing of it waits here to be read, the sweep mirrors
-      // it. The receipt line is the whole entry, and the rail refreshes.
-      if (!r.captureId) {
-        setLive((l) => [
-          {
-            kind: "fed",
-            id,
-            at,
-            space: r.space,
-            title: "",
-            origin: r.origin,
-            lines: [r.receipt],
-            briefs: [],
-            detail: [],
-          },
-          ...l,
-        ]);
-        router.refresh();
-        return;
-      }
       setLive((l) => [
         {
           kind: "fed",

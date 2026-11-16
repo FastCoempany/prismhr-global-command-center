@@ -82,8 +82,11 @@ export function receiptCaveats(r: LedgerRow): string[] {
     filed && r.degraded ? READER_DOWN : "",
     // A failed backup under a filing says why, and so does one under a
     // filing that failed (pass 8 call 8); a backup that was the whole filing
-    // says it on its own line instead.
-    (filed || r.state === "error") && r.vault?.bad ? r.vault.text : "",
+    // says it on its own line instead. A kept file's backup failure says so
+    // under the keep (founder, 2026-11-16: the top Chute keeps, never files).
+    (filed || r.state === "error" || r.state === "kept") && r.vault?.bad
+      ? r.vault.text
+      : "",
     r.note ?? "",
   ].filter(Boolean);
 }
@@ -424,10 +427,27 @@ export function ReceiptLine({
       );
       break;
     case "unfiled":
-      line = `⇪ Not filed. Backed up. · ${name}${day}`;
+      // The backup's door rides this line too: an unreadable file the top
+      // Chute backed up has nothing else to open (2026-11-16).
+      line = (
+        <>
+          {`⇪ Not filed. Backed up. · ${name}${day}`}
+          <OpenLink url={row.vault?.url} />
+        </>
+      );
       break;
     case "kept":
-      line = `Not filed. Kept in the brain. · ${name}${day}`;
+      // The top Chute's own keep carries its receipt and the read's line; the
+      // held box's ✕ carries none (founder, 2026-11-16).
+      // A kept file's backup brings its door once it lands.
+      line = (
+        <>
+          {`${row.reason || "Not filed. Kept in the brain."} · ${name}${day}`}
+          {row.vault && !row.vault.bad && !row.vault.going && (
+            <OpenLink url={row.vault.url} />
+          )}
+        </>
+      );
       break;
     case "error":
       line = `${name} · ${row.reason ?? ""}`;
@@ -452,6 +472,8 @@ export function ReceiptLine({
   // the backup's own failure on the amber line.
   const failedBackup =
     row.state === "error" && row.vault && !row.vault.bad ? row.vault : null;
+  // A kept file's backup in flight says so beneath the keep.
+  const keptBackup = row.state === "kept" && row.vault?.going ? row.vault : null;
   return (
     <>
       <div className={styles.rcptRow}>
@@ -479,6 +501,7 @@ export function ReceiptLine({
           )}
         </p>
       )}
+      {keptBackup && <p className={styles.rcptQuiet}>⇪ {keptBackup.text}</p>}
       {settled && caveat}
     </>
   );
