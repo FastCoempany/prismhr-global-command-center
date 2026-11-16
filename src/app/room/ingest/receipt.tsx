@@ -427,7 +427,14 @@ export function ReceiptLine({
       );
       break;
     case "unfiled":
-      line = `⇪ Not filed. Backed up. · ${name}${day}`;
+      // The backup's door rides this line too: an unreadable file the top
+      // Chute backed up has nothing else to open (2026-11-16).
+      line = (
+        <>
+          {`⇪ Not filed. Backed up. · ${name}${day}`}
+          <OpenLink url={row.vault?.url} />
+        </>
+      );
       break;
     case "kept":
       // The top Chute's own keep carries its receipt and the read's line; the

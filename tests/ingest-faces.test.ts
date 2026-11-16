@@ -798,6 +798,16 @@ describe("the ✕ files nothing and still backs the file up", () => {
     });
     assert.ok(textOf(bad).includes("The backup failed. Drop it again."));
     assert.ok(!bad.includes("href="), "a failed backup has no door");
+    // An unreadable file the top Chute backed up opens to its backup.
+    const unfiled = await receiptLine({
+      key: 7,
+      filename: "call.mp4",
+      state: "unfiled",
+      day: "11/16",
+      vault: { text: "Backed up.", url: "https://github.com/x/y/blob/main/call.mp4" },
+    });
+    assert.ok(textOf(unfiled).startsWith("⇪ Not filed. Backed up. · call.mp4 · 11/16"));
+    assert.ok(unfiled.includes('href="https://github.com/x/y/blob/main/call.mp4"'));
   });
 });
 
