@@ -774,6 +774,30 @@ describe("the ✕ files nothing and still backs the file up", () => {
       ),
       "Not filed. Kept in the brain. · Send-it paste · 10/6 ✕",
     );
+    // A kept file's backup shows on its receipt: in flight beneath it, its
+    // door once it lands, and its failure on the amber line.
+    const kept = {
+      key: 6,
+      filename: "Teams thread.txt",
+      state: "kept" as const,
+      day: "11/16",
+    };
+    const going = await receiptLine({
+      ...kept,
+      vault: { text: "Backing up Teams thread.txt… 1 of 2", going: true },
+    });
+    assert.ok(textOf(going).includes("⇪ Backing up Teams thread.txt… 1 of 2"));
+    const landed = await receiptLine({
+      ...kept,
+      vault: { text: "Backed up.", url: "https://github.com/x/y/blob/main/f" },
+    });
+    assert.ok(landed.includes('href="https://github.com/x/y/blob/main/f"'), "the door");
+    const bad = await receiptLine({
+      ...kept,
+      vault: { text: "The backup failed. Drop it again.", bad: true },
+    });
+    assert.ok(textOf(bad).includes("The backup failed. Drop it again."));
+    assert.ok(!bad.includes("href="), "a failed backup has no door");
   });
 });
 
