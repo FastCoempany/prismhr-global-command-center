@@ -254,6 +254,8 @@
       "X Mail, call transcripts, Teams threads, sheets, documents and pasted text read here in the browser. PDFs and images go to the reader. What you drop here is kept in the Intranet's memory and read for its facts, decisions and questions. It never files onto an account. To file onto an account, use that row's own Chute. Two feeds still split across your accounts: the weekly Salesforce activity export and the Sales Navigator grab. Nothing is kept twice. Every file is backed up whole in git. The day's receipts survive a reload.",
       "X No earlier drop came back.",
       "X Reading it now…",
+      "X X Reading the rest…",
+      "X X The Intranet reads the rest on its next pass.",
       "X filed",
       "X held",
       "X reading",

@@ -491,13 +491,52 @@ export function Chute({ canWrite }: { canWrite: boolean }) {
     })
       .then(
         (res) =>
-          res.json() as Promise<{ ok?: boolean; lines?: string[]; reason?: string }>,
+          res.json() as Promise<{
+            ok?: boolean;
+            lines?: string[];
+            reason?: string;
+            pending?: number;
+          }>,
       )
       .catch(() => null);
     const read = g?.ok
       ? (g.lines?.[0] ?? "Read.")
       : "The Intranet reads it on its next pass.";
-    patch(key, { reason: `${r.receipt} ${read}` });
+    // A capture bigger than one pass leaves documents unread. The rest is
+    // read the way Send-it reads it: catch-up passes on the Intranet's run
+    // route until nothing is pending, another run holds the room, or a pass
+    // fails, which leaves the rest for the Intranet's next pass.
+    let left = g?.ok ? (g.pending ?? 0) : 0;
+    if (left > 0) {
+      patch(key, { reason: `${r.receipt} ${read} Reading the rest…` });
+      for (let pass = 0; pass < 60 && left > 0; pass += 1) {
+        const c = await fetch("/intranet/run", {
+          method: "POST",
+          cache: "no-store",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ sweep: false }),
+        })
+          .then((res) =>
+            res.ok
+              ? (res.json() as Promise<{
+                  ok?: boolean;
+                  busy?: boolean;
+                  halt?: boolean;
+                  pending?: number;
+                }>)
+              : null,
+          )
+          .catch(() => null);
+        if (!c || c.busy || c.halt || !c.ok) break;
+        left = c.pending ?? 0;
+      }
+    }
+    patch(key, {
+      reason:
+        left > 0
+          ? `${r.receipt} ${read} The Intranet reads the rest on its next pass.`
+          : `${r.receipt} ${read}`,
+    });
     // Every page derives on request (D15): on the Intranet the rail, the
     // ledger and the archive read what the keep just added.
     router.refresh();

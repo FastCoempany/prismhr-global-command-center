@@ -149,6 +149,14 @@ describe("the Send-it box's action keeps the capture in the brain and never file
       keepRow.indexOf('fetch("/intranet/read"') < keepRow.indexOf("router.refresh()"),
       "the page re-reads after the read",
     );
+    // A capture bigger than one pass is read to the end, as Send-it's is.
+    assert.match(keepRow, /let left = g\?\.ok \? \(g\.pending \?\? 0\) : 0;/);
+    assert.match(keepRow, /fetch\("\/intranet\/run",[\s\S]*?sweep: false/);
+    assert.match(keepRow, /if \(!c \|\| c\.busy \|\| c\.halt \|\| !c\.ok\) break;/);
+    assert.ok(
+      keepRow.indexOf('fetch("/intranet/run"') < keepRow.indexOf("router.refresh()"),
+      "the page re-reads after the rest is read",
+    );
   });
 
   test("the keep is the capture itself", () => {
