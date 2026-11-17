@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ask Russ Triptych</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Ask Russ: one object on the HomeRoom deal row. Quiet while the prospect
+     has been silent for fewer business days than the threshold, active and
+     pulsing once it is reached. Three structures, one theme, the room's tokens. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input,textarea{font:inherit;color:inherit}
+  button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1280px;margin:0 auto;padding:40px 16px 120px}
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .notes{margin:18px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:72px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+  .sim{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;border:1px dashed var(--quiet);border-radius:8px;padding:8px 12px;background:var(--surface);font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--soft)}
+  .sim input[type=range]{flex:1;min-width:140px;accent-color:var(--ink)}
+
+  /* the HomeRoom row, drawn as the F26 face draws it */
+  .board{background:var(--field);border:1px solid var(--hair-soft);border-radius:12px;padding:16px 18px 18px}
+  .row{background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;padding:16px 18px;position:relative}
+  .sentence{font:400 15px/1.5 var(--sans);color:var(--soft);margin:0}
+  .sentence b{font:400 20px/1.2 var(--serif);color:var(--ink);margin-right:6px}
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .moverow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .move{font:600 16px/1.4 var(--sans)}
+  .why{font-size:13px;color:var(--soft)}
+  .done{border:1.5px solid var(--green);color:#15803d;border-radius:8px;padding:6px 12px;font:600 13.5px/1 var(--sans);background:var(--surface)}
+  .rule{width:1px;height:20px;background:var(--hair)}
+  .chute{font:600 13.5px/1 var(--sans);color:var(--soft)}
+  .ghostrow{height:46px;border-radius:10px;background:var(--surface);border:1px solid var(--hair-soft);margin-top:10px;display:flex;align-items:center;padding:0 14px;gap:10px;color:var(--faint);font-size:13px}
+  .ghostrow b{font:400 16px/1 var(--serif);color:var(--soft)}
+
+  /* the counter's color is set inline from the gradient; .live adds the pulse */
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}70%{box-shadow:0 0 0 9px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+  .live{animation:pulse 1.6s ease-out infinite}
+  @media (prefers-reduced-motion:reduce){.live{animation:none}}
+
+  /* the threshold widget, shared */
+  .tune{display:inline-flex;align-items:center;gap:8px;font:600 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .tune button{border:1px solid var(--hair);border-radius:5px;width:22px;height:22px;display:inline-grid;place-items:center;color:var(--soft);background:var(--surface)}
+  .tune .reset{width:auto;padding:0 7px}
+  .tune output{color:var(--ink);min-width:12px;text-align:center}
+
+  /* the draft, shared */
+  .draft{display:none;margin-top:14px;border-top:1px solid var(--hair-soft);padding-top:12px}
+  .draft.open{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:26px}
+  @media (max-width:880px){.draft.open{grid-template-columns:1fr}}
+  .field{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--hair-soft);min-height:38px}
+  .field input{border:0;background:transparent;padding:7px 0;min-width:0;width:100%}
+  .field input:focus{outline:none}
+  .body{width:100%;min-height:290px;border:0;background:transparent;resize:vertical;padding:10px 0;line-height:1.55;font-size:14px}
+  .body:focus{outline:none}
+  .modes{display:inline-flex;border:1px solid var(--hair);border-radius:99px;padding:2px;margin-bottom:8px}
+  .modes button{font:700 9px/1 var(--mono);letter-spacing:.12em;padding:6px 10px;border-radius:99px;color:var(--faint)}
+  .modes button[aria-pressed=true]{background:var(--ink);color:#fff}
+  .foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .dl{background:var(--orange);color:#fff;font:600 14.5px/1 var(--sans);border-radius:8px;padding:11px 16px}
+  .quietbtn{font:600 13px/1 var(--sans);color:var(--soft)}
+  .metercap{font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .receipt{margin-top:12px;font:600 10.5px/1.6 var(--mono);letter-spacing:.06em;color:var(--soft);border:1px solid var(--hair-soft);border-radius:8px;padding:8px 10px;display:none;align-items:baseline;gap:10px;flex-wrap:wrap;background:var(--field)}
+  .receipt.on{display:flex}
+  .receipt .ok{color:#15803d}
+  .receipt button{margin-left:auto;color:var(--faint)}
+  .item{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:start;padding:7px 0;border-bottom:1px solid var(--hair-soft);font-size:13px}
+  .item input{margin-top:4px;accent-color:var(--ink)}
+  .item .src{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue);display:block}
+  .item .nm{font-weight:600}
+  .item .sz{font:600 10.5px/1.6 var(--mono);color:var(--faint);white-space:nowrap}
+  .inside{grid-column:2/4;margin:4px 0 0;padding:0;list-style:none}
+  .inside li{display:flex;gap:10px;font-size:12px;color:var(--soft);padding:1px 0}
+  .inside .t{font:600 10px/1.6 var(--mono);color:var(--faint);width:38px;flex:none}
+  .inside button{margin-left:auto;font:600 9.5px/1.6 var(--mono);letter-spacing:.08em;color:var(--blue);white-space:nowrap}
+  .grp{margin-top:10px}
+  .yours{display:block;cursor:pointer;border:1.5px dashed var(--quiet);border-radius:10px;padding:12px;text-align:center;font-size:13px;color:var(--soft);margin-top:10px}
+
+  /* Concept A: a chip at the end of the move row */
+  .chipA{display:inline-flex;align-items:center;gap:8px;border:1.5px solid currentColor;border-radius:99px;padding:5px 11px 5px 7px;font:700 10px/1 var(--mono);letter-spacing:.12em;background:var(--surface);margin-left:auto}
+  .chipA .n{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:50%;color:#fff;font:700 11px/1 var(--mono)}
+  .chipA[aria-disabled=true]{cursor:default}
+  .chipA .tunewrap{display:none}
+  .popA{display:none;position:absolute;right:18px;top:100%;margin-top:6px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(10,28,64,.08);z-index:5;font-size:12.5px;color:var(--soft);max-width:300px}
+  .popA.open{display:block}
+  .moveA{position:relative}
+
+  /* Concept B: a business-day strip across the top edge of the row */
+  .stripB{display:grid;gap:3px;margin:-16px -18px 12px;padding:0;border-radius:12px 12px 0 0;overflow:hidden}
+  .stripB i{height:6px;background:var(--hair-soft)}
+  .stripB.live{animation:none}
+  .stripB.live i{animation:fade 1.6s ease-in-out infinite}
+  @keyframes fade{50%{opacity:.45}}
+  @media (prefers-reduced-motion:reduce){.stripB.live i{animation:none}}
+  .lineB{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--hair-soft)}
+  .lineB .k{font:700 9px/1.4 var(--mono);letter-spacing:.2em}
+  .lineB .t{font-size:13.5px;color:var(--soft)}
+  .lineB .go{font:600 13.5px/1 var(--sans);border:1.5px solid var(--ink);border-radius:8px;padding:7px 12px;background:var(--surface)}
+  .lineB .go[disabled]{border-color:var(--quiet);color:var(--faint);cursor:default}
+
+  /* Concept C: a counter that owns the row's right corner */
+  .rowC{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:18px}
+  @media (max-width:560px){.rowC{grid-template-columns:1fr}}
+  .cornerC{border-left:1px solid var(--hair-soft);padding-left:16px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+  @media (max-width:560px){.cornerC{border-left:0;padding-left:0;border-top:1px solid var(--hair-soft);padding-top:10px}}
+  .bigC{font:500 44px/1 var(--mono);letter-spacing:-.02em;border-radius:10px;padding:2px 6px;margin-left:-6px}
+  .ofC{font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .goC{font:600 13.5px/1 var(--sans);border:1.5px solid var(--ink);border-radius:8px;padding:8px 12px;background:var(--surface);margin-top:4px}
+  .goC[disabled]{border-color:var(--quiet);color:var(--faint);cursor:default}
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom overhaul · Ask Russ · Triptych · 2026-11-17</p>
+<h1>Ask Russ when a prospect goes quiet</h1>
+<p class="lede">One object on the deal row. It stays quiet while the prospect has been silent for fewer business days than the threshold, then turns red and pulses. Its one action drafts an email, attaches anything from the library, and downloads an Outlook file while saving that same file to the account's record. Nothing here ships until you give a ship order.</p>
+<ul class="notes">
+  <li><b>What the counter counts.</b> Business days in Chicago since our last send, with weekends left out. Any substantive reply from their side resets it on its own. A sign-off like "thanks!" does not, under the closer rule.</li>
+  <li><b>The threshold.</b> Five business days by default. − and + change it for this account, and ↺ restarts the count from today when you know why they are quiet.</li>
+  <li><b>One press, two results.</b> "Download for Outlook" saves an .eml file to your computer and files the same email on the account's record, with the file backed up under accounts/&lt;Account&gt;/. The receipt says both happened.</li>
+  <li><b>Open question: who is the draft to?</b> All three concepts default to an email to Russ that carries a ready note he can forward to the prospect. Concept B also shows the other way, where the draft is the note itself, addressed to the prospect, for Russ to send from his own mailbox.</li>
+  <li><b>Color.</b> Quiet ink at day 0, amber as it nears the threshold, red at the threshold. Red because a prospect going silent is a real risk; orange stays the one move, the download button.</li>
+</ul>
+
+<!-- ═════════════════════════ A ═════════════════════════ -->
+<section>
+  <p class="kick">Concept A</p>
+  <h2>A chip at the end of the move</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it sits.</b> On the move row, after Mark it done and the Chute, as a small chip with the count in a dot. It takes no new line on the row.</li>
+    <li><b>How it reads.</b> The dot fills with the gradient color. At the threshold the chip pulses and opens the draft below the move row. The threshold widget opens from the chip's ⋯.</li>
+    <li><b>Cost.</b> It is the smallest of the three, so a busy row can hide it until it pulses.</li>
+  </ul>
+  <div class="sim">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="3" data-sim="A"><output data-simout="A">3</output></div>
+  <div class="board">
+    <div class="row" id="A">
+      <p class="sentence"><b>Simploy</b> resells contractor management to one client in India. <span class="sample">SAMPLE</span></p>
+      <div class="moverow moveA">
+        <span class="lbl">NEXT MOVE</span>
+        <span class="move">Follow up on the demo.</span>
+        <button class="done">Mark it done</button>
+        <span class="rule"></span>
+        <button class="chute">Latest email and Chute</button>
+        <span class="chipA" data-chip>
+          <span class="n" data-n></span><span data-chiplbl>ASK RUSS</span>
+          <button data-more aria-label="Change the count" style="color:var(--faint);font-size:14px;line-height:1">⋯</button>
+        </span>
+        <div class="popA" data-pop>
+          <p style="margin:0 0 8px">Silent since your send on 11/10.</p>
+          <span class="tune"><span>ASK AT</span><button data-dec>−</button><output data-thr></output><button data-inc>+</button><span>DAYS</span><button class="reset" data-reset>↺ RESTART</button></span>
+        </div>
+      </div>
+      <div class="draft" data-draft></div>
+    </div>
+    <div class="ghostrow"><b>Infiniti HR</b> NEXT MOVE · Wait on Tom. Promised Friday.</div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ B ═════════════════════════ -->
+<section>
+  <p class="kick">Concept B</p>
+  <h2>A strip of days across the row's top edge</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it sits.</b> A thin bar along the top edge of the row, one segment per business day up to the threshold, plus a line of its own under the move row: "ASK RUSS" with the reason and a Draft email button that stays greyed until the threshold.</li>
+    <li><b>How it reads.</b> Each silent day lights its segment in the gradient color, so you see how close it is from across the room. At the threshold the strip breathes and the button wakes.</li>
+    <li><b>The other way to write it.</b> The draft here has a switch: TO RUSS, the default, or AS THE NOTE, addressed to the prospect for Russ to send himself.</li>
+  </ul>
+  <div class="sim">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="5" data-sim="B"><output data-simout="B">5</output></div>
+  <div class="board">
+    <div class="row" id="B">
+      <div class="stripB" data-strip></div>
+      <p class="sentence"><b>Simploy</b> resells contractor management to one client in India. <span class="sample">SAMPLE</span></p>
+      <div class="moverow">
+        <span class="lbl">NEXT MOVE</span>
+        <span class="move">Follow up on the demo.</span>
+        <button class="done">Mark it done</button>
+        <span class="rule"></span>
+        <button class="chute">Latest email and Chute</button>
+      </div>
+      <div class="lineB">
+        <span class="k" data-k>ASK RUSS</span>
+        <span class="t" data-t></span>
+        <button class="go" data-go>Draft email</button>
+        <span class="tune" style="margin-left:auto"><span>ASK AT</span><button data-dec>−</button><output data-thr></output><button data-inc>+</button><button class="reset" data-reset>↺ RESTART</button></span>
+      </div>
+      <div class="draft" data-draft></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ C ═════════════════════════ -->
+<section>
+  <p class="kick">Concept C</p>
+  <h2>A counter that owns the row's corner</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it sits.</b> A column of its own at the row's right edge: the day count as a large number, the threshold beneath it, and the button.</li>
+    <li><b>How it reads.</b> The number itself takes the gradient color and pulses at the threshold. It is the easiest to read at a glance and the most room it takes.</li>
+    <li><b>The draft.</b> It opens across the full row, with the letter on the left and the library on the right.</li>
+  </ul>
+  <div class="sim">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="6" data-sim="C"><output data-simout="C">6</output></div>
+  <div class="board">
+    <div class="row" id="C">
+      <div class="rowC">
+        <div>
+          <p class="sentence"><b>Simploy</b> resells contractor management to one client in India. <span class="sample">SAMPLE</span></p>
+          <div class="moverow">
+            <span class="lbl">NEXT MOVE</span>
+            <span class="move">Follow up on the demo.</span>
+            <button class="done">Mark it done</button>
+            <span class="rule"></span>
+            <button class="chute">Latest email and Chute</button>
+          </div>
+        </div>
+        <div class="cornerC">
+          <span class="lbl">ASK RUSS</span>
+          <span class="bigC" data-big></span>
+          <span class="ofC" data-of></span>
+          <span class="tune"><button data-dec>−</button><output data-thr></output><button data-inc>+</button><button class="reset" data-reset>↺</button></span>
+          <button class="goC" data-go>Draft email</button>
+        </div>
+      </div>
+      <div class="draft" data-draft></div>
+    </div>
+  </div>
+</section>
+
+<p class="notes" style="margin-top:56px;list-style:none;padding:0;font-size:12.5px;color:var(--faint)">Sample data throughout: the deal sentence, the silence and the note are made up to show the behavior. The .eml the mockup downloads lists the chosen files by name; the real one carries them.</p>
+</main>
+
+<script>
+(() => {
+  const MB = 1_000_000;
+  const size = b => b < MB ? Math.round(b/1000) + " KB" : (b/MB).toFixed(1) + " MB";
+  const LIB = [
+    { id:"listo", grp:"THE DEMO", src:"LISTO PLATFORM", name:"The whole platform demo", runs:"41:03", bytes:4_880_000,
+      inside:[["0:00","Into Global Payroll from PrismHR"],["5:57","Invoices, reseller and referral"],["12:57","Payroll: pay periods and gross to net"],["20:12","Adding a new employee, EOR"],["33:12","Contractor pay and support"]] },
+    { id:"op-all", grp:"ONE-PAGERS", src:"ONE-PAGER", name:"PrismHR Global at a glance", bytes:103_508 },
+    { id:"op-eor", grp:"ONE-PAGERS", src:"ONE-PAGER", name:"Employer of record", bytes:478_578 },
+    { id:"op-gp", grp:"ONE-PAGERS", src:"ONE-PAGER", name:"Global payroll", bytes:432_923 },
+    { id:"op-con", grp:"ONE-PAGERS", src:"ONE-PAGER", name:"Contractor solutions", bytes:421_035 },
+    { id:"op-tal", grp:"ONE-PAGERS", src:"ONE-PAGER", name:"Talent", bytes:491_901 },
+    { id:"ag-res", grp:"AGREEMENTS", src:"AGREEMENT · REVIEW COPY", name:"Reseller agreement", bytes:138_013 },
+    { id:"ag-ref", grp:"AGREEMENTS", src:"AGREEMENT · REVIEW COPY", name:"Referral agreement", bytes:48_474 },
+  ];
+  const NOTE = "Hi Chassie,\n\nI lead sales for PrismHR Global. Antaeus sent you the demo on November 10. If a short call with the two of us would help your team decide, I'm glad to set one up this week or next.\n\nRuss";
+  const TO_RUSS = "Russ,\n\nChassie at Simploy has been quiet since I sent the demo on 11/10. Could you send her the note below from your inbox? It's ready to go as is.\n\n---\n\n" + NOTE;
+
+  // Gradient: quiet ink at 0, amber near the threshold, red at it.
+  const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  const INK = [196, 202, 214], AMBER = [245, 158, 11], RED = [239, 68, 68];
+  function color(d, thr){
+    if (d >= thr) return `rgb(${RED})`;
+    const t = d / thr;
+    return t < .6 ? `rgb(${mix(INK, AMBER, t / .6)})` : `rgb(${mix(AMBER, RED, (t - .6) / .4 * .55)})`;
+  }
+
+  function draftHTML(key, modes){
+    return `<div>
+      ${modes ? `<div class="modes"><button aria-pressed="true" data-mode="russ">TO RUSS</button><button aria-pressed="false" data-mode="note">AS THE NOTE</button></div>` : ""}
+      <div class="field"><span class="lbl">To</span><input data-to value="Russ Jones"></div>
+      <div class="field"><span class="lbl">Subject</span><input data-subj value="A note for Chassie at Simploy"></div>
+      <textarea class="body" data-body></textarea>
+      <div class="foot">
+        <button class="dl" data-dl>Download for Outlook</button>
+        <button class="quietbtn" data-close>Close</button>
+        <span class="metercap" data-cap></span>
+      </div>
+      <div class="receipt" data-receipt></div>
+    </div>
+    <div data-lib></div>`;
+  }
+
+  function setup(root, key, render){
+    const st = { d:+document.querySelector(`[data-sim="${key}"]`).value, thr:5, picked:new Set(), local:[], open:false, mode:"russ" };
+    const draft = root.querySelector("[data-draft]");
+    draft.innerHTML = draftHTML(key, key === "B");
+    const body = draft.querySelector("[data-body]");
+    body.value = TO_RUSS;
+
+    function lib(){
+      let html = "", last = "";
+      LIB.forEach(f => {
+        if (f.grp !== last){ html += `<p class="lbl grp">${f.grp}</p>`; last = f.grp; }
+        html += `<label class="item"><input type="checkbox" data-pick="${f.id}" ${st.picked.has(f.id) ? "checked" : ""}><span><span class="src">${f.src}</span><span class="nm">${f.name}</span></span><span class="sz">${f.runs ? f.runs + " · " : ""}${size(f.bytes)}</span>`;
+        if (f.inside) html += `<ul class="inside">${f.inside.map(([t,l]) => `<li><span class="t">${t}</span>${l}<button type="button" data-ch="${t}" data-l="${l}">+ POINT TO IT</button></li>`).join("")}</ul>`;
+        html += `</label>`;
+      });
+      html += `<label class="yours"><input type="file" multiple hidden data-local><b>＋ From your computer</b><br>Any file.</label>`;
+      draft.querySelector("[data-lib]").innerHTML = html;
+      draft.querySelector("[data-local]").onchange = e => { [...e.target.files].forEach(f => st.local.push({ name:f.name, bytes:f.size })); cap(); };
+    }
+    function cap(){
+      const n = st.picked.size + st.local.length;
+      let total = 0; LIB.forEach(f => { if (st.picked.has(f.id)) total += f.bytes; }); st.local.forEach(f => total += f.bytes);
+      draft.querySelector("[data-cap]").textContent = n ? `${n} FILE${n > 1 ? "S" : ""} · ${size(total)}` : "NO FILES";
+    }
+    function paint(){
+      document.querySelector(`[data-simout="${key}"]`).textContent = st.d;
+      root.querySelectorAll("[data-thr]").forEach(o => o.textContent = st.thr);
+      render(root, st, color(st.d, st.thr), st.d >= st.thr);
+      if (st.d >= st.thr && !st.open && key === "A"){ st.open = true; draft.classList.add("open"); }
+    }
+
+    document.querySelector(`[data-sim="${key}"]`).addEventListener("input", e => { st.d = +e.target.value; paint(); });
+    root.addEventListener("click", e => {
+      const t = e.target;
+      if (t.closest("[data-dec]")){ st.thr = Math.max(1, st.thr - 1); paint(); return; }
+      if (t.closest("[data-inc]")){ st.thr = Math.min(20, st.thr + 1); paint(); return; }
+      if (t.closest("[data-reset]")){ st.d = 0; document.querySelector(`[data-sim="${key}"]`).value = 0; st.open = false; draft.classList.remove("open"); paint(); return; }
+      if (t.closest("[data-more]")){ root.querySelector("[data-pop]").classList.toggle("open"); return; }
+      const go = t.closest("[data-go]");
+      if (go && !go.disabled){ st.open = !st.open; draft.classList.toggle("open", st.open); return; }
+      const chip = t.closest("[data-chip]");
+      if (chip && st.d >= st.thr && !t.closest("[data-more]")){ st.open = !st.open; draft.classList.toggle("open", st.open); return; }
+      if (t.closest("[data-close]")){ st.open = false; draft.classList.remove("open"); return; }
+      const ch = t.closest("[data-ch]");
+      if (ch){ e.preventDefault(); st.picked.add("listo"); body.value = body.value.replace(/\s*(Russ)?\s*$/, m => `\n\nAt ${ch.dataset.ch}, ${ch.dataset.l.charAt(0).toLowerCase()}${ch.dataset.l.slice(1)}.` + m); ch.textContent = "IN THE EMAIL"; ch.style.color = "var(--faint)"; draft.querySelector('[data-pick="listo"]').checked = true; cap(); return; }
+      const md = t.closest("[data-mode]");
+      if (md){
+        st.mode = md.dataset.mode;
+        draft.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b === md));
+        draft.querySelector("[data-to]").value = st.mode === "russ" ? "Russ Jones" : "Chassie Smith";
+        draft.querySelector("[data-subj]").value = st.mode === "russ" ? "A note for Chassie at Simploy" : "PrismHR Global, a quick offer";
+        body.value = st.mode === "russ" ? TO_RUSS : NOTE;
+        return;
+      }
+      if (t.closest("[data-dl]")){
+        const files = [...LIB.filter(f => st.picked.has(f.id)).map(f => f.name), ...st.local.map(f => f.name)];
+        const eml = [`To: ${draft.querySelector("[data-to]").value}`, `Subject: ${draft.querySelector("[data-subj]").value}`, "X-Unsent: 1", "Content-Type: text/plain; charset=utf-8", "", body.value, "", ...files.map(n => `[Attached: ${n}]`)].join("\r\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([eml], { type:"message/rfc822" }));
+        a.download = "Ask Russ - Simploy.eml"; document.body.appendChild(a); a.click(); a.remove();
+        const r = draft.querySelector("[data-receipt]");
+        r.innerHTML = `<span class="ok">✓</span><span>SIMPLOY · 1 EMAIL FILED · ${files.length} FILE${files.length === 1 ? "" : "S"} · 11/17 · ASK RUSS</span><span style="color:var(--faint)">BACKED UP UNDER ACCOUNTS/SIMPLOY/</span><button data-clear aria-label="Clear">✕</button>`;
+        r.classList.add("on"); return;
+      }
+      if (t.closest("[data-clear]")){ draft.querySelector("[data-receipt]").classList.remove("on"); }
+    });
+    draft.addEventListener("change", e => { const pk = e.target.closest("input[data-pick]"); if (pk){ pk.checked ? st.picked.add(pk.dataset.pick) : st.picked.delete(pk.dataset.pick); cap(); } });
+    lib(); cap(); paint();
+  }
+
+  // A: the chip.
+  setup(document.getElementById("A"), "A", (root, st, c, live) => {
+    const chip = root.querySelector("[data-chip]");
+    chip.style.color = live ? "var(--red)" : "var(--faint)";
+    chip.style.borderColor = live ? "var(--red)" : "var(--hair)";
+    chip.classList.toggle("live", live);
+    chip.style.cursor = live ? "pointer" : "default";
+    const n = root.querySelector("[data-n]"); n.style.background = c; n.textContent = st.d;
+    root.querySelector("[data-chiplbl]").textContent = live ? "ASK RUSS" : `ASK RUSS AT ${st.thr}`;
+  });
+
+  // B: the strip.
+  setup(document.getElementById("B"), "B", (root, st, c, live) => {
+    const strip = root.querySelector("[data-strip]");
+    strip.style.gridTemplateColumns = `repeat(${st.thr},1fr)`;
+    strip.innerHTML = Array.from({ length: st.thr }, (_, i) => `<i style="background:${i < st.d ? color(i + 1, st.thr) : "var(--hair-soft)"}"></i>`).join("");
+    strip.classList.toggle("live", live);
+    const k = root.querySelector("[data-k]"); k.style.color = live ? "var(--red)" : "var(--faint)";
+    root.querySelector("[data-t]").textContent = live ? `Silent ${st.d} business days.` : `Silent ${st.d} of ${st.thr} business days.`;
+    const go = root.querySelector("[data-go]"); go.disabled = !live; go.classList.toggle("live", live);
+    go.style.borderColor = live ? "var(--red)" : ""; go.style.color = live ? "var(--red)" : "";
+  });
+
+  // C: the corner number.
+  setup(document.getElementById("C"), "C", (root, st, c, live) => {
+    const big = root.querySelector("[data-big]"); big.textContent = st.d; big.style.color = c; big.classList.toggle("live", live);
+    root.querySelector("[data-of]").textContent = live ? "BUSINESS DAYS SILENT" : `OF ${st.thr} BUSINESS DAYS`;
+    const go = root.querySelector("[data-go]"); go.disabled = !live;
+    go.style.borderColor = live ? "var(--red)" : ""; go.style.color = live ? "var(--red)" : "";
+  });
+})();
+</script>
+</body>
+</html>

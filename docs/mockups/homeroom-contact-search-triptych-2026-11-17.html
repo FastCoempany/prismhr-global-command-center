@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HomeRoom Contact Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Three looks for one HomeRoom tool: type a name, an address or a company
+     and see the last time you and that person spoke, and which account they
+     belong to, book or not. One theme, the room's own tokens. The concepts
+     differ by structure. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0;text-align:left}
+  input{font:inherit;color:inherit}
+  button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1280px;margin:0 auto;padding:40px 16px 120px}
+
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .notes{margin:18px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:72px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+
+  /* the HomeRoom as it stands, drawn small */
+  .room{background:var(--field);border:1px solid var(--hair-soft);border-radius:12px;overflow:hidden;position:relative}
+  .roomhead{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--hair-soft);flex-wrap:wrap}
+  .roomname{font:700 11px/1 var(--mono);letter-spacing:.3em;color:var(--ink)}
+  .openall{font:700 9.5px/1 var(--mono);letter-spacing:.14em;border:1px solid var(--hair);border-radius:99px;padding:6px 10px;color:var(--soft);background:var(--surface)}
+  .add{font:600 14px/1 var(--sans);background:var(--ink);color:#fff;border-radius:99px;padding:10px 16px}
+  .clock{margin-left:auto;font:500 18px/1 var(--mono);color:var(--faint)}
+  .ghostrows{padding:14px 18px 18px;min-width:0}
+  .ghostrow{height:46px;border-radius:10px;background:var(--surface);border:1px solid var(--hair-soft);margin-top:10px;display:flex;align-items:center;padding:0 14px;gap:10px;color:var(--faint);font-size:13px;overflow:hidden;white-space:nowrap}
+  .ghostrow b{font:400 16px/1 var(--serif);color:var(--soft)}
+
+  /* shared result parts */
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .search{display:flex;align-items:center;gap:8px;border:1px solid var(--hair);background:var(--surface);border-radius:99px;padding:0 14px;min-width:0}
+  .search input{border:0;background:transparent;padding:9px 0;min-width:0;flex:1}
+  .search input:focus{outline:none}
+  .search .glass{color:var(--faint);font-size:14px}
+  .key{font:600 10px/1 var(--mono);color:var(--faint);border:1px solid var(--hair);border-radius:4px;padding:3px 5px}
+  .res{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;padding:10px 12px;border-radius:8px;width:100%}
+  .res:hover,.res[aria-selected=true]{background:var(--blue-soft)}
+  .res .who{font-weight:600;font-size:14.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .res .day{font:600 10.5px/1.8 var(--mono);color:var(--faint);white-space:nowrap;text-align:right}
+  .res .acct{font-size:12.5px;color:var(--soft);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .res .last{grid-column:1/3;font-size:12.5px;color:var(--soft);display:flex;gap:8px;align-items:baseline;min-width:0}
+  .res .last .subj{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .dir{font:700 8.5px/1 var(--mono);letter-spacing:.12em;white-space:nowrap;flex:none}
+  .dir.you{color:var(--soft)} .dir.them{color:var(--blue)} .dir.col{color:var(--faint)}
+  .ch{font:700 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--faint);border:1px solid var(--hair);border-radius:3px;padding:3px 4px;flex:none}
+  .noacct{color:var(--faint);font-style:normal}
+  .ours{font:700 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--faint);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:1px}
+  .norow{font:700 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--amber);margin-left:6px}
+  .empty{font-size:13px;color:var(--soft);padding:12px}
+
+  /* the person, one click deep */
+  .card{padding:14px 16px;min-width:0}
+  .card h3{font:400 22px/1.2 var(--serif);margin:0}
+  .card .acctline{font-size:13px;color:var(--soft);margin:4px 0 0}
+  .card .addr{font:500 12px/1.5 var(--mono);color:var(--faint);margin-top:2px;overflow-wrap:anywhere}
+  .card .acts{display:flex;gap:14px;align-items:center;margin:12px 0 4px;flex-wrap:wrap}
+  .writeto{background:var(--orange);color:#fff;font:600 14px/1 var(--sans);border-radius:8px;padding:10px 16px}
+  .quiet{font:600 13px/1 var(--sans);color:var(--soft)}
+  .xlist{margin:12px 0 0;padding:0;list-style:none;border-top:1px solid var(--hair-soft)}
+  .xlist li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:2px 12px;padding:9px 0;border-bottom:1px solid var(--hair-soft);font-size:13px}
+  .xlist .d{font:600 10.5px/1.7 var(--mono);color:var(--faint)}
+  .xlist .t{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;min-width:0}
+  .xlist .t span.s{min-width:0;overflow-wrap:anywhere}
+  .xlist .g{grid-column:2;color:var(--soft);font-size:12.5px}
+
+  /* Concept A: the search in the header, a dropdown under it */
+  .roomA .searchA{flex:1 1 260px;max-width:420px;position:relative}
+  .dropA{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--hair);border-radius:12px;box-shadow:0 12px 32px rgba(10,28,64,.12);padding:6px;z-index:5;max-height:520px;overflow:auto;display:none}
+  .dropA.open{display:block}
+  @media (max-width:640px){.roomA .searchA{flex-basis:100%;max-width:none;order:9}}
+
+  /* Concept B: the people column beside the rows */
+  .roomB{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr)}
+  @media (max-width:880px){.roomB{grid-template-columns:1fr}}
+  .col{border-right:1px solid var(--hair-soft);background:var(--surface);min-width:0;display:flex;flex-direction:column}
+  @media (max-width:880px){.col{border-right:0;border-bottom:1px solid var(--hair-soft)}}
+  .colhead{padding:14px 14px 8px}
+  .colhead .search{border-radius:8px}
+  .seg{display:flex;gap:12px;margin-top:10px}
+  .seg button{font:700 9px/1 var(--mono);letter-spacing:.14em;color:var(--faint);padding:4px 0;border-bottom:2px solid transparent}
+  .seg button[aria-pressed=true]{color:var(--ink);border-color:var(--ink)}
+  .colbody{padding:0 6px 10px;max-height:560px;overflow:auto}
+  .grp{padding:10px 8px 2px}
+  .back{font:700 9px/1 var(--mono);letter-spacing:.14em;color:var(--blue);padding:12px 16px 0}
+
+  /* Concept C: the palette over the room */
+  .roomC{min-height:560px}
+  .hint{font:600 10.5px/1 var(--mono);letter-spacing:.1em;color:var(--faint);display:flex;gap:6px;align-items:center}
+  .scrim{position:absolute;inset:0;background:rgba(10,28,64,.18);display:none;z-index:6}
+  .scrim.open{display:block}
+  .pal{position:absolute;left:50%;top:60px;transform:translateX(-50%);width:min(860px,calc(100% - 24px));background:var(--surface);border-radius:14px;box-shadow:0 24px 64px rgba(10,28,64,.22);display:none;z-index:7;overflow:hidden}
+  .pal.open{display:block}
+  .palin{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--hair-soft)}
+  .palin input{border:0;flex:1;min-width:0;font-size:18px;background:transparent}
+  .palin input:focus{outline:none}
+  .palgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);min-height:380px}
+  @media (max-width:760px){.palgrid{grid-template-columns:1fr}.palgrid .card{border-left:0;border-top:1px solid var(--hair-soft)}}
+  .pallist{padding:6px;max-height:440px;overflow:auto;min-width:0}
+  .palgrid .card{border-left:1px solid var(--hair-soft);max-height:440px;overflow:auto}
+  .palfoot{display:flex;gap:16px;padding:9px 16px;border-top:1px solid var(--hair-soft);font:600 10px/1 var(--mono);letter-spacing:.08em;color:var(--faint);flex-wrap:wrap}
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom overhaul · Contact search · Triptych · 2026-11-17</p>
+<h1>Find the last time you spoke</h1>
+<p class="lede">One tool, three structures. Type a name, an address or a company, and the HomeRoom shows the last exchange you had with that person, which account they belong to, and every exchange behind it one click down. People outside the book show up too, and say so. Nothing here ships until you give a ship order.</p>
+<ul class="notes">
+  <li><b>Where the people come from.</b> A contact ledger kept from the three mail relays, the sent copy, the inbox copy and the calendar copy, plus every filed note, call and meeting already on the record. Each relayed message adds its people, its day, which way it went, its channel and its subject. Bodies stay where they are filed today.</li>
+  <li><b>The relays will be filtered.</b> Once the flows only pass mail tied to your accounts, a person reaches the ledger only through an account-related exchange. Internal all-company mail never arrives, so the search never fills with it.</li>
+  <li><b>The record already holds enough to start.</b> 103 people are named in the filed record across 30 accounts since July 1, and 11 of them show up on more than one account. The book's roster holds 5,168 contacts across 121 of its 149 accounts. The ledger starts from the record, and the roster only fills in a title or an address the record lacks.</li>
+  <li><b>One person, one line.</b> The record holds the same person under a name and an address, for example "Chassie Smith" and her simploy.com address. The ledger merges them the way the email reader pairs a name with an address, so a search for either finds one person.</li>
+  <li><b>Who counts as the last exchange.</b> A message between you and them, either way, or a meeting you both attended. A colleague's message to them shows with the colleague's name, because it tells you who spoke to them last; it never stands in for yours. A calendar acceptance or a decline is machinery and shows only as a meeting answer, never as them writing.</li>
+  <li><b>Orange is Write to them.</b> It opens the send tool from the send triptych with the person on the To line.</li>
+</ul>
+
+<!-- ═════════════════════════ A ═════════════════════════ -->
+<section>
+  <p class="kick">Concept A</p>
+  <h2>The search in the header</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> A search field in the HomeRoom header, between + add and the clock. Typing drops a list under it, one line per person: who, their account, the last exchange and its day. Clicking a line opens the person in the same dropdown, with every exchange.</li>
+    <li><b>Good for.</b> The quick lookup, from anywhere on the page, without moving the rows. <b>Cost.</b> The dropdown closes when you click away, so you read the history and then go back to work.</li>
+  </ul>
+  <div class="room roomA" id="A">
+    <div class="roomhead">
+      <span class="roomname">HOMEROOM</span>
+      <button class="openall">OPEN ALL</button>
+      <button class="add">+ add ▾</button>
+      <div class="searchA">
+        <label class="search"><span class="glass">⌕</span><input data-q placeholder="Find a person, an address or a company" value="sim" aria-label="Find a person"><span class="key">/</span></label>
+        <div class="dropA" data-drop></div>
+      </div>
+      <span class="clock">11:34 AM</span>
+    </div>
+    <div class="ghostrows" style="min-height:520px">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>XCEL HR</b> NEXT MOVE · Wait on Bill. Promised Friday.</div>
+      <div class="ghostrow"><b>Employer Services Corporation</b> NEXT MOVE · Book the demo.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ B ═════════════════════════ -->
+<section>
+  <p class="kick">Concept B</p>
+  <h2>The people column</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> A standing column on the left of the HomeRoom with everyone you've spoken with, newest exchange first under TODAY, THIS WEEK and EARLIER. The box at its top filters as you type. A person opens in the column itself, and BACK returns to the list.</li>
+    <li><b>Good for.</b> Seeing who you've been talking to without asking, including people the rows don't show. Three filters narrow it: everyone, people on an account with no HomeRoom row, and people on no account at all. <b>Cost.</b> The rows lose the column's width on every visit.</li>
+  </ul>
+  <div class="room roomB" id="B">
+    <aside class="col">
+      <div class="colhead">
+        <label class="search"><span class="glass">⌕</span><input data-q placeholder="Find a person" aria-label="Find a person"></label>
+        <div class="seg">
+          <button aria-pressed="true" data-seg="all">EVERYONE</button>
+          <button aria-pressed="false" data-seg="norow">NO ROW</button>
+          <button aria-pressed="false" data-seg="none">NO ACCOUNT</button>
+        </div>
+      </div>
+      <div class="colbody" data-list></div>
+    </aside>
+    <div class="ghostrows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>XCEL HR</b> NEXT MOVE · Wait on Bill. Promised Friday.</div>
+      <div class="ghostrow"><b>Employer Services Corporation</b> NEXT MOVE · Book the demo.</div>
+      <div class="ghostrow"><b>Marvel HR</b> NEXT MOVE · Send the kickoff notes.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ C ═════════════════════════ -->
+<section>
+  <p class="kick">Concept C</p>
+  <h2>The palette over the room</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> Nothing on the page until you press / or click the small FIND line in the header. A box opens over the room: results on the left, the person on the right, both at once. Arrow keys move through the people, and the right side follows. Escape closes it.</li>
+    <li><b>Good for.</b> Keyboard speed, and comparing two people's last exchanges by arrowing between them. <b>Cost.</b> The room is covered while it is open, and you have to know the key or the FIND line is there.</li>
+  </ul>
+  <div class="room roomC" id="C">
+    <div class="roomhead">
+      <span class="roomname">HOMEROOM</span>
+      <button class="openall">OPEN ALL</button>
+      <button class="add">+ add ▾</button>
+      <button class="hint" data-open>⌕ FIND <span class="key">/</span></button>
+      <span class="clock">11:34 AM</span>
+    </div>
+    <div class="ghostrows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>XCEL HR</b> NEXT MOVE · Wait on Bill. Promised Friday.</div>
+      <div class="ghostrow"><b>Employer Services Corporation</b> NEXT MOVE · Book the demo.</div>
+    </div>
+    <div class="scrim" data-scrim></div>
+    <div class="pal" data-pal role="dialog" aria-label="Find a person">
+      <label class="palin"><span class="glass" style="color:var(--faint)">⌕</span><input data-q placeholder="Find a person, an address or a company" value="terry" aria-label="Find a person"><span class="key">ESC</span></label>
+      <div class="palgrid">
+        <div class="pallist" data-list></div>
+        <div class="card" data-card></div>
+      </div>
+      <div class="palfoot"><span>↑ ↓ MOVE</span><span>ENTER WRITE TO THEM</span><span>ESC CLOSE</span></div>
+    </div>
+  </div>
+</section>
+
+<p class="notes" style="margin-top:56px;list-style:none;padding:0;font-size:12.5px;color:var(--faint)">Sample data throughout. The names, accounts and subjects take the record's real shapes from the last two weeks, cleaned the way EARLIER cleans them; the days, the counts per person and the people with no account are made up to show the behavior.</p>
+</main>
+
+<script>
+(() => {
+  // Sample people. dir: you (you wrote), them (they wrote), col (a colleague wrote).
+  // row: true when the account has a HomeRoom row; acct: null when on no account.
+  const P = [
+    { n:"Bill Laffey", a:"blaffey@xcelhr.example", acct:"XCEL HR", row:true, t:"VP of Operations",
+      x:[["Nov 16","you","EMAIL","Reseller agreement status"],["Nov 11","them","EMAIL","Reseller agreement status"],["Oct 30","you","CALL","Review of the reseller agreement"],["Oct 21","them","EMAIL","PrismHR Global, Mexico"]] },
+    { n:"Chassie Smith", a:"csmith@simploy.example", acct:"Simploy", row:true, t:"COO",
+      x:[["Nov 14","them","MEETING","Simploy business development chat","Accepted your invite."],["Nov 6","them","EMAIL","PrismHR Global training for new group quotes","Sent to Lewis Marty and you."],["Aug 26","them","EMAIL","Reseller demo"],["Jul 29","you","CALL","Call with Chassie at Simploy"]] },
+    { n:"Lewis Marty", a:"lmarty@simploy.example", acct:"Simploy", row:true, t:"Business Development",
+      x:[["Nov 14","you","MEETING","Simploy business development chat","You sent the invite."],["Nov 6","them","EMAIL","PrismHR Global training for new group quotes"]] },
+    { n:"Terry Hookstra", a:"terry@eesipeo.example", acct:"eEmployers Solutions", row:false, t:"President",
+      x:[["Nov 14","them","MEETING","PrismHR Global chat","Accepted your invite."],["Nov 5","them","EMAIL","PrismHR Global","Sent to Russell Jones, with you copied."]] },
+    { n:"Justin Clawson", a:"jclawson@myesc.example", acct:"Employer Services Corporation", row:true, t:"CFO",
+      x:[["Nov 14","them","MEETING","PrismHR Global chat","Accepted your invite."],["Nov 6","them","EMAIL","PrismHR One","Sent to Russell Jones, with you copied."],["Oct 2","them","EMAIL","Global payroll for ESC"]] },
+    { n:"Kinsey Diegan", a:"kdiegan@marvelhr.example", acct:"Marvel HR", row:true, t:"Director of HR",
+      x:[["Nov 12","col","EMAIL","Meeting today","Judi Owen wrote to Kinsey and two others."],["Nov 2","col","EMAIL","Intro to your Global account manager","Judi Owen wrote."],["Oct 24","you","EMAIL","Signed agreement, next steps"]] },
+    { n:"Thomas Boell", a:"tboell@staffleasing.example", acct:"Staff Leasing of Central New York", row:false, t:"Owner",
+      x:[["Nov 10","col","EMAIL","PrismHR Global","Russell Jones wrote to Thomas and you."],["Oct 14","you","EMAIL","PrismHR Global, a quick intro"]] },
+    { n:"Ron Washburn", a:"rwashburn@soliant.example", acct:"Soliant Health", row:false, t:"",
+      x:[["Nov 10","you","EMAIL","PrismHR Global for hires outside the US"]] },
+    { n:"Jessica Fincher", a:"jfincher@xcelhr.example", acct:"XCEL HR", row:true, t:"Payroll Manager",
+      x:[["Nov 2","you","EMAIL","PrismHR Global response"],["Oct 21","them","EMAIL","PrismHR Global, Mexico"]] },
+    { n:"Dana Reyes", a:"dana@northpointpeo.example", acct:null, row:false, t:"",
+      x:[["Nov 13","them","EMAIL","Saw the webinar, question on Canada"]] },
+    { n:"Marco Silva", a:"msilva@brightlinestaff.example", acct:null, row:false, t:"",
+      x:[["Oct 28","you","TEAMS","Intro from a CSM, Brazil hire","In a chat Lesha Cyphers started."]] },
+    { n:"Lesha Cyphers", a:"lcyphers@prismhr.example", acct:"Our side", ours:true, row:false, t:"CSM",
+      x:[["Nov 17","you","TEAMS","Simploy group quotes"],["Nov 10","them","EMAIL","Southern Personnel Management intro"]] },
+  ];
+  const DIR = { you:["YOU WROTE","you"], them:["THEY WROTE","them"], col:["A COLLEAGUE WROTE","col"] };
+  const dirFor = (d, ch) => ch === "MEETING" ? (d === "you" ? ["YOU INVITED","you"] : ["THEY ANSWERED","them"])
+    : ch === "CALL" ? (d === "you" ? ["YOU CALLED","you"] : ["THEY CALLED","them"]) : DIR[d];
+  const ORDER = ["Nov 17","Nov 16","Nov 15","Nov 14","Nov 13","Nov 12","Nov 11","Nov 10","Nov 6","Nov 5","Nov 2","Oct 30","Oct 28","Oct 24","Oct 21","Oct 14","Oct 2","Aug 26","Jul 29"];
+  const rank = d => ORDER.indexOf(d);
+  const people = [...P].sort((a,b) => rank(a.x[0][0]) - rank(b.x[0][0]));
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+  const match = (p, q) => {
+    q = q.trim().toLowerCase(); if (!q) return true;
+    return [p.n, p.a, p.acct || "", p.a.split("@")[1]].some(s => s.toLowerCase().includes(q));
+  };
+  const acctLine = p => p.ours ? `Our side<span class="ours">COLLEAGUE</span>`
+    : p.acct ? `${esc(p.acct)}${p.row ? "" : `<span class="norow">NO ROW</span>`}`
+    : `<span class="noacct">No account</span>`;
+  const result = (p, i, sel) => {
+    const [day, d, ch, subj] = p.x[0], [dl, dc] = dirFor(d, ch);
+    return `<button class="res" data-i="${P.indexOf(p)}" role="option" aria-selected="${sel ? "true" : "false"}">
+      <span class="who">${esc(p.n)}</span><span class="day">${day}</span>
+      <span class="acct" style="grid-column:1/3">${acctLine(p)}</span>
+      <span class="last"><span class="dir ${dc}">${dl}</span><span class="ch">${ch}</span><span class="subj">${esc(subj)}</span></span>
+    </button>`;
+  };
+  const card = (p, back) => {
+    if (!p) return `<p class="empty">Nobody matches. Try a company or part of an address.</p>`;
+    const acct = p.ours ? "A colleague on our side." : p.acct ? `${esc(p.acct)}.${p.row ? " Has a row in the HomeRoom." : " The account has no row in the HomeRoom."}` : "On no account in the book.";
+    return `${back ? `<button class="back" data-back>‹ BACK</button>` : ""}<div class="card">
+      <p class="lbl">${p.x.length} EXCHANGE${p.x.length > 1 ? "S" : ""} ON THE RECORD</p>
+      <h3>${esc(p.n)}</h3>
+      <p class="acctline">${p.t ? esc(p.t) + ", " : ""}${acct}</p>
+      <p class="addr">${esc(p.a)}</p>
+      <div class="acts"><button class="writeto">Write to them</button>${p.acct && !p.ours && !p.row ? `<button class="quiet">Add a row</button>` : ""}${!p.acct ? `<button class="quiet">Put them on an account</button>` : ""}</div>
+      <ul class="xlist">${p.x.map(([day, d, ch, subj, gloss]) => { const [dl, dc] = dirFor(d, ch); return `<li><span class="d">${day}</span><span class="t"><span class="dir ${dc}">${dl}</span><span class="ch">${ch}</span><span class="s">${esc(subj)}</span></span>${gloss ? `<span class="g">${esc(gloss)}</span>` : ""}</li>`; }).join("")}</ul>
+    </div>`;
+  };
+
+  // A: header search with a dropdown
+  (() => {
+    const root = document.getElementById("A"), q = root.querySelector("[data-q]"), drop = root.querySelector("[data-drop]");
+    let open = null;
+    const render = () => {
+      if (open !== null){ drop.innerHTML = `<button class="back" data-back>‹ ALL RESULTS</button>` + card(P[open]); drop.classList.add("open"); return; }
+      const hits = people.filter(p => match(p, q.value));
+      drop.innerHTML = q.value.trim() ? (hits.length ? hits.map((p,i) => result(p, i, false)).join("") : card(null)) : "";
+      drop.classList.toggle("open", !!q.value.trim());
+    };
+    q.addEventListener("input", () => { open = null; render(); });
+    q.addEventListener("focus", render);
+    drop.addEventListener("click", e => {
+      e.stopPropagation();
+      const r = e.target.closest(".res"); if (r){ open = +r.dataset.i; render(); return; }
+      if (e.target.closest("[data-back]")){ open = null; render(); }
+    });
+    document.addEventListener("click", e => { if (!root.querySelector(".searchA").contains(e.target)){ drop.classList.remove("open"); } });
+    render();
+  })();
+
+  // B: the people column
+  (() => {
+    const root = document.getElementById("B"), q = root.querySelector("[data-q]"), list = root.querySelector("[data-list]");
+    let seg = "all", open = null;
+    const group = d => d === "Nov 17" ? "TODAY" : rank(d) <= rank("Nov 11") ? "THIS WEEK" : "EARLIER";
+    const render = () => {
+      if (open !== null){ list.innerHTML = card(P[open], true); return; }
+      const hits = people.filter(p => match(p, q.value) && (seg === "all" || (seg === "none" ? !p.acct : p.acct && !p.ours && !p.row)));
+      let html = "", last = "";
+      hits.forEach((p,i) => { const g = group(p.x[0][0]); if (g !== last){ html += `<p class="lbl grp">${g}</p>`; last = g; } html += result(p, i, false); });
+      list.innerHTML = html || card(null);
+    };
+    q.addEventListener("input", () => { open = null; render(); });
+    root.querySelectorAll("[data-seg]").forEach(b => b.addEventListener("click", () => {
+      seg = b.dataset.seg; open = null; root.querySelectorAll("[data-seg]").forEach(x => x.setAttribute("aria-pressed", x === b)); render();
+    }));
+    list.addEventListener("click", e => {
+      const r = e.target.closest(".res"); if (r){ open = +r.dataset.i; render(); return; }
+      if (e.target.closest("[data-back]")){ open = null; render(); }
+    });
+    render();
+  })();
+
+  // C: the palette
+  (() => {
+    const root = document.getElementById("C"), pal = root.querySelector("[data-pal]"), scrim = root.querySelector("[data-scrim]");
+    const q = root.querySelector("[data-q]"), list = root.querySelector("[data-list]"), cardEl = root.querySelector("[data-card]");
+    let sel = 0, hits = [];
+    const render = () => {
+      hits = people.filter(p => match(p, q.value));
+      sel = Math.min(sel, Math.max(0, hits.length - 1));
+      list.innerHTML = hits.length ? hits.map((p,i) => result(p, i, i === sel)).join("") : `<p class="empty">Nobody matches.</p>`;
+      cardEl.innerHTML = card(hits[sel]);
+    };
+    const setOpen = o => { pal.classList.toggle("open", o); scrim.classList.toggle("open", o); if (o){ render(); q.focus(); } };
+    root.querySelector("[data-open]").addEventListener("click", () => setOpen(true));
+    scrim.addEventListener("click", () => setOpen(false));
+    q.addEventListener("input", () => { sel = 0; render(); });
+    q.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown"){ sel = Math.min(hits.length - 1, sel + 1); render(); e.preventDefault(); }
+      if (e.key === "ArrowUp"){ sel = Math.max(0, sel - 1); render(); e.preventDefault(); }
+      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Enter"){ const w = cardEl.querySelector(".writeto"); if (w) w.focus(); e.preventDefault(); }
+    });
+    list.addEventListener("click", e => { const r = e.target.closest(".res"); if (r){ sel = hits.indexOf(P[+r.dataset.i]); render(); } });
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ const r = root.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0){ e.preventDefault(); setOpen(true); } }
+    });
+    setOpen(true); q.blur();
+  })();
+})();
+</script>
+</body>
+</html>
