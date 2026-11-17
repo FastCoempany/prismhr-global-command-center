@@ -76,9 +76,9 @@
   .field input:focus{outline:none}
   .body{width:100%;min-height:290px;border:0;background:transparent;resize:vertical;padding:10px 0;line-height:1.55;font-size:14px}
   .body:focus{outline:none}
-  .modes{display:inline-flex;border:1px solid var(--hair);border-radius:99px;padding:2px;margin-bottom:8px}
-  .modes button{font:700 9px/1 var(--mono);letter-spacing:.12em;padding:6px 10px;border-radius:99px;color:var(--faint)}
-  .modes button[aria-pressed=true]{background:var(--ink);color:#fff}
+  .simbtn{font:700 9px/1 var(--mono);letter-spacing:.1em;border:1px solid var(--hair);border-radius:99px;padding:6px 10px;color:var(--soft);background:var(--field)}
+  .simbtn:hover{color:var(--ink);border-color:var(--faint)}
+  .simnote{color:var(--blue)}
   .foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
   .dl{background:var(--orange);color:#fff;font:600 14.5px/1 var(--sans);border-radius:8px;padding:11px 16px}
   .quietbtn{font:600 13px/1 var(--sans);color:var(--soft)}
@@ -139,10 +139,10 @@
 <h1>Ask Russ when a prospect goes quiet</h1>
 <p class="lede">One object on the deal row. It stays quiet while the prospect has been silent for fewer business days than the threshold, then turns red and pulses. Its one action drafts an email, attaches anything from the library, and downloads an Outlook file while saving that same file to the account's record. Nothing here ships until you give a ship order.</p>
 <ul class="notes">
-  <li><b>What the counter counts.</b> Business days in Chicago since our last send, with weekends left out. Any substantive reply from their side resets it on its own. A sign-off like "thanks!" does not, under the closer rule.</li>
+  <li><b>What the counter counts.</b> Business days in Chicago since our last send, with weekends left out. A substantive reply from the prospect resets it to zero, whether they answered you or answered Russ. A sign-off like "thanks!" does not, under the closer rule. The REPLIED TO YOU and REPLIED TO RUSS buttons in each simulator show the reset.</li>
   <li><b>The threshold.</b> Five business days by default. − and + change it for this account, and ↺ restarts the count from today when you know why they are quiet.</li>
   <li><b>One press, two results.</b> "Download for Outlook" saves an .eml file to your computer and files the same email on the account's record, with the file backed up under accounts/&lt;Account&gt;/. The receipt says both happened.</li>
-  <li><b>Open question: who is the draft to?</b> All three concepts default to an email to Russ that carries a ready note he can forward to the prospect. Concept B also shows the other way, where the draft is the note itself, addressed to the prospect, for Russ to send from his own mailbox.</li>
+  <li><b>Who the draft is to.</b> Russ, and only Russ. The Outlook file is addressed to him and carries the note he can send the prospect.</li>
   <li><b>Color.</b> Quiet ink at day 0, amber as it nears the threshold, red at the threshold. Red because a prospect going silent is a real risk; orange stays the one move, the download button.</li>
 </ul>
 
@@ -155,7 +155,7 @@
     <li><b>How it reads.</b> The dot fills with the gradient color. At the threshold the chip pulses and opens the draft below the move row. The threshold widget opens from the chip's ⋯.</li>
     <li><b>Cost.</b> It is the smallest of the three, so a busy row can hide it until it pulses.</li>
   </ul>
-  <div class="sim">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="3" data-sim="A"><output data-simout="A">3</output></div>
+  <div class="sim" data-simbar="A">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="3" data-sim="A"><output data-simout="A">3</output><button class="simbtn" data-reply="you">REPLIED TO YOU</button><button class="simbtn" data-reply="russ">REPLIED TO RUSS</button><span class="simnote" data-replynote></span></div>
   <div class="board">
     <div class="row" id="A">
       <p class="sentence"><b>Simploy</b> resells contractor management to one client in India. <span class="sample">SAMPLE</span></p>
@@ -187,9 +187,8 @@
   <ul class="notes" style="margin-bottom:18px">
     <li><b>Where it sits.</b> A thin bar along the top edge of the row, one segment per business day up to the threshold, plus a line of its own under the move row: "ASK RUSS" with the reason and a Draft email button that stays greyed until the threshold.</li>
     <li><b>How it reads.</b> Each silent day lights its segment in the gradient color, so you see how close it is from across the room. At the threshold the strip breathes and the button wakes.</li>
-    <li><b>The other way to write it.</b> The draft here has a switch: TO RUSS, the default, or AS THE NOTE, addressed to the prospect for Russ to send himself.</li>
   </ul>
-  <div class="sim">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="5" data-sim="B"><output data-simout="B">5</output></div>
+  <div class="sim" data-simbar="B">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="5" data-sim="B"><output data-simout="B">5</output><button class="simbtn" data-reply="you">REPLIED TO YOU</button><button class="simbtn" data-reply="russ">REPLIED TO RUSS</button><span class="simnote" data-replynote></span></div>
   <div class="board">
     <div class="row" id="B">
       <div class="stripB" data-strip></div>
@@ -221,7 +220,7 @@
     <li><b>How it reads.</b> The number itself takes the gradient color and pulses at the threshold. It is the easiest to read at a glance and the most room it takes.</li>
     <li><b>The draft.</b> It opens across the full row, with the letter on the left and the library on the right.</li>
   </ul>
-  <div class="sim">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="6" data-sim="C"><output data-simout="C">6</output></div>
+  <div class="sim" data-simbar="C">SIMULATE BUSINESS DAYS SILENT <span class="sample">SAMPLE</span><input type="range" min="0" max="8" value="6" data-sim="C"><output data-simout="C">6</output><button class="simbtn" data-reply="you">REPLIED TO YOU</button><button class="simbtn" data-reply="russ">REPLIED TO RUSS</button><span class="simnote" data-replynote></span></div>
   <div class="board">
     <div class="row" id="C">
       <div class="rowC">
@@ -278,10 +277,9 @@
     return t < .6 ? `rgb(${mix(INK, AMBER, t / .6)})` : `rgb(${mix(AMBER, RED, (t - .6) / .4 * .55)})`;
   }
 
-  function draftHTML(key, modes){
+  function draftHTML(){
     return `<div>
-      ${modes ? `<div class="modes"><button aria-pressed="true" data-mode="russ">TO RUSS</button><button aria-pressed="false" data-mode="note">AS THE NOTE</button></div>` : ""}
-      <div class="field"><span class="lbl">To</span><input data-to value="Russ Jones"></div>
+      <div class="field"><span class="lbl">To</span><input data-to value="Russ Jones" readonly></div>
       <div class="field"><span class="lbl">Subject</span><input data-subj value="A note for Chassie at Simploy"></div>
       <textarea class="body" data-body></textarea>
       <div class="foot">
@@ -295,9 +293,9 @@
   }
 
   function setup(root, key, render){
-    const st = { d:+document.querySelector(`[data-sim="${key}"]`).value, thr:5, picked:new Set(), local:[], open:false, mode:"russ" };
+    const st = { d:+document.querySelector(`[data-sim="${key}"]`).value, thr:5, picked:new Set(), local:[], open:false };
     const draft = root.querySelector("[data-draft]");
-    draft.innerHTML = draftHTML(key, key === "B");
+    draft.innerHTML = draftHTML();
     const body = draft.querySelector("[data-body]");
     body.value = TO_RUSS;
 
@@ -325,7 +323,15 @@
       if (st.d >= st.thr && !st.open && key === "A"){ st.open = true; draft.classList.add("open"); }
     }
 
-    document.querySelector(`[data-sim="${key}"]`).addEventListener("input", e => { st.d = +e.target.value; paint(); });
+    const bar = document.querySelector(`[data-simbar="${key}"]`);
+    const note = bar.querySelector("[data-replynote]");
+    document.querySelector(`[data-sim="${key}"]`).addEventListener("input", e => { st.d = +e.target.value; note.textContent = ""; paint(); });
+    bar.addEventListener("click", e => {
+      const rp = e.target.closest("[data-reply]"); if (!rp) return;
+      st.d = 0; document.querySelector(`[data-sim="${key}"]`).value = 0; st.open = false; draft.classList.remove("open");
+      note.textContent = rp.dataset.reply === "russ" ? "RESET · CHASSIE REPLIED TO RUSS 11/17" : "RESET · CHASSIE REPLIED TO YOU 11/17";
+      paint();
+    });
     root.addEventListener("click", e => {
       const t = e.target;
       if (t.closest("[data-dec]")){ st.thr = Math.max(1, st.thr - 1); paint(); return; }
@@ -339,15 +345,6 @@
       if (t.closest("[data-close]")){ st.open = false; draft.classList.remove("open"); return; }
       const ch = t.closest("[data-ch]");
       if (ch){ e.preventDefault(); st.picked.add("listo"); body.value = body.value.replace(/\s*(Russ)?\s*$/, m => `\n\nAt ${ch.dataset.ch}, ${ch.dataset.l.charAt(0).toLowerCase()}${ch.dataset.l.slice(1)}.` + m); ch.textContent = "IN THE EMAIL"; ch.style.color = "var(--faint)"; draft.querySelector('[data-pick="listo"]').checked = true; cap(); return; }
-      const md = t.closest("[data-mode]");
-      if (md){
-        st.mode = md.dataset.mode;
-        draft.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b === md));
-        draft.querySelector("[data-to]").value = st.mode === "russ" ? "Russ Jones" : "Chassie Smith";
-        draft.querySelector("[data-subj]").value = st.mode === "russ" ? "A note for Chassie at Simploy" : "PrismHR Global, a quick offer";
-        body.value = st.mode === "russ" ? TO_RUSS : NOTE;
-        return;
-      }
       if (t.closest("[data-dl]")){
         const files = [...LIB.filter(f => st.picked.has(f.id)).map(f => f.name), ...st.local.map(f => f.name)];
         const eml = [`To: ${draft.querySelector("[data-to]").value}`, `Subject: ${draft.querySelector("[data-subj]").value}`, "X-Unsent: 1", "Content-Type: text/plain; charset=utf-8", "", body.value, "", ...files.map(n => `[Attached: ${n}]`)].join("\r\n");
