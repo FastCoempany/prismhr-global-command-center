@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HomeRoom Send Triptych</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Three looks for one HomeRoom tool: write an email to anyone, from the
+     HomeRoom page, and attach the library or any file from the computer.
+     One theme, the room's own tokens. The concepts differ by structure. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input,textarea{font:inherit;color:inherit}
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1280px;margin:0 auto;padding:40px 16px 120px}
+
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .notes{margin:18px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:72px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+
+  /* the HomeRoom as it stands, drawn small */
+  .room{background:var(--field);border:1px solid var(--hair-soft);border-radius:12px;overflow:hidden;position:relative}
+  .roomhead{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--hair-soft);flex-wrap:wrap}
+  .roomname{font:700 11px/1 var(--mono);letter-spacing:.3em;color:var(--ink)}
+  .openall{font:700 9.5px/1 var(--mono);letter-spacing:.14em;border:1px solid var(--hair);border-radius:99px;padding:6px 10px;color:var(--soft);background:var(--surface)}
+  .add{font:600 14px/1 var(--sans);background:var(--ink);color:#fff;border-radius:99px;padding:10px 16px}
+  .write{font:600 14px/1 var(--sans);border:1.5px solid var(--ink);border-radius:99px;padding:9px 15px;background:var(--surface)}
+  .write.on{background:var(--ink);color:#fff}
+  .clock{margin-left:auto;font:500 18px/1 var(--mono);color:var(--faint)}
+  .ghostrows{padding:14px 18px 18px}
+  .ghostrow{height:46px;border-radius:10px;background:var(--surface);border:1px solid var(--hair-soft);margin-top:10px;display:flex;align-items:center;padding:0 14px;gap:10px;color:var(--faint);font-size:13px}
+  .ghostrow b{font:400 16px/1 var(--serif);color:var(--soft)}
+
+  /* shared composer parts */
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .field{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--hair-soft);min-height:40px}
+  .field input{border:0;background:transparent;padding:8px 0;min-width:0;width:100%}
+  .field input:focus{outline:none}
+  .body{width:100%;min-height:170px;border:0;background:transparent;resize:vertical;padding:12px 0;line-height:1.55}
+  .body:focus{outline:none}
+  .match{font-size:12.5px;color:var(--soft);padding:6px 0 0 64px;min-height:26px}
+  .match .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:1px}
+  .judi{margin:10px 0 0;border-left:2px solid var(--blue);background:var(--blue-soft);padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .judi[hidden]{display:none}
+  .judi .k{font:700 9px/1.4 var(--mono);letter-spacing:.16em;color:var(--blue)}
+  .judi button{font:600 12.5px/1 var(--sans);color:var(--blue);text-decoration:underline;text-underline-offset:3px}
+  .foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .send{background:var(--orange);color:#fff;font:600 14.5px/1 var(--sans);border-radius:8px;padding:11px 18px}
+  .quietbtn{font:600 13px/1 var(--sans);color:var(--soft)}
+  .meter{flex:1;min-width:160px}
+  .bar{height:4px;border-radius:2px;background:var(--hair-soft);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--faint);width:0;transition:width .2s}
+  .bar.warn i{background:var(--amber)}
+  .bar.over i{background:var(--red)}
+  .metercap{font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--faint);margin-top:5px}
+
+  /* the library */
+  .grp{margin-top:12px}
+  .item{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--hair-soft);font-size:13.5px}
+  .item input{margin-top:4px;accent-color:var(--ink)}
+  .item .nm{font-weight:600}
+  .item .src{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue);display:block}
+  .item .sz{font:600 10.5px/1.6 var(--mono);color:var(--faint);white-space:nowrap}
+  .inside{grid-column:2/4;margin:4px 0 2px;padding:0;list-style:none}
+  .inside li{display:flex;gap:10px;align-items:baseline;font-size:12.5px;color:var(--soft);padding:2px 0}
+  .inside .t{font:600 10.5px/1 var(--mono);color:var(--faint);width:40px;flex:none}
+  .inside button{font:600 10px/1 var(--mono);letter-spacing:.08em;color:var(--blue);margin-left:auto;white-space:nowrap}
+  .inside li.picked{color:var(--ink)}
+  .inside li.picked button{color:var(--faint)}
+  .tag{font:700 8.5px/1 var(--mono);letter-spacing:.1em;border:1px solid var(--hair);border-radius:3px;padding:3px 4px;color:var(--soft);white-space:nowrap}
+  .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+  .yours{display:block;cursor:pointer;border:1.5px dashed var(--quiet);border-radius:10px;padding:14px;text-align:center;font-size:13px;color:var(--soft);margin-top:12px}
+  .yours b{color:var(--ink)}
+  .chosen{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .pill{font:600 11px/1 var(--sans);border:1px solid var(--hair);background:var(--surface);border-radius:99px;padding:6px 8px 6px 10px;display:inline-flex;gap:6px;align-items:center}
+  .pill button{color:var(--faint)}
+
+  /* Concept A: the desk under the header */
+  .deskA{display:none;border-bottom:1px solid var(--hair);background:var(--surface);padding:16px 18px 18px}
+  .deskA.open{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px}
+  @media (max-width:880px){.deskA.open{grid-template-columns:1fr}}
+
+  /* Concept B: the sheet on the right edge */
+  .roomB{display:grid;grid-template-columns:minmax(0,1fr) 0;transition:grid-template-columns .25s}
+  .roomB.open{grid-template-columns:minmax(0,1fr) min(440px,100%)}
+  @media (max-width:880px){.roomB.open{grid-template-columns:0 1fr}}
+  .sheet{background:var(--surface);border-left:1px solid var(--hair);overflow:hidden;min-width:0}
+  .sheetin{padding:16px 18px;width:min(440px,100vw - 32px)}
+  .tabs{display:flex;gap:16px;border-bottom:1px solid var(--hair-soft);margin-top:14px}
+  .tabs button{font:700 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--faint);padding:10px 0;border-bottom:2px solid transparent}
+  .tabs button[aria-selected=true]{color:var(--ink);border-color:var(--ink)}
+  .person{font:600 13px/1 var(--sans);color:var(--ink);border-bottom:1px dotted var(--faint);cursor:pointer}
+
+  /* Concept C: files first */
+  .roomC .stepper{display:none;background:var(--surface);border-bottom:1px solid var(--hair);padding:16px 18px 18px}
+  .roomC .stepper.open{display:block}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:10px}
+  .card{border:1px solid var(--hair);border-radius:10px;padding:12px;background:var(--surface);text-align:left;display:flex;flex-direction:column;gap:6px;min-height:118px}
+  .card.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+  .card .src{font:700 8.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--blue)}
+  .card .nm{font-weight:600;font-size:14px;line-height:1.3}
+  .card .sz{font:600 10.5px/1.4 var(--mono);color:var(--faint);margin-top:auto}
+  .card.local{border-style:dashed;align-items:center;justify-content:center;color:var(--soft);font-size:13px}
+  .letterC{display:none;margin-top:18px;border-top:1px solid var(--hair-soft);padding-top:14px}
+  .letterC.open{display:block}
+  .stepnum{font:700 9px/1.4 var(--mono);letter-spacing:.2em;color:var(--faint)}
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom overhaul · Send · Triptych · 2026-11-17</p>
+<h1>Write to anyone from the HomeRoom</h1>
+<p class="lede">One tool, three structures. Each one lets you write to a person whether or not they have a row in the HomeRoom, attach anything from the library or your computer, and send through Outlook. Nothing here ships until you give a ship order.</p>
+<ul class="notes">
+  <li><b>What all three share.</b> The To line matches any address against the book. A person on a row says which row. A person with no row says so, and the send still goes; the HomeRoom keeps a record of it for the contact search.</li>
+  <li><b>The library carries one whole Listo clip.</b> The chapters are not separate files anymore. They are listed inside the clip with their start times, and picking one writes "At 20:12, adding a new employee" into the email so the reader can jump there.</li>
+  <li><b>The clip would start where Listo starts.</b> The current recording opens on a slide built for one partner, naming their countries and their placements, for about two seconds. Then 16 seconds of PrismHR's payroll menu, then the click into Global Payroll, and Listo loads at 0:26. The whole clip and the first chapter both carry that slide today. The new clip starts at the click, 0:18, so the slide is gone and the viewer sees how they get into Listo.</li>
+  <li><b>The Judi mark.</b> When the email goes to a deal that is signed or in implementation, a blue line says Judi should see it and why, with one click to copy her. It suggests and never adds her on its own.</li>
+  <li><b>Sizes.</b> The meter reads the email's encoded size against the 20 MB most mail servers accept. A file from your computer has no 5 MB rule; the meter tells you when the whole email gets too big.</li>
+  <li><b>Library names.</b> Each item carries its source in mono above the name, LISTO PLATFORM or PRISMHR, and tags for what it shows: PAYROLL, NEW EMPLOYEE, CONTRACTORS, INVOICES. The file name the prospect sees stays "PrismHR Global demo".</li>
+</ul>
+
+<!-- ═════════════════════════ A ═════════════════════════ -->
+<section>
+  <p class="kick">Concept A</p>
+  <h2>The desk under the header</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> A Write button beside + add. It opens a desk across the full width of the room, just under the header, and pushes the rows down. The letter is on the left and the library on the right, both in view at once.</li>
+    <li><b>Good for.</b> One-off emails where you want to see every file before choosing. <b>Cost.</b> The rows leave the screen while you write.</li>
+  </ul>
+  <div class="room" id="A">
+    <div class="roomhead">
+      <span class="roomname">HOMEROOM</span>
+      <button class="openall">OPEN ALL</button>
+      <button class="add">+ add ▾</button>
+      <button class="write" data-toggle="A">✉ Write</button>
+      <span class="clock">11:34 AM</span>
+    </div>
+    <div class="deskA" data-panel="A">
+      <div class="letter" data-letter="A">
+        <div class="field"><span class="lbl">To</span><input data-to value="chassie@" placeholder="Name or address"></div>
+        <div class="match" data-match></div>
+        <div class="field"><span class="lbl">Cc</span><input data-cc placeholder=""></div>
+        <div class="field"><span class="lbl">Subject</span><input value="The PrismHR Global demo"></div>
+        <textarea class="body" data-body>Hi Chassie,
+
+Here's the full demo, recorded in the platform itself.</textarea>
+        <div class="judi" data-judi hidden><span class="k">JUDI SHOULD SEE THIS</span><span data-judiwhy></span><button data-addjudi>Copy Judi</button></div>
+        <div class="chosen" data-chosen></div>
+        <div class="foot">
+          <button class="send">Send in Outlook</button>
+          <button class="quietbtn" data-toggle="A">Close</button>
+          <div class="meter"><div class="bar" data-bar><i></i></div><div class="metercap" data-cap></div></div>
+        </div>
+      </div>
+      <div class="lib" data-lib="A"></div>
+    </div>
+    <div class="ghostrows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>Infiniti HR</b> NEXT MOVE · Wait on Tom. Promised Friday.</div>
+      <div class="ghostrow"><b>Advanstaff</b> NEXT MOVE · Book the kickoff.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ B ═════════════════════════ -->
+<section>
+  <p class="kick">Concept B</p>
+  <h2>The sheet on the right edge</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> The same Write button opens a sheet down the right edge. The rows stay on the left, and clicking a person's name on any row puts them on the To line. The library is a second tab inside the sheet.</li>
+    <li><b>Good for.</b> Writing while you read a deal's row, and sending to several people one after another. <b>Cost.</b> The letter and the library share one narrow column, so you switch tabs to pick files.</li>
+  </ul>
+  <div class="room roomB" id="B">
+    <div style="min-width:0">
+      <div class="roomhead">
+        <span class="roomname">HOMEROOM</span>
+        <button class="openall">OPEN ALL</button>
+        <button class="add">+ add ▾</button>
+        <button class="write" data-toggle="B">✉ Write</button>
+        <span class="clock">11:34 AM</span>
+      </div>
+      <div class="ghostrows">
+        <div class="ghostrow"><b>Simploy</b> <span class="person" data-person="chassie@simploy.example">Chassie S.</span> <span class="person" data-person="lesha@prismhr.example">Lesha C.</span></div>
+        <div class="ghostrow"><b>Infiniti HR</b> <span class="person" data-person="tom@infinitihr.example">Tom H.</span></div>
+        <div class="ghostrow"><b>Advanstaff</b> <span class="person" data-person="ops@advanstaff.example">Their ops lead</span></div>
+      </div>
+    </div>
+    <aside class="sheet" data-panel="B">
+      <div class="sheetin" data-letter="B">
+        <div class="tabs" role="tablist" style="margin-top:0">
+          <button role="tab" aria-selected="true" data-tab="letter">LETTER</button>
+          <button role="tab" aria-selected="false" data-tab="files">FILES <span data-count></span></button>
+        </div>
+        <div data-pane="letter">
+          <div class="field"><span class="lbl">To</span><input data-to value="" placeholder="Name or address"></div>
+          <div class="match" data-match></div>
+          <div class="field"><span class="lbl">Cc</span><input data-cc></div>
+          <div class="field"><span class="lbl">Subject</span><input value="The PrismHR Global demo"></div>
+          <textarea class="body" data-body>Hi,
+
+Here's the full demo, recorded in the platform itself.</textarea>
+          <div class="judi" data-judi hidden><span class="k">JUDI SHOULD SEE THIS</span><span data-judiwhy></span><button data-addjudi>Copy Judi</button></div>
+          <div class="chosen" data-chosen></div>
+        </div>
+        <div data-pane="files" hidden><div class="lib" data-lib="B"></div></div>
+        <div class="foot">
+          <button class="send">Send in Outlook</button>
+          <button class="quietbtn" data-toggle="B">Close</button>
+          <div class="meter"><div class="bar" data-bar><i></i></div><div class="metercap" data-cap></div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ═════════════════════════ C ═════════════════════════ -->
+<section>
+  <p class="kick">Concept C</p>
+  <h2>Files first</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> A Send files button beside + add opens the library as cards. You pick what to send first, and the letter appears underneath, already holding a line for each file and each chapter you picked.</li>
+    <li><b>Good for.</b> The common case, where the files are the reason for the email. <b>Cost.</b> An email with no attachment takes one more click, "Write without files".</li>
+  </ul>
+  <div class="room roomC" id="C">
+    <div class="roomhead">
+      <span class="roomname">HOMEROOM</span>
+      <button class="openall">OPEN ALL</button>
+      <button class="add">+ add ▾</button>
+      <button class="write" data-toggle="C">⇪ Send files</button>
+      <span class="clock">11:34 AM</span>
+    </div>
+    <div class="stepper" data-panel="C">
+      <p class="stepnum">1 · PICK THE FILES</p>
+      <div class="cards" data-cards></div>
+      <div class="letterC" data-letterc>
+        <p class="stepnum">2 · WRITE IT</p>
+        <div data-letter="C">
+          <div class="field"><span class="lbl">To</span><input data-to value="someone@newpeo.example" placeholder="Name or address"></div>
+          <div class="match" data-match></div>
+          <div class="field"><span class="lbl">Cc</span><input data-cc></div>
+          <div class="field"><span class="lbl">Subject</span><input value="PrismHR Global, what we covered"></div>
+          <textarea class="body" data-body>Hi,
+
+Here's what we talked about today.</textarea>
+          <div class="judi" data-judi hidden><span class="k">JUDI SHOULD SEE THIS</span><span data-judiwhy></span><button data-addjudi>Copy Judi</button></div>
+          <div class="foot">
+            <button class="send">Send in Outlook</button>
+            <button class="quietbtn" data-toggle="C">Close</button>
+            <div class="meter"><div class="bar" data-bar><i></i></div><div class="metercap" data-cap></div></div>
+          </div>
+        </div>
+      </div>
+      <p style="margin:12px 0 0"><button class="quietbtn" data-nofiles style="text-decoration:underline;text-underline-offset:3px">Write without files</button></p>
+    </div>
+    <div class="ghostrows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>Infiniti HR</b> NEXT MOVE · Wait on Tom. Promised Friday.</div>
+    </div>
+  </div>
+</section>
+
+<p class="notes" style="margin-top:56px;list-style:none;padding:0;font-size:12.5px;color:var(--faint)">Sample data throughout: the addresses, the deal stages and the Judi reasons are made up to show the behavior. The chapter start times come from the existing cuts, shifted to a clip that starts at 0:18.</p>
+</main>
+
+<script>
+(() => {
+  const MB = 1_000_000;
+  // The library. Bytes are the files' real sizes; the whole Listo clip is the
+  // current recording cut at 0:18, estimated from its share of the running time.
+  const LIB = [
+    { id:"listo", src:"LISTO PLATFORM", name:"The whole platform demo", runs:"41:03", bytes:4_880_000,
+      tags:["PAYROLL","NEW EMPLOYEE","CONTRACTORS","INVOICES"],
+      inside:[
+        ["0:00","Into Global Payroll from PrismHR"],["0:08","The dashboard"],["2:42","The worker portal"],
+        ["5:57","Invoices, reseller and referral"],["8:27","Settings and client pricing"],
+        ["12:57","Payroll: pay periods and gross to net"],["16:12","Payroll: funding, wallet and approvals"],
+        ["18:57","The team view"],["20:12","Adding a new employee, EOR"],["25:57","Benefits and the offer letter"],
+        ["33:12","Contractor pay and support"],["35:42","Users and permissions"],["39:12","Approval workflows"]] },
+    { id:"op-all", src:"ONE-PAGER", name:"PrismHR Global at a glance", bytes:103_508 },
+    { id:"op-eor", src:"ONE-PAGER", name:"Employer of record", bytes:478_578 },
+    { id:"op-gp", src:"ONE-PAGER", name:"Global payroll", bytes:432_923 },
+    { id:"op-con", src:"ONE-PAGER", name:"Contractor solutions", bytes:421_035 },
+    { id:"op-tal", src:"ONE-PAGER", name:"Talent", bytes:491_901 },
+    { id:"ag-res", src:"AGREEMENT · REVIEW COPY", name:"Reseller agreement", bytes:138_013 },
+    { id:"ag-ref", src:"AGREEMENT · REVIEW COPY", name:"Referral agreement", bytes:48_474 },
+  ];
+  // Sample book: who has a row, and what stage the deal is at.
+  const BOOK = {
+    "chassie": { who:"Chassie Smith", row:"Simploy", stage:"signed", why:"Simploy is signed. Judi runs the kickoff." },
+    "tom": { who:"Tom Harrison", row:"Infiniti HR", stage:"onboarding", why:"Their client is onboarding. Judi owns it." },
+    "ops": { who:"Their ops lead", row:"Advanstaff", stage:"reviewing" },
+    "lesha": { who:"Lesha Cyphers", row:null, ours:true },
+  };
+  const encoded = b => { const x = Math.ceil(b/3)*4; return x + Math.ceil(x/76)*2; };
+  const CAP = 20*MB;
+  const size = b => b < 1_000_000 ? Math.round(b/1000) + " KB" : (b/MB).toFixed(1) + " MB";
+
+  function setup(root, key){
+    const st = { picked:new Set(), chapters:new Set(), local:[] };
+    const q = s => root.querySelector(s);
+    const letter = root.querySelector(`[data-letter="${key}"]`);
+    const toEl = letter.querySelector("[data-to]"), ccEl = letter.querySelector("[data-cc]");
+    const body = letter.querySelector("[data-body]");
+
+    function resolve(){
+      const v = toEl.value.trim().toLowerCase(), m = letter.querySelector("[data-match]");
+      const judi = letter.querySelector("[data-judi]");
+      const hit = Object.keys(BOOK).find(k => v && v.startsWith(k));
+      judi.hidden = true;
+      if (!v){ m.innerHTML = ""; return; }
+      if (!hit){ m.innerHTML = `<span class="dot" style="background:var(--quiet)"></span>No row in the HomeRoom. It sends anyway, and the contact search keeps it.`; return; }
+      const b = BOOK[hit];
+      if (b.ours){ m.innerHTML = `<span class="dot" style="background:var(--quiet)"></span>${b.who} is on our side. Nothing files.`; return; }
+      m.innerHTML = `<span class="dot" style="background:var(--blue)"></span>${b.who} · files on the <b>${b.row}</b> row.`;
+      if (b.why && !/judi/i.test(ccEl.value)){ judi.hidden = false; judi.querySelector("[data-judiwhy]").textContent = b.why; }
+    }
+    toEl.addEventListener("input", resolve);
+    letter.querySelector("[data-addjudi]").addEventListener("click", () => {
+      ccEl.value = ccEl.value ? ccEl.value + "; Judi Owen" : "Judi Owen"; resolve();
+    });
+
+    function meter(){
+      let total = 0;
+      LIB.forEach(f => { if (st.picked.has(f.id)) total += encoded(f.bytes); });
+      st.local.forEach(f => total += encoded(f.bytes));
+      const bar = letter.querySelector("[data-bar]"), cap = letter.querySelector("[data-cap]");
+      bar.querySelector("i").style.width = Math.min(100, total/CAP*100) + "%";
+      bar.className = "bar" + (total > CAP ? " over" : total > CAP*.8 ? " warn" : "");
+      cap.textContent = total ? `${(total/MB).toFixed(1)} MB OF 20 MB${total > CAP ? " · TOO BIG FOR MOST MAIL" : ""}` : "NO FILES";
+      const count = root.querySelector("[data-count]"); if (count) count.textContent = st.picked.size + st.local.length || "";
+      const chosen = letter.querySelector("[data-chosen]");
+      if (chosen){
+        chosen.innerHTML = "";
+        [...LIB.filter(f => st.picked.has(f.id)).map(f => [f.id, f.name]), ...st.local.map((f,i) => ["local"+i, f.name])]
+          .forEach(([id, nm]) => { const p = document.createElement("span"); p.className = "pill"; p.innerHTML = `${nm} <button aria-label="Remove">✕</button>`;
+            p.querySelector("button").onclick = () => { if (id.startsWith("local")) st.local.splice(+id.slice(5),1); else st.picked.delete(id); renderLib(); meter(); }; chosen.appendChild(p); });
+      }
+    }
+
+    function chapterLine(t, label){ return `At ${t}, ${label.charAt(0).toLowerCase()}${label.slice(1)}.`; }
+    function toggleChapter(t, label){
+      const line = chapterLine(t, label), k = t;
+      if (st.chapters.has(k)){ st.chapters.delete(k); body.value = body.value.replace("\n" + line, ""); }
+      else { st.chapters.add(k); st.picked.add("listo"); body.value = body.value.replace(/\s*$/, "") + "\n" + line; }
+      renderLib(); meter();
+    }
+
+    function renderLib(){
+      const lib = root.querySelector(`[data-lib="${key}"]`);
+      if (lib){
+        let html = "", last = "";
+        LIB.forEach(f => {
+          const grp = f.id === "listo" ? "THE DEMO" : f.src.startsWith("ONE") ? "ONE-PAGERS" : "AGREEMENTS";
+          if (grp !== last){ html += `<p class="lbl grp">${grp}</p>`; last = grp; }
+          html += `<label class="item"><input type="checkbox" data-pick="${f.id}" ${st.picked.has(f.id) ? "checked" : ""}>
+            <span><span class="src">${f.src}</span><span class="nm">${f.name}</span>${f.tags ? `<span class="tags">${f.tags.map(t => `<span class="tag">${t}</span>`).join("")}</span>` : ""}</span>
+            <span class="sz">${f.runs ? f.runs + " · " : ""}${size(f.bytes)}</span>`;
+          if (f.inside) html += `<ul class="inside">${f.inside.map(([t,l]) => `<li class="${st.chapters.has(t) ? "picked" : ""}"><span class="t">${t}</span>${l}<button type="button" data-ch="${t}" data-l="${l}">${st.chapters.has(t) ? "IN THE EMAIL" : "+ POINT TO IT"}</button></li>`).join("")}</ul>`;
+          html += `</label>`;
+        });
+        html += `<label class="yours"><input type="file" multiple hidden data-local><b>＋ From your computer</b><br>Any file. The meter says if the email gets too big.</label>`;
+        lib.innerHTML = html;
+      }
+      const cards = root.querySelector("[data-cards]");
+      if (cards){
+        cards.innerHTML = LIB.map(f => `<button class="card ${st.picked.has(f.id) ? "on" : ""}" data-pick="${f.id}"><span class="src">${f.src}</span><span class="nm">${f.name}</span>${f.tags ? `<span class="tags">${f.tags.map(t => `<span class="tag">${t}</span>`).join("")}</span>` : ""}<span class="sz">${f.runs ? f.runs + " · " : ""}${size(f.bytes)}</span></button>`).join("")
+          + `<label class="card local"><input type="file" multiple hidden data-local>＋ From your computer</label>`;
+        if (st.picked.has("listo")){
+          const f = LIB[0];
+          cards.insertAdjacentHTML("afterend", "");
+          let ins = root.querySelector("[data-insideC]");
+          if (!ins){ ins = document.createElement("div"); ins.setAttribute("data-insideC",""); cards.after(ins); }
+          ins.innerHTML = `<p class="lbl" style="margin-top:14px">POINT TO A PART OF THE DEMO</p><ul class="inside" style="margin:0">${f.inside.map(([t,l]) => `<li class="${st.chapters.has(t) ? "picked" : ""}"><span class="t">${t}</span>${l}<button type="button" data-ch="${t}" data-l="${l}">${st.chapters.has(t) ? "IN THE EMAIL" : "+ POINT TO IT"}</button></li>`).join("")}</ul>`;
+        } else { const ins = root.querySelector("[data-insideC]"); if (ins) ins.remove(); }
+        const lc = root.querySelector("[data-letterc]"); if (lc && (st.picked.size || st.local.length)) lc.classList.add("open");
+      }
+      root.querySelectorAll("[data-local]").forEach(inp => inp.onchange = () => {
+        [...inp.files].forEach(f => { st.local.push({ name:f.name, bytes:f.size }); body.value = body.value.replace(/\s*$/, "") + `\nAttached: ${f.name}.`; });
+        renderLib(); meter();
+      });
+    }
+
+    root.addEventListener("click", e => {
+      const ch = e.target.closest("[data-ch]");
+      if (ch){ e.preventDefault(); toggleChapter(ch.dataset.ch, ch.dataset.l); return; }
+      const card = e.target.closest("button.card[data-pick]");
+      if (card){
+        const id = card.dataset.pick, f = LIB.find(x => x.id === id);
+        if (st.picked.has(id)){ st.picked.delete(id); body.value = body.value.replace(`\nAttached: ${f.name}.`, ""); }
+        else { st.picked.add(id); body.value = body.value.replace(/\s*$/, "") + `\nAttached: ${f.name}.`; }
+        renderLib(); meter(); return;
+      }
+      const tg = e.target.closest("[data-toggle]");
+      if (tg){
+        const panel = root.querySelector(`[data-panel="${key}"]`);
+        const open = key === "B" ? root.classList.toggle("open") : panel.classList.toggle("open");
+        root.querySelectorAll(".write").forEach(w => w.classList.toggle("on", open));
+        return;
+      }
+      const tab = e.target.closest("[data-tab]");
+      if (tab){
+        root.querySelectorAll("[data-tab]").forEach(t => t.setAttribute("aria-selected", t === tab));
+        root.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== tab.dataset.tab); return;
+      }
+      const pr = e.target.closest("[data-person]");
+      if (pr){
+        if (!root.classList.contains("open")){ root.classList.add("open"); root.querySelector(".write").classList.add("on"); }
+        toEl.value = pr.dataset.person; resolve(); return;
+      }
+      if (e.target.closest("[data-nofiles]")){ root.querySelector("[data-letterc]").classList.add("open"); }
+    });
+    root.addEventListener("change", e => {
+      const pk = e.target.closest("input[data-pick]");
+      if (pk){ pk.checked ? st.picked.add(pk.dataset.pick) : st.picked.delete(pk.dataset.pick); renderLib(); meter(); }
+    });
+
+    renderLib(); meter(); resolve();
+  }
+  setup(document.getElementById("A"), "A");
+  setup(document.getElementById("B"), "B");
+  setup(document.getElementById("C"), "C");
+  document.querySelector('#A [data-toggle="A"]').click();
+})();
+</script>
+</body>
+</html>
