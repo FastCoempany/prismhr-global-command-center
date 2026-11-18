@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HomeRoom Map Leads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The HomeRoom, started over: the map leads. One idea, three structures.
+     The room's own tokens; the land is the shipped map's own dot grid
+     (src/lib/room/world-map.ts). */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 14px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input,textarea,select{font:inherit;color:inherit}
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1500px;margin:0 auto;padding:40px 16px 120px}
+
+  /* the document's own head */
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .lede{color:var(--soft);max-width:80ch;margin:0;font-size:15px}
+  .notes{margin:16px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:72px}
+  .widthbar{display:flex;gap:8px;align-items:center;margin-top:20px;flex-wrap:wrap}
+  .widthbar .kick{margin-right:4px}
+  .seg{display:inline-flex;border:1px solid var(--hair);border-radius:8px;overflow:hidden;background:var(--surface)}
+  .seg button{padding:6px 12px;font-size:13px;color:var(--soft);min-height:30px}
+  .seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+  .sample{font:600 9px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:3px 5px;white-space:nowrap}
+
+  /* the frame each variation sits in */
+  .frame{width:min(var(--fw,1440px),100%);margin-top:16px;position:relative}
+  .app{container-type:inline-size;background:var(--surface);border:1px solid var(--hair);border-radius:12px;overflow:hidden;position:relative;min-height:640px}
+  .bar{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--hair-soft)}
+  .mark{width:18px;height:18px}
+  .room{font:700 11px/1 var(--mono);letter-spacing:.28em}
+  .today{font:500 10.5px/1 var(--mono);letter-spacing:.12em;color:var(--faint)}
+  .bar .push{margin-left:auto}
+  .btn{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border:1px solid var(--hair);border-radius:8px;background:var(--surface);font-weight:600;font-size:13.5px;white-space:nowrap}
+  .btn:hover{border-color:var(--faint)}
+  .btn.quiet{border-color:transparent;color:var(--soft);font-weight:500}
+  .btn.quiet:hover{color:var(--ink);border-color:var(--hair)}
+  .btn.done{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.go{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn.ink{background:var(--ink);border-color:var(--ink);color:#fff}
+  .badge{font:600 10.5px/1 var(--mono);letter-spacing:.06em;color:var(--soft);background:var(--hair-soft);border-radius:99px;padding:4px 7px}
+
+  /* the map */
+  .map{position:relative;aspect-ratio:162/58;width:100%}
+  .map svg{position:absolute;inset:0;width:100%;height:100%}
+  .map .land{fill:rgba(10,28,64,.16)}
+  .lab{position:absolute;transform:translate(var(--tx),var(--ty));z-index:1;display:inline-flex;align-items:baseline;gap:6px;background:var(--surface);border:1px solid var(--hair);border-radius:6px;padding:3px 8px;font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer}
+  .lab .d{font:600 10px/1 var(--mono);letter-spacing:.08em;color:var(--faint)}
+  .lab.red .d{color:var(--red)} .lab.amber .d{color:#b77505}
+  .lab.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);z-index:2}
+  .lab.lift{z-index:3}
+  .pin{position:absolute;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;z-index:5;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--hair);cursor:pointer;padding:0}
+  .pin::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid currentColor;opacity:.0;animation:pulse 2.6s ease-out infinite}
+  .pin.red{background:var(--red);color:var(--red)} .pin.amber{background:var(--amber);color:var(--amber)}
+  .pin.plain{background:var(--ink);color:var(--ink)} .pin.passed{background:var(--quiet);color:var(--quiet)}
+  .pin.on{width:18px;height:18px;box-shadow:0 0 0 2px var(--ink)}
+  .pin.dim{opacity:.35}
+  @keyframes pulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.6);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.pin::after{animation:none;opacity:0}}
+
+  /* a deal, shared by all three */
+  .deal{padding:20px 24px 24px}
+  .dname{font:400 22px/1.2 var(--serif);margin:0}
+  .dline{color:var(--soft);margin:4px 0 0}
+  .focus{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+  .move{font-weight:600;font-size:18px;line-height:1.3}
+  .why{color:var(--soft)}
+  .acts{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .people{margin-top:16px;color:var(--soft)}
+  .people button{color:var(--ink);font-weight:500;border-bottom:1px dotted var(--faint)}
+  .people button[aria-expanded=true]{border-bottom-color:var(--ink)}
+  .contact{margin-top:6px;color:var(--soft)}
+  .contact a{color:var(--blue);text-decoration:none}
+  .meta{font:500 10.5px/1 var(--mono);letter-spacing:.1em;color:var(--faint);margin-left:6px}
+  .tool{margin-top:18px;border:1px solid var(--hair);border-radius:10px;padding:14px 16px}
+  .tool .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .tool .t{font-weight:600;font-size:15px}
+  .count{min-width:44px;height:44px;border-radius:8px;display:grid;place-items:center;color:#fff;font:700 18px/1 var(--mono);position:relative}
+  .count small{position:absolute;bottom:4px;font:600 8px/1 var(--mono);letter-spacing:.08em;opacity:.85}
+  .count.hot::after{content:"";position:absolute;inset:-3px;border-radius:10px;border:2px solid var(--red);animation:pulse2 1.8s ease-out infinite}
+  @keyframes pulse2{0%{opacity:.6}100%{opacity:0;transform:scale(1.12)}}
+  @media (prefers-reduced-motion:reduce){.count.hot::after{animation:none;opacity:0}}
+  .mini{display:inline-flex;align-items:center;gap:4px}
+  .mini button{min-width:28px;min-height:28px;border:1px solid var(--hair);border-radius:6px;font:600 12px/1 var(--mono);color:var(--soft)}
+  .mini span{font:600 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--faint);padding:0 4px}
+  .judi .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:12px}
+  @container (max-width:760px){.judi .cols{grid-template-columns:1fr}}
+  .sub{font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  .check{display:flex;gap:8px;align-items:flex-start;padding:3px 0}
+  .check input{margin-top:4px;accent-color:var(--ink)}
+  .fact{padding:3px 0}
+  .fact .src{font:600 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--blue);margin-left:6px}
+  .fact .miss{color:#b77505}
+  .fact input{border:1px solid var(--hair);border-radius:6px;padding:3px 8px;width:100%;margin-top:4px}
+  .judiseen{margin-top:12px;border-left:2px solid var(--blue);background:var(--blue-soft);padding:6px 10px;border-radius:0 6px 6px 0;font-size:13.5px}
+  .judiseen b{font:700 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--blue);margin-right:8px}
+
+  /* a draft */
+  .draft{margin-top:18px;border-top:1px solid var(--hair);padding-top:14px}
+  .field{display:grid;grid-template-columns:70px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--hair-soft);min-height:36px}
+  .field label{font:600 10px/1 var(--mono);letter-spacing:.14em;color:var(--faint)}
+  .field input{border:0;background:transparent;padding:6px 0;width:100%}
+  .field input:focus{outline:none}
+  .field input[readonly]{color:var(--soft)}
+  textarea.body{width:100%;min-height:130px;border:0;resize:vertical;padding:10px 0;line-height:1.55;background:transparent}
+  textarea.body:focus{outline:none}
+  .match{font-size:12.5px;color:var(--soft);padding:4px 0 0 70px;min-height:22px}
+  .files{margin-top:6px}
+  .files summary{cursor:pointer;font-weight:600;font-size:13.5px;list-style:none;padding:6px 0}
+  .files summary::-webkit-details-marker{display:none}
+  .grp{font:600 10px/1.4 var(--mono);letter-spacing:.14em;color:var(--faint);margin:10px 0 2px}
+  .item{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;padding:5px 0;align-items:start;border-bottom:1px solid var(--hair-soft)}
+  .item input{margin-top:4px;accent-color:var(--ink)}
+  .item .sz{font:500 10.5px/1.6 var(--mono);color:var(--faint);white-space:nowrap}
+  .inside{grid-column:2/4}
+  .inside summary{font-size:12.5px;color:var(--soft);cursor:pointer;list-style:none}
+  .inside summary::-webkit-details-marker{display:none}
+  .chap{display:flex;gap:10px;align-items:baseline;font-size:12.5px;color:var(--soft);padding:2px 0}
+  .chap .t{font:500 10.5px/1 var(--mono);color:var(--faint);width:38px;flex:none}
+  .chap button{margin-left:auto;font:600 10px/1 var(--mono);letter-spacing:.06em;color:var(--blue);white-space:nowrap}
+  .chap.on{color:var(--ink)} .chap.on button{color:var(--faint)}
+  .local{display:block;margin-top:8px;border:1px dashed var(--quiet);border-radius:8px;padding:8px 10px;color:var(--soft);font-size:13px;cursor:pointer}
+  .dfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .meter{font:500 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--faint)}
+  .receipt{margin-top:10px;font:600 10.5px/1.5 var(--mono);letter-spacing:.08em;color:var(--green)}
+
+  /* the desk: the page-wide tools, one sheet, opened on purpose */
+  .sheet{position:absolute;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--hair);box-shadow:-12px 0 32px rgba(10,28,64,.08);z-index:20;display:flex;flex-direction:column}
+  .sheet .shead{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--hair-soft)}
+  .tabs{display:flex;gap:4px}
+  .tabs button{padding:6px 10px;border-radius:6px;font-weight:600;color:var(--soft);min-height:30px;display:inline-flex;gap:6px;align-items:center}
+  .tabs button[aria-selected=true]{background:var(--hair-soft);color:var(--ink)}
+  .sbody{padding:16px;overflow:auto;flex:1}
+  .acct{border-bottom:1px solid var(--hair-soft);padding:8px 0}
+  .acct .n{font-weight:600}
+  .acct .r{color:var(--soft);font-size:13px}
+  .chan{border-bottom:1px solid var(--hair-soft);padding:10px 0}
+  .chan .n{font-weight:600}
+  .chan .r{color:var(--soft);font-size:13px}
+  .chan .kept{margin-top:6px;padding-left:10px;border-left:2px solid var(--hair)}
+  .chan .kept p{margin:4px 0;font-size:13px}
+  .chan .kept b{font:600 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--blue);margin-right:6px}
+  .row2{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .row2 input,.row2 select{border:1px solid var(--hair);border-radius:8px;padding:5px 10px;min-height:30px;background:var(--surface);flex:1;min-width:160px}
+
+  /* Variation 1: the map over the list */
+  .v1 .mapwrap{padding:18px 24px 6px}
+  .v1 .listhead{display:flex;align-items:baseline;gap:12px;padding:14px 24px 8px;border-top:1px solid var(--hair-soft);flex-wrap:wrap}
+  .v1 .listhead .c{font:400 20px/1.2 var(--serif)}
+  .v1 .listhead .push{margin-left:auto}
+  .lrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) 120px;gap:16px;align-items:baseline;padding:12px 24px;border-top:1px solid var(--hair-soft);width:100%;text-align:left}
+  .lrow:hover{background:var(--field)}
+  .lrow .n{font:400 18px/1.2 var(--serif)}
+  .lrow .m{font-weight:600}
+  .lrow .w{color:var(--soft);font-weight:400}
+  .lrow .d{font:600 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--faint);text-align:right}
+  .lrow .d.red{color:var(--red)} .lrow .d.amber{color:#b77505}
+  .lrow[aria-expanded=true]{background:var(--field)}
+  .v1 .open{border-top:1px solid var(--hair-soft);background:var(--surface)}
+  @container (max-width:760px){.lrow{grid-template-columns:minmax(0,1fr) auto}.lrow .m{grid-column:1/-1;order:3}}
+
+  /* Variation 2: the map with a country drawer */
+  .v2 .split{display:grid;grid-template-columns:minmax(0,1fr) 0;transition:grid-template-columns .25s}
+  .v2 .split.open{grid-template-columns:minmax(0,1fr) 460px}
+  .v2 .mapwrap{padding:24px}
+  .v2 .prompt{padding:4px 24px 24px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .v2 .prompt .s{font-size:16px}
+  .v2 .drawer{border-left:1px solid var(--hair);overflow:hidden;min-width:0}
+  .v2 .dhead{display:flex;align-items:baseline;gap:10px;padding:18px 24px 10px}
+  .v2 .dhead .c{font:400 22px/1.2 var(--serif)}
+  .v2 .dhead .push{margin-left:auto}
+  .crow{display:block;width:100%;text-align:left;padding:12px 24px;border-top:1px solid var(--hair-soft)}
+  .crow:hover{background:var(--field)}
+  .crow .n{font:400 18px/1.2 var(--serif);display:block}
+  .crow .m{font-weight:600}
+  .crow .w{color:var(--soft)}
+  .back{padding:12px 24px 0}
+  @container (max-width:1000px){.v2 .split.open{grid-template-columns:minmax(0,1fr)}.v2 .drawer{border-left:0;border-top:1px solid var(--hair)}}
+
+  /* Variation 3: the map first, then the deal */
+  .v3 .lead{padding:28px 32px 0}
+  .v3 .lead .s{font:400 26px/1.25 var(--serif);margin:0}
+  .v3 .lead .s2{color:var(--soft);font-size:15px;margin:6px 0 0}
+  .v3 .mapwrap{padding:18px 32px 32px}
+  .v3 .pick{position:absolute;z-index:30;background:var(--surface);border:1px solid var(--hair);border-radius:10px;box-shadow:0 10px 30px rgba(10,28,64,.12);padding:6px;min-width:220px;transform:translate(-50%,14px)}
+  .v3 .pick button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:6px}
+  .v3 .pick button:hover{background:var(--field)}
+  .v3 .pick .n{font:400 16px/1.2 var(--serif);display:block}
+  .v3 .pick .m{font-size:13px;color:var(--soft)}
+  .v3 .crumb{display:flex;align-items:center;gap:20px;padding:14px 32px;border-bottom:1px solid var(--hair-soft);flex-wrap:wrap}
+  .v3 .thumb{width:220px;flex:none}
+  .v3 .also{color:var(--soft)}
+  .v3 .also button{color:var(--ink);font-weight:500;border-bottom:1px dotted var(--faint)}
+  .v3 .deal{padding:32px 32px 40px;max-width:980px}
+  .v3 .deal .dname{font-size:30px}
+  .v3 .deal .move{font-size:20px}
+</style>
+</head>
+<body>
+<main class="page">
+<p class="kick">HomeRoom · Started over · The map leads · 2026-11-18</p>
+<h1>The map leads</h1>
+<p class="lede">The room opens on the world your deals touch. A country is the way in, and a deal opens to one calm page of its own. Three structures for the same idea.</p>
+<ul class="notes">
+  <li><b>On arrival, two or three things at most.</b> The map, one plain sentence or list, and a single Desk button. Everything else is one click down.</li>
+  <li><b>Pins carry the urgency.</b> Red when a client date is 14 days or less away, amber within 30 or when the record says it's urgent with no day, ink otherwise, and a passed date reads PASSED in a faded pin. Pins sit exactly on their country and always above every label.</li>
+  <li><b>The Desk holds Write, Seats and Teams.</b> None of the three belongs to a country or a deal, so they stay off the map and out of the list until you open the Desk on purpose. That keeps the page about your deals.</li>
+  <li><b>A deal looks the same in all three.</b> Its name, one line of what it is, the next move with Mark it done and Send files, its people, and only the tools it needs: Ask Russ when it went quiet, the Judi handoff once it's signed.</li>
+  <li><b>Orange appears only inside an open draft,</b> on Download for Outlook. Every draft downloads a real Outlook file and says where it was saved.</li>
+</ul>
+<div class="widthbar">
+  <span class="kick">Frame</span>
+  <span class="seg" role="group" aria-label="Frame width"><button data-fw="1440" aria-pressed="true">Laptop · 1440</button><button data-fw="960" aria-pressed="false">Half monitor · 960</button></span>
+  <span class="sample">SAMPLE DEALS AND DATES</span>
+</div>
+
+<section>
+  <p class="kick">Variation 1</p>
+  <h2>The map over the list</h2>
+  <ul class="notes">
+    <li><b>Where things live.</b> The map takes the top half. Under it, one quiet list: each deal on one line with its next move and its date. A country filters the list; a deal opens in place, one at a time.</li>
+    <li><b>Trade-off.</b> The most familiar of the three, and the whole book is visible at once. The map and the list compete a little for the eye.</li>
+  </ul>
+  <div class="frame"><div class="app v1" id="v1"></div></div>
+</section>
+
+<section>
+  <p class="kick">Variation 2</p>
+  <h2>The map with a country drawer</h2>
+  <ul class="notes">
+    <li><b>Where things live.</b> The map fills the room with one sentence under it. Choosing a country slides a drawer in from the right with that country's deals; a deal opens inside the drawer, with a way back to the country.</li>
+    <li><b>Trade-off.</b> The calmest arrival, and the map stays in view while you work a deal. The drawer is narrower than the full page, so a long deal scrolls.</li>
+  </ul>
+  <div class="frame"><div class="app v2" id="v2"></div></div>
+</section>
+
+<section>
+  <p class="kick">Variation 3</p>
+  <h2>The map first, then the deal</h2>
+  <ul class="notes">
+    <li><b>Where things live.</b> The room opens as the map alone, with one sentence about what's nearest. Choosing a pin opens its deal as a full page, with a small map at the top to show where you are and the other deals in that country beside it.</li>
+    <li><b>Trade-off.</b> Each deal gets the whole screen and nothing competes with it. Moving between deals in different countries goes back through the map.</li>
+  </ul>
+  <div class="frame"><div class="app v3" id="v3"></div></div>
+</section>
+</main>
+
+<script>
+(() => {
+  const MASK = "AAADwBQAAP//gAAAAACAAP/gAIAAAADfTC+AH//gAAAAAMBi///+DoH/gYP8w74F//gAAB4AAj///////P///4Zdj8D/wAAAP/5f/v//////f/////+hyD+AeAAf/H/////////D/////9w8B8AcAB+/v/////////P/////wPAA4AAAH5///////////f0P///gDgAIAAAH8D//////////AgC///wD+AAAACA5f////////+ACAAf//+D/AAAACBx/////////4AAAA////n/wAAAZB//////////6AAAAP///3/4AAAbn///////////AAAAH////4IAAAAf//////////+AAAAD////4cAAAD///////////8AAAAB////+gAAAA//9fn//////5EAAAD////0AAAAA+v4PP//////xgAAAD////gAAAAPwz4Hn//////AAAAAD///+AAAAAPoLP/n/////cCAAAAB///8AAAAAPAZv/n/////GCAAAAA///8AAAAAAfAA///////iGAAAAAf//8AAAAAH/AA///////g4AAAAAP//wAAAAAP/zg///////gAAAAAAD/8QAAAAAP////P/////gAAAAAAF/AQAAAAA/////v/////gAAAAAAC/AAAAAAB////fx/////AAAAAAABfAAAAAAB////P2D///+AAAAAAAAPAoAAAAD////v/B/7/4AAAAAAAAPGCAAAAD////n+Afx/AAAAAAAAAH8AEAAAD////3+AfA/AQAAAAAAAAsAAAAAD////z4AeAfggAAAAAAAAHgAAAAD////7AAOAPgAAAAAAAAABgwAAAD////8AAMADgIAAAAAAAAAheAAAA/////wAEABAAAAAAAAAAAH/gAAA/////gACAIAMAAAAAAAAAD/wAAAfn///gAAAEBAAAAAAAAAAD/+AAAAB///AAAAUGAAAAAAAAAAH/+AAAAB//+AAAAKOAAAAAAAAAAP//AAAAB//8AAAAMegAAAAAAAAAP//wAAAB//4AAAAHOhUAAAAAAAAP//+AAAA//wAAAACAwPgAAAAAAAP///gAAAf/wAAAABAAD0AAAAAAAH///gAAAf/wAAAAAMAHQAAAAAAAH///AAAAf/wAAAAAAoAIAAAAAAAD///AAAAf/4AAAAAAARAAAAAAAAD//+AAAAf/4wAAAAABxAAAAAAAAB//+AAAA//5gAAAAAH5gAAAAAAAAf/+AAAA//hgAAAAAP/wAAAAAAAAf/8AAAAf/BgAAAAA//4AAAAAAAAf/8AAAAP/DgAAAAH//4AAAAAAAAf/gAAAAP/DAAAAAH//8AAAAAAAAf/AAAAAP+AAAAAAD//+AAAAAAAAf/AAAAAP+AAAAAAD//+AAAAAAAAf+AAAAAH8AAAAAAD//+AAAAAAAAf+AAAAAD4AAAAAAD+f+AAAAAAAAf8AAAAADgAAAAAADAP8AAAAAAAA/wAAAAAAAAAAAAAAAD8AAAAAAAA/wAAAAAAAAAAAAAAABwAAAAAAAA+AAAAAAAAAAAAAAAAAoA=";
+  const MAPG = { lon0: -168, lat0: 74, step: 2, cols: 162, rows: 58 };
+  const landPath = (() => {
+    const bin = atob(MASK); let d = "";
+    for (let i = 0; i < MAPG.cols * MAPG.rows; i++) {
+      if (!(bin.charCodeAt(i >> 3) & (128 >> (i & 7)))) continue;
+      const x = (i % MAPG.cols) + 0.5, y = Math.floor(i / MAPG.cols) + 0.5;
+      d += `M${(x - 0.3).toFixed(1)} ${y}a.3 .3 0 1 0 .6 0a.3 .3 0 1 0 -.6 0`;
+    }
+    return d;
+  })();
+  const xy = (lon, lat) => [(((lon - MAPG.lon0) / MAPG.step + 0.5) / MAPG.cols) * 100, (((MAPG.lat0 - lat) / MAPG.step + 0.5) / MAPG.rows) * 100];
+
+  // Sample: the day the room is read, and the deals.
+  const TODAY = new Date("2026-11-18T12:00:00");
+  const days = (iso) => Math.round((new Date(iso + "T12:00:00") - TODAY) / 864e5);
+  const md = (iso) => { const d = new Date(iso + "T12:00:00"); return `${d.toLocaleString("en-US", { month: "short" }).toUpperCase()} ${d.getDate()}`; };
+
+  const COUNTRIES = {
+    ca: { name: "Canada", flag: "🇨🇦", geo: [-100, 56.5], side: "r" },
+    mx: { name: "Mexico", flag: "🇲🇽", geo: [-102.5, 23.6], side: "l" },
+    pr: { name: "Puerto Rico", flag: "🇵🇷", geo: [-66.5, 18.2], side: "r" },
+    gb: { name: "United Kingdom", flag: "🇬🇧", geo: [-2.5, 54], side: "l" },
+    pt: { name: "Portugal", flag: "🇵🇹", geo: [-8.2, 39.6], side: "l" },
+    de: { name: "Germany", flag: "🇩🇪", geo: [10.4, 51.1], side: "r" },
+    in: { name: "India", flag: "🇮🇳", geo: [78.9, 22.5], side: "l" },
+    ph: { name: "Philippines", flag: "🇵🇭", geo: [122.5, 12.5], side: "r" },
+  };
+
+  const DEALS = [
+    { id: "xcel", name: "XCEL HR", line: "Referral · employer of record · a client hiring in Canada and Mexico · Closed Won 11/17",
+      countries: ["ca", "mx"], date: "2026-11-28", move: "Send Judi the handoff.", why: "Signed 11/17.",
+      people: [{ n: "Bill Laffey", t: "President", e: "blaffey@xcelhr.example", p: "555-0141", c: "Columbus, OH", q: "QUIET 3 DAYS" }, { n: "Helen Niemcewicz", t: "Payroll Manager", e: "helen@xcelhr.example", p: "555-0142", c: "Columbus, OH", q: "QUIET 9 DAYS" }],
+      judi: true },
+    { id: "esc", name: "Employer Services Corporation", line: "Reseller · global payroll · their own entity in Canada",
+      countries: ["ca"], move: "Book the payroll walkthrough.", why: "Demo held 11/6.",
+      people: [{ n: "C. Hatton Humphrey", t: "CEO", e: "hatton@esc.example", p: "555-0151", c: "Little Rock, AR", q: "QUIET 12 DAYS" }] },
+    { id: "trend", name: "Trend Personnel Services", line: "Referral · employer of record · a client in the Philippines",
+      countries: ["ph"], date: "2026-12-12", move: "Send the Philippines numbers.", why: "Adam asked 11/14.",
+      people: [{ n: "Adam Dingwell", t: "VP Operations", e: "adamd@trendhr.example", p: "555-0161", c: "Phoenix, AZ", q: "QUIET 4 DAYS" }, { n: "Melanie Dreyer", t: "Controller", e: "mdreyer@trendhr.example", p: "555-0162", c: "Phoenix, AZ", q: "QUIET 4 DAYS" }] },
+    { id: "regis", name: "Regis HR Group", line: "Reseller · employer of record · Integra, 3 people in Puerto Rico, Portugal next",
+      countries: ["pr", "pt"], date: "2027-01-01", move: "Send the numbers.", why: "Integra starts Jan 1.",
+      people: [{ n: "Leilani Gonzalez", t: "Director of Operations", e: "lgonzalez@regishrgroup.example", p: "305-555-0197", c: "Miami, FL", q: "QUIET 21 DAYS" }, { n: "Elise Munoz", t: "COO", e: "elise@regishrgroup.example", p: "305-555-0198", c: "Miami, FL", q: "QUIET 8 DAYS" }] },
+    { id: "infiniti", name: "Infiniti HR", line: "Reseller · employer of record · two staffing clients in Puerto Rico, their own employee in Germany",
+      countries: ["pr", "de"], move: "Wait on Tom.", why: "Pricing sent 11/7.",
+      people: [{ n: "Tom Harrison", t: "VP Sales", e: "tom@infinitihr.example", p: "555-0171", c: "Laurel, MD", q: "QUIET 6 BUSINESS DAYS" }, { n: "Scott Smrkovski", t: "CFO", e: "scott@infinitihr.example", p: "555-0172", c: "Laurel, MD", q: "QUIET 15 DAYS" }],
+      russ: { days: 6, thr: 5, who: "Tom" } },
+    { id: "simploy", name: "Simploy", line: "Referral · contractor management · 2 contractors in India",
+      countries: ["in"], urgent: true, move: "Send the demo.", why: "Chassie asked Monday.",
+      people: [{ n: "Chassie Smith", t: "COO", e: "csmith@simploy.example", p: "555-0181", c: "Raleigh, NC", q: "QUIET 2 DAYS" }] },
+    { id: "landrum", name: "Landrum HR", line: "Engaged warm · employer of record · a client in the United Kingdom",
+      countries: ["gb"], date: "2026-11-10", move: "Ask for the new start date.", why: "The 11/10 start passed.",
+      people: [{ n: "Jessica Taikina", t: "HR Director", e: "jessica@landrum.example", p: "555-0191", c: "Pensacola, FL", q: "QUIET 18 DAYS" }] },
+  ];
+  const DEAL = Object.fromEntries(DEALS.map((d) => [d.id, d]));
+
+  // A country's light is its nearest date still ahead; a passed date only counts alone.
+  function light(code) {
+    const ds = DEALS.filter((d) => d.countries.includes(code));
+    const ahead = ds.filter((d) => d.date && days(d.date) >= 0).sort((a, b) => days(a.date) - days(b.date));
+    if (ahead.length) {
+      const n = days(ahead[0].date);
+      return { cls: n <= 14 ? "red" : n <= 30 ? "amber" : "plain", label: md(ahead[0].date), n };
+    }
+    if (ds.some((d) => d.urgent)) return { cls: "amber", label: "URGENT", n: null };
+    const past = ds.filter((d) => d.date);
+    if (past.length) return { cls: "passed", label: "PASSED " + md(past[0].date), n: null };
+    return { cls: "plain", label: "", n: null };
+  }
+  const dealLight = (d) => {
+    if (d.date) { const n = days(d.date); return n < 0 ? { cls: "", t: "PASSED " + md(d.date) } : { cls: n <= 14 ? "red" : n <= 30 ? "amber" : "", t: md(d.date) }; }
+    return d.urgent ? { cls: "amber", t: "URGENT" } : { cls: "", t: "" };
+  };
+  const countriesOf = (code) => DEALS.filter((d) => d.countries.includes(code));
+  const nearest = () => Object.keys(COUNTRIES).map((c) => ({ c, l: light(c) })).filter((x) => x.l.n !== null).sort((a, b) => a.l.n - b.l.n)[0];
+
+  // The library: what shipped 11/18.
+  const MB = 1e6;
+  const LIB = [
+    { id: "emp", grp: "DEMOS", name: "The platform, employer side", runs: "36:43", bytes: 4410003, inside: [["0:00","Into Global from PrismHR by single sign-on"],["0:37","The service provider view"],["6:05","Invoices, reseller and referral"],["8:28","Admin access"],["8:52","Client pricing"],["12:05","Pay periods and gross to net"],["14:03","How contractors, EOR and payroll are paid"],["16:34","Reimbursements, time off and time tracking"],["18:23","Onboarding and the team"],["18:58","Adding a new EOR employee"],["22:23","The employer cost estimate"],["26:22","Equipment"],["27:21","Benefits"],["29:57","What happens next"],["32:46","Support"],["34:05","Users and permissions"],["35:18","Approval workflows"]] },
+    { id: "lp", grp: "DEMOS", name: "ListoPay, the contractor's wallet", runs: "28:46", bytes: 4452872, inside: [["0:00","Wallet home"],["0:44","The virtual card"],["1:52","Withdraw to a Philippines bank"],["8:42","Savings"],["9:44","Investing"],["12:42","Beneficiaries"],["13:32","Withdraw to GCash"],["15:12","Mobile wallets by country"],["16:05","Tax forms"],["17:42","The card avoids the fee"],["19:28","Funding timing"],["21:49","How fast withdrawals land"],["22:24","Protections, and when a contractor leaves"],["24:42","USD to a USD account"],["26:31","Funding the wallet yourself"],["27:48","Why withdrawals settle fast"]] },
+    { id: "o1", grp: "ONE-PAGERS", name: "PrismHR Global at a glance", bytes: 103508 },
+    { id: "o2", grp: "ONE-PAGERS", name: "Employer of record", bytes: 478578 },
+    { id: "o3", grp: "ONE-PAGERS", name: "Global payroll", bytes: 432923 },
+    { id: "o4", grp: "ONE-PAGERS", name: "Contractor solutions", bytes: 421035 },
+    { id: "o5", grp: "ONE-PAGERS", name: "Talent", bytes: 491901 },
+    { id: "a1", grp: "AGREEMENTS · REVIEW COPIES", name: "Reseller agreement", bytes: 138013 },
+    { id: "a2", grp: "AGREEMENTS · REVIEW COPIES", name: "Referral agreement", bytes: 48474 },
+  ];
+  const size = (b) => (b < MB ? Math.round(b / 1000) + " KB" : (b / MB).toFixed(1) + " MB");
+  const enc = (b) => { const x = Math.ceil(b / 3) * 4; return x + Math.ceil(x / 76) * 2; };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // Seats and Teams: the Desk's own state, shared by all three.
+  const SEATS = [
+    { csm: "Anika", full: "Anika Steenstra", why: "Bi-weekly calls on the record.", accts: [["American Benefits Company", "Bi-weekly calls run by Riley Pitt."], ["Pinnacle Employee Services", "Quarterly call with Mary Mahoney."], ["Aegis Payroll Management", "High fit. Nothing on the record."]] },
+    { csm: "Lesha", full: "Lesha Cyphers", why: "Quarterly reviews on the record.", accts: [["Back Office Risk", "Quarterly review on the record."], ["Surety HR", "High fit. Nothing on the record."], ["Upright Holdings", "Medium fit. Nothing on the record."]] },
+    { csm: "Whitney", full: "Whitney Dideon", why: "Nothing on the record yet.", accts: [["Sidecar HR", "High fit. Nothing on the record."], ["Dental HR", "Medium fit. Nothing on the record."], ["Servant HR", "Medium fit. Nothing on the record."]] },
+  ];
+  const TEAMS0 = [
+    { n: "Global Implementation", team: "PrismHR Global", why: "Implementation and handoff", last: "TODAY 7:00 AM", kept: [["FACT", "Judi runs kickoff for every signed account."], ["DECISION", "Pre-payroll check-ins move to 3 business days out."]] },
+    { n: "Global Sales & Operations", team: "External", why: "Deals in my book", last: "TODAY 7:00 AM", kept: [["FACT", "Executive titles can't be hired on EOR. Use senior manager."], ["FACT", "UK payroll tax goes by direct debit from the client's UK account when it has one."], ["QUESTION", "Do we pay HMRC on the client's behalf?"]] },
+  ];
+
+  function download(name, eml) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([eml], { type: "message/rfc822" }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  }
+  const emlOf = (to, cc, subject, body, files) =>
+    [`To: ${to}`, cc ? `Cc: ${cc}` : "", `Subject: ${subject}`, "X-Unsent: 1", "MIME-Version: 1.0", 'Content-Type: text/plain; charset="utf-8"', "", body,
+     files.length ? `\n[Attached: ${files.join(", ")}]` : ""].filter((l) => l !== "").join("\r\n");
+
+  // ── one room ───────────────────────────────────────────────────────────
+  function room(root, kind) {
+    const st = { country: null, deal: null, draft: null, contact: null, desk: false, tab: "write", pick: null,
+      russ: { ...DEAL.infiniti.russ }, judi: {}, judiFacts: {}, seat: 0, seatLeft: 109, seatAsked: false,
+      teams: TEAMS0.map((t) => ({ ...t, open: false, paused: false })), receipts: {} };
+
+    // ── pieces ──
+    const mapHTML = (opts = {}) => {
+      const dim = opts.focus ? (c) => (c === opts.focus ? "" : " dim") : () => "";
+      let labs = "", pins = "";
+      for (const [code, c] of Object.entries(COUNTRIES)) {
+        const [x, y] = xy(...c.geo), l = light(code);
+        const tx = c.side === "r" ? "12px" : "calc(-100% - 12px)";
+        const on = st.country === code ? " on" : "";
+        if (!opts.bare) labs += `<button class="lab ${l.cls}${on}" data-c="${code}" style="left:${x}%;top:${y}%;--tx:${tx};--ty:-50%">${c.flag} ${esc(c.name)}${l.label ? ` <span class="d">${l.label}</span>` : ""}</button>`;
+        pins += `<button class="pin ${l.cls}${on}${dim(code)}" data-c="${code}" style="left:${x}%;top:${y}%" aria-label="${esc(c.name)}"></button>`;
+      }
+      return `<div class="map"><svg viewBox="0 0 162 58" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="land" d="${landPath}"/></svg>${labs}${pins}</div>`;
+    };
+
+    const russHTML = () => {
+      const r = st.russ, f = Math.min(1, r.days / r.thr), hot = r.days >= r.thr;
+      const col = hot ? "var(--red)" : f >= 0.6 ? "var(--amber)" : `rgba(10,28,64,${0.22 + 0.3 * f})`;
+      return `<div class="tool"><div class="head">
+        <div class="count${hot ? " hot" : ""}" style="background:${col}">${r.days}<small>OF ${r.thr}</small></div>
+        <div><div class="t">${hot ? `Ask Russ to nudge ${r.who}.` : `Ask Russ at ${r.thr} days.`}</div><div class="why">Silent ${r.days} business days since pricing went out.</div></div>
+        <div class="acts"><span class="mini"><button data-a="r-">−</button><span>AT ${r.thr}</span><button data-a="r+">+</button><button data-a="r0" title="Start the count over">↺</button></span>
+        <button class="btn" data-a="draft-russ"${hot ? "" : " disabled style='opacity:.45'"}>Draft for Russ</button><button class="btn quiet" data-a="replied">They replied</button></div>
+      </div>${st.draft === "russ" ? draftHTML("russ") : ""}${st.receipts.russ ? `<div class="receipt">${st.receipts.russ}</div>` : ""}</div>`;
+    };
+
+    const judiHTML = (d) => {
+      const J = st.judi, F = st.judiFacts;
+      const part = [["send", "Send Judi the handoff."], ["intro", "Introduce Judi to Bill."], ["fill", "Fill the one missing fact."]];
+      const facts = [
+        ["Client", F.client ? `${esc(F.client)}<span class="src">YOUR HAND</span>` : null],
+        ["Countries", `Canada and Mexico<span class="src">CALL NOTES 8/17</span>`],
+        ["Start date", `Nov 28 in Canada<span class="src">EMAIL 11/12</span>`],
+        ["Support", `The client uses in-app help<span class="src">REFERRAL</span>`],
+      ];
+      return `<div class="tool judi"><div class="head"><div><div class="t">Hand off to Judi.</div><div class="why">XCEL signed 11/17. Judi runs the kickoff.</div></div>
+        <div class="acts"><button class="btn" data-a="draft-judi">Draft the handoff</button></div></div>
+        <div class="cols">
+          <div><p class="sub">Your part</p>${part.map(([k, t]) => `<label class="check"><input type="checkbox" data-j="${k}" ${J[k] ? "checked" : ""}><span>${t}</span></label>`).join("")}</div>
+          <div><p class="sub">What Judi needs</p>${facts.map(([k, v]) => `<div class="fact"><span class="why">${k}:</span> ${v ?? `<span class="miss">Not on the record. Fill it in.</span><input data-f="client" placeholder="The client's name">`}</div>`).join("")}</div>
+          <div><p class="sub">This implementation</p><div class="fact">Client setup goes through a CRC ticket.</div><div class="fact">Sign-in is set up by PrismHR's services team.</div><div class="fact">Invoice markup isn't possible yet.</div></div>
+        </div>
+        <div class="judiseen"><b>JUDI SHOULD SEE THIS</b>Bill was promised a kickoff the week of 11/24.</div>
+        ${st.draft === "judi" ? draftHTML("judi") : ""}${st.receipts.judi ? `<div class="receipt">${st.receipts.judi}</div>` : ""}</div>`;
+    };
+
+    const libHTML = (key) => {
+      const pk = (st.picked ??= {})[key] ??= new Set(); const ch = (st.chaps ??= {})[key] ??= new Set();
+      let h = "", last = "";
+      for (const f of LIB) {
+        if (f.grp !== last) { h += `<p class="grp">${f.grp}</p>`; last = f.grp; }
+        h += `<div class="item"><input type="checkbox" data-pick="${f.id}" data-k="${key}" ${pk.has(f.id) ? "checked" : ""} aria-label="${esc(f.name)}"><span>${esc(f.name)}</span><span class="sz">${f.runs ? f.runs + " · " : ""}${size(f.bytes)}</span>`;
+        if (f.inside) h += `<details class="inside"><summary>What's inside ▸</summary>${f.inside.map(([t, l]) => `<div class="chap${ch.has(f.id + t) ? " on" : ""}"><span class="t">${t}</span>${l}<button data-ch="${f.id}|${t}|${esc(l)}" data-k="${key}">${ch.has(f.id + t) ? "IN THE EMAIL" : "+ POINT TO IT"}</button></div>`).join("")}</details>`;
+        h += `</div>`;
+      }
+      h += `<label class="local"><input type="file" multiple hidden data-local="${key}">＋ From your computer</label>`;
+      return h;
+    };
+    const total = (key) => { let t = 0; for (const id of (st.picked?.[key] ?? [])) t += enc(LIB.find((f) => f.id === id).bytes); for (const f of (st.locals?.[key] ?? [])) t += enc(f.bytes); return t; };
+
+    const DRAFTS = {
+      files: (d) => ({ to: `${d.people[0].n} <${d.people[0].e}>`, lock: false, subject: "PrismHR Global, what we covered", body: `Hi ${d.people[0].n.split(" ")[0]},\n\nHere are the files from our conversation.`, files: true, acct: d.name }),
+      russ: () => ({ to: "Russ Jones <rjones@prismhr.com>", lock: true, subject: "Infiniti HR has gone quiet", body: "Russ,\n\nTom at Infiniti HR hasn't replied in 6 business days since pricing went out on 11/7. A short note from you would help.\n\nA note you could send Tom:\n\nTom, checking in from my side. Antaeus sent pricing for the two Puerto Rico clients. Happy to get on a call if anything in it needs a second look.", files: true, acct: "Infiniti HR" }),
+      judi: () => ({ to: "Judi Owen <judi.owen@prismhr.example>", lock: false, cc: "Danielle Stansberry", subject: "Handoff: XCEL HR", body: `Judi,\n\nXCEL HR signed the referral agreement on 11/17.\n\nClient: ${st.judiFacts.client || "not on the record yet"}\nCountries: Canada and Mexico\nStart date: Nov 28 in Canada\nSupport: the client uses in-app help\n\nBill was promised a kickoff the week of 11/24.`, files: true, acct: "XCEL HR" }),
+      seat: () => { const s = SEATS[st.seat % SEATS.length]; return { to: `${s.full} <${s.full.toLowerCase().replace(" ", ".")}@prismhr.com>`, lock: false, subject: "Five minutes on your next check-in", body: `${s.csm},\n\nCould I join your next check-in with these three for five minutes? No selling. Just who I am, what Global does, and the two ways to work with us.\n\n${s.accts.map((a) => "· " + a[0]).join("\n")}`, files: false, acct: s.accts.map((a) => a[0]).join(", ") }; },
+      write: () => ({ to: "", lock: false, subject: "", body: "", files: true, acct: null }),
+    };
+
+    function draftHTML(key) {
+      const v = (st.dv ??= {})[key] ??= (key === "files" ? DRAFTS.files(DEAL[st.deal]) : DRAFTS[key]());
+      const t = total(key);
+      const match = key === "write" ? matchLine(v.to) : "";
+      return `<div class="draft" data-draft="${key}">
+        <div class="field"><label>TO</label><input data-v="to" value="${esc(v.to)}" ${v.lock ? "readonly" : ""} placeholder="Name or address"></div>
+        ${key === "write" ? `<div class="match" data-match>${match}</div>` : ""}
+        ${v.cc !== undefined ? `<div class="field"><label>CC</label><input data-v="cc" value="${esc(v.cc)}"></div>` : ""}
+        <div class="field"><label>SUBJECT</label><input data-v="subject" value="${esc(v.subject)}"></div>
+        <textarea class="body" data-v="body">${esc(v.body)}</textarea>
+        ${v.files ? `<details class="files"${(st.picked?.[key]?.size || st.locals?.[key]?.length) ? " open" : ""}><summary>Files ▸ <span class="badge">${(st.picked?.[key]?.size ?? 0) + (st.locals?.[key]?.length ?? 0)}</span></summary>${libHTML(key)}</details>` : ""}
+        <div class="dfoot"><button class="btn go" data-a="send" data-k="${key}">Download for Outlook</button><button class="btn quiet" data-a="close">Close</button>
+        ${v.files ? `<span class="meter">${t ? (t / MB).toFixed(1) + " MB OF 20 MB" : "NO FILES"}</span>` : ""}</div>
+      </div>`;
+    }
+    function matchLine(to) {
+      const s = (to || "").toLowerCase(); if (!s.trim()) return "";
+      const hit = DEALS.find((d) => d.people.some((p) => s.includes(p.e.split("@")[0]) || s.includes(p.n.toLowerCase().split(" ")[0])));
+      if (s.includes("prismhr")) return "On our side. Nothing files.";
+      return hit ? `Files on the <b>${esc(hit.name)}</b> deal.` : "No deal in the room. It sends, and the record keeps it.";
+    }
+
+    const dealHTML = (id) => {
+      const d = DEAL[id];
+      const ppl = d.people.map((p, i) => `<button data-p="${i}" aria-expanded="${st.contact === i}">${esc(p.n)}</button>, ${esc(p.t)}`).join(" · ");
+      const c = st.contact != null ? d.people[st.contact] : null;
+      return `<div class="deal">
+        <h3 class="dname">${esc(d.name)}</h3>
+        <p class="dline">${esc(d.line)}</p>
+        <div class="focus"><span class="move">${esc(d.move)}</span><span class="why">${esc(d.why)}</span>
+          <span class="acts"><button class="btn done" data-a="done">Mark it done</button><button class="btn" data-a="draft-files">Send files</button></span></div>
+        ${st.draft === "files" ? draftHTML("files") : ""}${st.receipts["files-" + id] ? `<div class="receipt">${st.receipts["files-" + id]}</div>` : ""}
+        <div class="people">${ppl}</div>
+        ${c ? `<div class="contact"><a href="mailto:${c.e}">${c.e}</a> · ${c.p} · ${c.c}<span class="meta">${c.q}</span></div>` : ""}
+        ${d.russ ? russHTML() : ""}${d.judi ? judiHTML(d) : ""}
+      </div>`;
+    };
+
+    const deskHTML = () => {
+      if (!st.desk) return "";
+      const s = SEATS[st.seat % SEATS.length];
+      let body = "";
+      if (st.tab === "write") body = `<p class="why" style="margin:0 0 8px">Write to anyone. A person on a deal files there.</p>${draftHTML("write")}${st.receipts.write ? `<div class="receipt">${st.receipts.write}</div>` : ""}`;
+      if (st.tab === "seats") body = `<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-weight:600;font-size:16px">Ask ${s.csm} for a seat.</span><span class="why">${s.why}</span></div>
+        <p class="why" style="margin:4px 0 10px"><span class="badge">${st.seatLeft}</span> accounts have nothing on the record with you. Three at a time, by CSM.</p>
+        ${s.accts.map((a) => `<div class="acct"><div class="n">${esc(a[0])}</div><div class="r">${esc(a[1])}</div></div>`).join("")}
+        <div class="row2"><button class="btn" data-a="draft-seat">Draft the ask</button></div>
+        ${st.draft === "seat" ? draftHTML("seat") : ""}${st.receipts.seat ? `<div class="receipt">${st.receipts.seat}</div>` : ""}`;
+      if (st.tab === "teams") body = `<p class="why" style="margin:0">Give GEM a channel to read, and why.</p>
+        <div class="row2"><input data-tlink placeholder="Paste a Teams channel link"><select data-twhy><option value="">Why watch it?</option><option>Deals in my book</option><option>Implementation and handoff</option><option>Product and roadmap</option><option>CSM coordination</option></select></div>
+        <div class="row2"><button class="btn" data-a="watch">Watch it</button></div>
+        ${st.teams.map((t, i) => `<div class="chan"><div><span class="n">${esc(t.n)}</span> <span class="r">· ${esc(t.why)}</span></div>
+          <div class="r">${t.paused ? "Paused" : "Last batch " + t.last.toLowerCase()} · <button data-tk="${i}" style="color:var(--blue);font-weight:600">${t.kept.length} kept ${t.open ? "▾" : "▸"}</button> · <button data-tp="${i}" class="r">${t.paused ? "Resume" : "Pause"}</button> · <button data-tx="${i}" class="r" aria-label="Stop watching">✕</button></div>
+          ${t.open ? `<div class="kept">${t.kept.map((k) => `<p><b>${k[0]}</b>${esc(k[1])}</p>`).join("")}</div>` : ""}</div>`).join("")}`;
+      const tabs = [["write", "Write", ""], ["seats", "Seats", st.seatLeft], ["teams", "Teams", st.teams.reduce((n, t) => n + (t.paused ? 0 : t.kept.length), 0)]];
+      return `<aside class="sheet" aria-label="Desk"><div class="shead"><div class="tabs" role="tablist">${tabs.map(([k, l, n]) => `<button role="tab" data-tab="${k}" aria-selected="${st.tab === k}">${l}${n !== "" ? ` <span class="badge">${n}</span>` : ""}</button>`).join("")}</div><button class="btn quiet" style="margin-left:auto" data-a="desk" aria-label="Close the desk">✕</button></div><div class="sbody">${body}</div></aside>`;
+    };
+
+    const barHTML = (extra = "") => `<div class="bar"><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="butt" stroke-linejoin="miter"><path d="M4 21 12 3l8 18M7.5 14h9"/><path d="M2 21h20"/></svg><span class="room">HOMEROOM</span><span class="today">TUE · NOV 18</span>${extra}<button class="btn push" data-a="desk" aria-expanded="${st.desk}">Desk</button></div>`;
+
+    // ── the three structures ──
+    function render() {
+      let h = "";
+      if (kind === 1) {
+        const list = st.country ? countriesOf(st.country) : DEALS;
+        const L = st.country ? light(st.country) : null;
+        h = barHTML() + `<div class="mapwrap">${mapHTML()}</div>
+          <div class="listhead">${st.country ? `<span class="c">${COUNTRIES[st.country].flag} ${esc(COUNTRIES[st.country].name)}</span><span class="why">${list.length} deal${list.length > 1 ? "s" : ""}${L.n !== null ? ` · client date in ${L.n} days` : L.label ? " · " + L.label.toLowerCase() : ""}</span><button class="btn quiet push" data-a="all">All countries</button>` : `<span class="why">${DEALS.length} deals in ${Object.keys(COUNTRIES).length} countries. Choose a country, or a deal.</span>`}</div>
+          ${list.map((d) => { const l = dealLight(d); return `<button class="lrow" data-deal="${d.id}" aria-expanded="${st.deal === d.id}"><span class="n">${esc(d.name)}</span><span><span class="m">${esc(d.move)}</span> <span class="w">${esc(d.why)}</span></span><span class="d ${l.cls}">${l.t}</span></button>${st.deal === d.id ? `<div class="open">${dealHTML(d.id)}</div>` : ""}`; }).join("")}`;
+      }
+      if (kind === 2) {
+        const n = nearest();
+        h = barHTML() + `<div class="split${st.country ? " open" : ""}"><div><div class="mapwrap">${mapHTML()}</div>
+          <div class="prompt"><span class="s">${DEALS.length} deals in ${Object.keys(COUNTRIES).length} countries. ${n ? `${esc(COUNTRIES[n.c].name)}'s client date is in ${n.l.n} days.` : ""}</span>${n && !st.country ? `<button class="btn" data-c="${n.c}">Open ${esc(COUNTRIES[n.c].name)}</button>` : ""}</div></div>
+          <div class="drawer">${st.country ? drawerHTML() : ""}</div></div>`;
+      }
+      if (kind === 3) {
+        if (!st.deal) {
+          const n = nearest();
+          h = barHTML() + `<div class="lead"><p class="s">${DEALS.length} deals across ${Object.keys(COUNTRIES).length} countries.</p><p class="s2">${n ? `Nearest client date: ${esc(COUNTRIES[n.c].name)}, in ${n.l.n} days. ` : ""}Choose a pin to open its deal.</p></div>
+            <div class="mapwrap" style="position:relative">${mapHTML()}${st.pick ? pickHTML() : ""}</div>`;
+        } else {
+          const d = DEAL[st.deal], c = st.country ?? d.countries[0];
+          const others = countriesOf(c).filter((x) => x.id !== d.id);
+          h = barHTML() + `<div class="crumb"><button class="btn quiet" data-a="map">‹ Map</button><div class="thumb">${mapHTML({ bare: true, focus: c })}</div>
+            <span class="also">${COUNTRIES[c].flag} ${esc(COUNTRIES[c].name)}${others.length ? ` · also here: ${others.map((o) => `<button data-deal="${o.id}">${esc(o.name)}</button>`).join(", ")}` : ""}</span></div>${dealHTML(d.id)}`;
+        }
+      }
+      root.innerHTML = h + deskHTML();
+    }
+    function drawerHTML() {
+      const c = COUNTRIES[st.country], L = light(st.country), list = countriesOf(st.country);
+      if (st.deal) return `<div class="back"><button class="btn quiet" data-a="back">‹ ${esc(c.name)}</button></div>${dealHTML(st.deal)}`;
+      return `<div class="dhead"><span class="c">${c.flag} ${esc(c.name)}</span><span class="why">${L.n !== null ? `client date in ${L.n} days` : L.label.toLowerCase()}</span><button class="btn quiet push" data-a="all" aria-label="Close">✕</button></div>
+        ${list.map((d) => `<button class="crow" data-deal="${d.id}"><span class="n">${esc(d.name)}</span><span class="m">${esc(d.move)}</span> <span class="w">${esc(d.why)}</span></button>`).join("")}`;
+    }
+    function pickHTML() {
+      const [x, y] = xy(...COUNTRIES[st.pick].geo);
+      return `<div class="pick" style="left:calc(32px + (100% - 64px) * ${x / 100});top:calc(18px + (100% - 50px) * ${y / 100})">${countriesOf(st.pick).map((d) => `<button data-deal="${d.id}" data-from="${st.pick}"><span class="n">${esc(d.name)}</span><span class="m">${esc(d.move)}</span></button>`).join("")}</div>`;
+    }
+
+    // ── what each click does ──
+    function chooseCountry(code) {
+      if (kind === 3) {
+        const ds = countriesOf(code);
+        if (ds.length === 1) { st.country = code; st.deal = ds[0].id; st.pick = null; }
+        else st.pick = st.pick === code ? null : code;
+      } else { st.country = st.country === code && kind === 1 ? null : code; st.deal = null; }
+      st.draft = null; st.contact = null; render();
+    }
+    function send(key) {
+      const v = st.dv[key];
+      const files = [...(st.picked?.[key] ?? [])].map((id) => LIB.find((f) => f.id === id).name).concat((st.locals?.[key] ?? []).map((f) => f.name));
+      download(`${(v.subject || "Note").replace(/[\\/:*?"<>|]/g, "")}.eml`, emlOf(v.to, v.cc, v.subject, v.body, files));
+      const where = v.acct ? `SAVED TO ${v.acct.toUpperCase()}'S RECORD` : (matchLine(v.to).includes("Files on") ? `SAVED TO ${matchLine(v.to).replace(/.*<b>|<\/b>.*/g, "").toUpperCase()}'S RECORD` : "KEPT FOR THE RECORD");
+      const r = `${where} · 11/18 · DOWNLOADED${files.length ? ` · ${files.length} FILE${files.length > 1 ? "S" : ""}` : ""}`;
+      if (key === "files") st.receipts["files-" + st.deal] = r; else st.receipts[key] = r;
+      if (key === "seat") { st.seatLeft -= 3; st.seat++; st.dv.seat = null; delete st.dv.seat; }
+      st.draft = null; if (key === "write") { delete st.dv.write; st.picked.write = new Set(); }
+      if (key === "files") { delete st.dv.files; }
+      render();
+    }
+
+    root.addEventListener("click", (e) => {
+      const t = e.target.closest("button,[data-pick],label.local");
+      if (!t) { if (kind === 3 && st.pick && !e.target.closest(".pick")) { st.pick = null; render(); } return; }
+      if (t.dataset.c) return chooseCountry(t.dataset.c);
+      if (t.dataset.deal) {
+        if (kind === 1) st.deal = st.deal === t.dataset.deal ? null : t.dataset.deal;
+        else { st.deal = t.dataset.deal; if (t.dataset.from) st.country = t.dataset.from; st.pick = null; }
+        st.draft = null; st.contact = null; return render();
+      }
+      if (t.dataset.p != null) { const i = +t.dataset.p; st.contact = st.contact === i ? null : i; return render(); }
+      if (t.dataset.tab) { st.tab = t.dataset.tab; st.draft = st.tab === "write" ? "write" : null; return render(); }
+      if (t.dataset.tk != null) { const c = st.teams[+t.dataset.tk]; c.open = !c.open; return render(); }
+      if (t.dataset.tp != null) { const c = st.teams[+t.dataset.tp]; c.paused = !c.paused; return render(); }
+      if (t.dataset.tx != null) { st.teams.splice(+t.dataset.tx, 1); return render(); }
+      if (t.dataset.ch) {
+        const [fid, time, label] = t.dataset.ch.split("|"), k = t.dataset.k, set = st.chaps[k], line = `At ${time}, ${label.charAt(0).toLowerCase() + label.slice(1)}.`;
+        const v = st.dv[k];
+        if (set.has(fid + time)) { set.delete(fid + time); v.body = v.body.replace("\n" + line, ""); }
+        else { set.add(fid + time); st.picked[k].add(fid); v.body = v.body.replace(/\s*$/, "") + "\n" + line; }
+        return render();
+      }
+      const a = t.dataset.a;
+      if (!a) return;
+      if (a === "desk") { st.desk = !st.desk; st.draft = st.desk && st.tab === "write" ? "write" : (st.draft === "write" || st.draft === "seat" ? null : st.draft); return render(); }
+      if (a === "all") { st.country = null; st.deal = null; st.draft = null; return render(); }
+      if (a === "back") { st.deal = null; st.draft = null; return render(); }
+      if (a === "map") { st.deal = null; st.country = null; st.draft = null; return render(); }
+      if (a === "done") { t.textContent = "Done ✓"; t.disabled = true; return; }
+      if (a.startsWith("draft-")) { const k = a.slice(6); st.draft = st.draft === k ? null : k; if (k === "files") delete st.dv?.files; return render(); }
+      if (a === "close") { st.draft = st.desk && st.tab === "write" ? null : null; return render(); }
+      if (a === "send") return send(t.dataset.k);
+      if (a === "r-") { st.russ.thr = Math.max(2, st.russ.thr - 1); return render(); }
+      if (a === "r+") { st.russ.thr = Math.min(15, st.russ.thr + 1); return render(); }
+      if (a === "r0" || a === "replied") { st.russ.days = 0; st.draft = st.draft === "russ" ? null : st.draft; st.receipts.russ = a === "replied" ? "RESET · TOM REPLIED 11/18" : "RESET · COUNT STARTS OVER"; return render(); }
+      if (a === "watch") {
+        const link = root.querySelector("[data-tlink]").value.trim(), why = root.querySelector("[data-twhy]").value;
+        if (!/teams\.microsoft\.com/i.test(link) || !why) { root.querySelector("[data-tlink]").placeholder = "Paste a teams.microsoft.com channel link, then pick why"; root.querySelector("[data-tlink]").value = ""; return; }
+        const name = decodeURIComponent((link.match(/channel\/[^/]+\/([^?]+)/) || [, "New channel"])[1]).replace(/[-+]/g, " ");
+        st.teams.unshift({ n: name, team: "", why, last: "NEXT BATCH TOMORROW 7:00 AM", kept: [], open: false, paused: false }); return render();
+      }
+    });
+    root.addEventListener("input", (e) => {
+      const d = e.target.closest("[data-draft]");
+      if (d && e.target.dataset.v) {
+        st.dv[d.dataset.draft][e.target.dataset.v] = e.target.value;
+        if (d.dataset.draft === "write" && e.target.dataset.v === "to") { const m = d.querySelector("[data-match]"); if (m) m.innerHTML = matchLine(e.target.value); }
+      }
+      if (e.target.dataset.f) st.judiFacts[e.target.dataset.f] = e.target.value;
+    });
+    root.addEventListener("change", (e) => {
+      const t = e.target;
+      if (t.dataset.pick) { const s = st.picked[t.dataset.k]; t.checked ? s.add(t.dataset.pick) : s.delete(t.dataset.pick); return render(); }
+      if (t.dataset.j) { st.judi[t.dataset.j] = t.checked; return; }
+      if (t.dataset.f) { render(); return; }
+      if (t.dataset.local) { const k = t.dataset.local; ((st.locals ??= {})[k] ??= []).push(...[...t.files].map((f) => ({ name: f.name, bytes: f.size }))); return render(); }
+    });
+    // A hovered or focused pin brings its own label in front of the others.
+    root.addEventListener("pointerover", (e) => { const p = e.target.closest(".pin"); root.querySelectorAll(".lab.lift").forEach((l) => l.classList.remove("lift")); if (p) root.querySelector(`.lab[data-c="${p.dataset.c}"]`)?.classList.add("lift"); });
+    root.addEventListener("focusin", (e) => { const p = e.target.closest(".pin"); if (p) root.querySelector(`.lab[data-c="${p.dataset.c}"]`)?.classList.add("lift"); });
+    render();
+  }
+
+  room(document.getElementById("v1"), 1);
+  room(document.getElementById("v2"), 2);
+  room(document.getElementById("v3"), 3);
+
+  // The frame width, remembered per browser.
+  const setFW = (w) => { document.querySelectorAll(".frame").forEach((f) => f.style.setProperty("--fw", w + "px")); document.querySelectorAll("[data-fw]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.fw === w))); try { localStorage.setItem("mapleads:fw", w); } catch {} };
+  document.querySelectorAll("[data-fw]").forEach((b) => b.addEventListener("click", () => setFW(b.dataset.fw)));
+  try { const w = localStorage.getItem("mapleads:fw"); if (w) setFW(w); } catch {}
+})();
+</script>
+</body>
+</html>

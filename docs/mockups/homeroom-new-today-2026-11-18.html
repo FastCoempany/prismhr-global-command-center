@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HomeRoom, Today in Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The HomeRoom as one ordered list of today's moves, drawn from every
+     deal. Three structures of the same idea. One theme, the room's tokens. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --fw:1440px;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 14px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input,textarea,select{font:inherit;color:inherit}
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1480px;margin:0 auto;padding:40px 16px 120px}
+
+  /* the document's own head */
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 26px/1.2 var(--serif);margin:6px 0 8px}
+  .lede{color:var(--soft);max-width:78ch;margin:0}
+  .notes{margin:16px 0 0;padding:0;list-style:none;max-width:90ch}
+  .notes li{color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  .bar{position:sticky;top:0;z-index:20;background:var(--field);border-bottom:1px solid var(--hair-soft);padding:10px 0;margin-top:24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .seg{display:inline-flex;border:1px solid var(--hair);border-radius:8px;overflow:hidden;background:var(--surface)}
+  .seg button{padding:5px 12px;min-height:30px;color:var(--soft)}
+  .seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+  section{margin-top:56px}
+  .sample{font:600 9px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:3px 5px;white-space:nowrap}
+
+  /* the room's frame */
+  .frame{width:min(var(--fw),100%);margin:0 auto;background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;overflow:hidden}
+  .roomhead{display:flex;align-items:baseline;gap:14px;padding:16px 24px;border-bottom:1px solid var(--hair-soft);flex-wrap:wrap}
+  .roomname{font:700 11px/1 var(--mono);letter-spacing:.3em}
+  .day{font:500 11px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .tally{margin-left:auto;font:600 11px/1 var(--mono);letter-spacing:.08em;color:var(--soft)}
+  .linkbtn{color:var(--blue);font-weight:500}
+  .linkbtn:hover{text-decoration:underline;text-underline-offset:3px}
+  .col{max-width:760px;margin:0 auto;padding:28px 24px 8px}
+
+  /* an item: number, action and reason, the deal */
+  .item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:0 14px;padding:14px 0;border-top:1px solid var(--hair-soft);align-items:baseline}
+  .item:first-child{border-top:0}
+  .n{font:600 11px/1 var(--mono);color:var(--faint);text-align:right}
+  .act{font:600 16px/1.35 var(--sans)}
+  .why{color:var(--soft)}
+  .carried{color:var(--amber);font-weight:600}
+  .deal{font:400 16px/1.3 var(--serif);color:var(--ink);text-align:right;white-space:nowrap}
+  .deal:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--quiet)}
+  .item button.row{all:unset;cursor:pointer;display:contents}
+  .item.closed .act{font-weight:500;color:var(--soft)}
+  .item.open{padding-bottom:4px}
+  .item.open .act{font-size:18px}
+  .item:not(.open):hover .act{color:var(--ink)}
+  .panelwrap{grid-column:2/4;margin-top:12px}
+
+  /* the controls under an open item */
+  .moves{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 6px}
+  .btn{min-height:30px;padding:5px 12px;border-radius:7px;border:1px solid var(--hair);background:var(--surface);font-weight:600}
+  .btn:hover{border-color:var(--faint)}
+  .done{background:var(--green);border-color:var(--green);color:#fff}
+  .done:hover{border-color:var(--green);filter:brightness(.95)}
+  .go{border:1.5px solid var(--ink);background:var(--surface)}
+  [data-focus="1"] .go{background:var(--orange);border-color:var(--orange);color:#fff}
+  .later{color:var(--soft);font-weight:500;padding:5px 4px}
+  .later:hover{color:var(--ink)}
+
+  /* panels */
+  .pane{border-top:1px solid var(--hair-soft);padding-top:14px}
+  .lbl{font:600 10px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .f{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--hair-soft);min-height:36px}
+  .f input{border:0;background:transparent;padding:6px 0;width:100%;min-width:0}
+  .f input:focus{outline:none}
+  .f input[readonly]{color:var(--soft)}
+  .body{width:100%;min-height:120px;border:0;border-bottom:1px solid var(--hair-soft);background:transparent;resize:vertical;padding:10px 0;line-height:1.55}
+  .body:focus{outline:none}
+  .files summary{cursor:pointer;list-style:none;padding:10px 0;color:var(--soft);font-weight:500}
+  .files summary::-webkit-details-marker{display:none}
+  .files[open] summary{color:var(--ink)}
+  .file{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;padding:6px 0;align-items:baseline}
+  .file input{accent-color:var(--ink);margin:0}
+  .sz{font:500 10.5px/1 var(--mono);color:var(--faint)}
+  .inside{grid-column:2/4;margin:2px 0 6px;padding:0;list-style:none}
+  .inside li{display:flex;gap:10px;align-items:baseline;color:var(--soft);padding:1px 0}
+  .inside .t{font:500 10.5px/1 var(--mono);color:var(--faint);width:38px;flex:none}
+  .inside button{margin-left:auto;color:var(--blue);font-weight:500;white-space:nowrap}
+  .inside li.on{color:var(--ink)}
+  .inside li.on button{color:var(--faint)}
+  .receipt{font:600 10.5px/1.5 var(--mono);letter-spacing:.06em;color:var(--green)}
+  .receipt span{color:var(--faint);font-weight:500}
+  .fold{margin-top:6px}
+  .fold summary{cursor:pointer;list-style:none;color:var(--soft);font-weight:500;padding:4px 0}
+  .fold summary::-webkit-details-marker{display:none}
+  .facts{margin:6px 0 10px;padding:0;list-style:none}
+  .facts li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;padding:3px 0;border-bottom:1px solid var(--hair-soft)}
+  .facts .k{color:var(--soft)}
+  .facts .src{font:500 10px/1 var(--mono);color:var(--faint);margin-left:8px;letter-spacing:.06em}
+  .facts input{border:0;border-bottom:1px dashed var(--amber);background:transparent;width:100%;padding:0}
+  .tick{display:flex;gap:10px;align-items:baseline;padding:3px 0}
+  .tick input{accent-color:var(--ink)}
+  .judi{border-left:2px solid var(--blue);background:var(--blue-soft);padding:6px 10px;border-radius:0 6px 6px 0;margin:8px 0;color:var(--ink)}
+  .judi b{font:700 10px/1 var(--mono);letter-spacing:.14em;color:var(--blue);margin-right:8px}
+
+  /* Ask Russ counter */
+  .russ{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .count{font:600 28px/1 var(--mono);min-width:44px;text-align:center;padding:6px 8px;border-radius:8px;border:1px solid var(--hair)}
+  .count.pulse{animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.35)}50%{box-shadow:0 0 0 7px rgba(239,68,68,0)}}
+  @media (prefers-reduced-motion:reduce){.count.pulse{animation:none}}
+  .tiny{min-height:28px;min-width:28px;padding:2px 8px;border:1px solid var(--hair);border-radius:6px;font:600 11px/1 var(--mono);color:var(--soft)}
+  .sim{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+
+  /* lists that fold: done today, not today, the deals */
+  .tail{max-width:760px;margin:0 auto;padding:4px 24px 24px}
+  .tailrow{display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid var(--hair-soft);padding-top:12px}
+  .count-link{font:600 11px/1 var(--mono);letter-spacing:.08em;color:var(--soft)}
+  .count-link:hover{color:var(--ink)}
+  .gone{padding:4px 0;color:var(--soft);display:flex;gap:10px;align-items:baseline}
+  .gone .x{margin-left:auto;color:var(--faint);font:600 12px/1 var(--mono)}
+  .gone .x:hover{color:var(--ink)}
+  .dealcard{border:1px solid var(--hair-soft);border-radius:8px;padding:10px 12px;margin:8px 0;background:var(--field)}
+  .dealcard .nm{font:400 17px/1.2 var(--serif)}
+  .tools{max-width:760px;margin:0 auto;padding:12px 24px 18px;border-top:1px solid var(--hair-soft);display:flex;gap:20px;flex-wrap:wrap;align-items:baseline}
+  .tools .lbl{margin-right:2px}
+  .toolpane{max-width:760px;margin:0 auto;padding:0 24px 24px}
+  .chan{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-bottom:1px solid var(--hair-soft)}
+  .chan .meta{color:var(--soft)}
+  .line{color:var(--soft);padding:2px 0 2px 12px;border-left:2px solid var(--hair)}
+  .watch{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .watch input,.watch select{border:1px solid var(--hair);border-radius:7px;padding:5px 10px;min-height:30px;background:var(--surface)}
+  .watch input{flex:1;min-width:200px}
+
+  /* Variation B: one at a time */
+  .stage{max-width:760px;margin:0 auto;padding:40px 24px 16px}
+  .of{font:600 11px/1 var(--mono);letter-spacing:.14em;color:var(--faint)}
+  .big{font:600 18px/1.35 var(--sans);margin:10px 0 2px}
+  .stage .deal{text-align:left;display:inline-block;margin-top:2px}
+  .next{max-width:760px;margin:0 auto;padding:14px 24px;border-top:1px solid var(--hair-soft);display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .next .act{font-size:14px;font-weight:600}
+  .queue{max-width:760px;margin:0 auto;padding:0 24px 12px}
+
+  /* Variation C: the day in three bands */
+  .band{border-top:1px solid var(--hair-soft)}
+  .band:first-child{border-top:0}
+  .bandhead{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:14px;align-items:baseline;padding:14px 0;width:100%;text-align:left}
+  .bandhead .time{font:600 11px/1 var(--mono);letter-spacing:.1em;color:var(--faint)}
+  .bandhead .what{font-weight:600}
+  .bandhead .c{font:600 11px/1 var(--mono);color:var(--soft)}
+  .band.now .time{color:var(--ink)}
+  .now-tag{font:700 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--blue);margin-left:8px}
+  .band .items{padding-left:0}
+
+  @media (max-width:640px){
+    .item{grid-template-columns:22px minmax(0,1fr)}
+    .deal{grid-column:2;text-align:left;margin-top:2px}
+    .panelwrap{grid-column:1/3}
+    .facts li{grid-template-columns:1fr}
+    .bandhead{grid-template-columns:1fr auto}
+    .bandhead .what{grid-column:1/3;grid-row:2}
+    .col,.tail,.tools,.toolpane,.stage,.next,.queue{padding-left:16px;padding-right:16px}
+    .roomhead{padding:14px 16px}
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom overhaul · New idea · Today, in order · 2026-11-18</p>
+<h1>Today, in order</h1>
+<p class="lede">The HomeRoom becomes the short list of what to do today, drawn from every deal and put in the order to do it. Deals stay in the background: a deal opens only when you click its name or the deal list. Three structures of the same idea follow.</p>
+<ul class="notes">
+  <li><b>What makes the list.</b> A reply or a promise owed, a deal silent five business days or more (Ask Russ), a deal you marked Closed Won (the Judi handoff), a CSM seat to ask for, and a client date coming up. A move left from yesterday returns at the top and says so.</li>
+  <li><b>Where Write, Seats and Teams went.</b> They sit on one quiet line under the list, because they are tools you reach for, not today's moves; when a seat is due, the ask itself joins the list as an item.</li>
+  <li><b>One orange at a time.</b> Only the item or tool you have open shows its orange move. Mark it done is green. Every item can be done or put off for today, and both come back with ↺.</li>
+  <li><b>Sample data</b> from the record's shapes: the accounts and people are real names from the book; the dates, counts and drafts are made up to show the behavior.</li>
+</ul>
+
+<div class="bar">
+  <span class="kick">Frame</span>
+  <span class="seg" data-width><button data-w="1440" aria-pressed="true">Laptop · 1440</button><button data-w="960" aria-pressed="false">Half monitor · 960</button></span>
+</div>
+
+<section>
+  <p class="kick">Variation A</p>
+  <h2>The list, worked top to bottom</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>How it reads.</b> One column of today's moves. The first one is open with its draft and its buttons; the rest are one line each. Done moves leave the list and wait in "Done today" at the foot.</li>
+    <li><b>Good for.</b> Seeing the whole day at once and picking any move. <b>Cost.</b> With a long day, the list grows taller than one screen.</li>
+  </ul>
+  <div class="frame" id="A"></div>
+</section>
+
+<section>
+  <p class="kick">Variation B</p>
+  <h2>One move at a time</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>How it reads.</b> One move fills the room, open, with its draft. Under it, only the next move's line and how many are left. The full queue opens one click down.</li>
+    <li><b>Good for.</b> Working through the day without being pulled sideways. <b>Cost.</b> You see the rest of the day only when you ask for it.</li>
+  </ul>
+  <div class="frame" id="B"></div>
+</section>
+
+<section>
+  <p class="kick">Variation C</p>
+  <h2>The day in three bands</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>How it reads.</b> The day's moves sit in the three bands the app already keeps: sends from 9 to 11, people from 11 to 2, and prep and filing from 2. The band you are in is open; the others fold to one line with their count. A send left over from the morning stays in its band and says so.</li>
+    <li><b>Good for.</b> Doing the right kind of work at the right hour. <b>Cost.</b> A move in a later band is one click away until its hour.</li>
+  </ul>
+  <div class="frame" id="C"></div>
+</section>
+
+<p class="notes" style="margin-top:48px;list-style:none;padding:0;color:var(--faint)">Sample data throughout. The file names are real; the drafts download as Outlook files that list their attachments by name.</p>
+</main>
+
+<script>
+(() => {
+  const MB = 1_000_000;
+  const store = {
+    get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+    set(k,v){ try { localStorage.setItem(k,v); } catch {} },
+  };
+
+  const LIB = [
+    { id:"emp", g:"Demos", name:"The platform, employer side", runs:"36:43", bytes:4_410_003,
+      inside:[["0:00","Into Global from PrismHR by single sign-on"],["0:37","The service provider view"],["6:05","Invoices, reseller and referral"],["8:28","Admin access"],["8:52","Client pricing"],["12:05","Pay periods and gross to net"],["14:03","How contractors, EOR and payroll are paid"],["16:34","Reimbursements, time off and time tracking"],["18:23","Onboarding and the team"],["18:58","Adding a new EOR employee"],["22:23","The employer cost estimate"],["26:22","Equipment"],["27:21","Benefits"],["29:57","What happens next"],["32:46","Support"],["34:05","Users and permissions"],["35:18","Approval workflows"]] },
+    { id:"pay", g:"Demos", name:"ListoPay, the contractor's wallet", runs:"28:46", bytes:4_452_872,
+      inside:[["0:00","Wallet home"],["0:44","The virtual card"],["1:52","Withdraw to a Philippines bank"],["8:42","Savings"],["9:44","Investing"],["12:42","Beneficiaries"],["13:32","Withdraw to GCash"],["15:12","Mobile wallets by country"],["16:05","Tax forms"],["17:42","The card avoids the fee"],["19:28","Funding timing"],["21:49","Withdrawal speed"],["22:24","Protections, and when a contractor leaves"],["24:42","USD to a USD account"],["26:31","Funding the wallet yourself"],["27:48","Why withdrawals settle fast"]] },
+    { id:"op1", g:"One-pagers", name:"PrismHR Global at a glance", bytes:103_508 },
+    { id:"op2", g:"One-pagers", name:"Employer of record", bytes:478_578 },
+    { id:"op3", g:"One-pagers", name:"Global payroll", bytes:432_923 },
+    { id:"op4", g:"One-pagers", name:"Contractor solutions", bytes:421_035 },
+    { id:"op5", g:"One-pagers", name:"Talent", bytes:491_901 },
+    { id:"ag1", g:"Agreements", name:"Reseller agreement, review copy", bytes:138_013 },
+    { id:"ag2", g:"Agreements", name:"Referral agreement, review copy", bytes:48_474 },
+  ];
+  const size = b => b < MB ? Math.round(b/1000) + " KB" : (b/MB).toFixed(1) + " MB";
+
+  const DEALS = {
+    "Regis HR Group": { sentence:"Reseller · employer of record for a client in Puerto Rico · 3 people · client starts Jan 1", stage:"Reviewing · their client shown", people:"Leilani Gonzalez, Director of Operations · Elise M.", contact:"lgonzalez@regishrgroup.example · 305-555-0197 · Miami · quiet 21 days" },
+    "Infiniti HR": { sentence:"Reseller · employer of record in Puerto Rico · 1 employee", stage:"Engaged warm · their client named", people:"Tom Harrison · Scott S.", contact:"tom@infinitihr.example · 555-0142 · silent 6 business days" },
+    "XCEL HR": { sentence:"Referral · employer of record in Canada and Mexico", stage:"Signed today · their client won", people:"Bill Laffey · Melanie D.", contact:"bill@xcelhr.example · 555-0118" },
+    "Simploy": { sentence:"Referral · global payroll for a client in India · 2 contractors", stage:"Engaged warm · their client scoped", people:"Chassie Smith, COO · Lesha C.", contact:"csmith@simploy.example · 555-0163" },
+    "AlphaStaff": { sentence:"Partner · one-pagers sent 11/17", stage:"Engaged cold", people:"Cristina Bouchard · Annie M.", contact:"cbouchard@alphastaff.example · 555-0171" },
+    "Nextep": { sentence:"Partner · the employer-side demo sent 11/17", stage:"Engaged cold", people:"Melissa Grimes", contact:"mgrimes@nextep.example · 555-0109" },
+    "American Benefits Company": { sentence:"Nothing on the record with you · Anika's account", stage:"Not met", people:"Riley Pitt runs their bi-weekly calls", contact:"" },
+  };
+
+  const ITEMS = [
+    { id:"regis", band:"people", act:"Book Judi's intro call.", why:"Asked Friday.", carried:true, deal:"Regis HR Group", kind:"email",
+      to:"Leilani Gonzalez <lgonzalez@regishrgroup.example>", cc:"Judi Owen", subject:"15 minutes with Judi",
+      body:"Hi Leilani,\n\nJudi Owen runs implementation for PrismHR Global, and she'd like 15 minutes to walk you through the platform. Do Tuesday or Wednesday afternoon work?\n\nThanks,\nAntaeus", go:"Download for Outlook" },
+    { id:"infiniti", band:"sends", act:"Ask Russ to nudge Tom.", why:"Silent 6 business days.", deal:"Infiniti HR", kind:"russ", go:"Download for Outlook" },
+    { id:"xcel", band:"sends", act:"Send Judi the handoff.", why:"Signed today.", deal:"XCEL HR", kind:"judi", go:"Download for Outlook" },
+    { id:"simploy", band:"sends", act:"Send Chassie the demo.", why:"Asked on Monday's call.", deal:"Simploy", kind:"email",
+      to:"Chassie Smith <csmith@simploy.example>", cc:"", subject:"The PrismHR Global demo",
+      body:"Hi Chassie,\n\nHere's the payroll side of the platform, recorded start to finish.\n\nThanks,\nAntaeus", files:["emp"], go:"Download for Outlook" },
+    { id:"seat", band:"people", act:"Ask Anika for a seat.", why:"Bi-weekly calls on the record.", deal:"American Benefits Company", kind:"seat", go:"Download for Outlook" },
+    { id:"alpha", band:"people", act:"Ask Cristina about the files.", why:"Files sent 11/17. No reply.", deal:"AlphaStaff", kind:"email",
+      to:"Cristina Bouchard <cbouchard@alphastaff.example>", cc:"", subject:"The PrismHR Global one-pagers",
+      body:"Hi Cristina,\n\nDid the one-pagers answer what your team needed? I'm glad to walk through any of them.\n\nThanks,\nAntaeus", go:"Download for Outlook" },
+    { id:"nextep", band:"people", act:"Ask Melissa about the demo.", why:"Demo sent 11/17. No reply.", deal:"Nextep", kind:"email",
+      to:"Melissa Grimes <mgrimes@nextep.example>", cc:"", subject:"The employer-side demo",
+      body:"Hi Melissa,\n\nDid the demo cover what you were looking for? Happy to go through any part of it live.\n\nThanks,\nAntaeus", go:"Download for Outlook" },
+    { id:"integra", band:"prep", act:"Confirm the client's start date.", why:"Client starts Jan 1.", deal:"Regis HR Group", kind:"email",
+      to:"Leilani Gonzalez <lgonzalez@regishrgroup.example>", cc:"", subject:"Integra's start date",
+      body:"Hi Leilani,\n\nIs Jan 1 still the start date for Integra's three people in Puerto Rico? It sets when Judi's team begins setup.\n\nThanks,\nAntaeus", go:"Download for Outlook" },
+  ];
+  const BANDS = [
+    { id:"sends", time:"9 TO 11", what:"Sends" },
+    { id:"people", time:"11 TO 2", what:"People" },
+    { id:"prep", time:"FROM 2", what:"Prep and filing" },
+  ];
+  const NOW_BAND = "people";
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  function fresh(){
+    return {
+      status:{}, open:null, tool:null, deal:null, folds:{}, band:NOW_BAND,
+      drafts:{}, saved:{}, russ:{ days:6, at:5, cleared:false },
+      judi:{ ticks:{}, fill:"", cc:true }, seat:{ left:109, batch:0, skip:{} },
+      teams:{ chans:[
+        { name:"Global Sales & Operations", why:"Deals in my book", n:3, lines:["Senior manager titles over director on EOR contracts, per Kym.","HMRC payroll tax goes by direct debit from the client's UK account.","Tyler can pay HMRC on the client's behalf."] },
+        { name:"PrismHR Global Team", why:"Implementation and handoff", n:2, lines:["Judi takes kickoffs for signed partners from this week.","Early adopter feedback form is live."] },
+        { name:"PrismGlobal Launch", why:"Product and roadmap", n:0, lines:[] },
+      ]},
+    };
+  }
+
+  const isOpen = (st, it) => !st.status[it.id];
+  const live = st => ITEMS.filter(it => isOpen(st, it) && !(it.kind === "russ" && st.russ.cleared));
+
+  function draftOf(st, it){
+    if (!st.drafts[it.id]){
+      let d;
+      if (it.kind === "russ") d = { to:"Russ Jones <rjones@prismhr.com>", cc:"", subject:"A nudge for Tom at Infiniti HR", locked:true,
+        body:"Russ,\n\nTom Harrison at Infiniti HR has been silent for six business days, after we sent the Puerto Rico pricing. A short note from you could get him moving. Here's one you can forward or send as is:\n\n\"Tom, Antaeus mentioned your Puerto Rico hire. I'd like to make sure you have what you need from us. Is a quick call this week useful?\"\n\nThanks,\nAntaeus", files:[] };
+      else if (it.kind === "judi") d = { to:"Judi Owen", cc:"Danielle Stansberry", subject:"Handoff: XCEL HR, signed today",
+        body:"Judi,\n\nXCEL HR signed today as a referral partner. Their client hires in Canada and Mexico under employer of record. Bill Laffey is the partner contact. Support routes through the in-app help, because this is a referral.\n\nThe facts I have, and the one still missing, are below.\n\nThanks,\nAntaeus", files:["ag2"] };
+      else if (it.kind === "seat") d = { to:"Anika Steenstra", cc:"", subject:"Five minutes on your next check-ins",
+        body:"Anika,\n\nCould I join your next check-in with a few of your accounts for five minutes? No selling. I'd say what Global does for their clients and the two ways to work with us, reseller and referral.\n\nThe accounts: American Benefits Company, Pinnacle Employee Services and Aegis Payroll Management.\n\nThanks,\nAntaeus", files:["op1"] };
+      else d = { to:it.to||"", cc:it.cc||"", subject:it.subject||"", body:it.body||"", files:(it.files||[]).slice() };
+      d.points = {}; st.drafts[it.id] = d;
+    }
+    return st.drafts[it.id];
+  }
+
+  function draftHTML(key, d, label){
+    const picked = new Set(d.files);
+    let lib = "", last = "";
+    LIB.forEach(f => {
+      if (f.g !== last){ lib += `<p class="lbl" style="margin:10px 0 2px">${f.g}</p>`; last = f.g; }
+      lib += `<label class="file"><input type="checkbox" data-pick="${f.id}" ${picked.has(f.id)?"checked":""}><span>${esc(f.name)}</span><span class="sz">${f.runs? f.runs+" · ":""}${size(f.bytes)}</span>`;
+      if (f.inside && picked.has(f.id)) lib += `<ul class="inside">${f.inside.map(([t,l]) => `<li class="${d.points[f.id+t]?"on":""}"><span class="t">${t}</span>${esc(l)}<button type="button" data-point="${f.id}|${t}|${esc(l)}">${d.points[f.id+t]?"In the email":"Point to it"}</button></li>`).join("")}</ul>`;
+      lib += `</label>`;
+    });
+    lib += `<label class="file"><input type="file" data-local hidden><span class="linkbtn">From your computer</span><span></span></label>`;
+    const n = d.files.length + (d.local||[]).length;
+    return `<div class="pane" data-draft="${key}">
+      <div class="f"><span class="lbl">To</span><input data-field="to" value="${esc(d.to)}" ${d.locked?"readonly":""}></div>
+      ${d.cc!==undefined ? `<div class="f"><span class="lbl">Cc</span><input data-field="cc" value="${esc(d.cc)}"></div>` : ""}
+      <div class="f"><span class="lbl">Subject</span><input data-field="subject" value="${esc(d.subject)}"></div>
+      <textarea class="body" data-field="body">${esc(d.body)}</textarea>
+      <details class="files" data-filesfold="${key}" ${d.filesOpen?"open":""}><summary>Files${n?` · ${n} attached`:""} ▾</summary>${lib}</details>
+      <div class="moves" style="margin-top:4px"><button class="btn go" data-download="${key}">${label}</button>${d.saved?`<span class="receipt">SAVED TO THE RECORD <span>· 11/18 · DOWNLOADED</span></span>`:""}</div>
+    </div>`;
+  }
+
+  function russHTML(st){
+    const r = st.russ, d = r.days, a = r.at;
+    const col = d >= a ? "var(--red)" : d >= a-1 ? "var(--amber)" : "var(--faint)";
+    return `<div class="russ">
+      <span class="count ${d>=a?"pulse":""}" style="color:${col};border-color:${col}">${d}</span>
+      <span>Tom has said nothing for <b>${d} business days</b>. You ask Russ at ${a}.</span>
+    </div>
+    <div class="sim"><button class="tiny" data-russ="-" aria-label="Ask Russ one day sooner">−</button><span class="tiny" style="border-style:dashed">AT ${a}</span><button class="tiny" data-russ="+" aria-label="Ask Russ one day later">+</button><button class="tiny" data-russ="r" title="Start the count again from today">↺</button>
+      <span class="sample">SAMPLE</span><button class="tiny" data-russ="you">TOM REPLIED TO YOU</button><button class="tiny" data-russ="russ">TOM REPLIED TO RUSS</button></div>`;
+  }
+
+  function judiHTML(st){
+    const j = st.judi;
+    const part = ["Send Judi the handoff.","Introduce Judi to Bill.","Lead the post-implementation check-in."];
+    return `<p class="lbl" style="margin-top:4px">Your part</p>
+      ${part.map((p,i) => `<label class="tick"><input type="checkbox" data-jtick="${i}" ${j.ticks[i]?"checked":""}> ${p}</label>`).join("")}
+      <p class="lbl" style="margin-top:12px">What Judi needs</p>
+      <ul class="facts">
+        <li><span class="k">Partner contact</span><span>Bill Laffey <span class="src">CALL NOTES 8/17</span></span></li>
+        <li><span class="k">Engagement</span><span>Referral · support through in-app help <span class="src">THE SENTENCE</span></span></li>
+        <li><span class="k">Countries</span><span>Canada and Mexico <span class="src">EMAIL 8/17</span></span></li>
+        <li><span class="k">First payroll</span><span>${j.fill ? esc(j.fill)+` <span class="src">YOUR HAND</span>` : `<input data-jfill placeholder="Not on the record. Fill it in.">`}</span></li>
+      </ul>
+      <p class="judi"><b>JUDI SHOULD SEE THIS</b>Bill was told payroll could start the first week of January.</p>`;
+  }
+
+  const SEATS = [
+    [["American Benefits Company","Bi-weekly calls with Riley Pitt on the record."],["Pinnacle Employee Services","Quarterly call with Mary Mahoney on the record."],["Aegis Payroll Management","High fit. Nothing on the record."]],
+    [["Thanexus","High fit. Nothing on the record."],["Payroll Solutions III","Monthly call on the record."],["Atlantic Payroll Partners","High fit. Nothing on the record."]],
+  ];
+  const CSMS = ["Anika Steenstra","Lesha Cyphers"];
+  function seatHTML(st){
+    const s = st.seat, b = SEATS[Math.min(s.batch, SEATS.length-1)], who = CSMS[Math.min(s.batch, CSMS.length-1)];
+    return `<p class="why" style="margin:0 0 6px"><b style="color:var(--ink)">${who}</b> · three of the <button class="linkbtn" data-tool-fold="seatsplit">${s.left} accounts with nothing on the record</button></p>
+      ${st.folds.seatsplit ? `<p class="line" style="margin:0 0 8px">Lesha 50 · Anika 43 · Whitney 13 · John 2 · no CSM 1</p>` : ""}
+      ${b.filter(([n]) => !s.skip[n]).map(([n,w]) => `<div class="gone" style="color:var(--ink)"><span style="font-family:var(--serif);font-size:16px">${n}</span><span class="why">${w}</span><button class="x" data-seatskip="${esc(n)}" title="Not in this ask">✕</button></div>`).join("")}`;
+  }
+
+  function teamsHTML(st){
+    return `${st.teams.chans.map((c,i) => `<div class="chan"><span><b>${esc(c.name)}</b><span class="meta"> · ${esc(c.why)}</span></span>
+        <button class="count-link" data-teamsopen="${i}">${c.n} NEW</button>
+        ${st.folds["teams"+i] ? `<div style="grid-column:1/3">${c.lines.length? c.lines.map(l => `<p class="line" style="margin:4px 0">${esc(l)}</p>`).join("") : `<p class="why">Nothing new from this channel.</p>`}</div>` : ""}</div>`).join("")}
+      <div class="watch"><input data-teamslink placeholder="Paste a Teams channel link"><select data-teamswhy><option value="">Why watch it?</option><option>Deals in my book</option><option>Implementation and handoff</option><option>Product and roadmap</option><option>CSM coordination</option></select><button class="btn" data-teamsadd>Watch it</button></div>`;
+  }
+
+  function panelHTML(st, it){
+    const d = draftOf(st, it);
+    let top = "";
+    if (it.kind === "russ") top = russHTML(st);
+    if (it.kind === "judi") top = judiHTML(st);
+    if (it.kind === "seat") top = seatHTML(st);
+    const label = it.kind === "russ" ? "Download the note to Russ" : it.go;
+    return `${top ? `<div style="margin:2px 0 12px">${top}</div>` : ""}${draftHTML(it.id, d, label)}`;
+  }
+
+  function movesHTML(it){
+    return `<div class="moves"><button class="btn done" data-done="${it.id}">Mark it done</button><button class="later" data-later="${it.id}">Not today</button></div>`;
+  }
+
+  function dealHTML(st, name){
+    const D = DEALS[name]; if (!D) return "";
+    return `<div class="dealcard"><div class="nm">${esc(name)}</div><div class="why">${esc(D.sentence)}</div><div>${esc(D.stage)}</div><div class="why">${esc(D.people)}</div>${D.contact?`<div class="why">${esc(D.contact)}</div>`:""}</div>`;
+  }
+
+  function reasonHTML(it){
+    return `<span class="why">${esc(it.why)}${it.carried ? ` <span class="carried">Left from yesterday.</span>` : ""}</span>`;
+  }
+
+  function itemHTML(st, it, i, opts={}){
+    const open = st.open === it.id && !st.tool;
+    return `<div class="item ${open?"open":"closed"}" ${open?'data-focus="1"':""}>
+      <span class="n">${String(i+1).padStart(2,"0")}</span>
+      <button class="row" data-openitem="${it.id}" aria-expanded="${open}"><span><span class="act">${esc(it.act)}</span><br>${reasonHTML(it)}</span></button>
+      <button class="deal" data-deal="${esc(it.deal)}" title="Open the deal">${esc(it.deal)}</button>
+      ${st.deal === it.id ? `<div class="panelwrap">${dealHTML(st, it.deal)}</div>` : ""}
+      ${open ? `<div class="panelwrap">${movesHTML(it)}${panelHTML(st, it)}</div>` : ""}
+    </div>`;
+  }
+
+  function tailHTML(st){
+    const done = ITEMS.filter(it => st.status[it.id] === "done");
+    const later = ITEMS.filter(it => st.status[it.id] === "later");
+    const cleared = st.russ.cleared;
+    return `<div class="tail"><div class="tailrow">
+        <button class="count-link" data-fold="done">DONE TODAY · ${done.length + (cleared?1:0)}</button>
+        <button class="count-link" data-fold="later">NOT TODAY · ${later.length}</button>
+        <button class="count-link" data-fold="deals" style="margin-left:auto">ALL DEALS · ${Object.keys(DEALS).length}</button>
+      </div>
+      ${st.folds.done ? (done.length||cleared ? done.map(it => `<div class="gone">✓ ${esc(it.act)} <span class="why">${esc(it.deal)}</span><button class="x" data-undo="${it.id}" title="Put it back">↺</button></div>`).join("") + (cleared?`<div class="gone">✓ Tom replied. Ask Russ cleared. <span class="why">Infiniti HR</span><button class="x" data-russ="undo" title="Put it back">↺</button></div>`:"") : `<p class="why">Nothing done yet.</p>`) : ""}
+      ${st.folds.later ? (later.length ? later.map(it => `<div class="gone">${esc(it.act)} <span class="why">${esc(it.deal)}</span><button class="x" data-undo="${it.id}" title="Put it back">↺</button></div>`).join("") : `<p class="why">Nothing put off.</p>`) : ""}
+      ${st.folds.deals ? Object.keys(DEALS).map(n => `<details class="fold"><summary><span style="font-family:var(--serif);font-size:16px">${esc(n)}</span> <span class="why">· ${esc(DEALS[n].stage)}</span></summary>${dealHTML(st,n)}</details>`).join("") : ""}
+    </div>`;
+  }
+
+  function toolsHTML(st){
+    const t = st.tool;
+    let pane = "";
+    if (t === "write"){ const d = st.drafts.__write || (st.drafts.__write = { to:"", cc:"", subject:"", body:"", files:[], points:{} }); pane = draftHTML("__write", d, "Download for Outlook"); }
+    if (t === "seats"){ const it = ITEMS.find(x => x.kind === "seat"); pane = `<div style="margin-bottom:10px">${seatHTML(st)}</div>${draftHTML(it.id, draftOf(st,it), "Download for Outlook")}`; }
+    if (t === "teams") pane = teamsHTML(st);
+    const newLines = st.teams.chans.reduce((a,c) => a + c.n, 0);
+    return `<div class="tools"><span class="lbl">Tools</span>
+        <button class="linkbtn" data-tool="write">${t==="write"?"Close write":"Write to anyone"}</button>
+        <button class="linkbtn" data-tool="seats">Seats <span class="count-link">${st.seat.left}</span></button>
+        <button class="linkbtn" data-tool="teams">Teams <span class="count-link">${newLines} NEW</span></button>
+      </div>
+      ${t ? `<div class="toolpane" data-focus="1">${pane}</div>` : ""}`;
+  }
+
+  function headHTML(st, label){
+    const n = live(st).length;
+    return `<div class="roomhead"><span class="roomname">HOMEROOM</span><span class="day">TUE 11/18 · 11:20 AM</span><span class="sample">SAMPLE</span><span class="tally">${label || `${n} TO DO TODAY`}</span></div>`;
+  }
+
+  /* ── Variation A: the list ─────────────────────────────────────────── */
+  function renderA(root, st){
+    const L = live(st);
+    if (st.open && !L.find(x => x.id === st.open)) st.open = null;
+    if (!st.open && !st.tool && !st.manual && L[0]) st.open = L[0].id;
+    root.innerHTML = headHTML(st) + `<div class="col">${L.length ? L.map((it,i) => itemHTML(st, it, i)).join("") : `<p class="act" style="padding:24px 0">The list is clear for today.</p>`}</div>` + tailHTML(st) + toolsHTML(st);
+  }
+
+  /* ── Variation B: one at a time ────────────────────────────────────── */
+  function renderB(root, st){
+    const L = live(st);
+    if (!L.find(x => x.id === st.open)) st.open = L[0] ? L[0].id : null;
+    const i = L.findIndex(x => x.id === st.open);
+    const it = L[i], nx = L[i+1] || (i > 0 ? L[0] : null);
+    const stage = it ? `<div class="stage" ${st.tool?"":'data-focus="1"'}>
+        <span class="of">${i+1} OF ${L.length}</span>
+        <p class="big">${esc(it.act)}</p>
+        ${reasonHTML(it)}<br>
+        <button class="deal" data-deal="${esc(it.deal)}" title="Open the deal">${esc(it.deal)}</button>
+        ${st.deal === it.id ? dealHTML(st, it.deal) : ""}
+        ${movesHTML(it)}
+        ${panelHTML(st, it)}
+      </div>` : `<div class="stage"><p class="big">The list is clear for today.</p></div>`;
+    const next = nx ? `<div class="next"><span class="lbl">Next</span><button class="act" data-openitem="${nx.id}" style="text-align:left">${esc(nx.act)}</button><span class="why">${esc(nx.deal)}</span>
+        <button class="count-link" data-fold="queue" style="margin-left:auto">${st.folds.queue ? "HIDE THE LIST ▴" : "SEE THE WHOLE LIST ▾"}</button></div>` : "";
+    const queue = st.folds.queue ? `<div class="queue">${L.map((x,k) => `<div class="item ${x.id===st.open?"open":"closed"}" style="padding:8px 0"><span class="n">${String(k+1).padStart(2,"0")}</span><button class="row" data-openitem="${x.id}"><span><span class="act" style="font-size:14px">${esc(x.act)}</span> ${reasonHTML(x)}</span></button><span class="deal" style="font-size:14px">${esc(x.deal)}</span></div>`).join("")}</div>` : "";
+    root.innerHTML = headHTML(st, it ? `${L.length} LEFT TODAY` : "CLEAR") + stage + next + queue + tailHTML(st) + toolsHTML(st);
+  }
+
+  /* ── Variation C: the day in bands ─────────────────────────────────── */
+  function renderC(root, st){
+    const L = live(st);
+    if (st.open && !L.find(x => x.id === st.open)) st.open = null;
+    const bands = BANDS.map(b => {
+      const its = L.filter(x => x.band === b.id);
+      const open = st.band === b.id;
+      if (open && !st.open && !st.tool && !st.manual && its[0]) st.open = its[0].id;
+      const left = b.id === "sends" && NOW_BAND !== "sends" && its.length ? ` <span class="carried" style="font-size:12px">${its.length} left from the morning</span>` : "";
+      return `<div class="band ${b.id===NOW_BAND?"now":""}">
+        <button class="bandhead" data-band="${b.id}" aria-expanded="${open}"><span class="time">${b.time}${b.id===NOW_BAND?`<span class="now-tag">NOW</span>`:""}</span><span class="what">${b.what}${left}</span><span class="c">${its.length}</span></button>
+        ${open ? `<div class="items">${its.length ? its.map((it,i) => itemHTML(st, it, i)).join("") : `<p class="why" style="padding:0 0 14px 42px">Nothing in this band.</p>`}</div>` : ""}
+      </div>`;
+    }).join("");
+    root.innerHTML = headHTML(st) + `<div class="col">${bands}</div>` + tailHTML(st) + toolsHTML(st);
+  }
+
+  /* ── one wiring for all three ──────────────────────────────────────── */
+  function emlFor(d){
+    const files = d.files.map(id => LIB.find(f => f.id === id)?.name).filter(Boolean).concat((d.local||[]));
+    const body = d.body + (files.length ? "\n\nAttached: " + files.join(", ") + "." : "");
+    return ["X-Unsent: 1", "To: " + d.to, d.cc ? "Cc: " + d.cc : "", "Subject: " + d.subject, "Content-Type: text/plain; charset=utf-8", "", body].filter((l,i) => l !== "" || i === 5).join("\r\n");
+  }
+
+  function setup(root, render){
+    const st = fresh();
+    const keyFold = root.id + ":folds";
+    try { Object.assign(st.folds, JSON.parse(store.get(keyFold) || "{}")); } catch {}
+    const draw = () => { render(root, st); store.set(keyFold, JSON.stringify(st.folds)); };
+    root.addEventListener("click", e => {
+      const t = e.target.closest("button,[data-pick],summary");
+      if (!t || !root.contains(t)) return;
+      const ds = t.dataset;
+      if (ds.openitem){ st.manual = true; st.tool = null; st.open = st.open === ds.openitem && render !== renderB ? null : ds.openitem; st.deal = null; return draw(); }
+      if (ds.deal){ const id = (ITEMS.find(x => x.id === st.open && x.deal === ds.deal) || ITEMS.find(x => x.deal === ds.deal)).id; st.deal = st.deal === id ? null : id; return draw(); }
+      if (ds.done){ st.status[ds.done] = "done"; st.open = null; st.manual = false; st.deal = null; return draw(); }
+      if (ds.later){ st.status[ds.later] = "later"; st.open = null; st.manual = false; st.deal = null; return draw(); }
+      if (ds.undo){ delete st.status[ds.undo]; return draw(); }
+      if (ds.fold){ st.folds[ds.fold] = !st.folds[ds.fold]; return draw(); }
+      if (ds.toolFold){ st.folds[ds.toolFold] = !st.folds[ds.toolFold]; return draw(); }
+      if (ds.tool){ st.tool = st.tool === ds.tool ? null : ds.tool; return draw(); }
+      if (ds.band){ st.band = st.band === ds.band ? null : ds.band; st.open = null; st.manual = false; return draw(); }
+      if (ds.teamsopen !== undefined){ st.folds["teams"+ds.teamsopen] = !st.folds["teams"+ds.teamsopen]; return draw(); }
+      if (ds.teamsadd !== undefined){
+        const link = root.querySelector("[data-teamslink]").value.trim(), why = root.querySelector("[data-teamswhy]").value;
+        if (!/teams\.(microsoft|live)\.com/i.test(link) || !why){ root.querySelector("[data-teamslink]").placeholder = "Paste a Teams link and pick a reason"; root.querySelector("[data-teamslink]").value = ""; return; }
+        st.teams.chans.push({ name:"New channel", why, n:0, lines:[] }); return draw();
+      }
+      if (ds.seatskip){ st.seat.skip[ds.seatskip] = true; return draw(); }
+      if (ds.russ){
+        const r = st.russ;
+        if (ds.russ === "-") r.at = Math.max(2, r.at-1);
+        if (ds.russ === "+") r.at = Math.min(15, r.at+1);
+        if (ds.russ === "r") r.days = 0;
+        if (ds.russ === "you" || ds.russ === "russ"){ r.cleared = true; r.days = 0; st.open = null; }
+        if (ds.russ === "undo"){ r.cleared = false; r.days = 6; }
+        return draw();
+      }
+      if (ds.point){
+        const [fid, tm, lab] = ds.point.split("|"); const key = t.closest("[data-draft]").dataset.draft; const d = st.drafts[key];
+        const line = `At ${tm}, ${lab.charAt(0).toLowerCase()}${lab.slice(1)}.`;
+        if (d.points[fid+tm]){ delete d.points[fid+tm]; d.body = d.body.replace("\n"+line, ""); }
+        else { d.points[fid+tm] = true; d.body = d.body.replace(/\s*$/, "") + "\n" + line; }
+        return draw();
+      }
+      if (ds.download){
+        const key = ds.download; const d = st.drafts[key];
+        const blob = new Blob([emlFor(d)], { type:"message/rfc822" });
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+        a.download = (d.subject || "Draft").replace(/[\\/:*?"<>|]/g, "") + ".eml"; document.body.appendChild(a); a.click(); a.remove();
+        d.saved = true;
+        if (key === "seat"){ st.seat.left = Math.max(0, st.seat.left - 3); st.seat.batch++; st.seat.skip = {}; }
+        return draw();
+      }
+    });
+    root.addEventListener("change", e => {
+      const t = e.target;
+      if (t.dataset.pick !== undefined){ const key = t.closest("[data-draft]").dataset.draft; const d = st.drafts[key]; d.files = t.checked ? [...new Set([...d.files, t.dataset.pick])] : d.files.filter(x => x !== t.dataset.pick); return draw(); }
+      if (t.dataset.local !== undefined){ const key = t.closest("[data-draft]").dataset.draft; const d = st.drafts[key]; d.local = [...(d.local||[]), ...[...t.files].map(f => f.name)]; return draw(); }
+      if (t.dataset.jtick !== undefined){ st.judi.ticks[t.dataset.jtick] = t.checked; return; }
+    });
+    root.addEventListener("input", e => {
+      const t = e.target;
+      if (t.dataset.field){ const key = t.closest("[data-draft]").dataset.draft; st.drafts[key][t.dataset.field] = t.value; }
+    });
+    root.addEventListener("keydown", e => {
+      if (e.target.dataset.jfill !== undefined && e.key === "Enter" && e.target.value.trim()){ st.judi.fill = e.target.value.trim(); draw(); }
+    });
+    root.addEventListener("toggle", e => {
+      const f = e.target.dataset && e.target.dataset.filesfold; if (f !== undefined && e.target.tagName === "DETAILS" && st.drafts[f]) st.drafts[f].filesOpen = e.target.open;
+    }, true);
+    draw();
+  }
+
+  setup(document.getElementById("A"), renderA);
+  setup(document.getElementById("B"), renderB);
+  setup(document.getElementById("C"), renderC);
+
+  const seg = document.querySelector("[data-width]");
+  const setW = w => {
+    document.documentElement.style.setProperty("--fw", w + "px");
+    seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.w === String(w))));
+    store.set("today:width", String(w));
+  };
+  seg.addEventListener("click", e => { const b = e.target.closest("button"); if (b) setW(b.dataset.w); });
+  setW(store.get("today:width") || 1440);
+})();
+</script>
+</body>
+</html>
