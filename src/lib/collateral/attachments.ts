@@ -1,5 +1,5 @@
 // What the stage's Send in Outlook can carry (ship order
-// 2026-10-22): the demos we cut, the one-pagers, and the reseller and
+// 2026-10-22; the demos replaced 2026-11-18): two whole demos, the one-pagers, and the reseller and
 // referral agreements as review copies watermarked REVIEW COPY on every
 // page. Every file is 5,000,000 bytes or less, so it travels in a normal
 // email; the suite fails the build on a file that grows past it or goes
@@ -55,78 +55,19 @@ const demo = (
 });
 
 export const ATTACHMENTS: readonly Attachment[] = [
-  demo("demo-whole", "The whole platform", "41:21", "00-platform-demo.mp4", 4_923_553),
   demo(
-    "demo-signin",
-    "Sign-in and worker types",
-    "3:00",
-    "c01-sso-worker-types.mp4",
-    2_226_072,
-  ),
-  demo("demo-portal", "The worker portal", "3:15", "c02-worker-portal.mp4", 3_579_068),
-  demo(
-    "demo-invoices",
-    "Invoices, reseller and referral",
-    "2:30",
-    "c03-invoices-reseller-referral.mp4",
-    1_859_635,
+    "demo-employer",
+    "The platform, employer side",
+    "36:43",
+    "platform-demo-employer.mp4",
+    4_410_003,
   ),
   demo(
-    "demo-settings",
-    "Settings and client pricing",
-    "4:30",
-    "c04-settings-client-pricing.mp4",
-    2_838_656,
-  ),
-  demo(
-    "demo-payperiods",
-    "Pay periods and gross to net",
-    "3:15",
-    "c05a-pay-periods-gross-to-net.mp4",
-    2_579_549,
-  ),
-  demo(
-    "demo-funding",
-    "Funding, wallet and approvals",
-    "2:45",
-    "c05b-funding-wallet-approvals.mp4",
-    2_749_872,
-  ),
-  demo("demo-team", "The team view", "1:15", "c06-team.mp4", 1_282_484),
-  demo(
-    "demo-newhire",
-    "A new EOR hire",
-    "5:45",
-    "c07a-new-hire-eor-setup.mp4",
-    3_888_258,
-  ),
-  demo(
-    "demo-benefits",
-    "Benefits and the offer letter",
-    "7:15",
-    "c07b-new-hire-benefits-offer.mp4",
-    4_629_333,
-  ),
-  demo(
-    "demo-contractor",
-    "Contractor pay and support",
-    "2:30",
-    "c08-contractor-support.mp4",
-    1_476_161,
-  ),
-  demo(
-    "demo-users",
-    "Users and permissions",
-    "3:30",
-    "c09-qa-users-permissions.mp4",
-    2_878_444,
-  ),
-  demo(
-    "demo-approvals",
-    "Approval workflows",
-    "1:50",
-    "c10-approval-workflows.mp4",
-    1_619_025,
+    "demo-listopay",
+    "ListoPay, the contractor's wallet",
+    "28:46",
+    "listo-pay-demo.mp4",
+    4_452_872,
   ),
   {
     id: "onepager-overview",
@@ -209,6 +150,30 @@ export const ATTACH_GROUPS: readonly { group: AttachmentGroup; kicker: string }[
 
 export const attachmentById = (id: string): Attachment | undefined =>
   ATTACHMENTS.find((a) => a.id === id);
+
+/** Files the library once carried (ship order 2026-11-18): the 41-minute
+ *  recording and its twelve chapters, retired because the recording carried
+ *  a partner's own slide and voices. They no longer travel, but a send on
+ *  file still names them, so the record keeps their names. */
+export const RETIRED_ATTACHMENTS: Readonly<Record<string, string>> = {
+  "demo-whole": "The whole platform",
+  "demo-signin": "Sign-in and worker types",
+  "demo-portal": "The worker portal",
+  "demo-invoices": "Invoices, reseller and referral",
+  "demo-settings": "Settings and client pricing",
+  "demo-payperiods": "Pay periods and gross to net",
+  "demo-funding": "Funding, wallet and approvals",
+  "demo-team": "The team view",
+  "demo-newhire": "A new EOR hire",
+  "demo-benefits": "Benefits and the offer letter",
+  "demo-contractor": "Contractor pay and support",
+  "demo-users": "Users and permissions",
+  "demo-approvals": "Approval workflows",
+};
+
+/** The name a file goes by on the record, retired files included. */
+export const attachmentLabel = (id: string): string | undefined =>
+  attachmentById(id)?.label ?? RETIRED_ATTACHMENTS[id];
 
 /** A size as the picker shows it: "4.9 MB", "104 KB". */
 export function sizeLabel(bytes: number): string {

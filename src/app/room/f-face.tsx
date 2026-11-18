@@ -40,7 +40,7 @@ import type { FilesSent } from "@/lib/room/files-sent";
 import {
   ATTACHMENTS,
   ATTACH_GROUPS,
-  attachmentById,
+  attachmentLabel,
   sizeLabel,
 } from "@/lib/collateral/attachments";
 import { downloadDraft, fetchAttachment } from "@/lib/collateral/draft-client";
@@ -1508,7 +1508,7 @@ export function SentList({
           <span className={f.cil}>{mdOf(s.at)}</span>
           <span>
             {s.to ? `To ${s.to}: ` : ""}
-            {s.files.map((id) => attachmentById(id)?.label ?? id).join(", ")}
+            {s.files.map((id) => attachmentLabel(id) ?? id).join(", ")}
           </span>
           {canWrite && (
             <button

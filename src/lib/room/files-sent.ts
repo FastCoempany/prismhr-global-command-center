@@ -7,7 +7,7 @@
 // as the agreement going out on the partner ladder. Pure: no store is read
 // here.
 
-import { attachmentById } from "@/lib/collateral/attachments";
+import { attachmentById, attachmentLabel } from "@/lib/collateral/attachments";
 
 export const FILES_NS = "filessent:";
 const HEAD = "✎ FILES SENT";
@@ -37,7 +37,7 @@ export function parseFilesSent(
   for (const line of lines.slice(1)) {
     const [k, v = ""] = line.split("\t");
     if (k === "to") to = v;
-    else if (k === "file" && attachmentById(v)) files.push(v);
+    else if (k === "file" && attachmentLabel(v)) files.push(v);
   }
   return files.length ? { id: note.id, at: note.createdAt, to, files } : null;
 }
