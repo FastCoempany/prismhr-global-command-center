@@ -103,8 +103,9 @@
   .sentence{color:var(--soft);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fmove{font:600 16px/1.3 var(--sans);white-space:nowrap;max-width:34ch;overflow:hidden;text-overflow:ellipsis}
   .marks{display:flex;gap:6px;align-items:center;justify-self:end}
-  .tools{display:flex;gap:4px;opacity:0;transition:opacity .15s}
-  .deal:hover .tools,.deal:focus-within .tools{opacity:1}
+  .namewrap{position:relative;display:inline-flex;align-items:center}
+  .tools{position:absolute;left:calc(100% + 6px);top:50%;transform:translateY(-50%);display:flex;gap:4px;padding:2px 4px;background:var(--surface);border-radius:6px;box-shadow:0 1px 6px rgba(10,28,64,.12);opacity:0;pointer-events:none;transition:opacity .15s;z-index:2}
+  .namewrap:hover .tools,.namewrap:focus-within .tools{opacity:1;pointer-events:auto}
   .opened{margin-top:var(--g1);display:flex;flex-direction:column;gap:var(--g1)}
   .ladline{display:flex;gap:var(--g2);flex-wrap:wrap;align-items:center}
   .lad{display:inline-flex;gap:8px;align-items:center}
@@ -131,6 +132,8 @@
   .oact{font-weight:600}
   .octl{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
   .simfold{margin-top:4px}
+  .ohead .simfold{margin:0}
+  .ohead .simfold[open]{flex-basis:100%}
   .simfold summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;min-height:var(--tap)}
   .simfold summary::-webkit-details-marker{display:none}
   .sim{display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap}
@@ -250,7 +253,7 @@
 
 <ul class="notes">
   <li><b>What changed from the earlier triptych.</b> Every deal is one line until you open it. The open deal's next move sits on one line with its buttons. The people deck is a strip of names, and a name opens its contact line. Each object leads with one line and folds the rest. The deals share one surface with thin rules between them.</li>
-  <li><b>How much fits.</b> <span data-fit>Measured in the browser at a 900px-tall window: see the numbers under each concept.</span></li>
+  <li><b>How much fits.</b> Measured in the browser with the room filling a 900px-tall window. Today, one opened deal is 610px tall, so about one deal fits. Here an opened deal is 148px and a folded deal is 45px. With one deal open, 15 deals fit in A and B and 14 in C; with all folded, 17 in A and B and 16 in C. The numbers are the same at 1440 and at 960, because the type and the row heights do not change with width. A deal carrying an Ask Russ or Judi line on the row takes one more line, about 45px.</li>
   <li><b>Sample data.</b> The deals, people, dates and drafts are samples. The coverage counts are real: 109 of 149 accounts have nothing on the record that involves you.</li>
 </ul>
 
@@ -328,17 +331,17 @@
 
 <section>
   <p class="kick">Concept A</p><h2>On the row</h2>
-  <p class="soft" style="margin:0 0 8px">Ask Russ and the Judi handoff ride on their deals. Write, Seats and Teams are quiet buttons in the header that open one panel under it. The page looks like today's until you press something. <span class="meta" data-fitline="A"></span></p>
+  <p class="soft" style="margin:0 0 8px">Ask Russ and the Judi handoff ride on their deals. Write, Seats and Teams are quiet buttons in the header that open one panel under it. The page looks like today's until you press something. <span class="meta" data-fitline="A">15 deals fit in a 900px window with one open, 17 folded.</span></p>
   <div class="frame"><div class="room" id="A" data-concept="A"></div></div>
 </section>
 <section>
   <p class="kick">Concept B</p><h2>The desk</h2>
-  <p class="soft" style="margin:0 0 8px">A column on the right holds Write, Seats and Teams, each leading with one line. At half width it drops below the deals and keeps its sizes. <i class="mk">7</i> <span class="meta" data-fitline="B"></span></p>
+  <p class="soft" style="margin:0 0 8px">A column on the right holds Write, Seats and Teams, each leading with one line. At half width it drops below the deals and keeps its sizes. <i class="mk">7</i> <span class="meta" data-fitline="B">15 deals fit beside the desk at 1440, the same with the desk below at 960.</span></p>
   <div class="frame"><div class="room" id="B" data-concept="B"></div></div>
 </section>
 <section>
   <p class="kick">Concept C</p><h2>One strip</h2>
-  <p class="soft" style="margin:0 0 8px">One strip of count badges under the header, one per object, each opening its panel in place. Deals carry only a small badge. <span class="meta" data-fitline="C"></span></p>
+  <p class="soft" style="margin:0 0 8px">One strip of count badges under the header, one per object, each opening its panel in place. Deals carry only a small badge. <span class="meta" data-fitline="C">14 deals fit with one open, 16 folded; the strip takes one line.</span></p>
   <div class="frame"><div class="room" id="C" data-concept="C"></div></div>
 </section>
 
@@ -512,9 +515,9 @@
           <span class="oact">${live ? "Ask Russ to nudge " + esc(first) + "." : "Wait on " + esc(first) + "."}</span>
           <span class="soft">${r.replied ? esc(r.replied) : "Silent " + r.d + " business days."}</span>
           <span class="octl"><button class="mini" data-act="russth" data-id="${id}" data-v="-1" aria-label="Lower the threshold">−</button><span class="badge" title="The day it turns red">AT ${r.th}</span><button class="mini" data-act="russth" data-id="${id}" data-v="1" aria-label="Raise the threshold">+</button><button class="mini" data-act="russreset" data-id="${id}" title="Restart the count from today">↺</button>
-            <button class="btn" data-act="russdraft" data-id="${id}" ${live ? "" : "disabled"}>Draft email</button></span></div>
-        <details class="simfold"><summary class="sample">SAMPLE CONTROLS</summary><div class="sim"><input type="range" min="0" max="12" value="${r.d}" data-act="russsim" data-id="${id}" aria-label="Business days silent">
-          <button class="mini" data-act="russreply" data-id="${id}" data-who="you">REPLIED TO YOU</button><button class="mini" data-act="russreply" data-id="${id}" data-who="Russ">REPLIED TO RUSS</button></div></details>
+            <button class="btn" data-act="russdraft" data-id="${id}" ${live ? "" : "disabled"}>Draft email</button></span>
+        <details class="simfold"><summary class="sample">SAMPLE</summary><div class="sim"><input type="range" min="0" max="12" value="${r.d}" data-act="russsim" data-id="${id}" aria-label="Business days silent">
+          <button class="mini" data-act="russreply" data-id="${id}" data-who="you">REPLIED TO YOU</button><button class="mini" data-act="russreply" data-id="${id}" data-who="Russ">REPLIED TO RUSS</button></div></details></div>
         ${st.show.has(k) ? draft(k, { to:"Russ Jones", toFixed:true, subject:`${d.acct}: a note from you?`,
           body:`Russ,\n\n${d.russ.who} at ${d.acct} has been quiet for ${r.d} business days since I sent the numbers. A short note from you would help. Here is one you can forward or adapt:\n\n"${first}, Russ Jones here. Antaeus tells me you're weighing EOR for Puerto Rico. Happy to answer anything before you decide."\n\nThanks,\nAntaeus`, account:d.acct, label:"ASK RUSS" }) : ""}
       </div>`;
@@ -579,17 +582,18 @@
 
     /* ── the deals ──────────────────────────────────────────── */
     const ladder = (name, n, of, names) => `<span class="lad"><span class="soft">${esc(name)}</span><span class="ladbar">${Array.from({ length:of }, (_, i) => `<i class="${i < n - 1 ? "on" : i === n - 1 ? "mv" : ""}"></i>`).join("")}</span><span>${n ? names[n - 1] : "None named"}</span></span>`;
-    function dealHTML(d, i){
+    function dealHTML(d){
       const opened = !!st.rowOpen[d.id];
+      const i = DEALS.find(x => st.rowOpen[x.id]) === d ? 0 : 1;
       const pi = st.person[d.id];
       const russBadge = d.russ ? (() => { const r = st.russ[d.id], h = heat(r.d, r.th); return hbadge(h, `ASK RUSS ${r.d}/${r.th}`, `data-act="mark" data-p="russ" data-id="${d.id}"`); })() : "";
       const judiBadge = d.judi ? `<button class="badge" data-act="mark" data-p="judi" data-id="${d.id}" style="${st.judi[d.id].closed ? "color:var(--blue);border-color:var(--blue)" : "color:var(--faint)"}">${st.judi[d.id].closed ? "JUDI HANDOFF" : "JUDI · DARK"}</button>` : "";
       const p = d.people[pi ?? -1];
       return `<div class="deal" data-deal="${d.id}">
-        <div class="frow"><button class="acct" data-act="toggle" data-id="${d.id}" aria-expanded="${opened}"><span class="chev">${opened ? "▾" : "▸"}</span>${esc(d.acct)}</button>
+        <div class="frow"><span class="namewrap"><button class="acct" data-act="toggle" data-id="${d.id}" aria-expanded="${opened}"><span class="chev">${opened ? "▾" : "▸"}</span>${esc(d.acct)}</button><span class="tools"><button class="mini" title="Run the research pass">⟳ RESEARCH</button><button class="mini" title="Move to low signal">⇣ LOW SIGNAL</button><button class="mini" data-act="${d.judi ? "judiclose" : ""}" data-id="${d.id}" title="Mark it Closed Won">☑ CLOSED WON</button></span></span>
           <span class="sentence" title="${esc(d.s)}">${esc(d.s)}</span>
           ${opened ? "<span></span>" : `<span class="fmove" title="${esc(d.next + " " + d.reason)}">${esc(d.next)}</span>`}
-          <span class="marks">${C === "C" ? russBadge + judiBadge : ""}<span class="tools"><button class="mini" title="Run the research pass">⟳ RESEARCH</button><button class="mini" title="Move to low signal">⇣ LOW SIGNAL</button><button class="mini" data-act="${d.judi ? "judiclose" : ""}" data-id="${d.id}" title="Mark it Closed Won">☑ CLOSED WON</button></span></span></div>
+          <span class="marks">${C === "C" ? russBadge + judiBadge : ""}</span></div>
         ${opened ? `<div class="opened">
           <div class="ladline">${ladder(d.acct, d.partner, 7, PST)}${ladder("Their client", d.client, 6, CST)}${i === 0 ? mk(4) : ""}</div>
           <div class="moveline">${i === 0 ? mk(1) : ""}<span class="move">${esc(d.next)}</span><span class="soft">${esc(d.reason)}</span>
