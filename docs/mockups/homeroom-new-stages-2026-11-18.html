@@ -58,7 +58,7 @@
   .tool[aria-pressed=true] .badge{background:var(--surface)}
 
   /* the card, shared */
-  .card{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--hair);border-radius:8px;padding:12px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .card{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;width:100%;text-align:left;background:var(--surface);border:1px solid var(--hair);border-radius:8px;padding:12px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
   .card:hover{border-color:var(--quiet)}
   .card.sel{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
   .card .nm{font:400 17px/1.25 var(--serif);display:block}
@@ -155,7 +155,11 @@
   .size{font:600 10px/1 var(--mono);color:var(--faint);margin-left:auto}
 
   /* ── Variation A: columns and a side panel ───────────────────────── */
+  .A .abody{position:relative;overflow:hidden}
   .A .board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:0;overflow-x:auto;min-height:620px;scroll-snap-type:x proximity}
+  .A .board.shrunk{margin-right:440px}
+  body[data-w="960"] .A .board.shrunk{margin-right:0}
+  @media (max-width:1100px){.A .board.shrunk{margin-right:0}}
   .A .col{border-left:1px solid var(--hair-soft);padding:16px 14px 24px;scroll-snap-align:start}
   .A .col:first-child{border-left:0}
   .A .col.over{background:var(--blue-soft)}
@@ -163,7 +167,7 @@
   .A .colh b{font-weight:600}
   .A .colh .badge{margin-left:auto}
   .A .stack{display:grid;gap:10px}
-  .A .panel{position:absolute;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--hair);box-shadow:-12px 0 32px rgba(10,28,64,.08);padding:20px 22px 40px;overflow-y:auto;transform:translateX(102%);transition:transform .22s ease}
+  .A .panel{position:absolute;top:0;max-height:100%;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--hair);box-shadow:-12px 0 32px rgba(10,28,64,.08);padding:20px 22px 40px;overflow-y:auto;transform:translateX(102%);transition:transform .22s ease}
   .A .panel.open{transform:none}
   @media (prefers-reduced-motion:reduce){.A .panel{transition:none}}
   .x{position:absolute;top:14px;right:14px;min-width:30px;min-height:30px;border-radius:6px;color:var(--faint);font-size:16px}
@@ -197,7 +201,7 @@
   .dot.hot{animation:hot 1.6s ease-in-out infinite}
   .C .work{display:grid;grid-template-columns:360px minmax(0,1fr);min-height:600px}
   .C .list{border-right:1px solid var(--hair-soft);padding:8px 0}
-  .C .li{display:block;width:100%;text-align:left;padding:14px 20px;border-left:3px solid transparent}
+  .C .li{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;padding:14px 20px;border-left:3px solid transparent}
   .C .li:hover{background:var(--field)}
   .C .li[aria-current=true]{border-left-color:var(--ink);background:var(--field)}
   .C .li .nm{font:400 17px/1.25 var(--serif);display:block}
@@ -473,7 +477,7 @@
     let inner = "";
     if (st.tool) inner = toolHTML(st);
     else if (d) { const p = detail(d, st); inner = `<div class="det">${p.left}${p.right}</div>`; }
-    return bar(st) + `<div class="board">${cols}</div><aside class="panel ${inner ? "open" : ""}" aria-label="Detail"><button class="x" data-act="close" aria-label="Close">✕</button>${inner}</aside>`;
+    return bar(st) + `<div class="abody"><div class="board ${inner ? "shrunk" : ""}">${cols}</div><aside class="panel ${inner ? "open" : ""}" aria-label="Detail"><button class="x" data-act="close" aria-label="Close">✕</button>${inner}</aside></div>`;
   }
   function renderB(st) {
     let h = bar(st);
