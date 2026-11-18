@@ -418,7 +418,7 @@
       if (s.russ){
         const r = s.russ, due = r.days >= r.max, cls = this.russClass(r);
         move = due ? d.move : d.waitMove;
-        reason = `Silent ${r.days} of ${r.max} business days.`;
+        reason = r.days ? `${r.who} quiet since your 11/10 note.` : `${r.who} replied.`;
         extra = `<span class="clockface ${cls}" title="Business days since your last send, Chicago"><span class="pulse"></span><span class="days">${r.days}</span>OF ${r.max} BUSINESS DAYS</span>`;
         acts = `${due ? `<button class="btn ink" data-a="russ">Draft to Russ</button>` : ""}<button class="btn green" data-a="done">Mark it done</button>${write}<button class="btn quiet" data-a="adjust">Adjust</button>`;
       } else if (d.closable && s.closed){
@@ -596,7 +596,7 @@
           <button class="btn quiet" data-a="list">All deals</button><span class="sp" style="flex:1"></span><span class="mono">J AND K STEP</span></div>
           ${this.list ? `<div class="list">${this.order.map((id, n) => { const x = DEALS.find((y) => y.id === id); return `<button data-a="go" data-id="${id}" aria-current="${id === this.cur}"><span>${esc(x.name)}</span><span class="mono">${n + 1}</span></button>`; }).join("")}</div>` : ""}
           <article class="deal">${this.head(d)}${this.focal(d)}
-          <div class="block"><div class="blockhead"><h3>What they last said</h3></div>${this.mail(d)}</div>
+          <div class="block"><div class="blockhead"><h3>Latest exchange</h3></div>${this.mail(d)}</div>
           <div class="block"><div class="blockhead"><h3>People</h3></div>${this.people(d)}</div>
           <div class="block"><div class="blockhead"><h3>Where it stands</h3></div>${this.stages(d)}</div></article>`;
       }
