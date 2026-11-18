@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HomeRoom Teams Triptych</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Three looks for one HomeRoom control: choose which Teams channels GEM
+     reads, pause or drop them, and see what each one gave. One theme, the
+     room's own tokens. The concepts differ by structure. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input{font:inherit;color:inherit}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1280px;margin:0 auto;padding:40px 16px 120px}
+
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  h3{font:600 15px/1.4 var(--sans);margin:22px 0 4px}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .notes{margin:14px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:72px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+
+  /* the HomeRoom as it stands, drawn small */
+  .room{background:var(--field);border:1px solid var(--hair-soft);border-radius:12px;overflow:hidden}
+  .roomhead{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--hair-soft);flex-wrap:wrap}
+  .roomname{font:700 11px/1 var(--mono);letter-spacing:.3em}
+  .add{font:600 14px/1 var(--sans);background:var(--ink);color:#fff;border-radius:99px;padding:10px 16px}
+  .tbtn{font:600 14px/1 var(--sans);border:1.5px solid var(--ink);border-radius:99px;padding:9px 15px;background:var(--surface)}
+  .tbtn.on{background:var(--ink);color:#fff}
+  .clock{margin-left:auto;font:500 18px/1 var(--mono);color:var(--faint)}
+  .ghostrows{padding:6px 18px 18px}
+  .ghostrow{height:44px;border-radius:10px;background:var(--surface);border:1px solid var(--hair-soft);margin-top:10px;display:flex;align-items:center;padding:0 14px;gap:10px;color:var(--faint);font-size:13px;min-width:0;overflow:hidden;white-space:nowrap}
+  .ghostrow b{font:400 16px/1 var(--serif);color:var(--soft)}
+  .panel{display:none;background:var(--surface);border-bottom:1px solid var(--hair);padding:16px 18px 18px}
+  .panel.open{display:block}
+
+  /* shared parts */
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .paste{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .paste input{flex:1;min-width:0;border:1px solid var(--hair);border-radius:8px;padding:9px 12px;background:var(--surface);font-size:14px}
+  .go{background:var(--orange);color:#fff;font:600 14px/1 var(--sans);border-radius:8px;padding:11px 16px;white-space:nowrap}
+  .go[disabled]{opacity:.45;cursor:default}
+  .parsed{font-size:12.5px;color:var(--soft);margin-top:6px;min-height:20px}
+  .parsed.bad{color:var(--red)}
+  .parsed.warn{color:var(--amber)}
+  .reasons{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .rchip{font:600 12px/1 var(--sans);border:1px solid var(--hair);border-radius:99px;padding:7px 10px;background:var(--surface);color:var(--soft)}
+  .rchip[aria-pressed=true]{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+  .st{font:700 9px/1 var(--mono);letter-spacing:.14em;border-radius:3px;padding:4px 5px;white-space:nowrap}
+  .st.live{color:var(--green);border:1px solid rgba(34,197,94,.45)}
+  .st.paused{color:var(--faint);border:1px solid var(--hair)}
+  .st.chat{color:var(--amber);border:1px solid rgba(245,158,11,.5)}
+  .mini{font:600 10px/1 var(--mono);letter-spacing:.1em;color:var(--soft)}
+  .mini:hover{color:var(--ink)}
+  .x{color:var(--faint);font-size:13px}
+  .x:hover{color:var(--red)}
+  .when{font:600 10.5px/1.4 var(--mono);color:var(--faint);white-space:nowrap}
+  .counts{display:flex;gap:12px;flex-wrap:wrap}
+  .cnt{font:600 11px/1.4 var(--mono);color:var(--blue);border-bottom:1px dotted rgba(37,99,235,.5)}
+  .cnt[aria-expanded=true]{color:var(--ink);border-color:var(--ink)}
+  .cnt.zero{color:var(--quiet);border:0;cursor:default}
+  .kept{margin:8px 0 2px;padding:0;list-style:none;border-left:2px solid var(--blue);padding-left:12px}
+  .kept li{font-size:13px;color:var(--soft);padding:3px 0}
+  .kept .who{font:600 10px/1.4 var(--mono);color:var(--faint);margin-left:6px;white-space:nowrap}
+  .kept .open{font:600 10px/1 var(--mono);letter-spacing:.08em;color:var(--blue);margin-left:6px;white-space:nowrap}
+  .why{font-size:12.5px;color:var(--soft)}
+  .chname{font-weight:600;font-size:14.5px;overflow-wrap:anywhere}
+  .team{font-size:12px;color:var(--faint)}
+  .paused-row{opacity:.55}
+  code{font:500 12px/1.5 var(--mono);overflow-wrap:anywhere;word-break:break-all}
+
+  /* A: the roster */
+  .roster{margin-top:14px}
+  .rrow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.4fr) minmax(0,1.1fr) auto;gap:14px;align-items:start;padding:12px 0;border-top:1px solid var(--hair-soft)}
+  .rrow .ctl{display:flex;gap:12px;align-items:center;justify-content:flex-end}
+  .rrow .full{grid-column:1/-1}
+  @media (max-width:880px){.rrow{grid-template-columns:minmax(0,1fr) auto}.rrow .why,.rrow .counts{grid-column:1/-1}}
+
+  /* B: what came in first, the list as a rail */
+  .split{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px}
+  @media (max-width:880px){.split{grid-template-columns:minmax(0,1fr)}}
+  .daygroup{margin-top:14px}
+  .item{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:8px 0;border-bottom:1px solid var(--hair-soft);font-size:13.5px}
+  .item .k{font:700 9px/1.6 var(--mono);letter-spacing:.14em;color:var(--blue)}
+  .item .src{font:600 10px/1.4 var(--mono);color:var(--faint);display:block;margin-top:2px}
+  .rail{border-left:1px solid var(--hair-soft);padding-left:18px}
+  @media (max-width:880px){.rail{border-left:0;padding-left:0;border-top:1px solid var(--hair-soft);padding-top:14px}}
+  .rail .ch{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--hair-soft);min-width:0}
+  .rail .ch .nm{flex:1;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rail .ch .nm small{display:block;font-weight:400;color:var(--faint);font-size:11.5px}
+  .sw{width:30px;height:17px;border-radius:9px;background:var(--quiet);position:relative;flex:none}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:left .15s}
+  .sw[aria-checked=true]{background:var(--ink)}
+  .sw[aria-checked=true]::after{left:15px}
+  .filter{font:600 10px/1 var(--mono);letter-spacing:.1em;color:var(--blue)}
+
+  /* C: one card per channel, the add card asks twice */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:6px}
+  .card{border:1px solid var(--hair);border-radius:10px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+  .card .top{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+  .card .foot{display:flex;gap:12px;align-items:center;margin-top:auto;padding-top:6px;border-top:1px solid var(--hair-soft)}
+  .card.addcard{border-style:dashed;background:transparent}
+  .stepnum{font:700 9px/1.4 var(--mono);letter-spacing:.2em;color:var(--faint)}
+  .back{font:600 12.5px/1 var(--sans);color:var(--soft);text-decoration:underline;text-underline-offset:3px}
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom overhaul · Teams channels · Triptych · 2026-11-17</p>
+<h1>Choose what GEM reads from Teams</h1>
+<p class="lede">One control, three structures. Each one lets you paste a Teams channel link, say why you want it, pause it or drop it, and open what GEM kept from it. Nothing here ships until you give a ship order.</p>
+<ul class="notes">
+  <li><b>What all three share.</b> A pasted link is read on the spot for the channel's name and its team. You pick one reason, tied to your job, and that reason steers what the read keeps from the channel. Pausing keeps the channel on your list and stops new messages; removing it stops them and leaves what was already kept in the Intranet.</li>
+  <li><b>Every count opens.</b> "4 facts" opens the four facts, each with who said it and a door to its claim in the Intranet. That is one click, by the click-depth law.</li>
+  <li><b>The sample data is made up.</b> Channel names, people and kept lines show the behavior only.</li>
+</ul>
+
+<h3>How the messages reach GEM</h3>
+<ul class="notes">
+  <li><b>Option 1, standard connectors only.</b> One scheduled Power Automate flow runs once a day, reads the recent messages of every channel you belong to, and sends them as one digest email to the inbound address the relays already use. GEM keeps the channels on your list and drops the rest on arrival, so the list lives in GEM and you never edit the flow. One digest a day is one Postmark message a day. I believe the standard Teams connector has actions to list your teams and channels and to read a channel's messages, but I have not confirmed that it can read messages on a schedule without a trigger; that needs a test run before anything is built.</li>
+  <li><b>Option 2, a premium connector.</b> Your Power Automate screenshot says premium capabilities are available in this environment and are paid by the organization's pay-as-you-go Azure subscription. With the premium HTTP connector, a flow could post messages straight to a GEM route and skip Postmark entirely, and it could also read your list from GEM. Every run is billed to the organization, so whether to use it is your call. It asks nothing of IT.</li>
+  <li><b>One message at a time.</b> Teams' "…" menu on any message can run a flow on that message only. I believe the standard connector's "for a selected message" trigger does this. It suits a one-off from a channel you do not watch.</li>
+  <li><b>Chats are less certain.</b> Channels are the sure case. I am not sure the standard connector can read 1:1 and group chats on a schedule. A pasted chat link is accepted and marked CHAT · UNTESTED until that is checked.</li>
+</ul>
+
+<!-- ═════════════════════════ A ═════════════════════════ -->
+<section>
+  <p class="kick">Concept A</p>
+  <h2>The roster</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> A Teams button beside + add opens a panel under the HomeRoom header. The paste line is at the top and every watched channel is one row below it: the channel, your reason, when its last batch came, what was kept, and pause and remove.</li>
+    <li><b>Good for.</b> Managing the list. <b>Cost.</b> What was kept is one click down on each row, so a day's news across channels is not in one place.</li>
+  </ul>
+  <div class="room" data-concept="A">
+    <div class="roomhead">
+      <span class="roomname">HOMEROOM</span>
+      <button class="add">+ add ▾</button>
+      <button class="tbtn" data-toggle>Teams</button>
+      <span class="clock">11:34 AM</span>
+    </div>
+    <div class="panel" data-panel>
+      <div data-adder></div>
+      <div class="roster" data-list></div>
+    </div>
+    <div class="ghostrows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>Infiniti HR</b> NEXT MOVE · Wait on Tom. Promised Friday.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ B ═════════════════════════ -->
+<section>
+  <p class="kick">Concept B</p>
+  <h2>What came in first</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> The same button opens a panel that leads with what GEM kept from the last batch, newest first, across every watched channel. The channel list is a narrow rail on the right with a switch per channel. Clicking a channel's name shows only its lines.</li>
+    <li><b>Good for.</b> Reading the day's Teams news in one pass. <b>Cost.</b> The rail is narrow, so a channel's reason shows only on hover and in the filter's heading.</li>
+  </ul>
+  <div class="room" data-concept="B">
+    <div class="roomhead">
+      <span class="roomname">HOMEROOM</span>
+      <button class="add">+ add ▾</button>
+      <button class="tbtn" data-toggle>Teams</button>
+      <span class="clock">11:34 AM</span>
+    </div>
+    <div class="panel" data-panel>
+      <div class="split">
+        <div data-feed></div>
+        <aside class="rail"><div data-adder></div><div data-list style="margin-top:10px"></div></aside>
+      </div>
+    </div>
+    <div class="ghostrows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ C ═════════════════════════ -->
+<section>
+  <p class="kick">Concept C</p>
+  <h2>One card per channel</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Where it lives.</b> The panel is a grid with one card per channel. Each card shows its reason, its last batch and its counts, and the counts open in the card. The last card is the add card, which asks two things in turn: the link, then the reason.</li>
+    <li><b>Good for.</b> Seeing each channel's worth at a glance, and adding one without a crowded form. <b>Cost.</b> A long list makes a tall grid.</li>
+  </ul>
+  <div class="room" data-concept="C">
+    <div class="roomhead">
+      <span class="roomname">HOMEROOM</span>
+      <button class="add">+ add ▾</button>
+      <button class="tbtn" data-toggle>Teams</button>
+      <span class="clock">11:34 AM</span>
+    </div>
+    <div class="panel" data-panel>
+      <div class="grid" data-list></div>
+    </div>
+    <div class="ghostrows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+    </div>
+  </div>
+</section>
+
+<p class="notes" style="margin-top:56px;list-style:none;padding:0;font-size:12.5px;color:var(--faint)">Try it: paste <code>https://teams.microsoft.com/l/channel/19%3aabc%40thread.tacv2/Global%20Implementation?groupId=1</code>, or a chat link starting <code>https://teams.microsoft.com/l/chat/</code>, then pick a reason.</p>
+</main>
+
+<script>
+(() => {
+  const REASONS = ["Deals in my book", "Implementation and handoff", "Product and roadmap", "Pricing and terms", "CSM coordination"];
+  const SEED = () => [
+    { id:1, name:"Global Implementation", team:"PrismHR Global", kind:"channel", reason:"Implementation and handoff", live:true, last:"Today 6:00 AM",
+      kept:{ facts:[["Everest's first payroll is set for Dec 1.","Judi O."],["Advanstaff's SSO is set up.","Brett R."]],
+             decisions:[["Early adopter check-ins use the Microsoft form.","Russ J."]],
+             questions:[["Who runs the kickoff for the second early adopter?","Danielle S."]] } },
+    { id:2, name:"GTM Launch", team:"PrismHR Global GTM Project", kind:"channel", reason:"Product and roadmap", live:true, last:"Today 6:00 AM",
+      kept:{ facts:[["Invoice markup for resellers is still in development.","Brett R."]], decisions:[], questions:[] } },
+    { id:3, name:"Sales & Operations", team:"Global Sales & Operations", kind:"channel", reason:"Pricing and terms", live:false, last:"Nov 10, 6:00 AM",
+      kept:{ facts:[], decisions:[["Payroll is in both the reseller and the referral agreement.","Russ J."]], questions:[] } },
+  ];
+  const KIND = { facts:"FACT", decisions:"DECISION", questions:"QUESTION" };
+  const esc = s => s.replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c]));
+
+  function parse(link){
+    const v = link.trim();
+    if (!v) return null;
+    let u; try { u = new URL(v); } catch { return { bad:"That isn't a link." }; }
+    if (!/teams\.microsoft\.com$/.test(u.hostname)) return { bad:"That isn't a Teams link." };
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts[1] === "channel" && parts[3]) return { kind:"channel", name:decodeURIComponent(parts[3]), team:u.searchParams.get("groupId") ? "Team from the link" : "Team unknown" };
+    if (parts[1] === "chat") return { kind:"chat", name:"A chat", team:"Chat" };
+    return { bad:"Copy the link from the channel's … menu." };
+  }
+
+  function setup(root){
+    const C = root.dataset.concept;
+    let list = SEED(), nextId = 10, open = {}, filter = null;
+    let draft = { link:"", parsed:null, reason:null, step:1 };
+    const q = s => root.querySelector(s);
+
+    const status = c => c.kind === "chat" ? `<span class="st chat">CHAT · UNTESTED</span>` : c.live ? `<span class="st live">WATCHING</span>` : `<span class="st paused">PAUSED</span>`;
+    const countBtns = c => `<div class="counts">${Object.keys(KIND).map(k => {
+        const n = c.kept[k].length, word = k === "facts" ? (n === 1 ? "fact" : "facts") : k === "decisions" ? (n === 1 ? "decision" : "decisions") : (n === 1 ? "question" : "questions");
+        return n ? `<button class="cnt" data-open="${c.id}:${k}" aria-expanded="${open[c.id] === k}">${n} ${word}</button>` : `<span class="cnt zero">0 ${word}</span>`;
+      }).join("")}</div>`;
+    const keptList = c => open[c.id] ? `<ul class="kept">${c.kept[open[c.id]].map(([t,w]) => `<li>${esc(t)}<span class="who">${esc(w)}</span><button class="open">OPEN THE CLAIM</button></li>`).join("")}</ul>` : "";
+    const ctl = c => `<button class="mini" data-pause="${c.id}">${c.live ? "PAUSE" : "RESUME"}</button><button class="x" data-remove="${c.id}" title="Stop reading this channel" aria-label="Remove ${esc(c.name)}">✕</button>`;
+
+    function adderHTML(){
+      const p = draft.parsed;
+      const msg = !p ? "" : p.bad ? `<div class="parsed bad">${p.bad}</div>`
+        : `<div class="parsed ${p.kind === "chat" ? "warn" : ""}">${p.kind === "chat" ? "A chat. Chats may not be readable yet; it stays marked untested." : `${esc(p.name)} · ${esc(p.team)}`}</div>`;
+      const ok = p && !p.bad && draft.reason;
+      const reasons = `<p class="lbl" style="margin:8px 0 0">WHY YOU WANT IT</p><div class="reasons">${REASONS.map(r => `<button class="rchip" data-reason="${r}" aria-pressed="${draft.reason === r}">${r}</button>`).join("")}</div>`;
+      if (C === "C"){
+        if (draft.step === 1) return `<p class="stepnum">ADD A CHANNEL · 1 OF 2</p><div class="paste"><input data-link placeholder="Paste the channel link" value="${esc(draft.link)}"></div>${msg}<button class="go" data-next ${p && !p.bad ? "" : "disabled"} style="margin-top:8px;align-self:flex-start">Next</button>`;
+        return `<p class="stepnum">ADD A CHANNEL · 2 OF 2</p><div class="chname">${esc(p.name)}</div>${reasons}<div style="display:flex;gap:14px;align-items:center;margin-top:10px"><button class="go" data-add ${ok ? "" : "disabled"}>Watch it</button><button class="back" data-back>Back</button></div>`;
+      }
+      return `<p class="lbl" style="margin:0 0 6px">ADD A CHANNEL</p><div class="paste"><input data-link placeholder="Paste the channel link" value="${esc(draft.link)}"><button class="go" data-add ${ok ? "" : "disabled"}>Watch it</button></div>${msg}${p && !p.bad ? reasons : ""}`;
+    }
+
+    function render(){
+      const adder = q("[data-adder]"); if (adder) adder.innerHTML = adderHTML();
+      const L = q("[data-list]");
+      if (C === "A"){
+        L.innerHTML = `<p class="lbl" style="margin:0">WATCHING ${list.filter(c => c.live).length} OF ${list.length}</p>` + list.map(c => `
+          <div class="rrow ${c.live ? "" : "paused-row"}">
+            <div><div class="chname">${esc(c.name)}</div><div class="team">${esc(c.team)}</div></div>
+            <div class="why">${esc(c.reason)}<br><span class="when">LAST BATCH ${esc(c.last).toUpperCase()}</span></div>
+            ${countBtns(c)}
+            <div class="ctl">${status(c)}${ctl(c)}</div>
+            ${open[c.id] ? `<div class="full">${keptList(c)}</div>` : ""}
+          </div>`).join("");
+      }
+      if (C === "B"){
+        L.innerHTML = `<p class="lbl" style="margin:6px 0 0">CHANNELS</p>` + list.map(c => `
+          <div class="ch ${c.live ? "" : "paused-row"}" title="${esc(c.reason)}">
+            <button class="nm" data-filter="${c.id}" style="text-align:left">${esc(c.name)}<small>${esc(c.reason)}${c.kind === "chat" ? " · chat, untested" : ""}</small></button>
+            <button class="sw" role="switch" aria-checked="${c.live}" data-pause="${c.id}" aria-label="Read ${esc(c.name)}"></button>
+            <button class="x" data-remove="${c.id}" aria-label="Remove ${esc(c.name)}">✕</button>
+          </div>`).join("");
+        const shown = list.filter(c => !filter || c.id === filter);
+        const rows = shown.flatMap(c => Object.keys(KIND).flatMap(k => c.kept[k].map(([t,w]) => ({ c, k, t, w }))));
+        const f = filter && list.find(c => c.id === filter);
+        q("[data-feed]").innerHTML = `<div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap"><p class="lbl" style="margin:0">${f ? `FROM ${esc(f.name).toUpperCase()} · ${esc(f.reason).toUpperCase()}` : "KEPT FROM TODAY'S BATCH · 6:00 AM"}</p>${f ? `<button class="filter" data-filter="">SHOW EVERY CHANNEL</button>` : ""}</div>
+          <div class="daygroup">${rows.length ? rows.map(r => `<div class="item"><span class="k">${KIND[r.k]}</span><span>${esc(r.t)}<span class="src">${esc(r.c.name)} · ${esc(r.w)}${r.c.live ? "" : " · PAUSED"}</span><button class="open" style="font:600 10px/1 var(--mono);letter-spacing:.08em;color:var(--blue)">OPEN THE CLAIM</button></span></div>`).join("") : `<p class="why">Nothing kept from this channel yet.</p>`}</div>`;
+      }
+      if (C === "C"){
+        L.innerHTML = list.map(c => `
+          <div class="card ${c.live ? "" : "paused-row"}">
+            <div class="top"><div><div class="chname">${esc(c.name)}</div><div class="team">${esc(c.team)}</div></div>${status(c)}</div>
+            <div class="why">${esc(c.reason)}</div>
+            ${countBtns(c)}${keptList(c)}
+            <div class="foot"><span class="when">LAST ${esc(c.last).toUpperCase()}</span><span style="margin-left:auto;display:flex;gap:12px">${ctl(c)}</span></div>
+          </div>`).join("") + `<div class="card addcard">${adderHTML()}</div>`;
+      }
+      const inp = root.querySelector("[data-link]");
+      if (inp) inp.addEventListener("input", () => {
+        draft.link = inp.value; draft.parsed = parse(inp.value);
+        const pos = inp.selectionStart; render();
+        const again = root.querySelector("[data-link]"); again.focus(); again.setSelectionRange(pos, pos);
+      });
+    }
+
+    root.addEventListener("click", e => {
+      const t = e.target.closest("button"); if (!t) return;
+      if (t.hasAttribute("data-toggle")){ const open = q("[data-panel]").classList.toggle("open"); t.classList.toggle("on", open); return; }
+      if (t.dataset.open){ const [id,k] = t.dataset.open.split(":"); open[id] = open[id] === k ? null : k; render(); return; }
+      if (t.dataset.pause){ const c = list.find(x => x.id == t.dataset.pause); c.live = !c.live; render(); return; }
+      if (t.dataset.remove){ list = list.filter(x => x.id != t.dataset.remove); if (filter == t.dataset.remove) filter = null; render(); return; }
+      if (t.dataset.reason){ draft.reason = draft.reason === t.dataset.reason ? null : t.dataset.reason; render(); return; }
+      if ("filter" in t.dataset){ filter = t.dataset.filter ? +t.dataset.filter : null; render(); return; }
+      if (t.hasAttribute("data-next")){ draft.step = 2; render(); return; }
+      if (t.hasAttribute("data-back")){ draft.step = 1; render(); return; }
+      if (t.hasAttribute("data-add") && !t.disabled){
+        const p = draft.parsed;
+        list.push({ id:nextId++, name:p.name, team:p.team, kind:p.kind, reason:draft.reason, live:true, last:"Not yet", kept:{ facts:[], decisions:[], questions:[] } });
+        draft = { link:"", parsed:null, reason:null, step:1 }; render();
+      }
+    });
+    render();
+    q("[data-toggle]").click();
+  }
+  document.querySelectorAll("[data-concept]").forEach(setup);
+})();
+</script>
+</body>
+</html>

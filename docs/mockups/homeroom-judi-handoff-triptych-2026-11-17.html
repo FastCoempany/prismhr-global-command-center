@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Judi Handoff Triptych</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The Judi handoff, revised 2026-11-17: one object on a HomeRoom deal row,
+     dark until Closed Won. It holds three things only: your part, what Judi
+     and the team need to service the PEO and its client, and what is
+     specific to this account's implementation. Three structures, one theme. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input,textarea{font:inherit;color:inherit}
+  button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1280px;margin:0 auto;padding:40px 16px 120px}
+
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .notes{margin:18px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:72px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+
+  /* the deal row, drawn small */
+  .room{background:var(--field);border:1px solid var(--hair-soft);border-radius:12px;padding:16px 18px 18px;overflow:hidden}
+  .row{background:var(--surface);border:1px solid var(--hair-soft);border-radius:12px;padding:14px 16px}
+  .rowtop{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .acct{font:400 21px/1.2 var(--serif)}
+  .sentence{color:var(--soft);font-size:14px}
+  .tools{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .tool{font:600 12px/1 var(--sans);color:var(--soft)}
+  .tool:hover{color:var(--ink)}
+  .greenbtn{background:var(--green);color:#fff;font:600 13px/1 var(--sans);border-radius:7px;padding:8px 12px}
+  .closedby{font:700 9.5px/1.4 var(--mono);letter-spacing:.12em;color:var(--green)}
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin:0}
+  .move{font:600 16px/1.5 var(--sans);margin:2px 0 0}
+  .reason{font-size:13.5px;color:var(--soft);margin:0}
+
+  /* dark */
+  .dark{margin-top:12px;border:1px dashed var(--quiet);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;color:var(--faint);font-size:13px;flex-wrap:wrap}
+  .dark .k{font:700 9px/1.4 var(--mono);letter-spacing:.18em;color:var(--quiet)}
+  .lit-in{animation:litin .45s ease-out}
+  @keyframes litin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.lit-in{animation:none}}
+
+  /* your part */
+  .todo{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--hair-soft);font-size:14px}
+  .todo .t{font-weight:600}
+  .todo .why{display:block;font-size:12.5px;color:var(--soft);font-weight:400}
+  .todo .why.blue{color:var(--blue)}
+  .todo.done .t{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--quiet)}
+  .tick{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--quiet);display:inline-block;position:relative;transform:translateY(2px)}
+  .tick.on{background:var(--ink);border-color:var(--ink)}
+  .tick.on::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+  /* facts */
+  .fact{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--hair-soft);font-size:13.5px}
+  @media (max-width:560px){.fact{grid-template-columns:1fr;gap:2px}}
+  .fact .k{font:600 9.5px/1.4 var(--mono);letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+  .src{font:600 9px/1 var(--mono);letter-spacing:.1em;color:var(--blue);margin-left:6px;white-space:nowrap}
+  .src.hand{color:var(--soft)}
+  .missing{color:var(--soft)}
+  .fill{font:600 12px/1 var(--sans);color:var(--ink);text-decoration:underline;text-underline-offset:3px;margin-left:6px}
+  .judi{margin:4px 0 0;border-left:2px solid var(--blue);background:var(--blue-soft);padding:5px 10px;border-radius:0 8px 8px 0;font-size:12.5px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;grid-column:1/-1}
+  .judi .k{font:700 9px/1.4 var(--mono);letter-spacing:.16em;color:var(--blue)}
+
+  /* action and draft */
+  .actionbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .send{background:var(--orange);color:#fff;font:600 14.5px/1 var(--sans);border-radius:8px;padding:11px 18px}
+  .quietbtn{font:600 13px/1 var(--sans);color:var(--soft)}
+  .receipt{font:600 10px/1.5 var(--mono);letter-spacing:.1em;color:var(--green)}
+  .draft{margin-top:12px;border-top:1px solid var(--hair-soft);padding-top:12px}
+  .fieldl{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--hair-soft);min-height:38px;font-size:14px}
+  .fieldl input{border:0;background:transparent;padding:7px 0;min-width:0;width:100%}
+  .fieldl input:focus{outline:none}
+  .cc{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--soft);padding:8px 0;border-bottom:1px solid var(--hair-soft)}
+  .cc input{accent-color:var(--ink)}
+  .body{width:100%;min-height:230px;border:0;background:transparent;resize:vertical;padding:10px 0;line-height:1.55;font-size:14px}
+  .body:focus{outline:none}
+  .files summary{font:700 9px/1.4 var(--mono);letter-spacing:.2em;color:var(--faint);cursor:pointer;padding:6px 0}
+  .fileitem{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:3px 0}
+  .fileitem input{accent-color:var(--ink)}
+  .fileitem .fsrc{font:700 8.5px/1 var(--mono);letter-spacing:.12em;color:var(--blue)}
+
+  /* A: three columns on the row */
+  .cardA{margin-top:12px;border:1px solid var(--hair);border-radius:12px;padding:14px 16px}
+  .gridA{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:24px;margin-top:6px}
+  @media (max-width:980px){.gridA{grid-template-columns:1fr;gap:16px}}
+
+  /* B: the letter */
+  .letterB{margin-top:12px;border:1px solid var(--hair);border-radius:12px;padding:14px 16px}
+  .partB{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+  .chipB{display:inline-flex;gap:7px;align-items:center;border:1px solid var(--hair);border-radius:99px;padding:5px 10px;font-size:13px;background:var(--surface)}
+  .chipB.done{color:var(--faint);text-decoration:line-through}
+  .doc{margin-top:12px;font-size:14px;line-height:1.7}
+  .doc p{margin:0 0 10px}
+  .blank{border-bottom:1.5px dashed var(--amber);color:var(--soft);padding:0 2px}
+  .blank button{font:600 12px/1 var(--sans);color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+  .val{border-bottom:1px solid var(--hair)}
+  .doc .src{margin-left:4px}
+  .doc ul{margin:0 0 10px;padding-left:18px}
+
+  /* C: the sheet */
+  .roomC{display:grid;grid-template-columns:minmax(0,1fr) 0;transition:grid-template-columns .25s;padding:0}
+  .roomC.open{grid-template-columns:minmax(0,1fr) min(440px,100%)}
+  @media (max-width:880px){.roomC.open{grid-template-columns:0 1fr}.roomC.open .left{visibility:hidden;padding:0}}
+  .roomC .left{padding:16px 18px 18px;min-width:0;overflow:hidden}
+  .sheet{background:var(--surface);border-left:1px solid var(--hair);min-width:0;overflow:hidden}
+  .sheetin{padding:16px 18px;width:min(440px,100vw - 32px)}
+  .tabs{display:flex;gap:16px;border-bottom:1px solid var(--hair-soft);margin:10px 0 6px;flex-wrap:wrap}
+  .tabs button{font:700 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--faint);padding:10px 0;border-bottom:2px solid transparent}
+  .tabs button[aria-selected=true]{color:var(--ink);border-color:var(--ink)}
+  .opensheet{font:600 13px/1 var(--sans);border:1.5px solid var(--ink);border-radius:8px;padding:8px 12px;margin-top:10px;background:var(--surface)}
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom overhaul · Judi handoff · Triptych · revised 2026-11-17</p>
+<h1>Hand a signed deal to Judi</h1>
+<p class="lede">One object on a deal row. It stays dark until you mark the deal Closed Won. Then it holds three things: your part, what Judi and the team need to service the PEO and its client, and what is specific to this account's implementation. Nothing here ships until you give a ship order.</p>
+<ul class="notes">
+  <li><b>What lights it.</b> Your ☑ Closed won on the row, or the board's Closed Won. Press "☑ Closed won" on a row below to see it. ↺ on the closed stamp puts it back to dark.</li>
+  <li><b>Your part.</b> The things only you can do: send the handoff, introduce Judi to the PEO's contact, fill what the record is missing, and the three check-ins the outline gives you to lead, after implementation, before the first payroll and after it. A check-in shows a date only when the record holds one. You tick each item yourself.</li>
+  <li><b>What Judi needs.</b> The PEO and client contacts, countries, headcount, employees or contractors, the engagement, the start date, the first payroll date, what was promised in the sale, and where support goes. Each fact names where it came from. A fact the record does not hold says so and takes your hand.</li>
+  <li><b>This account's implementation.</b> What is particular to setting this account up, each with its source: what the reseller invoice can and cannot do today, how a new client gets set up, the sign-in setup, and what the record says about funding.</li>
+  <li><b>The one move.</b> "Send Judi the handoff" drafts the email to Judi, with Danielle Stansberry as an optional copy and files from the whole library. One press downloads the Outlook file and saves it to the account's record.</li>
+</ul>
+
+<section>
+  <p class="kick">Concept A</p>
+  <h2>Three columns on the row</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Shape.</b> Closed Won turns the dashed strip into a card with three columns: your part, what Judi needs, this account's implementation. The move sits at the foot.</li>
+    <li><b>Good for.</b> Seeing all three at once on the deal you just closed. <b>Cost.</b> The row gets taller while the card is open.</li>
+  </ul>
+  <div class="room" data-concept="A"></div>
+</section>
+
+<section>
+  <p class="kick">Concept B</p>
+  <h2>The handoff is the letter</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Shape.</b> Your part rides as a line of chips across the top. Below it, the handoff email is already written from the record, with each fact in place and its source beside it. A fact the record lacks is an amber blank in the sentence, and filling it fills the letter.</li>
+    <li><b>Good for.</b> Getting the handoff out fast, because what Judi needs and what she receives are the same thing. <b>Cost.</b> The facts are read as prose, not scanned as a list.</li>
+  </ul>
+  <div class="room" data-concept="B"></div>
+</section>
+
+<section>
+  <p class="kick">Concept C</p>
+  <h2>One line and a sheet</h2>
+  <ul class="notes" style="margin-bottom:18px">
+    <li><b>Shape.</b> The row keeps one line, "Hand it to Judi", with how much of your part is left. It opens a sheet on the right edge with three tabs: Your part, What Judi needs, Implementation. The email sits at the sheet's foot on every tab.</li>
+    <li><b>Good for.</b> Keeping the row short while the deal is in implementation. <b>Cost.</b> The handoff is one click away from the row.</li>
+  </ul>
+  <div class="room roomC" data-concept="C"></div>
+</section>
+
+<p class="notes" style="margin-top:56px;list-style:none;padding:0;font-size:12.5px;color:var(--faint)">Sample data throughout. Chassie Smith, Simploy's COO, and the India contractors come from the record's July 9 call notes. The invoice, client setup and sign-in lines come from the global project plan's rows 37, 170 and 101 to 103. The engagement, the promise and the funding line are made up to show the behavior.</p>
+</main>
+
+<script>
+(() => {
+  const TODAY = "11/17";
+  const LIB = [["LISTO PLATFORM","The whole platform demo"],["","PrismHR Global at a glance"],["","Employer of record"],["","Global payroll"],["","Contractor solutions"],["","Talent"],["","Reseller agreement, review copy"],["","Referral agreement, review copy"]];
+
+  const seed = () => ({
+    closed:false, confirming:false, drafting:false, sent:null, sheet:false, tab:"part",
+    ccDanielle:true, files:new Set(), done:new Set(),
+    facts:{
+      peo:{ k:"PEO contact", v:"Chassie Smith, COO", src:"CALL NOTES 7/9" },
+      client:{ k:"Client", v:null },
+      cliContact:{ k:"Client contact", v:null },
+      countries:{ k:"Countries", v:"India", src:"CALL NOTES 7/9" },
+      heads:{ k:"Headcount", v:"2", src:"CALL NOTES 7/9" },
+      kind:{ k:"Employees or contractors", v:"Contractors", src:"CALL NOTES 7/9" },
+      engagement:{ k:"Engagement", v:"Reseller", src:"THE SENTENCE" },
+      start:{ k:"Start date", v:null },
+      payroll:{ k:"First payroll", v:null },
+      promised:{ k:"Promised in the sale", v:"A call with Judi before the first payroll.", src:"EMAIL 11/12", judi:"She should hear this from you first." },
+    },
+    impl:[
+      { k:"Invoices", v:"Simploy can white-label the invoice. It cannot mark it up yet.", src:"PROJECT PLAN · ROW 37", judi:"Simploy may ask for markup." },
+      { k:"New client setup", v:"Simploy asks for each new client setup through a CRC ticket.", src:"PROJECT PLAN · ROW 170" },
+      { k:"Sign-in", v:"Sign-in from PrismHR into Global is set up by PrismHR's services team.", src:"PROJECT PLAN · ROWS 101-103" },
+      { k:"Funding", v:"Simploy remits payment back. How the India contractors get funded is not clear yet.", src:"CALL NOTES 7/29", sample:true },
+    ],
+  });
+
+  const missing = s => Object.entries(s.facts).filter(([,f]) => !f.v);
+  const support = s => s.facts.engagement.v === "Referral" ? "The client uses the help button in the app." : "Simploy opens a CRC ticket.";
+
+  // Your part. Only what the operator does. The check-ins carry no date unless the record holds one.
+  const part = s => [
+    { id:"send", t:"Send Judi the handoff.", why: s.sent ? `Sent and saved ${s.sent}.` : "Closed Won today." },
+    { id:"intro", t:"Introduce Judi to Chassie.", why:"Chassie is Simploy's contact." },
+    { id:"fill", t: missing(s).length ? `Fill the ${missing(s).length} missing facts.` : "Every fact is on file.", why: missing(s).length ? missing(s).map(([,f]) => f.k).join(", ") + "." : "Nothing left to fill.", auto: !missing(s).length },
+    { id:"c2", t:"Run the post-implementation check-in.", why:"Read their feedback form first.", blue:true, date:null },
+    { id:"c3", t:"Run the pre-payroll check-in.", why:"Read their feedback form first.", blue:true, date:null },
+    { id:"c4", t:"Run the post-payroll check-in.", why:"Read their feedback form first.", blue:true, date:null },
+  ];
+  const isDone = (s, p) => p.auto || s.done.has(p.id) || (p.id === "send" && s.sent);
+  const left = s => part(s).filter(p => !isDone(s, p)).length;
+
+  const todoHTML = s => part(s).map(p => `<div class="todo ${isDone(s,p) ? "done" : ""}">
+      <button class="tick ${isDone(s,p) ? "on" : ""}" data-tick="${p.id}" aria-label="Mark done" ${p.id === "send" || p.id === "fill" ? "disabled style='cursor:default'" : ""}></button>
+      <span><span class="t">${p.t}</span><span class="why ${p.blue ? "blue" : ""}">${p.why}${p.id.startsWith("c") ? (p.date ? ` ${p.date}.` : " No date on the record.") : ""}</span></span></div>`).join("");
+
+  const factHTML = (key, f) => `<div class="fact"><span class="k">${f.k}</span>${f.v
+      ? `<span>${f.v}<span class="src ${f.src === "YOUR HAND" ? "hand" : ""}">${f.src}</span></span>`
+      : `<span class="missing">Not on the record.<button class="fill" data-fill="${key}">Fill it in</button></span>`}
+      ${f.v && f.judi ? `<div class="judi"><span class="k">JUDI SHOULD SEE THIS</span>${f.judi}</div>` : ""}</div>`;
+  const factsHTML = s => Object.entries(s.facts).map(([k,f]) => factHTML(k,f)).join("")
+      + `<div class="fact"><span class="k">Support goes to</span><span>${support(s)}<span class="src">THE AGREEMENT</span></span></div>`;
+  const implHTML = s => s.impl.map(i => `<div class="fact"><span class="k">${i.k}</span><span>${i.v}<span class="src">${i.src}</span>${i.sample ? '<span class="sample">SAMPLE</span>' : ""}</span>
+      ${i.judi ? `<div class="judi"><span class="k">JUDI SHOULD SEE THIS</span>${i.judi}</div>` : ""}</div>`).join("");
+
+  function bodyText(s){
+    const f = s.facts, v = k => f[k].v || "not on the record yet";
+    return `Hi Judi,
+
+Simploy signed today. Here is what you need to take it from here.
+
+PEO contact: ${v("peo")}
+Client: ${v("client")}
+Client contact: ${v("cliContact")}
+Countries: ${v("countries")}
+Headcount: ${v("heads")}, ${v("kind").toLowerCase()}
+Engagement: ${v("engagement")}
+Start date: ${v("start")}
+First payroll: ${v("payroll")}
+Support: ${support(s)}
+
+Promised in the sale: ${v("promised")}
+
+For their implementation:
+${s.impl.map(i => "- " + i.v).join("\n")}
+
+I'll run the post-implementation, pre-payroll and post-payroll check-ins. I'll introduce you to Chassie this week.
+
+Tell me what else you need from me.`;
+  }
+  const draftHTML = s => !s.drafting ? "" : `<div class="draft">
+      <div class="fieldl"><span class="lbl">To</span><input value="Judi Owen"></div>
+      <label class="cc"><input type="checkbox" data-ccd ${s.ccDanielle ? "checked" : ""}> Copy Danielle Stansberry</label>
+      <div class="fieldl"><span class="lbl">Subject</span><input value="Simploy signed: the handoff"></div>
+      <textarea class="body" data-body>${bodyText(s)}</textarea>
+      <details class="files"><summary>ATTACH FROM THE LIBRARY${s.files.size ? " · " + s.files.size : ""}</summary>
+        ${LIB.map(([src,n],i) => `<label class="fileitem"><input type="checkbox" data-file="${i}" ${s.files.has(i) ? "checked" : ""}>${src ? `<span class="fsrc">${src}</span>` : ""}${n}</label>`).join("")}
+      </details></div>`;
+  const actionHTML = s => `<div class="actionbar">
+      <button class="send" data-send>${s.drafting ? "Download and save it" : s.sent ? "Send Judi an update" : "Send Judi the handoff"}</button>
+      ${s.drafting ? `<button class="quietbtn" data-cancel>Not now</button>` : ""}
+      ${s.sent ? `<span class="receipt">SAVED TO SIMPLOY'S RECORD · ${s.sent} · DOWNLOADED</span>` : ""}</div>`;
+
+  function rowHead(s){
+    const tools = s.closed
+      ? `<span class="closedby">CLOSED WON · BY YOUR CALL</span><button class="tool" data-reopen title="Reopen the deal">↺</button>`
+      : s.confirming
+        ? `<button class="greenbtn" data-confirm>Confirm Closed Won</button><button class="tool" data-notyet>Not yet</button>`
+        : `<button class="tool" data-close title="Mark it Closed Won">☑ Closed won</button>`;
+    return `<div class="rowtop"><span class="acct">Simploy</span><span class="sentence">Reseller · contractor management · India<span class="sample">SAMPLE</span></span><span class="tools">${tools}</span></div>`;
+  }
+  const moveLine = s => s.closed
+    ? (() => { const n = part(s).find(p => !isDone(s, p));
+        return `<p class="lbl" style="margin-top:12px">NEXT MOVE</p><p class="move">${n ? n.t : "Your part is done."}</p><p class="reason">${!s.sent ? "Signed today." : n && n.id.startsWith("c") ? "Implementation is underway." : "Handoff sent today."}</p>`; })()
+    : `<p class="lbl" style="margin-top:12px">NEXT MOVE</p><p class="move">Send the agreement.</p><p class="reason">They asked Friday.</p>`;
+  const darkStrip = `<div class="dark"><span class="k">JUDI HANDOFF</span>Lights up when you mark it Closed Won.</div>`;
+
+  const R = {
+    A(s){
+      return `<div class="row">${rowHead(s)}${moveLine(s)}${!s.closed ? darkStrip :
+        `<div class="cardA ${s.justLit ? "lit-in" : ""}">
+          <div class="gridA">
+            <div><p class="lbl">YOUR PART · ${left(s)} LEFT</p>${todoHTML(s)}</div>
+            <div><p class="lbl">WHAT JUDI NEEDS · ${missing(s).length} NOT ON THE RECORD</p>${factsHTML(s)}</div>
+            <div><p class="lbl">THIS ACCOUNT'S IMPLEMENTATION</p>${implHTML(s)}</div>
+          </div>${draftHTML(s)}${actionHTML(s)}</div>`}</div>`;
+    },
+    B(s){
+      if (!s.closed) return `<div class="row">${rowHead(s)}${moveLine(s)}${darkStrip}</div>`;
+      const f = s.facts;
+      const slot = k => f[k].v
+        ? `<span class="val">${f[k].v}</span><span class="src ${f[k].src === "YOUR HAND" ? "hand" : ""}">${f[k].src}</span>`
+        : `<span class="blank">${f[k].k.toLowerCase()} not on the record <button data-fill="${k}">Fill it in</button></span>`;
+      return `<div class="row">${rowHead(s)}${moveLine(s)}
+        <div class="letterB ${s.justLit ? "lit-in" : ""}">
+          <p class="lbl">YOUR PART · ${left(s)} LEFT</p>
+          <div class="partB">${part(s).map(p => `<button class="chipB ${isDone(s,p) ? "done" : ""}" data-tick="${p.id}" ${p.id === "send" || p.id === "fill" ? "disabled" : ""} title="${p.why}"><span class="tick ${isDone(s,p) ? "on" : ""}"></span>${p.t.replace(/\.$/,"")}</button>`).join("")}</div>
+          <p class="lbl" style="margin-top:14px">THE HANDOFF · TO JUDI${s.ccDanielle ? ", COPY DANIELLE" : ""}</p>
+          <div class="doc">
+            <p>Hi Judi, Simploy signed today. Their contact is ${slot("peo")}. The client is ${slot("client")}, and their contact there is ${slot("cliContact")}.</p>
+            <p>They need ${f.kind.v ? `<span class="val">${f.kind.v.toLowerCase()}</span><span class="src ${f.kind.src === "YOUR HAND" ? "hand" : ""}">${f.kind.src}</span>` : slot("kind")} in ${slot("countries")}, ${slot("heads")} to start, as a ${slot("engagement")} account. The start date is ${slot("start")} and the first payroll is ${slot("payroll")}. ${support(s)}<span class="src">THE AGREEMENT</span></p>
+            <p>Promised in the sale: ${slot("promised")}</p>
+            ${f.promised.v ? `<div class="judi"><span class="k">JUDI SHOULD SEE THIS</span>${f.promised.judi}</div>` : ""}
+            <p style="margin-top:10px">For their implementation:</p>
+            <ul>${s.impl.map(i => `<li>${i.v}<span class="src">${i.src}</span>${i.sample ? '<span class="sample">SAMPLE</span>' : ""}</li>`).join("")}</ul>
+            <p>I'll run the post-implementation, pre-payroll and post-payroll check-ins.</p>
+          </div>
+          ${s.drafting ? `<div class="draft"><label class="cc"><input type="checkbox" data-ccd ${s.ccDanielle ? "checked" : ""}> Copy Danielle Stansberry</label>
+            <details class="files"><summary>ATTACH FROM THE LIBRARY${s.files.size ? " · " + s.files.size : ""}</summary>
+            ${LIB.map(([src,n],i) => `<label class="fileitem"><input type="checkbox" data-file="${i}" ${s.files.has(i) ? "checked" : ""}>${src ? `<span class="fsrc">${src}</span>` : ""}${n}</label>`).join("")}</details>
+            <textarea class="body" data-body hidden>${bodyText(s)}</textarea></div>` : ""}
+          ${actionHTML(s)}</div></div>`;
+    },
+    C(s){
+      const l = `<div class="left"><div class="row">${rowHead(s)}${moveLine(s)}${!s.closed ? darkStrip :
+        `<div class="${s.justLit ? "lit-in" : ""}"><button class="opensheet" data-sheet>Hand it to Judi · ${left(s) ? left(s) + " of your part left" : "your part is done"}</button></div>`}</div>
+        <div class="row" style="margin-top:10px;opacity:.6"><div class="rowtop"><span class="acct">Infiniti HR</span><span class="sentence">Referral · employer of record<span class="sample">SAMPLE</span></span></div></div></div>`;
+      const tabs = [["part",`YOUR PART · ${left(s)}`],["needs",`WHAT JUDI NEEDS · ${missing(s).length}`],["impl","IMPLEMENTATION"]];
+      const pane = s.tab === "part" ? todoHTML(s) : s.tab === "needs" ? factsHTML(s) : implHTML(s);
+      const sheet = `<aside class="sheet"><div class="sheetin">
+        <div style="display:flex;align-items:baseline;gap:10px"><p class="lbl">JUDI HANDOFF · SIMPLOY</p><button class="quietbtn" data-sheet style="margin-left:auto">Close</button></div>
+        <div class="tabs" role="tablist">${tabs.map(([k,n]) => `<button role="tab" aria-selected="${s.tab === k}" data-tab="${k}">${n}</button>`).join("")}</div>
+        ${pane}${draftHTML(s)}${actionHTML(s)}</div></aside>`;
+      return l + sheet;
+    },
+  };
+
+  function eml(s, root){
+    const ta = root.querySelector("[data-body]");
+    const body = ta ? ta.value : bodyText(s);
+    const files = [...s.files].map(i => LIB[i][1]);
+    const lines = ["X-Unsent: 1","To: Judi Owen <judi.owen@example.com>",
+      ...(s.ccDanielle ? ["Cc: Danielle Stansberry <danielle.stansberry@example.com>"] : []),
+      "Subject: Simploy signed: the handoff","MIME-Version: 1.0","Content-Type: text/plain; charset=utf-8","",
+      body + (files.length ? `\n\nAttached:\n${files.join("\n")}` : "")];
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([lines.join("\r\n")], { type:"message/rfc822" }));
+    a.download = "Simploy handoff to Judi.eml";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  document.querySelectorAll("[data-concept]").forEach(root => {
+    const key = root.dataset.concept, s = seed();
+    const paint = () => { root.innerHTML = R[key](s); if (key === "C") root.classList.toggle("open", s.sheet && s.closed); s.justLit = false; };
+    root.addEventListener("click", e => {
+      const t = e.target.closest("button"); if (!t || t.disabled) return;
+      const d = t.dataset;
+      if (d.close !== undefined) s.confirming = true;
+      else if (d.notyet !== undefined) s.confirming = false;
+      else if (d.confirm !== undefined){ s.closed = true; s.confirming = false; s.justLit = true; if (key === "C") s.sheet = true; }
+      else if (d.reopen !== undefined) Object.assign(s, seed());
+      else if (d.sheet !== undefined) s.sheet = !s.sheet;
+      else if (d.tab) s.tab = d.tab;
+      else if (d.tick){ s.done.has(d.tick) ? s.done.delete(d.tick) : s.done.add(d.tick); }
+      else if (d.cancel !== undefined) s.drafting = false;
+      else if (d.send !== undefined){ if (!s.drafting) s.drafting = true; else { eml(s, root); s.sent = TODAY; s.drafting = false; } }
+      else if (d.fill){
+        const f = s.facts[d.fill];
+        const v = prompt(f.k + (d.fill === "payroll" || d.fill === "start" ? " (M/D)" : ""), "");
+        if (v && v.trim()){ f.v = v.trim(); f.src = "YOUR HAND"; }
+      }
+      else return;
+      paint();
+    });
+    root.addEventListener("change", e => {
+      if (e.target.matches("[data-ccd]")){ s.ccDanielle = e.target.checked; if (key === "B") paint(); }
+      if (e.target.matches("[data-file]")){
+        const i = +e.target.dataset.file; e.target.checked ? s.files.add(i) : s.files.delete(i);
+        const sm = root.querySelector(".files summary"); if (sm) sm.textContent = "ATTACH FROM THE LIBRARY" + (s.files.size ? " · " + s.files.size : "");
+      }
+    });
+    paint();
+  });
+})();
+</script>
+</body>
+</html>

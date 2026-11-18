@@ -305,3 +305,27 @@ describe("the door is signed in and serves pieces under the cap", () => {
     assert.match(client, /a\.download = `Note to \$\{name \|\| "them"\}\.eml`;/);
   });
 });
+
+describe("retired demos keep their names on the record (ship order 2026-11-18)", () => {
+  test("a retired file no longer travels but a send on file still names it", async () => {
+    const { RETIRED_ATTACHMENTS, attachmentLabel } =
+      await import("../src/lib/collateral/attachments");
+    const { parseFilesSent, renderFilesSent } =
+      await import("../src/lib/room/files-sent");
+    for (const id of Object.keys(RETIRED_ATTACHMENTS)) {
+      assert.equal(
+        attachmentById(id),
+        undefined,
+        `${id} is retired, so it never travels`,
+      );
+      assert.equal(attachmentLabel(id), RETIRED_ATTACHMENTS[id]);
+    }
+    assert.equal(renderFilesSent(["demo-whole"], "Someone"), null);
+    const sent = parseFilesSent({
+      id: "n1",
+      createdAt: "2026-11-17T18:18:51.848Z",
+      body: "✎ FILES SENT\nto\tMelissa Grimes\nfile\tdemo-whole",
+    });
+    assert.deepEqual(sent?.files, ["demo-whole"]);
+  });
+});

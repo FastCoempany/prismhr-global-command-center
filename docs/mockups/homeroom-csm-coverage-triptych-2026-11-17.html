@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HomeRoom Seat Ask</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The seat ask: a small HomeRoom object that names one CSM and at most
+     three accounts with nothing on the record involving the operator, and
+     drafts the ask for a seat on that CSM's next check-in. One theme, the
+     room's own tokens. The three concepts differ by structure. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input,textarea{font:inherit;color:inherit}
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px}
+  .page{max-width:1280px;margin:0 auto;padding:40px 16px 120px}
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,46px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 28px/1.2 var(--serif);margin:6px 0 8px}
+  .lede{color:var(--soft);max-width:80ch;margin:0}
+  .notes{margin:18px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{font-size:13.5px;color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:72px}
+  .sample{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+
+  /* the HomeRoom as it stands, drawn small */
+  .room{background:var(--field);border:1px solid var(--hair-soft);border-radius:12px;position:relative}
+  .roomhead{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--hair-soft);flex-wrap:wrap;position:relative}
+  .roomname{font:700 11px/1 var(--mono);letter-spacing:.3em}
+  .openall{font:700 9.5px/1 var(--mono);letter-spacing:.14em;border:1px solid var(--hair);border-radius:99px;padding:6px 10px;color:var(--soft);background:var(--surface)}
+  .add{font:600 14px/1 var(--sans);background:var(--ink);color:#fff;border-radius:99px;padding:10px 16px}
+  .clock{margin-left:auto;font:500 18px/1 var(--mono);color:var(--faint)}
+  .rows{padding:12px 18px 18px}
+  .ghostrow{min-height:46px;border-radius:10px;background:var(--surface);border:1px solid var(--hair-soft);margin-top:10px;display:flex;align-items:center;padding:0 14px;gap:10px;color:var(--faint);font-size:13px}
+  .ghostrow b{font:400 16px/1 var(--serif);color:var(--soft)}
+
+  /* shared parts */
+  .lbl{font:700 9px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .count{font:700 9.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--soft);text-decoration:underline;text-decoration-color:var(--quiet);text-underline-offset:3px}
+  .act{font:600 16px/1.35 var(--sans);margin:0}
+  .why{font-size:13px;color:var(--soft);margin:2px 0 0}
+  .dot{display:inline-grid;place-items:center;min-width:30px;height:22px;padding:0 6px;border-radius:99px;font:700 11px/1 var(--mono);color:#fff;background:var(--quiet)}
+  .dot.hot{animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}50%{box-shadow:0 0 0 7px rgba(239,68,68,0)}}
+  @media (prefers-reduced-motion:reduce){.dot.hot{animation:none}}
+  .tune{display:inline-flex;align-items:center;gap:6px;font:600 10px/1 var(--mono);letter-spacing:.08em;color:var(--faint)}
+  .tune button{width:20px;height:20px;border:1px solid var(--hair);border-radius:5px;background:var(--surface);color:var(--soft);font:600 12px/1 var(--mono)}
+  .acct{display:grid;grid-template-columns:16px minmax(0,1fr) 18px;gap:8px;align-items:start;padding:7px 0;border-top:1px solid var(--hair-soft)}
+  .acct input{margin-top:5px;accent-color:var(--ink)}
+  .acct .nm{font-weight:600;font-size:14px;text-align:left;line-height:1.35}
+  .acct .hint{display:block;font:600 9.5px/1.5 var(--mono);letter-spacing:.06em;color:var(--blue);text-transform:uppercase}
+  .acct .hint.none{color:var(--faint)}
+  .acct .x{color:var(--quiet);font-size:12px;opacity:0;transition:opacity .15s;padding-top:3px}
+  .acct:hover .x,.acct .x:focus-visible{opacity:1}
+  @media (hover:none){.acct .x{opacity:1}}
+  .evidence{grid-column:2/4;font-size:12.5px;color:var(--soft);margin:2px 0 0}
+  .breakdown{margin:6px 0 0;padding:0;list-style:none}
+  .breakdown li button{display:flex;gap:10px;width:100%;font-size:12.5px;color:var(--soft);padding:2px 0;text-align:left}
+  .breakdown li button:hover{color:var(--ink)}
+  .breakdown .n{font:600 11px/1.6 var(--mono);color:var(--faint);min-width:24px;text-align:right}
+  .breakdown li.on button{color:var(--ink);font-weight:600}
+  .send{background:var(--orange);color:#fff;font:600 14px/1 var(--sans);border-radius:8px;padding:10px 16px}
+  .ghost{border:1.5px solid var(--ink);border-radius:8px;padding:8px 14px;font:600 13.5px/1 var(--sans);background:var(--surface)}
+  .quietbtn{font:600 12.5px/1 var(--sans);color:var(--soft)}
+  .draft{margin-top:10px;border-top:1px solid var(--hair);padding-top:8px}
+  .field{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--hair-soft);min-height:34px}
+  .field input{border:0;background:transparent;padding:6px 0;min-width:0;width:100%;font-size:13.5px}
+  .field input:focus,.body:focus{outline:none}
+  .body{width:100%;min-height:270px;border:0;background:transparent;resize:vertical;padding:8px 0;font-size:13.5px;line-height:1.5}
+  .files summary{cursor:pointer;font:700 9.5px/1.4 var(--mono);letter-spacing:.14em;color:var(--soft);padding:6px 0;list-style:none}
+  .files summary::-webkit-details-marker{display:none}
+  .files label{display:flex;gap:8px;align-items:baseline;font-size:12.5px;padding:2px 0}
+  .files label .sz{margin-left:auto;font:600 10px/1 var(--mono);color:var(--faint)}
+  .files input{accent-color:var(--ink)}
+  .foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .receipt{margin-top:10px;font:600 9.5px/1.6 var(--mono);letter-spacing:.08em;color:var(--soft);border-left:2px solid var(--green);padding:4px 0 4px 10px}
+  .receipt span{display:block;color:var(--faint);font-weight:500;letter-spacing:.04em;text-transform:none;font-family:var(--sans);font-size:12px}
+  .empty{font-size:13px;color:var(--soft)}
+  .sim{display:flex;align-items:center;gap:10px;margin:0 0 12px;font:600 9.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--faint);flex-wrap:wrap}
+  .sim input{width:180px;accent-color:var(--ink)}
+
+  /* A: the card under the header */
+  .cardA{margin:12px 18px 0 auto;max-width:400px;background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:12px 14px}
+  .cardA .top{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+  @media (max-width:520px){.cardA{margin:12px 12px 0}}
+
+  /* B: one line in the stack of rows */
+  .rowB{background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:10px 14px}
+  .rowB .line{display:flex;align-items:center;gap:12px;width:100%;text-align:left;flex-wrap:wrap}
+  .rowB .line .act{font-size:15px}
+  .rowB .line .why{margin:0}
+  .rowB .line .cv{margin-left:auto;font:700 10px/1 var(--mono);color:var(--faint)}
+  .rowB .open{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;margin-top:10px}
+  @media (max-width:820px){.rowB .open{grid-template-columns:1fr}}
+
+  /* C: the chip in the header and its pop-out */
+  .chipC{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair);border-radius:99px;padding:5px 10px 5px 6px;background:var(--surface);font:700 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--soft)}
+  .chipC[aria-expanded=true]{border-color:var(--ink);color:var(--ink)}
+  .popC{position:absolute;top:calc(100% + 6px);left:min(260px,4vw);width:min(360px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--hair);border-radius:12px;box-shadow:0 10px 30px rgba(10,28,64,.12);padding:12px 14px;z-index:5}
+  .popC[hidden]{display:none}
+  @media (max-width:600px){.popC{left:8px;right:8px;width:auto}}
+  .roomC.open{min-height:760px}
+  .pips{display:flex;gap:6px;margin:8px 0 4px}
+  .pips button{width:22px;height:4px;border-radius:2px;background:var(--hair)}
+  .pips button.on{background:var(--ink)}
+  .focus{border-top:1px solid var(--hair-soft);padding-top:8px;margin-top:6px}
+  .focus .nm{font:400 20px/1.2 var(--serif);margin:0}
+  .focus .tick{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--soft);margin-top:8px}
+  .focus .tick input{accent-color:var(--ink)}
+  .roomC .rows{padding-top:12px}
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom overhaul · Seat ask · Triptych · 2026-11-17 · second pass</p>
+<h1>Ask a CSM for a seat</h1>
+<p class="lede">One small object on the HomeRoom. It names one CSM and at most three of their accounts where the record holds nothing with you on it, and drafts your ask to join that CSM's next check-in for five minutes. The full list never shows. When you send the ask, the next CSM and the next three take its place. Nothing here ships until you give a ship order.</p>
+<ul class="notes">
+  <li><b>What counts as a touch.</b> Anything on the record with you in it: an email you sent, received or were copied on, a call, meeting or transcript with you, a send you logged, and a colleague's email or Salesforce activity only when it carries your name or address. Support cases never count.</li>
+  <li><b>The real numbers today.</b> Your book holds 149 accounts. 40 have a touch with you. 28 of those have a direct exchange; 10 only appear in your own emails to their CSM; 2 only in your own notes. <b>109 have nothing.</b> By CSM: Lesha Cyphers 50, Anika Steenstra 43, Whitney Dideon 13, John Hebert 2, no CSM 1. By fit: 19 high, 25 medium, 65 low.</li>
+  <li><b>What it read.</b> Every filed entry on every account in the database, all 125 accounts' slices of the Salesforce export, the sends you logged and your own touch log. It did not read the backup files on GitHub; they hold the same filings as whole files.</li>
+  <li><b>The order.</b> An account whose record mentions the CSM's recurring meeting comes first, newest mention first, then by fit. 8 of the 109 carry a mention: bi-weekly, monthly or quarterly calls and business reviews in the CSM team's emails. A support case only supplies a mention when it talks about such a meeting; none of the 109 does today.</li>
+  <li><b>The counter.</b> Business days since you last asked a CSM about accounts. The record's last one is 7/21, so today it reads red and pulses. At the threshold, five by default, it turns red; − and + change the threshold, ↺ restarts the count. Reduced motion keeps the red and drops the pulse.</li>
+  <li><b>The count is a door.</b> "109 with nothing" opens to the split by CSM, never to the accounts. Picking a CSM there brings their top three forward.</li>
+  <li><b>Send.</b> "Download for Outlook" downloads the email as an Outlook draft file and, on the same press, saves it on each named account's record. Those accounts now carry a touch with you, so the count drops and the next batch arrives. ✕ on an account sets it aside for today and pulls in that CSM's next one.</li>
+  <li><b>Sample.</b> The accounts, CSMs, counts and mentions are real. The CSM addresses come from the record; John Hebert's is not on it. The draft's words are a first draft for you to change.</li>
+</ul>
+
+<!-- ═════════ A ═════════ -->
+<section>
+  <p class="kick">Concept A</p>
+  <h2>The card under the header</h2>
+  <ul class="notes" style="margin-bottom:16px">
+    <li><b>Where it lives.</b> A card about 400 pixels wide sits under the HomeRoom header, on the right, above the rows. It shows the counter, the action, the CSM's three accounts and the button. The draft opens inside the card.</li>
+    <li><b>Good for.</b> Always in view without taking a row. <b>Cost.</b> It sits in the top of the room every day until the 109 reach zero.</li>
+  </ul>
+  <div class="sim" data-sim="A">SIMULATE DAYS SINCE LAST ASK <input type="range" min="0" max="90" value="84"> <span></span></div>
+  <div class="room" id="A">
+    <div class="roomhead"><span class="roomname">HOMEROOM</span><button class="openall">OPEN ALL</button><button class="add">+ add ▾</button><span class="clock">11:34 AM</span></div>
+    <div class="cardA" data-obj></div>
+    <div class="rows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>Infiniti HR</b> NEXT MOVE · Wait on Tom. Promised Friday.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ B ═════════ -->
+<section>
+  <p class="kick">Concept B</p>
+  <h2>One line in the stack of rows</h2>
+  <ul class="notes" style="margin-bottom:16px">
+    <li><b>Where it lives.</b> At rest it is one line at the top of the rows, built like a deal row's move: the counter, "Ask Anika for a seat.", the reason and the batch's size. Opening it shows the three accounts on the left and the draft on the right, side by side.</li>
+    <li><b>Good for.</b> It reads like every other move in the room and takes one line. <b>Cost.</b> It sits among the deals, so it competes with them for the top of the stack.</li>
+  </ul>
+  <div class="sim" data-sim="B">SIMULATE DAYS SINCE LAST ASK <input type="range" min="0" max="90" value="84"> <span></span></div>
+  <div class="room" id="B">
+    <div class="roomhead"><span class="roomname">HOMEROOM</span><button class="openall">OPEN ALL</button><button class="add">+ add ▾</button><span class="clock">11:34 AM</span></div>
+    <div class="rows">
+      <div class="rowB" data-obj></div>
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>Infiniti HR</b> NEXT MOVE · Wait on Tom. Promised Friday.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ C ═════════ -->
+<section>
+  <p class="kick">Concept C</p>
+  <h2>A chip in the header, one account at a time</h2>
+  <ul class="notes" style="margin-bottom:16px">
+    <li><b>Where it lives.</b> A small chip in the HomeRoom header holds the counter and "SEATS". It opens a pop-out that shows one account of the batch at a time, with three pips to move between them, then "Draft the ask" for all the ticked ones. The draft replaces the account in the same pop-out.</li>
+    <li><b>Good for.</b> The smallest footprint: nothing on the page until the counter turns red. <b>Cost.</b> The three accounts are never side by side.</li>
+  </ul>
+  <div class="sim" data-sim="C">SIMULATE DAYS SINCE LAST ASK <input type="range" min="0" max="90" value="84"> <span></span></div>
+  <div class="room roomC" id="C">
+    <div class="roomhead"><span class="roomname">HOMEROOM</span><button class="openall">OPEN ALL</button><button class="add">+ add ▾</button><span data-chipslot></span><span class="clock">11:34 AM</span>
+      <div class="popC" data-obj hidden></div>
+    </div>
+    <div class="rows">
+      <div class="ghostrow"><b>Simploy</b> NEXT MOVE · Send the demo.</div>
+      <div class="ghostrow"><b>Infiniti HR</b> NEXT MOVE · Wait on Tom. Promised Friday.</div>
+    </div>
+  </div>
+</section>
+
+<p class="notes" style="margin-top:56px;list-style:none;padding:0;font-size:12.5px;color:var(--faint)">Real data, read only, on 11/17. The pulse, the draft and the download work; the save is shown as its receipt.</p>
+</main>
+
+<script>
+(() => {
+  const QUEUE = [{"n":"American Benefits Company","c":"Anika Steenstra","t":"high","h":{"d":"2026-09-09","w":"Bi-weekly call","by":"Riley Pitt"},"s":13,"o":12},{"n":"Aegis Payroll Management, LLC","c":"Anika Steenstra","t":"medium","h":{"d":"2026-08-28","w":"Business review","by":"Mary Mahoney"},"s":2,"o":1},{"n":"Lone Star PEO","c":"Anika Steenstra","t":"medium","h":{"d":"2026-09-01","w":"Monthly call","by":"Riley Pitt"},"s":6,"o":11},{"n":"Pinnacle Employee Services, Inc.","c":"Anika Steenstra","t":"medium","h":{"d":"2026-09-08","w":"Quarterly call","by":"Mary Mahoney"},"s":14,"o":16},{"n":"Amplify HR Management","c":"Anika Steenstra","t":"low","h":{"d":"2026-08-28","w":"Monthly call","by":"Riley Pitt"},"s":19,"o":21},{"n":"Stitch Employment Services, Inc.","c":"Anika Steenstra","t":"low","h":{"d":"2027-03-26","w":"Business review","by":"Mary Mahoney"},"s":9,"o":7},{"n":"July Business Services","c":"Whitney Dideon","t":"low","h":{"d":"2026-09-04","w":"Monthly call","by":"Venessa Wilson"},"s":71,"o":10},{"n":"MAU Workforce Solutions","c":"Lesha Cyphers","t":"low","h":{"d":"2026-09-03","w":"Check-in call","by":"Mary Mahoney"},"s":5,"o":1},{"n":"Engage PEO","c":"Anika Steenstra","t":"high","h":null,"s":44,"o":4},{"n":"E3 HR Inc","c":"Lesha Cyphers","t":"high","h":null,"s":4,"o":4},{"n":"TLR of Bonita, Inc","c":"Lesha Cyphers","t":"high","h":null,"s":3,"o":0},{"n":"Axcet HR Solutions","c":"Anika Steenstra","t":"high","h":null,"s":60,"o":0},{"n":"Axios, Inc.","c":"Anika Steenstra","t":"high","h":null,"s":0,"o":0},{"n":"CEOHR","c":"Anika Steenstra","t":"high","h":null,"s":0,"o":0},{"n":"CS Partners, Inc DBA Partner Solutions","c":"Anika Steenstra","t":"high","h":null,"s":16,"o":0},{"n":"Educational Services, Inc.","c":"Lesha Cyphers","t":"high","h":null,"s":11,"o":0},{"n":"Employee Professionals NE LLC","c":"Anika Steenstra","t":"high","h":null,"s":1,"o":0},{"n":"Florida Resource Management","c":"Anika Steenstra","t":"high","h":null,"s":0,"o":1},{"n":"Galactic Employer Services","c":"Lesha Cyphers","t":"high","h":null,"s":45,"o":6},{"n":"HR Strategies Inc.","c":"Lesha Cyphers","t":"high","h":null,"s":0,"o":0},{"n":"Innovative Employer Solutions, Inc.","c":"Anika Steenstra","t":"high","h":null,"s":0,"o":0},{"n":"Kymberly Group Payroll Solutions","c":"Lesha Cyphers","t":"high","h":null,"s":0,"o":0},{"n":"PRemployer, Inc.","c":"Lesha Cyphers","t":"high","h":null,"s":7,"o":0},{"n":"Payroll Solutions III, Inc.","c":"Anika Steenstra","t":"high","h":null,"s":0,"o":0},{"n":"The Employer Group","c":"Anika Steenstra","t":"high","h":null,"s":18,"o":0},{"n":"United Benefits Consulting, Inc. d/b/a Zamp HR","c":"Anika Steenstra","t":"high","h":null,"s":4,"o":0},{"n":"APA-Aviation People Administration","c":"Anika Steenstra","t":"medium","h":null,"s":0,"o":0},{"n":"Advanced PEO Solutions, LLC","c":"Anika Steenstra","t":"medium","h":null,"s":3,"o":0},{"n":"American Payroll and Benefits","c":"Lesha Cyphers","t":"medium","h":null,"s":0,"o":0},{"n":"Atlantic Payroll Partners","c":"Lesha Cyphers","t":"medium","h":null,"s":3,"o":0},{"n":"Centric HC, Inc.","c":"Lesha Cyphers","t":"medium","h":null,"s":27,"o":8},{"n":"Cornerstone Employer Solutions (dba SynchronyHR)","c":"Anika Steenstra","t":"medium","h":null,"s":1,"o":0},{"n":"Dental HR","c":"Anika Steenstra","t":"medium","h":null,"s":3,"o":1},{"n":"Employer Pay-Care Services Inc.","c":"Lesha Cyphers","t":"medium","h":null,"s":4,"o":1},{"n":"HR Plus, LLC","c":"Anika Steenstra","t":"medium","h":null,"s":2,"o":0},{"n":"Innovative Administrative Services, LLC","c":"Lesha Cyphers","t":"medium","h":null,"s":2,"o":12},{"n":"MedHQ","c":"Lesha Cyphers","t":"medium","h":null,"s":0,"o":0},{"n":"Outsource Management, Inc.","c":"Lesha Cyphers","t":"medium","h":null,"s":6,"o":0},{"n":"Servant HR","c":"Anika Steenstra","t":"medium","h":null,"s":5,"o":0},{"n":"Sidecar HR, LLC","c":"Anika Steenstra","t":"medium","h":null,"s":58,"o":19},{"n":"Talent HR Solutions","c":"Anika Steenstra","t":"medium","h":null,"s":12,"o":1},{"n":"Tandium Elite PEO, Inc.","c":"Lesha Cyphers","t":"medium","h":null,"s":5,"o":1},{"n":"Thanexus, Inc.","c":"Anika Steenstra","t":"medium","h":null,"s":9,"o":0},{"n":"Administrative Benefits, Inc.","c":"Whitney Dideon","t":"medium","h":null,"s":0,"o":0},{"n":"DMC Outsourcing, Inc.","c":"Whitney Dideon","t":"medium","h":null,"s":2,"o":0},{"n":"EmployShare, Inc.","c":"Whitney Dideon","t":"medium","h":null,"s":1,"o":0},{"n":"TruePath HCM","c":"Whitney Dideon","t":"medium","h":null,"s":3,"o":3},{"n":"Halifax Advisors, LLP","c":"Anika Steenstra","t":"medium","h":null,"s":0,"o":0},{"n":"Aloha Workforce Management Solutions","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Approved Payroll, Inc.","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Fullstack PEO","c":"Anika Steenstra","t":"low","h":null,"s":5,"o":0},{"n":"M&M Sales & Outsourcing, Inc.","c":"Anika Steenstra","t":"low","h":null,"s":0,"o":0},{"n":"PAC Services Inc.","c":"Anika Steenstra","t":"low","h":null,"s":2,"o":0},{"n":"Pay Suite LLC","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Sequoia Trusted Advisors, Inc","c":"Lesha Cyphers","t":"low","h":null,"s":2,"o":0},{"n":"ADAPT HR","c":"Anika Steenstra","t":"low","h":null,"s":3,"o":0},{"n":"Advanced Builds","c":"Anika Steenstra","t":"low","h":null,"s":0,"o":0},{"n":"American Payroll Service","c":"Anika Steenstra","t":"low","h":null,"s":5,"o":5},{"n":"AscendHR, LLC","c":"Anika Steenstra","t":"low","h":null,"s":7,"o":0},{"n":"AspenHR LLC","c":"Anika Steenstra","t":"low","h":null,"s":0,"o":0},{"n":"BestPEO","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"CORE HR, LLC","c":"Anika Steenstra","t":"low","h":null,"s":0,"o":0},{"n":"Choice Payroll Solutions, LLC","c":"Anika Steenstra","t":"low","h":null,"s":0,"o":0},{"n":"Easeworks","c":"Whitney Dideon","t":"low","h":null,"s":20,"o":0},{"n":"Emplova LLC","c":"Lesha Cyphers","t":"low","h":null,"s":30,"o":20},{"n":"Empower Services Corporation","c":"Lesha Cyphers","t":"low","h":null,"s":9,"o":5},{"n":"Garyjames Inc & Affiliates","c":"Anika Steenstra","t":"low","h":null,"s":19,"o":0},{"n":"Gordon J. Maier & Company, LLP","c":"Anika Steenstra","t":"low","h":null,"s":10,"o":0},{"n":"IHA of Wyoming (DBA Adapt Payroll)","c":"Anika Steenstra","t":"low","h":null,"s":1,"o":0},{"n":"IPO Payroll Services","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"InnovationsHR","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Integrity Trade Services LLC","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"LSI Staffing","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Liberty Associates Group LLC","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"OnTrack Staffing","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Penmac Staffing Services, Inc.","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"R1 RCM, Inc.","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"RealTime PEO","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Strategic Employer Services","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Superior Staffing & Services LLC dba Hawai'i Staffing & Services","c":"Lesha Cyphers","t":"low","h":null,"s":4,"o":1},{"n":"Surety HR, Inc.","c":"Lesha Cyphers","t":"low","h":null,"s":1,"o":27},{"n":"TLC Companies","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"The Resource","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"TraverseHR LLC","c":"Lesha Cyphers","t":"low","h":null,"s":6,"o":0},{"n":"Upright Holdings, Inc","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Vested HR Solutions, LLC","c":"Anika Steenstra","t":"low","h":null,"s":4,"o":0},{"n":"CIP Payroll, LLC","c":"Whitney Dideon","t":"low","h":null,"s":65,"o":0},{"n":"Denali HR Solutions","c":"Whitney Dideon","t":"low","h":null,"s":10,"o":0},{"n":"Hiring Quick LLC","c":"Whitney Dideon","t":"low","h":null,"s":1,"o":0},{"n":"Piedmont Payroll","c":"Whitney Dideon","t":"low","h":null,"s":30,"o":0},{"n":"Puntual Payroll LLC","c":"Unassigned","t":"low","h":null,"s":0,"o":0},{"n":"Slate Payworx, Inc.","c":"Whitney Dideon","t":"low","h":null,"s":10,"o":0},{"n":"VeroHCM","c":"Whitney Dideon","t":"low","h":null,"s":21,"o":3},{"n":"Grand Home Furnishings","c":"Lesha Cyphers","t":"low","h":null,"s":4,"o":1},{"n":"Atlantic Solutions Group Inc DBA Empire Workforce Solutions","c":"Lesha Cyphers","t":"low","h":null,"s":4,"o":0},{"n":"Meridian Payroll Group, Inc","c":"John Hebert","t":"low","h":null,"s":0,"o":0},{"n":"Payroll Solutions, Inc.","c":"John Hebert","t":"low","h":null,"s":0,"o":0},{"n":"Allied Global Services","c":"Lesha Cyphers","t":"low","h":null,"s":1,"o":0},{"n":"American Business Resource Corporation","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Balance Managed Services, LLC","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"Employment Enterprises","c":"Lesha Cyphers","t":"low","h":null,"s":2,"o":0},{"n":"KP Staffing","c":"Lesha Cyphers","t":"low","h":null,"s":11,"o":0},{"n":"Management Registry Inc. dba Malone Workforce Solutions","c":"Lesha Cyphers","t":"low","h":null,"s":7,"o":0},{"n":"Morales Enterprises, Inc dba Morales Group Staffing","c":"Lesha Cyphers","t":"low","h":null,"s":0,"o":0},{"n":"QPS Employment Group","c":"Lesha Cyphers","t":"low","h":null,"s":5,"o":5},{"n":"Reliant Services Holdings, LLC.","c":"Lesha Cyphers","t":"low","h":null,"s":6,"o":0},{"n":"Opes Companies","c":"Anika Steenstra","t":"low","h":null,"s":2,"o":0},{"n":"Simplified Employer Solutions, LLC","c":"Whitney Dideon","t":"low","h":null,"s":3,"o":0},{"n":"Engage PEO - Cloud","c":"Anika Steenstra","t":"low","h":null,"s":0,"o":0}];
+  const ADDR = { "Anika Steenstra":"anika.steenstra@prismhr.com", "Lesha Cyphers":"lcyphers@prismhr.com", "Whitney Dideon":"whittney.dideon@prismhr.com", "John Hebert":"", "Unassigned":"" };
+  const LIB = [
+    ["The whole platform demo, Listo", 4_880_000], ["PrismHR Global at a glance", 103_508], ["Employer of record", 478_578],
+    ["Global payroll", 432_923], ["Contractor solutions", 421_035], ["Talent", 491_901],
+    ["Reseller agreement, review copy", 138_013], ["Referral agreement, review copy", 48_474],
+  ];
+  const TODAY = new Date(2026, 10, 17);
+  const LAST_ASK = new Date(2026, 6, 21);
+  const size = b => b < 1e6 ? Math.round(b/1000) + " KB" : (b/1e6).toFixed(1) + " MB";
+  const md = s => { const [y,m,d] = s.split("-"); return y === "2026" ? `${+m}/${+d}` : `${+m}/${+d}/${y.slice(2)}`; };
+  const first = c => c === "Unassigned" ? "" : c.split(" ")[0];
+  const short = n => n.replace(/,? (Inc\.?|LLC|LLP|Corporation|Corp\.?)$/i, "").replace(/,? (Inc\.?|LLC)$/i, "");
+  function bizDays(a, b){ let n = 0; const d = new Date(a); while (d < b){ d.setDate(d.getDate()+1); const w = d.getDay(); if (w && w !== 6) n++; } return n; }
+  function color(days, th){
+    if (days >= th) return "var(--red)";
+    const t = days / th;
+    if (t < .4) return "var(--quiet)";
+    if (t < .7) return "rgba(245,158,11,.55)";
+    return "var(--amber)";
+  }
+
+  function make(root, variant){
+    const st = { asked:new Set(), aside:new Set(), unticked:new Set(), csm:null, days:bizDays(LAST_ASK, TODAY), th:5,
+                 drafting:false, breakdown:false, ev:null, pip:0, receipt:null, files:new Set(), open:false };
+    const obj = root.querySelector("[data-obj]");
+    const remaining = () => QUEUE.filter(a => !st.asked.has(a.n));
+    function batch(){
+      const r = remaining().filter(a => !st.aside.has(a.n));
+      if (!r.length) return { csm:null, list:[] };
+      const csm = st.csm && r.some(a => a.c === st.csm) ? st.csm : r[0].c;
+      return { csm, list: r.filter(a => a.c === csm).slice(0, 3) };
+    }
+    const hintText = a => a.h ? `${a.h.w} on the record · ${md(a.h.d)} · ${a.h.by}` : "No meeting on the record";
+    const reason = list => { const h = list.find(a => a.h && !st.unticked.has(a.n)); return h ? `${h.h.w} on the record.` : "Nothing with you on the record."; };
+    const action = csm => csm === "Unassigned" ? "Name a CSM to ask." : `Ask ${first(csm)} for a seat.`;
+    function dot(){
+      const c = color(st.days, st.th), hot = st.days >= st.th;
+      return `<span class="dot ${hot ? "hot" : ""}" style="background:${c}" title="Business days since your last ask">${st.days}</span>`;
+    }
+    const tune = () => `<span class="tune">AT ${st.th} <button data-th="-1" aria-label="Lower the threshold">−</button><button data-th="1" aria-label="Raise the threshold">+</button><button data-reset aria-label="Restart the count">↺</button></span>`;
+    function countBtn(){
+      const n = remaining().length;
+      return `<button class="count" data-breakdown aria-expanded="${st.breakdown}">${n} WITH NOTHING ON RECORD</button>`;
+    }
+    function breakdown(){
+      if (!st.breakdown) return "";
+      const by = {}; remaining().forEach(a => by[a.c] = (by[a.c]||0) + 1);
+      const b = batch();
+      return `<ul class="breakdown">${Object.entries(by).sort((x,y) => y[1]-x[1]).map(([c,n]) =>
+        `<li class="${c === b.csm ? "on" : ""}"><button data-pick="${c}"><span class="n">${n}</span>${c === "Unassigned" ? "No CSM on the book" : c}</button></li>`).join("")}</ul>`;
+    }
+    function evidence(a){
+      const parts = [];
+      if (a.s) parts.push(`${a.s} support case${a.s > 1 ? "s" : ""}`);
+      if (a.o) parts.push(`${a.o} colleague entr${a.o > 1 ? "ies" : "y"}`);
+      return parts.length ? `The record holds ${parts.join(" and ")}. None has you on it.` : "The record holds nothing on this account yet.";
+    }
+    function acct(a){
+      return `<div class="acct"><input type="checkbox" data-tick="${a.n}" ${st.unticked.has(a.n) ? "" : "checked"} aria-label="Include ${a.n}">
+        <div><button class="nm" data-ev="${a.n}">${short(a.n)}</button><span class="hint ${a.h ? "" : "none"}">${hintText(a)}</span></div>
+        <button class="x" data-aside="${a.n}" title="Not today" aria-label="Set ${a.n} aside for today">✕</button>
+        ${st.ev === a.n ? `<p class="evidence">${evidence(a)}</p>` : ""}</div>`;
+    }
+    function body(b){
+      const picked = b.list.filter(a => !st.unticked.has(a.n));
+      const lines = picked.map(a => `- ${short(a.n)}.${a.h ? ` Your ${a.h.w.toLowerCase()} came up on ${md(a.h.d)}.` : ""}`).join("\n");
+      return `Hi ${first(b.csm) || "there"},\n\nCould I join your next check-in with ${picked.length > 1 ? "these accounts" : "this account"} for five minutes? It's not a sales pitch. I'd introduce myself, say what PrismHR Global is and does and what it could mean for them, and walk through the two ways to work with us, reseller and referral.\n\n${lines}\n\nIf a different call fits better, tell me and I'll work around it.\n\nThanks,\nAntaeus`;
+    }
+    function draft(b){
+      const picked = b.list.filter(a => !st.unticked.has(a.n));
+      return `<div class="draft">
+        <div class="field"><span class="lbl">To</span><input data-to value="${ADDR[b.csm] || ""}" placeholder="${b.csm === "John Hebert" ? "John Hebert's address is not on the record" : "Who to ask"}"></div>
+        <div class="field"><span class="lbl">Subject</span><input data-subj value="Five minutes on your next check-in"></div>
+        <textarea class="body" data-body>${body(b)}</textarea>
+        <details class="files"><summary>FILES ${st.files.size ? "· " + st.files.size : ""} ▾</summary>
+          ${LIB.map(([n,s]) => `<label><input type="checkbox" data-file="${n}" ${st.files.has(n) ? "checked" : ""}>${n}<span class="sz">${size(s)}</span></label>`).join("")}
+          <label style="color:var(--soft)"><input type="file" multiple data-local style="max-width:100%"></label>
+        </details>
+        <div class="foot"><button class="send" data-download ${picked.length ? "" : "disabled"}>Download for Outlook</button><button class="quietbtn" data-cancel>Close</button></div>
+      </div>`;
+    }
+    function receipt(){
+      if (!st.receipt) return "";
+      return `<div class="receipt">SAVED ON ${st.receipt.n} ACCOUNT${st.receipt.n > 1 ? "S" : ""} · 11/17 · ASK ${first(st.receipt.csm).toUpperCase() || "CSM"}<span>${st.receipt.names}. Downloaded for Outlook.</span></div>`;
+    }
+
+    function render(){
+      const b = batch();
+      if (!b.list.length){ obj.innerHTML = `<p class="empty">Every account in the book has something with you on the record.</p>`; return; }
+      if (variant === "A"){
+        obj.innerHTML = `<div class="top">${dot()}${countBtn()}${tune()}</div>${breakdown()}
+          <p class="act" style="margin-top:8px">${action(b.csm)}</p><p class="why">${reason(b.list)}</p>
+          <div style="margin-top:6px">${b.list.map(acct).join("")}</div>
+          ${st.drafting ? draft(b) : `<div class="foot"><button class="send" data-draft>Draft the ask</button></div>`}${receipt()}`;
+      }
+      if (variant === "B"){
+        obj.innerHTML = `<button class="line" data-toggle aria-expanded="${st.open}">${dot()}<span class="act">${action(b.csm)}</span><span class="why">${reason(b.list)}</span><span class="cv">${b.list.length} ACCOUNT${b.list.length > 1 ? "S" : ""} ${st.open ? "▴" : "▾"}</span></button>
+          ${st.open ? `<div class="open"><div><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">${countBtn()}${tune()}</div>${breakdown()}<div style="margin-top:6px">${b.list.map(acct).join("")}</div>
+            ${st.drafting ? "" : `<div class="foot"><button class="send" data-draft>Draft the ask</button></div>`}</div>
+            <div>${st.drafting ? draft(b) : `<p class="empty" style="margin-top:8px">The draft opens here.</p>`}${receipt()}</div></div>` : (st.receipt ? receipt() : "")}`;
+      }
+      if (variant === "C"){
+        const slot = root.querySelector("[data-chipslot]");
+        slot.innerHTML = `<button class="chipC" data-chip aria-expanded="${st.open}">${dot()}SEATS</button>`;
+        obj.hidden = !st.open; root.classList.toggle("open", st.open);
+        if (!st.open) return;
+        const i = Math.min(st.pip, b.list.length - 1), a = b.list[i];
+        obj.innerHTML = `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${countBtn()}${tune()}</div>${breakdown()}
+          <p class="act" style="margin-top:8px">${action(b.csm)}</p><p class="why">${reason(b.list)}</p>
+          ${st.drafting ? draft(b) : `
+          <div class="pips">${b.list.map((x,j) => `<button class="${j === i ? "on" : ""}" data-pip="${j}" aria-label="Account ${j+1} of ${b.list.length}"></button>`).join("")}</div>
+          <div class="focus"><p class="nm">${short(a.n)}</p><span class="hint ${a.h ? "" : "none"}" style="font:600 9.5px/1.5 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:${a.h ? "var(--blue)" : "var(--faint)"}">${hintText(a)}</span>
+            <p class="evidence" style="margin-top:6px">${evidence(a)}</p>
+            <label class="tick"><input type="checkbox" data-tick="${a.n}" ${st.unticked.has(a.n) ? "" : "checked"}>Include in the ask</label>
+            <button class="quietbtn" data-aside="${a.n}" style="margin-top:6px">✕ Not today</button></div>
+          <div class="foot"><button class="send" data-draft>Draft the ask</button></div>`}${receipt()}`;
+      }
+    }
+
+    function download(b){
+      const picked = b.list.filter(a => !st.unticked.has(a.n));
+      const to = obj.querySelector("[data-to]").value, subj = obj.querySelector("[data-subj]").value, text = obj.querySelector("[data-body]").value;
+      const files = [...st.files];
+      const eml = `X-Unsent: 1\r\nTo: ${to}\r\nSubject: ${subj}\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${text}${files.length ? "\r\n\r\nAttached: " + files.join(", ") : ""}\r\n`;
+      const url = URL.createObjectURL(new Blob([eml], { type:"message/rfc822" }));
+      const link = document.createElement("a"); link.href = url; link.download = `Ask ${first(b.csm) || "CSM"} for a seat.eml`;
+      document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      picked.forEach(a => st.asked.add(a.n));
+      st.receipt = { n:picked.length, csm:b.csm, names:picked.map(a => short(a.n)).join(", ") };
+      st.days = 0; st.drafting = false; st.csm = null; st.unticked.clear(); st.files.clear(); st.pip = 0; st.ev = null;
+      const sim = document.querySelector(`[data-sim="${variant}"]`); sim.querySelector("input").value = 0; sim.querySelector("span").textContent = "0";
+      render();
+    }
+
+    root.addEventListener("click", e => {
+      const t = e.target, b = batch();
+      if (t.closest("[data-breakdown]")){ st.breakdown = !st.breakdown; render(); return; }
+      const pk = t.closest("[data-pick]"); if (pk){ st.csm = pk.dataset.pick; st.breakdown = false; st.pip = 0; st.drafting = false; render(); return; }
+      const th = t.closest("[data-th]"); if (th){ st.th = Math.max(1, Math.min(30, st.th + +th.dataset.th)); render(); return; }
+      if (t.closest("[data-reset]")){ st.days = 0; syncSim(); render(); return; }
+      const ev = t.closest("[data-ev]"); if (ev){ st.ev = st.ev === ev.dataset.ev ? null : ev.dataset.ev; render(); return; }
+      const as = t.closest("[data-aside]"); if (as){ st.aside.add(as.dataset.aside); st.pip = 0; render(); return; }
+      if (t.closest("[data-draft]")){ st.drafting = true; st.receipt = null; render(); return; }
+      if (t.closest("[data-cancel]")){ st.drafting = false; render(); return; }
+      if (t.closest("[data-download]")){ download(b); return; }
+      if (t.closest("[data-toggle]")){ st.open = !st.open; render(); return; }
+      if (t.closest("[data-chip]")){ st.open = !st.open; render(); return; }
+      const pp = t.closest("[data-pip]"); if (pp){ st.pip = +pp.dataset.pip; render(); return; }
+    });
+    root.addEventListener("change", e => {
+      const tk = e.target.closest("[data-tick]");
+      if (tk){ tk.checked ? st.unticked.delete(tk.dataset.tick) : st.unticked.add(tk.dataset.tick);
+        const bd = obj.querySelector("[data-body]"); if (bd) bd.value = body(batch()); render(); return; }
+      const f = e.target.closest("[data-file]");
+      if (f){ f.checked ? st.files.add(f.dataset.file) : st.files.delete(f.dataset.file);
+        const s = obj.querySelector(".files summary"); if (s) s.textContent = `FILES ${st.files.size ? "· " + st.files.size : ""} ▾`; return; }
+      const lf = e.target.closest("[data-local]"); if (lf){ [...lf.files].forEach(x => st.files.add(x.name)); }
+    });
+    const sim = document.querySelector(`[data-sim="${variant}"]`);
+    function syncSim(){ sim.querySelector("input").value = Math.min(90, st.days); sim.querySelector("span").textContent = st.days; }
+    sim.querySelector("input").addEventListener("input", e => { st.days = +e.target.value; sim.querySelector("span").textContent = st.days; render(); });
+    syncSim(); render();
+  }
+  make(document.getElementById("A"), "A");
+  make(document.getElementById("B"), "B");
+  make(document.getElementById("C"), "C");
+})();
+</script>
+</body>
+</html>

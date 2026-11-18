@@ -127,13 +127,13 @@ describe("Send in Outlook carries the files ticked", () => {
       "ONE-PAGERS",
       "AGREEMENTS",
     ]);
-    assert.equal(await fold.locator("input[type=checkbox]").count(), 20);
+    assert.equal(await fold.locator("input[type=checkbox]").count(), 9);
     assert.match(await fold.innerText(), /Reseller agreement, review copy/);
     assert.match(await fold.innerText(), /Referral agreement, review copy/);
-    await fold.getByLabel(/The whole platform/).check();
+    await fold.getByLabel(/The platform, employer side/).check();
     await fold.getByLabel(/Employer of record/).check();
     assert.match(await fold.locator("summary").innerText(), /· 2$/);
-    assert.match(await fold.innerText(), /About 7\.4 MB in the email\./);
+    assert.match(await fold.innerText(), /About 6\.7 MB in the email\./);
     const oranges = await page.$$eval(
       `${$("stage")} *`,
       (els) =>
@@ -153,7 +153,7 @@ describe("Send in Outlook carries the files ticked", () => {
     const asked = await serveFiles(page);
     const fold = page.locator($("attach"));
     await fold.locator("summary").click();
-    await fold.getByLabel(/The whole platform/).check();
+    await fold.getByLabel(/The platform, employer side/).check();
     await fold.getByLabel(/Referral agreement/).check();
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: /^Send in Outlook/ }).click();
@@ -166,8 +166,8 @@ describe("Send in Outlook carries the files ticked", () => {
     );
     assert.deepEqual(asked.sort(), [
       "/groundwork/attach/agreement-referral?part=0",
-      "/groundwork/attach/demo-whole?part=0",
-      "/groundwork/attach/demo-whole?part=1",
+      "/groundwork/attach/demo-employer?part=0",
+      "/groundwork/attach/demo-employer?part=1",
     ]);
     const { readFileSync } = await import("node:fs");
     const { createHash } = await import("node:crypto");
@@ -183,7 +183,7 @@ describe("Send in Outlook carries the files ticked", () => {
     const sha = (b: Buffer) => createHash("sha256").update(b).digest("hex");
     assert.equal(
       sha(decoded(parts[1])),
-      sha(readFileSync("collateral/demos/00-platform-demo.mp4")),
+      sha(readFileSync("collateral/demos/platform-demo-employer.mp4")),
     );
     assert.equal(
       sha(decoded(parts[2])),
