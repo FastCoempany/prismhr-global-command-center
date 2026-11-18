@@ -486,7 +486,7 @@
       const ds = DEALS.filter((d) => col(d, st) === i);
       h += `<div class="lane"><div class="lname"><b>${s}</b><span class="badge">${ds.length}</span></div><div class="cards">${ds.length ? ds.map((d) => card(d, st)).join("") : `<span style="color:var(--faint);padding:10px 0">Nothing here today.</span>`}</div>`;
       const d = ds.find((x) => x.id === st.sel);
-      if (d && !st.tool) { const p = detail(d, st); h += `<div class="open"><button class="x" data-act="close" aria-label="Close">✕</button><div class="det"><div class="left">${p.left}</div><div>${p.right || `<div class="obj dark" style="margin-top:0">Nothing else on this deal today.</div>`}</div></div></div>`; }
+      if (d && !st.tool) { const p = detail(d, st); h += `<div class="open"><button class="x" data-act="close" aria-label="Close">✕</button><div class="det" ${p.right ? "" : 'style="grid-template-columns:minmax(0,720px)"'}><div class="left">${p.left}</div>${p.right ? `<div>${p.right}</div>` : ""}</div></div>`; }
       h += `</div>`;
     });
     return h;
