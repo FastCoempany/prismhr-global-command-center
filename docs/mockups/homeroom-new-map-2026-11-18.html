@@ -179,7 +179,8 @@
   .lrow .d{font:600 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--faint);text-align:right}
   .lrow .d.red{color:var(--red)} .lrow .d.amber{color:#b77505}
   .lrow[aria-expanded=true]{background:var(--field)}
-  .v1 .open{border-top:1px solid var(--hair-soft);background:var(--surface)}
+  .v1 .open{border-top:1px solid var(--hair-soft);background:var(--surface);position:relative}
+  .v1 .closer{position:absolute;top:16px;right:20px}
   @container (max-width:760px){.lrow{grid-template-columns:minmax(0,1fr) auto}.lrow .m{grid-column:1/-1;order:3}}
 
   /* Variation 2: the map with a country drawer */
@@ -292,16 +293,16 @@
     ca: { name: "Canada", flag: "🇨🇦", geo: [-100, 56.5], side: "r" },
     mx: { name: "Mexico", flag: "🇲🇽", geo: [-102.5, 23.6], side: "l" },
     pr: { name: "Puerto Rico", flag: "🇵🇷", geo: [-66.5, 18.2], side: "r" },
-    gb: { name: "United Kingdom", flag: "🇬🇧", geo: [-2.5, 54], side: "l" },
+    gb: { name: "United Kingdom", flag: "🇬🇧", geo: [-2.5, 54], side: "t" },
     pt: { name: "Portugal", flag: "🇵🇹", geo: [-8.2, 39.6], side: "l" },
     de: { name: "Germany", flag: "🇩🇪", geo: [10.4, 51.1], side: "r" },
-    in: { name: "India", flag: "🇮🇳", geo: [78.9, 22.5], side: "l" },
-    ph: { name: "Philippines", flag: "🇵🇭", geo: [122.5, 12.5], side: "r" },
+    in: { name: "India", flag: "🇮🇳", geo: [78.9, 22.5], side: "t" },
+    ph: { name: "Philippines", flag: "🇵🇭", geo: [122.5, 12.5], side: "l" },
   };
 
   const DEALS = [
     { id: "xcel", name: "XCEL HR", line: "Referral · employer of record · a client hiring in Canada and Mexico · Closed Won 11/17",
-      countries: ["ca", "mx"], date: "2026-11-28", move: "Send Judi the handoff.", why: "Signed 11/17.",
+      countries: ["ca", "mx"], date: "2026-11-28", dateIn: "ca", move: "Send Judi the handoff.", why: "Signed 11/17.",
       people: [{ n: "Bill Laffey", t: "President", e: "blaffey@xcelhr.example", p: "555-0141", c: "Columbus, OH", q: "QUIET 3 DAYS" }, { n: "Helen Niemcewicz", t: "Payroll Manager", e: "helen@xcelhr.example", p: "555-0142", c: "Columbus, OH", q: "QUIET 9 DAYS" }],
       judi: true },
     { id: "esc", name: "Employer Services Corporation", line: "Reseller · global payroll · their own entity in Canada",
@@ -311,7 +312,7 @@
       countries: ["ph"], date: "2026-12-12", move: "Send the Philippines numbers.", why: "Adam asked 11/14.",
       people: [{ n: "Adam Dingwell", t: "VP Operations", e: "adamd@trendhr.example", p: "555-0161", c: "Phoenix, AZ", q: "QUIET 4 DAYS" }, { n: "Melanie Dreyer", t: "Controller", e: "mdreyer@trendhr.example", p: "555-0162", c: "Phoenix, AZ", q: "QUIET 4 DAYS" }] },
     { id: "regis", name: "Regis HR Group", line: "Reseller · employer of record · Integra, 3 people in Puerto Rico, Portugal next",
-      countries: ["pr", "pt"], date: "2027-01-01", move: "Send the numbers.", why: "Integra starts Jan 1.",
+      countries: ["pr", "pt"], date: "2027-01-01", dateIn: "pr", move: "Send the numbers.", why: "Integra starts Jan 1.",
       people: [{ n: "Leilani Gonzalez", t: "Director of Operations", e: "lgonzalez@regishrgroup.example", p: "305-555-0197", c: "Miami, FL", q: "QUIET 21 DAYS" }, { n: "Elise Munoz", t: "COO", e: "elise@regishrgroup.example", p: "305-555-0198", c: "Miami, FL", q: "QUIET 8 DAYS" }] },
     { id: "infiniti", name: "Infiniti HR", line: "Reseller · employer of record · two staffing clients in Puerto Rico, their own employee in Germany",
       countries: ["pr", "de"], move: "Wait on Tom.", why: "Pricing sent 11/7.",
@@ -329,13 +330,14 @@
   // A country's light is its nearest date still ahead; a passed date only counts alone.
   function light(code) {
     const ds = DEALS.filter((d) => d.countries.includes(code));
-    const ahead = ds.filter((d) => d.date && days(d.date) >= 0).sort((a, b) => days(a.date) - days(b.date));
+    const dated = (d) => d.date && (!d.dateIn || d.dateIn === code);
+    const ahead = ds.filter((d) => dated(d) && days(d.date) >= 0).sort((a, b) => days(a.date) - days(b.date));
     if (ahead.length) {
       const n = days(ahead[0].date);
       return { cls: n <= 14 ? "red" : n <= 30 ? "amber" : "plain", label: md(ahead[0].date), n };
     }
     if (ds.some((d) => d.urgent)) return { cls: "amber", label: "URGENT", n: null };
-    const past = ds.filter((d) => d.date);
+    const past = ds.filter(dated);
     if (past.length) return { cls: "passed", label: "PASSED " + md(past[0].date), n: null };
     return { cls: "plain", label: "", n: null };
   }
@@ -395,9 +397,10 @@
       let labs = "", pins = "";
       for (const [code, c] of Object.entries(COUNTRIES)) {
         const [x, y] = xy(...c.geo), l = light(code);
-        const tx = c.side === "r" ? "12px" : "calc(-100% - 12px)";
+        const tx = c.side === "r" ? "12px" : c.side === "t" ? "-50%" : "calc(-100% - 12px)";
+        const ty = c.side === "t" ? "calc(-100% - 12px)" : "-50%";
         const on = st.country === code ? " on" : "";
-        if (!opts.bare) labs += `<button class="lab ${l.cls}${on}" data-c="${code}" style="left:${x}%;top:${y}%;--tx:${tx};--ty:-50%">${c.flag} ${esc(c.name)}${l.label ? ` <span class="d">${l.label}</span>` : ""}</button>`;
+        if (!opts.bare) labs += `<button class="lab ${l.cls}${on}" data-c="${code}" style="left:${x}%;top:${y}%;--tx:${tx};--ty:${ty}">${c.flag} ${esc(c.name)}${l.label ? ` <span class="d">${l.label}</span>` : ""}</button>`;
         pins += `<button class="pin ${l.cls}${on}${dim(code)}" data-c="${code}" style="left:${x}%;top:${y}%" aria-label="${esc(c.name)}"></button>`;
       }
       return `<div class="map"><svg viewBox="0 0 162 58" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="land" d="${landPath}"/></svg>${labs}${pins}</div>`;
@@ -524,7 +527,7 @@
         const L = st.country ? light(st.country) : null;
         h = barHTML() + `<div class="mapwrap">${mapHTML()}</div>
           <div class="listhead">${st.country ? `<span class="c">${COUNTRIES[st.country].flag} ${esc(COUNTRIES[st.country].name)}</span><span class="why">${list.length} deal${list.length > 1 ? "s" : ""}${L.n !== null ? ` · client date in ${L.n} days` : L.label ? " · " + L.label.toLowerCase() : ""}</span><button class="btn quiet push" data-a="all">All countries</button>` : `<span class="why">${DEALS.length} deals in ${Object.keys(COUNTRIES).length} countries. Choose a country, or a deal.</span>`}</div>
-          ${list.map((d) => { const l = dealLight(d); return `<button class="lrow" data-deal="${d.id}" aria-expanded="${st.deal === d.id}"><span class="n">${esc(d.name)}</span><span><span class="m">${esc(d.move)}</span> <span class="w">${esc(d.why)}</span></span><span class="d ${l.cls}">${l.t}</span></button>${st.deal === d.id ? `<div class="open">${dealHTML(d.id)}</div>` : ""}`; }).join("")}`;
+          ${list.map((d) => { const l = dealLight(d); return st.deal === d.id ? `<div class="open"><button class="btn quiet closer" data-deal="${d.id}" aria-label="Fold this deal">Fold ▴</button>${dealHTML(d.id)}</div>` : `<button class="lrow" data-deal="${d.id}" aria-expanded="false"><span class="n">${esc(d.name)}</span><span><span class="m">${esc(d.move)}</span> <span class="w">${esc(d.why)}</span></span><span class="d ${l.cls}">${l.t}</span></button>`; }).join("")}`;
       }
       if (kind === 2) {
         const n = nearest();
@@ -632,7 +635,7 @@
       const t = e.target;
       if (t.dataset.pick) { const s = st.picked[t.dataset.k]; t.checked ? s.add(t.dataset.pick) : s.delete(t.dataset.pick); return render(); }
       if (t.dataset.j) { st.judi[t.dataset.j] = t.checked; return; }
-      if (t.dataset.f) { render(); return; }
+      if (t.dataset.f && t.value.trim()) { t.parentElement.innerHTML = `<span class="why">Client:</span> ${esc(t.value.trim())}<span class="src">YOUR HAND</span>`; return; }
       if (t.dataset.local) { const k = t.dataset.local; ((st.locals ??= {})[k] ??= []).push(...[...t.files].map((f) => ({ name: f.name, bytes: f.size }))); return render(); }
     });
     // A hovered or focused pin brings its own label in front of the others.
