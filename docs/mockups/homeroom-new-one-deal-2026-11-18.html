@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>One Deal HomeRoom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The HomeRoom, one deal at a time. Three structures of one idea: the
+     room shows a single deal and nothing from the others competes with it.
+     One theme, the room's own tokens. */
+  :root{
+    color-scheme: light;
+    --field:#f5f7fb; --surface:#ffffff;
+    --ink:#0a1c40; --soft:rgba(10,28,64,.66); --faint:rgba(10,28,64,.42); --quiet:rgba(10,28,64,.22);
+    --hair:rgba(10,28,64,.12); --hair-soft:rgba(10,28,64,.07);
+    --orange:#e6701e; --blue:#2563eb; --blue-soft:rgba(37,99,235,.07);
+    --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    --serif:"DM Serif Display",Georgia,serif;
+    --sans:"Public Sans",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --fw:1440px;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--field)}
+  body{margin:0;color:var(--ink);font:400 14px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+  input,textarea,select{font:inherit;color:inherit}
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+  .page{max-width:1500px;margin:0 auto;padding:40px 16px 120px}
+
+  /* the document's own head */
+  .kick{font:600 10.5px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  h1{font:400 clamp(30px,5vw,44px)/1.1 var(--serif);margin:10px 0 12px}
+  h2{font:400 26px/1.2 var(--serif);margin:4px 0 6px}
+  .lede{color:var(--soft);max-width:78ch;margin:0}
+  .notes{margin:16px 0 0;padding:0;list-style:none;max-width:92ch}
+  .notes li{color:var(--soft);padding:3px 0 3px 16px;position:relative}
+  .notes li::before{content:"";position:absolute;left:0;top:12px;width:6px;height:1px;background:var(--faint)}
+  .notes b{color:var(--ink);font-weight:600}
+  section{margin-top:64px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:20px}
+  .seg{display:inline-flex;border:1px solid var(--hair);border-radius:8px;overflow:hidden;background:var(--surface)}
+  .seg button{height:30px;padding:0 12px;font-weight:600;font-size:13px;color:var(--soft)}
+  .seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+
+  /* the frame each variation sits in */
+  .frame{width:min(var(--fw),100%);margin:16px auto 0;background:var(--field);border:1px solid var(--hair);border-radius:14px;overflow:hidden;container-type:inline-size;position:relative}
+  .bar{display:flex;align-items:center;gap:12px;height:52px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--hair-soft)}
+  .mark{width:18px;height:18px;flex:none}
+  .roomname{font:700 11px/1 var(--mono);letter-spacing:.3em}
+  .bar .sp{flex:1}
+  .clock{font:500 12px/1 var(--mono);color:var(--faint);letter-spacing:.06em}
+
+  /* controls */
+  .btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--hair);border-radius:8px;background:var(--surface);font:600 13.5px/1 var(--sans);white-space:nowrap}
+  .btn:hover{border-color:var(--faint)}
+  .btn.green{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.ink{background:var(--ink);border-color:var(--ink);color:#fff}
+  .btn.orange{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn.quiet{border-color:transparent;color:var(--soft);padding:0 8px}
+  .btn.quiet:hover{color:var(--ink);border-color:var(--hair)}
+  .link{color:var(--blue);font-weight:600;font-size:13.5px}
+  .link:hover{text-decoration:underline;text-underline-offset:3px}
+  .mono{font:600 10.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .badge{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:5px;border:1px solid var(--hair);font:600 10.5px/1 var(--mono);letter-spacing:.06em;color:var(--soft);background:var(--surface)}
+  .sample{font:600 9px/1 var(--mono);letter-spacing:.1em;color:var(--quiet);border:1px dashed var(--quiet);border-radius:3px;padding:2px 4px;vertical-align:2px}
+
+  /* the deal, shared parts */
+  .dname{font:400 30px/1.15 var(--serif);margin:0}
+  .dsent{color:var(--soft);margin:4px 0 0}
+  .meta{margin-top:6px}
+  .focal{margin-top:28px}
+  .move{font:600 18px/1.35 var(--sans);margin:0}
+  .reason{color:var(--soft);margin:2px 0 0}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .block{margin-top:32px}
+  .blockhead{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .blockhead h3{font:600 14px/1.3 var(--sans);margin:0}
+  .rule{height:1px;background:var(--hair-soft);border:0;margin:28px 0 0}
+
+  /* stages: one line each */
+  .stages{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}
+  .stages .who{color:var(--soft)}
+  .ladder{display:flex;align-items:center;gap:10px;min-width:0}
+  .segs{display:flex;gap:3px;flex:none}
+  .segs i{width:22px;height:4px;border-radius:2px;background:var(--hair)}
+  .segs i.done{background:var(--ink)}
+  .segs i.now{background:var(--blue)}
+  .stagebtn{font-weight:600;color:var(--ink);border-bottom:1px dotted var(--faint)}
+  .why{margin-top:8px;padding:8px 12px;border-left:2px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0;color:var(--soft)}
+
+  /* people */
+  .people{list-style:none;margin:0;padding:0}
+  .people li{border-top:1px solid var(--hair-soft)}
+  .people li:first-child{border-top:0}
+  .person{display:flex;gap:8px;align-items:baseline;width:100%;text-align:left;padding:8px 0}
+  .person b{font-weight:600}
+  .person span{color:var(--soft)}
+  .contact{padding:0 0 10px;color:var(--soft);display:flex;flex-wrap:wrap;gap:4px 12px}
+  .contact a{color:var(--blue)}
+
+  /* the email */
+  .mail{background:var(--surface);border:1px solid var(--hair-soft);border-radius:10px;padding:16px 18px}
+  .mail .subj{font-weight:600;margin:4px 0 8px}
+  .mail p{margin:0 0 8px}
+  .earlier{list-style:none;margin:8px 0 0;padding:0}
+  .earlier li{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:6px 0;border-top:1px solid var(--hair-soft);color:var(--soft)}
+  .earlier li span:first-child{font:600 10.5px/1.9 var(--mono);letter-spacing:.06em;color:var(--faint)}
+
+  /* the draft */
+  .draft{margin-top:16px;background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px 18px;max-width:760px}
+  .field{display:grid;grid-template-columns:70px minmax(0,1fr);align-items:center;border-bottom:1px solid var(--hair-soft);min-height:38px}
+  .field input,.field select{border:0;background:transparent;padding:6px 0;width:100%;min-width:0}
+  .field input:focus,.field select:focus{outline:none}
+  .field input[readonly]{color:var(--soft)}
+  .draft textarea{width:100%;min-height:150px;border:0;resize:vertical;padding:10px 0;line-height:1.55}
+  .draft textarea:focus{outline:none}
+  .hint{color:var(--soft);font-size:13px;padding:4px 0 0 70px}
+  .hint.blue{color:var(--blue)}
+  .files{margin-top:8px;border-top:1px solid var(--hair-soft);padding-top:8px}
+  .files summary{cursor:pointer;font-weight:600;list-style:none}
+  .files summary::-webkit-details-marker{display:none}
+  .lib{margin:8px 0 0;padding:0;list-style:none}
+  .lib > li{padding:6px 0;border-top:1px solid var(--hair-soft)}
+  .lib label{display:flex;gap:10px;align-items:baseline}
+  .lib .sz{margin-left:auto;font:600 10.5px/1 var(--mono);color:var(--faint);white-space:nowrap}
+  .inside{list-style:none;margin:4px 0 0 26px;padding:0}
+  .inside li{display:flex;gap:10px;align-items:baseline;padding:2px 0;color:var(--soft)}
+  .inside .t{font:600 10.5px/1 var(--mono);color:var(--faint);width:38px;flex:none}
+  .inside button{margin-left:auto;font:600 10px/1 var(--mono);letter-spacing:.08em;color:var(--blue)}
+  .inside li.on{color:var(--ink)}
+  .inside li.on button{color:var(--faint)}
+  .foot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .receipt{font:600 10.5px/1.4 var(--mono);letter-spacing:.08em;color:var(--green)}
+  .meter{font:600 10.5px/1 var(--mono);color:var(--faint);letter-spacing:.06em}
+
+  /* Ask Russ */
+  .clockface{display:inline-flex;align-items:baseline;gap:6px;font:600 10.5px/1 var(--mono);letter-spacing:.08em;color:var(--faint)}
+  .days{font:700 15px/1 var(--mono)}
+  .hot .days{color:var(--red)}
+  .warm .days{color:var(--amber)}
+  .cool .days{color:var(--faint)}
+  .hot .pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.6s ease-in-out infinite;margin-right:2px}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+  @media (prefers-reduced-motion: reduce){.hot .pulse{animation:none}}
+  .adjust{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:8px 10px;border:1px dashed var(--hair);border-radius:8px;max-width:640px}
+  .adjust .btn{height:28px;padding:0 9px;font-size:12.5px}
+
+  /* Judi handoff */
+  .handoff{margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;max-width:1000px}
+  .handoff h4{font:600 13px/1.3 var(--sans);margin:0 0 6px}
+  .handoff ul{list-style:none;margin:0;padding:0}
+  .handoff li{padding:5px 0;border-top:1px solid var(--hair-soft);color:var(--soft)}
+  .handoff li b{color:var(--ink);font-weight:600}
+  .handoff .src{display:block;font:600 9.5px/1.5 var(--mono);letter-spacing:.08em;color:var(--faint)}
+  .handoff input[type=text]{border:1px solid var(--hair);border-radius:6px;padding:3px 6px;width:100%}
+  .handoff label{display:flex;gap:8px;align-items:baseline}
+  .confirm{display:inline-flex;gap:8px;align-items:center}
+
+  /* the desk: page-wide tools behind one door */
+  .desk{position:absolute;top:52px;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--hair);box-shadow:-12px 0 32px rgba(10,28,64,.06);padding:18px 20px;overflow:auto;z-index:5}
+  .desk[hidden]{display:none}
+  .tabs{display:flex;gap:18px;border-bottom:1px solid var(--hair-soft);margin-bottom:14px}
+  .tabs button{padding:8px 0;font-weight:600;color:var(--faint);border-bottom:2px solid transparent}
+  .tabs button[aria-selected=true]{color:var(--ink);border-color:var(--ink)}
+  .acct{padding:8px 0;border-top:1px solid var(--hair-soft)}
+  .acct b{font-weight:600}
+  .acct span{display:block;color:var(--soft)}
+  .split{list-style:none;margin:8px 0;padding:0}
+  .split li{display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--hair-soft)}
+  .chan{padding:10px 0;border-top:1px solid var(--hair-soft)}
+  .chan .row{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .lines{list-style:none;margin:6px 0 0;padding:0}
+  .lines li{padding:4px 0 4px 10px;border-left:2px solid var(--blue);margin-top:4px;color:var(--soft)}
+  .stack{display:flex;flex-direction:column;gap:8px}
+  .stack input,.stack select{height:32px;border:1px solid var(--hair);border-radius:8px;padding:0 10px;background:var(--surface);width:100%}
+
+  /* ===== Variation A: the folio ===== */
+  .vA .body{display:grid;grid-template-columns:220px minmax(0,1fr)}
+  .vA .switch{background:var(--surface);border-right:1px solid var(--hair-soft);padding:20px 0;min-height:820px}
+  .vA .switch .mono{padding:0 20px 8px}
+  .vA .switch button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 20px;color:var(--soft);border-left:2px solid transparent}
+  .vA .switch button:hover{color:var(--ink);background:var(--field)}
+  .vA .switch button[aria-current=true]{color:var(--ink);font-weight:600;border-left-color:var(--ink);background:var(--field)}
+  .vA .dot{width:7px;height:7px;border-radius:50%;background:var(--red);margin-left:auto;flex:none}
+  .vA .deal{padding:36px 48px 56px;max-width:1100px}
+  .vA .two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:48px;margin-top:36px}
+  @container (max-width: 1000px){
+    .vA .body{grid-template-columns:minmax(0,1fr)}
+    .vA .switch{min-height:0;border-right:0;border-bottom:1px solid var(--hair-soft);padding:8px 16px;display:flex;gap:4px;overflow-x:auto}
+    .vA .switch .mono{display:none}
+    .vA .switch button{width:auto;white-space:nowrap;padding:6px 10px;border-left:0;border-radius:6px}
+    .vA .deal{padding:28px 24px 40px}
+    .vA .two{grid-template-columns:minmax(0,1fr);gap:32px}
+  }
+
+  /* ===== Variation B: the masthead ===== */
+  .vB .names{display:flex;gap:28px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--hair-soft);overflow-x:auto}
+  .vB .names button{padding:14px 0 12px;color:var(--soft);border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:6px;align-items:center}
+  .vB .names button[aria-current=true]{color:var(--ink);font-weight:600;border-color:var(--ink)}
+  .vB .names .dot{width:6px;height:6px;border-radius:50%;background:var(--red)}
+  .vB .deal{padding:32px 40px 56px}
+  .vB .cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:48px;margin-top:28px;align-items:start}
+  .vB .side{position:sticky;top:16px}
+  .vB .side .focal{margin-top:0;padding:20px;background:var(--surface);border:1px solid var(--hair);border-radius:12px}
+  @container (max-width: 1000px){
+    .vB .deal{padding:24px 20px 40px}
+    .vB .cols{grid-template-columns:minmax(0,1fr);gap:28px}
+    .vB .side{position:static;order:-1}
+  }
+
+  /* ===== Variation C: one at a time, in order ===== */
+  .vC .stepper{display:flex;align-items:center;gap:10px;padding:0 24px;height:52px;border-bottom:1px solid var(--hair-soft);background:var(--surface)}
+  .vC .stepper .pos{font:600 11px/1 var(--mono);letter-spacing:.12em;color:var(--soft)}
+  .vC .list{position:absolute;top:104px;left:24px;width:min(320px,calc(100% - 48px));background:var(--surface);border:1px solid var(--hair);border-radius:10px;box-shadow:0 10px 30px rgba(10,28,64,.08);padding:6px;z-index:6}
+  .vC .list button{display:flex;width:100%;gap:10px;padding:7px 10px;border-radius:6px;text-align:left;color:var(--soft)}
+  .vC .list button:hover{background:var(--field);color:var(--ink)}
+  .vC .list button[aria-current=true]{color:var(--ink);font-weight:600}
+  .vC .list .mono{margin-left:auto}
+  .vC .deal{max-width:720px;margin:0 auto;padding:44px 24px 64px}
+  .vC .focal{margin-top:24px;padding:22px 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+  .vC .move{font-size:18px}
+  @container (max-width: 760px){ .vC .deal{padding:28px 16px 40px} }
+
+  @container (max-width: 760px){
+    .handoff{grid-template-columns:minmax(0,1fr)}
+    .dname{font-size:26px}
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="kick">HomeRoom · from scratch · One deal at a time · 2026-11-18</p>
+<h1>One deal at a time</h1>
+<p class="lede">The HomeRoom shows a single deal and gives it the whole screen. Nothing from your other deals competes with it. You switch deals from a short list of names. Three structures of the same idea follow.</p>
+<ul class="notes">
+  <li><b>What arrives.</b> Three things, in this order of weight: the deal's name, its next move with the buttons that act on it, and the latest exchange or the people behind it. Everything else is one click down.</li>
+  <li><b>The deal's own tools ride its move.</b> When the deal needs Russ, the move says so and carries the counter. When it closes, the move becomes the Judi handoff. Send files and Write live on the move as its buttons.</li>
+  <li><b>The page-wide tools sit behind one quiet door, Desk, in the room's bar.</b> Write to anyone, Seats and Teams aren't about the deal on screen, so keeping them off the page keeps the deal the only thing you look at.</li>
+  <li><b>Sizes.</b> Body text is 14px, the move 18px semibold, account names in serif, and small capitals only for times and counts. Buttons are 30px tall and as wide as their words. At half width every size stays the same and the columns stack.</li>
+  <li><b>Sample data.</b> Real account names from your book with made-up details, labeled where they appear. No figures.</li>
+</ul>
+<div class="toolbar">
+  <span class="kick">Frame width</span>
+  <span class="seg" role="group" aria-label="Frame width"><button data-w="1440" aria-pressed="true">Laptop · 1440</button><button data-w="960" aria-pressed="false">Half monitor · 960</button></span>
+</div>
+
+<section>
+  <p class="kick">Variation A</p>
+  <h2>The folio</h2>
+  <ul class="notes"><li>A narrow list of deal names stands on the left, always in view. The deal reads top to bottom: name, move, then two columns, what they last said on the left and who they are and where it stands on the right. <b>Trade-off:</b> the list costs a little width, and the email and people share the lower half.</li></ul>
+  <div class="frame vA" data-room="A"></div>
+</section>
+
+<section>
+  <p class="kick">Variation B</p>
+  <h2>The masthead</h2>
+  <ul class="notes"><li>Deal names run across the top like a masthead. The conversation takes the wide left column, and the move with its buttons sits in a card on the right that stays in view as you read. <b>Trade-off:</b> the exchange leads, so you read before you act; a long list of deals scrolls sideways.</li></ul>
+  <div class="frame vB" data-room="B"></div>
+</section>
+
+<section>
+  <p class="kick">Variation C</p>
+  <h2>One at a time, in order</h2>
+  <ul class="notes"><li>No list on screen. The room puts the deal that most needs you first and steps through the rest with ‹ and ›, or J and K on the keyboard. All deals is one click and opens the list. The deal reads as one centered column. <b>Trade-off:</b> the calmest page, but you can't see the other deals' names without opening the list.</li></ul>
+  <div class="frame vC" data-room="C"></div>
+</section>
+
+<p class="notes" style="margin-top:48px;color:var(--faint);font-size:12.5px">Sample data throughout. The email files name their attachments instead of carrying them, and saving to the record is shown by its receipt.</p>
+</main>
+
+<script>
+(() => {
+  const MB = 1_000_000;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  const store = {
+    get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const size = (b) => b < MB ? Math.round(b / 1000) + " KB" : (b / MB).toFixed(1) + " MB";
+  const encoded = (b) => { const x = Math.ceil(b / 3) * 4; return x + Math.ceil(x / 76) * 2; };
+
+  const LIB = [
+    { id:"emp", g:"Demos", name:"The platform, employer side", runs:"36:43", bytes:4_410_003,
+      inside:[["0:00","Into Global from PrismHR by single sign-on"],["0:37","The service provider view"],["6:05","Invoices, reseller and referral"],["8:28","Admin access"],["8:52","Client pricing"],["12:05","Pay periods and gross to net"],["14:03","How contractors, EOR and payroll are paid"],["16:34","Reimbursements, time off and time tracking"],["18:23","Onboarding and the team"],["18:58","Adding a new EOR employee"],["22:23","The employer cost estimate"],["26:22","Equipment"],["27:21","Benefits"],["29:57","What happens next"],["32:46","Support"],["34:05","Users and permissions"],["35:18","Approval workflows"]] },
+    { id:"pay", g:"Demos", name:"ListoPay, the contractor's wallet", runs:"28:46", bytes:4_452_872,
+      inside:[["0:00","Wallet home"],["0:44","The virtual card"],["1:52","Withdraw to a Philippines bank"],["8:42","Savings"],["9:44","Investing"],["12:42","Beneficiaries"],["13:32","Withdraw to GCash"],["15:12","Mobile wallets by country"],["16:05","Tax forms"],["17:42","The card avoids the fee"],["19:28","Funding timing"],["21:49","Withdrawal speed"],["22:24","Protections and leavers"],["24:42","USD to a USD account"],["26:31","Funding the wallet yourself"],["27:48","Why withdrawals settle fast"]] },
+    { id:"op1", g:"One-pagers", name:"PrismHR Global at a glance", bytes:103_508 },
+    { id:"op2", g:"One-pagers", name:"Employer of record", bytes:478_578 },
+    { id:"op3", g:"One-pagers", name:"Global payroll", bytes:432_923 },
+    { id:"op4", g:"One-pagers", name:"Contractor solutions", bytes:421_035 },
+    { id:"op5", g:"One-pagers", name:"Talent", bytes:491_901 },
+    { id:"ag1", g:"Agreements", name:"Reseller agreement, review copy", bytes:138_013 },
+    { id:"ag2", g:"Agreements", name:"Referral agreement, review copy", bytes:48_474 },
+  ];
+
+  const PARTNER = ["Not met","Engaged cold","Engaged warm","Reviewing","Signed","Oriented","Live"];
+  const CLIENT = ["Named","Scoped","Shown","Won","Onboarding","Live"];
+
+  // Real account names from the book; every detail below is sample.
+  const DEALS = [
+    { id:"regis", name:"Regis HR Group", meta:"Reseller · EOR · Puerto Rico",
+      sent:"Employer of record for a client not named yet, 3 people in Puerto Rico.",
+      p:3, c:2, pWhy:"The reseller agreement went out at their request, 10/16.", cWhy:"Demo held 9/3. Puerto Rico came up first.",
+      move:"Book Judi's intro call.", reason:"Leilani asked for it Monday.",
+      people:[ { n:"Leilani Gonzalez", t:"Director of Operations", e:"lgonzalez@regishrgroup.example", ph:"305-555-0197", city:"Miami", q:"Wrote 6 days ago" },
+               { n:"Elise Munoz", t:"VP, Client Services", e:"emunoz@regishrgroup.example", ph:"305-555-0142", city:"Miami", q:"Wrote 3 weeks ago" } ],
+      mail:{ from:"Leilani Gonzalez", to:"you", when:"NOV 12 · 9:16 AM", subj:"Re: Intro to your Global Business Consultant",
+        body:["Thanks for walking us through the platform.","Before we decide, can we get 15 minutes with your account manager? Our CFO wants to hear how onboarding works for the three people in Puerto Rico.","Leilani"] },
+      earlier:[["NOV 3","You → Leilani","The reseller agreement, review copy"],["OCT 20","Elise → you","Integra has no employer in Puerto Rico"],["OCT 16","You → Leilani","Sequencing before the demo"],["SEP 11","You → Elise","Demo recordings and one-pagers"],["SEP 3","Call","PrismHR Global overview"]] },
+    { id:"infiniti", name:"Infiniti HR", meta:"Reseller · EOR · Puerto Rico", russ:{ days:6, max:5, who:"Tom" },
+      sent:"Employer of record for two staffing clients hiring in Puerto Rico.",
+      p:2, c:1, pWhy:"Tom asked for a pricing call, 9/24.", cWhy:"Country and product on file. Count and date are not.",
+      move:"Ask Russ to nudge Tom.", reason:"Silent 6 business days.", waitMove:"Wait on Tom.",
+      people:[ { n:"Tom Harrison", t:"Chief Revenue Officer", e:"tharrison@infinitihr.example", ph:"813-555-0110", city:"Tampa", q:"Wrote 4 weeks ago" },
+               { n:"Scott Smrkovski", t:"Controller", e:"ssmrkovski@infinitihr.example", ph:"813-555-0125", city:"Tampa", q:"Never wrote" } ],
+      mail:{ from:"You", to:"Tom Harrison", when:"NOV 10 · 11:16 AM", subj:"Everest and Prism Global",
+        body:["Tom, checking in to see if there's any word back from Javier on the Puerto Rico start.","Happy to get on a call this week if it helps."] },
+      earlier:[["SEP 25","Tom → you","Walked through pricing internally"],["AUG 28","You → Tom","Platform walkthrough recording"],["AUG 14","Call","Germany, Puerto Rico, Mexico and Brazil"]] },
+    { id:"xcel", name:"XCEL HR", meta:"Referral · EOR · Canada and Mexico", closable:true,
+      sent:"Employer of record for a client hiring in Canada and Mexico.",
+      p:3, c:3, pWhy:"Their signed copy is expected this week.", cWhy:"The client agreed to start in January.",
+      move:"Confirm the signed copy.", reason:"Bill said it went out Monday.",
+      people:[ { n:"Bill Laffey", t:"President", e:"blaffey@xcelhr.example", ph:"214-555-0160", city:"Dallas", q:"Wrote 2 days ago" },
+               { n:"Helen Niemcewicz", t:"Operations Manager", e:"hniemcewicz@xcelhr.example", ph:"214-555-0161", city:"Dallas", q:"Wrote 2 weeks ago" } ],
+      mail:{ from:"Bill Laffey", to:"you", when:"NOV 16 · 4:02 PM", subj:"Re: Prism Global payroll demo",
+        body:["Signed copy is on its way back to you Monday.","The client wants their two hires in Canada and one in Mexico to start in January if you can make that work."] },
+      earlier:[["NOV 4","You → Bill","Referral agreement, review copy"],["AUG 17","You → Bill","Follow-up after the demo"]] },
+    { id:"simploy", name:"Simploy", meta:"Referral · Global payroll · India",
+      sent:"Global payroll for a client with 2 contractors in India.",
+      p:2, c:1, pWhy:"Chassie asked for the demo, 7/21.", cWhy:"Country and product on file.",
+      move:"Send the demo.", reason:"Chassie asked on Monday.",
+      people:[ { n:"Chassie Smith", t:"COO", e:"csmith@simploy.example", ph:"919-555-0130", city:"Raleigh", q:"Wrote 5 days ago" } ],
+      mail:{ from:"Chassie Smith", to:"you", when:"NOV 13 · 2:10 PM", subj:"Re: PrismHR Global demo",
+        body:["Could you send the recording so I can share it with our two partners before we meet?"] },
+      earlier:[["AUG 26","Chassie → you","Sorry for the delay"],["JUL 29","Call","Contractors in India"]] },
+    { id:"alpha", name:"AlphaStaff", meta:"Partner · not decided",
+      sent:"No client named yet. Interested in contractor management.",
+      p:2, c:0, pWhy:"Cristina replied to the one-pagers.", cWhy:"No client named yet.",
+      move:"Wait on Cristina.", reason:"Promised Friday.",
+      people:[ { n:"Cristina Bouchard", t:"Director, Partnerships", e:"cbouchard@alphastaff.example", ph:"954-555-0101", city:"Sunrise", q:"Wrote 1 day ago" } ],
+      mail:{ from:"Cristina Bouchard", to:"you", when:"NOV 17 · 3:40 PM", subj:"Re: PrismHR Global",
+        body:["Thanks, I'll go through these with the team and come back to you by Friday."] },
+      earlier:[["NOV 17","You → Cristina","The funding and approvals demo"]] },
+    { id:"nextep", name:"Nextep", meta:"Partner · not decided",
+      sent:"No client named yet.",
+      p:1, c:0, pWhy:"Melissa opened the conversation.", cWhy:"No client named yet.",
+      move:"Wait on Melissa.", reason:"Demo sent 11/17.",
+      people:[ { n:"Melissa Grimes", t:"VP, Sales", e:"mgrimes@nextep.example", ph:"405-555-0177", city:"Norman", q:"Wrote 3 weeks ago" } ],
+      mail:{ from:"You", to:"Melissa Grimes", when:"NOV 17 · 12:18 PM", subj:"The PrismHR Global demo",
+        body:["Here's the full walkthrough of the employer side, as promised."] },
+      earlier:[["OCT 28","Melissa → you","Re: Global for our clients"]] },
+  ];
+
+  // The page-wide tools' data. The coverage counts are real (read 11/17).
+  const CSM_SPLIT = [["Lesha Cyphers",50],["Anika Steenstra",43],["Whitney Dideon",13],["John Hebert",2],["No CSM",1]];
+  const SEAT_BATCHES = [
+    { csm:"Anika Steenstra", email:"anika.steenstra@prismhr.com", why:"Bi-weekly calls on the record.", accounts:[["American Benefits Company","Bi-weekly calls run by her team."],["Pinnacle Employee Services","Quarterly call on the record."],["Aegis Payroll Management","High fit. Never touched."]] },
+    { csm:"Lesha Cyphers", email:"lcyphers@prismhr.com", why:"Her check-in is Thursday.", accounts:[["Superior Staffing","High fit. Never touched."],["Surety HR","Never touched."],["Back Office Risk","Never touched."]] },
+    { csm:"Whitney Dideon", email:"whittney.dideon@prismhr.com", why:"Quarterly review next week.", accounts:[["Kymberly Group","Never touched."],["TLC Companies","Never touched."]] },
+  ];
+  const CHANNELS = [
+    { name:"Global Implementation", team:"PrismHR Global", reason:"Implementation and handoff", on:true,
+      lines:["FACT · Judi runs every kickoff call.","DECISION · Senior Manager titles, not Director, on EOR.","QUESTION · Can HMRC payments come from the client's UK account?"] },
+    { name:"Global Sales & Operations", team:"External", reason:"Deals in my book", on:true,
+      lines:["FACT · Funding a wallet takes about three business days."] },
+  ];
+
+  // One room per variation. Every room reads the same deals and keeps its own state.
+  class Room {
+    constructor(el, v){
+      this.el = el; this.v = v;
+      const key = (k) => `onedeal:${v}:${k}`; this.key = key;
+      this.order = v === "C" ? ["infiniti","xcel","regis","simploy","alpha","nextep"] : DEALS.map((d) => d.id);
+      this.cur = store.get(key("cur"), this.order[0]);
+      if (!DEALS.find((d) => d.id === this.cur)) this.cur = this.order[0];
+      this.state = {}; // per deal: open person, earlier fold, draft, russ, closed, facts
+      for (const d of DEALS) this.state[d.id] = { person:null, earlier:false, draft:null, adjust:false, closed:false, confirm:false, facts:{}, ticks:{}, handoff:false, russ: d.russ ? { ...d.russ } : null, stage:null };
+      this.desk = { open:false, tab:"write", draft:null, split:false, batch:0, count:109, days:85, chans:CHANNELS.map((c) => ({ ...c, open:false })), url:"", reason:"" };
+      this.list = false;
+      this.render();
+      el.addEventListener("click", (e) => this.click(e));
+      el.addEventListener("input", (e) => this.input(e));
+      el.addEventListener("change", (e) => this.change(e));
+      if (v === "C") window.addEventListener("keydown", (e) => {
+        if (!this.el.matches(":hover") || /input|textarea|select/i.test(document.activeElement?.tagName || "")) return;
+        if (e.key === "j" || e.key === "ArrowRight") this.step(1);
+        if (e.key === "k" || e.key === "ArrowLeft") this.step(-1);
+      });
+    }
+    deal(){ return DEALS.find((d) => d.id === this.cur); }
+    s(){ return this.state[this.cur]; }
+    go(id){ this.cur = id; store.set(this.key("cur"), id); this.list = false; this.render(); }
+    step(n){ const i = this.order.indexOf(this.cur); this.go(this.order[(i + n + this.order.length) % this.order.length]); }
+
+    // ---------- shared pieces ----------
+    bar(){
+      return `<div class="bar">
+        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21 12 3l8 18M7.5 14h9"/></svg>
+        <span class="roomname">HOMEROOM</span><span class="sp"></span>
+        <button class="btn quiet" data-a="desk">Desk</button>
+        <span class="clock">2:34 PM</span>
+      </div>`;
+    }
+    head(d){
+      return `<h1 class="dname">${esc(d.name)}</h1>
+        <p class="dsent">${esc(d.sent)}</p>
+        <p class="mono meta">${esc(d.meta)} <span class="sample">SAMPLE</span></p>`;
+    }
+    russClass(r){ const x = r.days / r.max; return x >= 1 ? "hot" : x >= .6 ? "warm" : "cool"; }
+    focal(d){
+      const s = this.s();
+      let move = d.move, reason = d.reason, extra = "", acts = "";
+      const write = `<button class="btn" data-a="write">Write to them</button><button class="btn" data-a="files">Send files</button>`;
+      if (s.russ){
+        const r = s.russ, due = r.days >= r.max, cls = this.russClass(r);
+        move = due ? d.move : d.waitMove;
+        reason = r.days ? `${r.who} quiet since your 11/10 note.` : `${r.who} replied.`;
+        extra = `<span class="clockface ${cls}" title="Business days since your last send, Chicago"><span class="pulse"></span><span class="days">${r.days}</span>OF ${r.max} BUSINESS DAYS</span>`;
+        acts = `${due ? `<button class="btn ink" data-a="russ">Draft to Russ</button>` : ""}<button class="btn green" data-a="done">Mark it done</button>${write}<button class="btn quiet" data-a="adjust">Adjust</button>`;
+      } else if (d.closable && s.closed){
+        move = "Send Judi the handoff."; reason = "Signed today.";
+        const missing = 2 - Object.values(s.facts).filter(Boolean).length;
+        acts = `<button class="btn ink" data-a="judi">Draft to Judi</button><button class="btn green" data-a="done">Mark it done</button><button class="btn quiet" data-a="handoff">What Judi needs · ${Math.max(0, missing)} missing</button>`;
+      } else if (d.closable){
+        acts = s.confirm
+          ? `<span class="confirm"><button class="btn green" data-a="won">Confirm Closed Won</button><button class="btn quiet" data-a="notyet">Not yet</button></span>`
+          : `<button class="btn green" data-a="done">Mark it done</button>${write}<button class="btn quiet" data-a="close">Closed won</button>`;
+      } else {
+        acts = `<button class="btn green" data-a="done">Mark it done</button>${write}`;
+      }
+      let html = `<div class="focal">
+        <p class="mono" style="margin:0 0 6px">${s.done ? "DONE TODAY · ↺" : "NEXT"}</p>
+        <p class="move">${esc(move)}</p>
+        <p class="reason">${esc(reason)} ${extra}</p>
+        <div class="acts">${acts}</div>`;
+      if (s.russ && s.adjust){
+        html += `<div class="adjust"><span class="mono">ASK AT</span>
+          <button class="btn" data-a="max-">−</button><span class="badge">${s.russ.max}</span><button class="btn" data-a="max+">+</button>
+          <button class="btn" data-a="reset">↺ Restart the count</button>
+          <span class="mono" style="margin-left:6px">SAMPLE</span>
+          <button class="btn" data-a="day+">+1 day</button>
+          <button class="btn" data-a="replied" data-who="you">Tom replied to you</button>
+          <button class="btn" data-a="replied" data-who="Russ">Tom replied to Russ</button></div>`;
+      }
+      if (s.resetNote) html += `<p class="why" style="max-width:640px">${esc(s.resetNote)}</p>`;
+      if (d.closable && s.closed && s.handoff) html += this.handoff(d);
+      if (s.draft) html += this.draft(s.draft, d.name);
+      return html + `</div>`;
+    }
+    handoff(d){
+      const s = this.s();
+      const fact = (k, label, src, val) => s.facts[k] || val
+        ? `<li><b>${esc(label)}:</b> ${esc(s.facts[k] || val)}<span class="src">${s.facts[k] ? "YOUR HAND" : esc(src)}</span></li>`
+        : `<li><b>${esc(label)}:</b> Not on the record. <input type="text" data-fact="${k}" placeholder="Fill it in"></li>`;
+      const tick = (k, t) => `<li><label><input type="checkbox" data-tick="${k}" ${s.ticks[k] ? "checked" : ""}> <span>${esc(t)}</span></label></li>`;
+      return `<div class="handoff">
+        <div><h4>Your part</h4><ul>${tick("send","Send Judi the handoff.")}${tick("intro","Introduce Judi to Bill.")}${tick("checks","Run your three check-ins.")}</ul></div>
+        <div><h4>What Judi needs</h4><ul>
+          ${fact("contact","PEO contact","EMAIL 11/16","Bill Laffey, President")}
+          ${fact("countries","Countries","EMAIL 11/16","Canada and Mexico")}
+          ${fact("people","People","EMAIL 11/16","2 in Canada, 1 in Mexico")}
+          ${fact("client","Client's name","","")}
+          ${fact("payroll","First payroll","","")}
+          ${fact("support","Support goes to","REFERRAL","The in-app help")}
+        </ul>
+        <p class="why">Judi should see this: the client wants a January start.</p></div>
+        <div><h4>This implementation</h4><ul>
+          <li>New client setup through a CRC ticket.<span class="src">PROJECT PLAN · ROW 170</span></li>
+          <li>Sign-in set up by PrismHR's services team.<span class="src">PROJECT PLAN · ROWS 101 TO 103</span></li>
+        </ul></div>
+      </div>`;
+    }
+    stages(d){
+      const s = this.s();
+      const seg = (n, at) => `<span class="segs">${Array.from({ length:n }, (_, i) => `<i class="${i < at ? "done" : i === at ? "now" : ""}"></i>`).join("")}</span>`;
+      const p = s.closed ? 4 : d.p;
+      return `<div class="stages">
+        <span class="who">${esc(d.name)}</span><span class="ladder">${seg(7, p)}<button class="stagebtn" data-a="stage" data-k="p">${PARTNER[p]}</button></span>
+        <span class="who">Their client</span><span class="ladder">${seg(6, d.c)}<button class="stagebtn" data-a="stage" data-k="c">${CLIENT[d.c]}</button></span>
+      </div>${s.stage ? `<p class="why">${esc(s.stage === "p" ? d.pWhy : d.cWhy)}</p>` : ""}`;
+    }
+    people(d){
+      const s = this.s();
+      return `<ul class="people">${d.people.map((p, i) => `<li>
+        <button class="person" data-a="person" data-i="${i}"><b>${esc(p.n)}</b><span>${esc(p.t)}</span></button>
+        ${s.person === i ? `<div class="contact"><a href="#" data-a="mailto" data-i="${i}">${esc(p.e)}</a><span>${esc(p.ph)}</span><span>${esc(p.city)}</span><span class="mono">${esc(p.q)}</span></div>` : ""}
+      </li>`).join("")}</ul>`;
+    }
+    mail(d){
+      const s = this.s(), m = d.mail;
+      return `<div class="mail">
+        <p class="mono" style="margin:0">${esc(m.from === "You" ? "YOU → " + m.to : m.from + " → you")} · ${esc(m.when)}</p>
+        <p class="subj">${esc(m.subj)}</p>
+        ${m.body.map((b) => `<p>${esc(b)}</p>`).join("")}
+        <button class="link" data-a="earlier">${s.earlier ? "Hide earlier" : `Earlier · ${d.earlier.length}`}</button>
+        ${s.earlier ? `<ul class="earlier">${d.earlier.map((e) => `<li><span>${esc(e[0])}</span><span>${esc(e[1])} · ${esc(e[2])}</span></li>`).join("")}</ul>` : ""}
+      </div>`;
+    }
+
+    // ---------- the draft, shared by every tool ----------
+    newDraft(kind, d){
+      const p = d?.people?.[0];
+      if (kind === "russ") return { kind, to:"Russ Jones <rjones@prismhr.com>", lock:true, subject:`${d.name}: a note from you to ${d.russ.who}`,
+        body:`Russ,\n\n${d.people[0].n} at ${d.name} has been quiet ${this.s().russ.days} business days since my last note. Would you send them a short line from you? Here's one you can forward:\n\n"${d.people[0].n.split(" ")[0]}, Russ Jones here. Antaeus tells me your Puerto Rico hires are close. I'd like to make sure nothing on our side is holding you up. Is a call this week useful?"\n\nThanks,\nAntaeus`, files:[], chapters:[] };
+      if (kind === "judi") return { kind, to:"Judi Owen", lock:true, cc:false, subject:`Handoff: ${d.name}`,
+        body:`Judi,\n\n${d.name} signed today. Their client wants two hires in Canada and one in Mexico to start in January.\n\nPEO contact: Bill Laffey, President.\nSupport: the client uses the in-app help, because this is a referral.\n\nI'll introduce you to Bill today and run my three check-ins.\n\nAntaeus`, files:[], chapters:[] };
+      if (kind === "seat"){ const b = SEAT_BATCHES[this.desk.batch % SEAT_BATCHES.length];
+        return { kind, to:`${b.csm} <${b.email}>`, lock:true, subject:"Five minutes on your next check-in",
+          body:`${b.csm.split(" ")[0]},\n\nCould I join your next check-in with these accounts for five minutes? I'd introduce Global and the two ways a PEO works with us, reseller and referral. No sales pitch.\n\n${b.accounts.map((a) => "· " + a[0]).join("\n")}\n\nThanks,\nAntaeus`, files:[], chapters:[] }; }
+      if (kind === "anyone") return { kind, to:"", subject:"", body:"", files:[], chapters:[] };
+      return { kind, to: p ? `${p.n} <${p.e}>` : "", subject:"", body: p ? `Hi ${p.n.split(" ")[0]},\n\n` : "", files: kind === "files" ? ["emp"] : [], chapters:[], filesOpen: kind === "files" };
+    }
+    draft(dr, owner){
+      const total = dr.files.reduce((t, id) => t + encoded(LIB.find((f) => f.id === id).bytes), 0) + (dr.local || []).reduce((t, f) => t + encoded(f.bytes), 0);
+      const hit = dr.kind === "anyone" && dr.to.trim()
+        ? (() => { const v = dr.to.toLowerCase(); const d = DEALS.find((x) => x.people.some((p) => v.includes(p.e.split("@")[0]) || v.includes(p.n.toLowerCase().split(" ")[0])));
+            return d ? `<p class="hint blue">Files on ${esc(d.name)}.</p>` : `<p class="hint">No deal yet. It sends anyway.</p>`; })()
+        : "";
+      const lib = ["Demos","One-pagers","Agreements"].map((g) => `<p class="mono" style="margin:10px 0 0">${g.toUpperCase()}</p><ul class="lib">${LIB.filter((f) => f.g === g).map((f) => `<li>
+          <label><input type="checkbox" data-file="${f.id}" ${dr.files.includes(f.id) ? "checked" : ""}> <span>${esc(f.name)}</span><span class="sz">${f.runs ? f.runs + " · " : ""}${size(f.bytes)}</span></label>
+          ${f.inside && dr.files.includes(f.id) ? `<ul class="inside">${f.inside.map(([t, l]) => { const on = dr.chapters.includes(f.id + t); return `<li class="${on ? "on" : ""}"><span class="t">${t}</span>${esc(l)}<button data-a="chapter" data-f="${f.id}" data-t="${t}" data-l="${esc(l)}">${on ? "IN THE EMAIL" : "+ POINT TO IT"}</button></li>`; }).join("")}</ul>` : ""}
+        </li>`).join("")}</ul>`).join("") + `<p style="margin:10px 0 0"><label class="link" style="cursor:pointer">＋ From your computer<input type="file" multiple hidden data-local></label></p>`;
+      return `<div class="draft">
+        <div class="field"><span class="mono">To</span><input data-d="to" value="${esc(dr.to)}" ${dr.lock ? "readonly" : ""} placeholder="Name or address"></div>
+        ${hit}
+        ${dr.kind === "judi" ? `<div class="field"><span class="mono">Cc</span><label style="display:flex;gap:8px"><input type="checkbox" data-a="cc" ${dr.cc ? "checked" : ""} style="width:auto"> Danielle Stansberry</label></div>` : ""}
+        <div class="field"><span class="mono">Subject</span><input data-d="subject" value="${esc(dr.subject)}"></div>
+        <textarea data-d="body">${esc(dr.body)}</textarea>
+        <details class="files" ${dr.filesOpen ? "open" : ""} data-fold="files"><summary>Files ${dr.files.length + (dr.local || []).length ? `<span class="badge">${dr.files.length + (dr.local || []).length}</span>` : ""}</summary>${lib}</details>
+        <div class="foot">
+          <button class="btn orange" data-a="download">Download for Outlook</button>
+          <button class="btn quiet" data-a="cancel">Close</button>
+          <span class="meter">${total ? (total / MB).toFixed(1) + " MB OF 20 MB" : "NO FILES"}</span>
+          ${dr.receipt ? `<span class="receipt">${esc(dr.receipt)}</span>` : ""}
+        </div>
+      </div>`;
+    }
+
+    // ---------- the desk: page-wide tools behind one door ----------
+    deskHtml(){
+      const k = this.desk;
+      if (!k.open) return `<aside class="desk" hidden></aside>`;
+      const tab = (id, label) => `<button role="tab" aria-selected="${k.tab === id}" data-a="tab" data-t="${id}">${label}</button>`;
+      let body = "";
+      if (k.tab === "write") body = k.draft ? this.draft(k.draft, null) : `<p class="dsent" style="margin:0 0 10px">Write to anyone, with any file. A person on a deal files on that deal.</p><button class="btn ink" data-a="anyone">New email</button>`;
+      if (k.tab === "seats"){
+        const b = SEAT_BATCHES[k.batch % SEAT_BATCHES.length];
+        body = `<p class="move" style="font-size:16px">Ask ${esc(b.csm.split(" ")[0])} for a seat.</p>
+          <p class="reason">${esc(b.why)} <span class="clockface hot"><span class="pulse"></span><span class="days">${k.days}</span>BUSINESS DAYS SINCE YOUR LAST ASK</span></p>
+          <p style="margin:10px 0 0"><button class="badge" data-a="split">${k.count} WITH NOTHING ON RECORD ▾</button></p>
+          ${k.split ? `<ul class="split">${CSM_SPLIT.map(([n, c]) => `<li><span>${esc(n)}</span><span class="mono">${c}</span></li>`).join("")}</ul>` : ""}
+          <div style="margin-top:10px">${b.accounts.map((a) => `<div class="acct"><b>${esc(a[0])}</b><span>${esc(a[1])}</span></div>`).join("")}</div>
+          ${k.draft ? this.draft(k.draft, null) : `<div class="acts"><button class="btn ink" data-a="seat">Draft the ask</button></div>`}`;
+      }
+      if (k.tab === "teams"){
+        body = `<div class="stack">
+            <input placeholder="Paste a Teams channel link" data-a="url" value="${esc(k.url)}">
+            <select data-a="why"><option value="">Why watch it?</option><option>Deals in my book</option><option>Implementation and handoff</option><option>Product and roadmap</option><option>CSM coordination</option></select>
+            <button class="btn ink" data-a="watch" ${/teams\.microsoft\.com/.test(k.url) && k.reason ? "" : "disabled style='opacity:.45'"}>Watch it</button>
+          </div>
+          ${k.chans.map((c, i) => `<div class="chan"><div class="row"><b>${esc(c.name)}</b><span class="mono">${esc(c.reason)}</span>
+            <button class="badge" data-a="chan" data-i="${i}">${c.lines.length} KEPT ${c.open ? "▴" : "▾"}</button></div>
+            ${c.open ? `<ul class="lines">${c.lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}</div>`).join("")}`;
+      }
+      return `<aside class="desk"><div class="tabs" role="tablist">${tab("write","Write")}${tab("seats",`Seats <span class="badge">${k.count}</span>`)}${tab("teams","Teams")}</div>${body}
+        <p style="margin-top:18px"><button class="btn quiet" data-a="desk">Close the desk</button></p></aside>`;
+    }
+
+    // ---------- the three structures ----------
+    render(){
+      const d = this.deal(), s = this.s();
+      const dot = (x) => (x.russ && this.state[x.id].russ.days >= this.state[x.id].russ.max) || (x.closable && this.state[x.id].closed && !this.state[x.id].done);
+      let html = this.bar();
+      if (this.v === "A"){
+        html += `<div class="body"><nav class="switch" aria-label="Deals"><p class="mono">YOUR DEALS · ${DEALS.length}</p>
+          ${this.order.map((id) => { const x = DEALS.find((y) => y.id === id); return `<button data-a="go" data-id="${id}" aria-current="${id === this.cur}">${esc(x.name)}${dot(x) ? `<span class="dot" title="Needs you today"></span>` : ""}</button>`; }).join("")}
+          </nav><article class="deal">${this.head(d)}${this.focal(d)}
+          <div class="two"><div><div class="blockhead"><h3>Latest exchange</h3></div>${this.mail(d)}</div>
+          <div><div class="blockhead"><h3>People</h3></div>${this.people(d)}
+          <div class="block"><div class="blockhead"><h3>Where it stands</h3></div>${this.stages(d)}</div></div></div></article></div>`;
+      }
+      if (this.v === "B"){
+        html += `<nav class="names" aria-label="Deals">${this.order.map((id) => { const x = DEALS.find((y) => y.id === id); return `<button data-a="go" data-id="${id}" aria-current="${id === this.cur}">${esc(x.name)}${dot(x) ? `<span class="dot" title="Needs you today"></span>` : ""}</button>`; }).join("")}</nav>
+          <article class="deal">${this.head(d)}
+          <div class="cols"><div><div class="blockhead"><h3>Latest exchange</h3></div>${this.mail(d)}
+            <div class="block"><div class="blockhead"><h3>Where it stands</h3></div>${this.stages(d)}</div></div>
+          <div class="side">${this.focal(d)}<div class="block"><div class="blockhead"><h3>People</h3></div>${this.people(d)}</div></div></div></article>`;
+      }
+      if (this.v === "C"){
+        const i = this.order.indexOf(this.cur);
+        html += `<div class="stepper"><button class="btn" data-a="prev" aria-label="Previous deal">‹</button><span class="pos">${i + 1} OF ${this.order.length}</span><button class="btn" data-a="next" aria-label="Next deal">›</button>
+          <button class="btn quiet" data-a="list">All deals</button><span class="sp" style="flex:1"></span><span class="mono">J AND K STEP</span></div>
+          ${this.list ? `<div class="list">${this.order.map((id, n) => { const x = DEALS.find((y) => y.id === id); return `<button data-a="go" data-id="${id}" aria-current="${id === this.cur}"><span>${esc(x.name)}</span><span class="mono">${n + 1}</span></button>`; }).join("")}</div>` : ""}
+          <article class="deal">${this.head(d)}${this.focal(d)}
+          <div class="block"><div class="blockhead"><h3>Latest exchange</h3></div>${this.mail(d)}</div>
+          <div class="block"><div class="blockhead"><h3>People</h3></div>${this.people(d)}</div>
+          <div class="block"><div class="blockhead"><h3>Where it stands</h3></div>${this.stages(d)}</div></article>`;
+      }
+      html += this.deskHtml();
+      this.el.innerHTML = html;
+    }
+
+    // ---------- events ----------
+    activeDraft(){ return this.desk.open && this.desk.draft ? this.desk.draft : this.s().draft; }
+    click(e){
+      const t = e.target.closest("[data-a]"); if (!t) return;
+      const a = t.dataset.a, d = this.deal(), s = this.s();
+      if (t.tagName === "A") e.preventDefault();
+      if (["url","why","cc"].includes(a)) { if (a === "cc"){ const dr = this.activeDraft(); if (dr) dr.cc = t.checked; } return; }
+      switch (a){
+        case "go": return this.go(t.dataset.id);
+        case "prev": return this.step(-1);
+        case "next": return this.step(1);
+        case "list": this.list = !this.list; break;
+        case "desk": this.desk.open = !this.desk.open; break;
+        case "tab": this.desk.tab = t.dataset.t; this.desk.draft = null; break;
+        case "anyone": this.desk.draft = this.newDraft("anyone"); break;
+        case "seat": this.desk.draft = this.newDraft("seat"); break;
+        case "split": this.desk.split = !this.desk.split; break;
+        case "chan": this.desk.chans[+t.dataset.i].open = !this.desk.chans[+t.dataset.i].open; break;
+        case "watch": this.desk.chans.unshift({ name:this.desk.url.split("/").pop().split("?")[0].replace(/[-_%0-9]+/g, " ").trim() || "New channel", team:"", reason:this.desk.reason, lines:[], open:false }); this.desk.url = ""; this.desk.reason = ""; break;
+        case "write": s.draft = this.newDraft("write", d); break;
+        case "files": s.draft = this.newDraft("files", d); break;
+        case "russ": s.draft = this.newDraft("russ", d); break;
+        case "judi": s.draft = this.newDraft("judi", d); break;
+        case "cancel": if (this.desk.open && this.desk.draft) this.desk.draft = null; else s.draft = null; break;
+        case "done": s.done = !s.done; break;
+        case "adjust": s.adjust = !s.adjust; break;
+        case "max-": s.russ.max = Math.max(1, s.russ.max - 1); break;
+        case "max+": s.russ.max += 1; break;
+        case "reset": s.russ.days = 0; s.resetNote = "Count restarted today."; break;
+        case "day+": s.russ.days += 1; s.resetNote = ""; break;
+        case "replied": s.russ.days = 0; s.draft = null; s.resetNote = `Reset · ${d.russ.who} replied to ${t.dataset.who} 11/18.`; break;
+        case "close": s.confirm = true; break;
+        case "notyet": s.confirm = false; break;
+        case "won": s.confirm = false; s.closed = true; break;
+        case "handoff": s.handoff = !s.handoff; break;
+        case "stage": s.stage = s.stage === t.dataset.k ? null : t.dataset.k; break;
+        case "person": s.person = s.person === +t.dataset.i ? null : +t.dataset.i; break;
+        case "mailto": { const p = d.people[+t.dataset.i]; s.draft = this.newDraft("write", { ...d, people:[p] }); break; }
+        case "earlier": s.earlier = !s.earlier; break;
+        case "chapter": {
+          const dr = this.activeDraft(), id = t.dataset.f + t.dataset.t, line = `At ${t.dataset.t} in the ${t.dataset.f === "emp" ? "employer-side" : "ListoPay"} demo: ${t.dataset.l.charAt(0).toLowerCase()}${t.dataset.l.slice(1)}.`;
+          if (dr.chapters.includes(id)){ dr.chapters = dr.chapters.filter((x) => x !== id); dr.body = dr.body.replace("\n" + line, ""); }
+          else { dr.chapters.push(id); dr.body = dr.body.replace(/\s*$/, "") + "\n" + line; }
+          dr.filesOpen = true; break; }
+        case "download": return this.download();
+        default: return;
+      }
+      this.render();
+    }
+    input(e){
+      const t = e.target, dr = this.activeDraft();
+      if (t.dataset.d && dr){ dr[t.dataset.d] = t.value; if (t.dataset.d === "to" && dr.kind === "anyone"){ this.render(); const el = this.el.querySelector('[data-d="to"]'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }
+      if (t.dataset.a === "url"){ this.desk.url = t.value; this.render(); const el = this.el.querySelector('[data-a="url"]'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+      if (t.dataset.fact !== undefined) { this.s().factDraft = { k:t.dataset.fact, v:t.value }; }
+    }
+    change(e){
+      const t = e.target, dr = this.activeDraft(), s = this.s();
+      if (t.dataset.file && dr){ dr.filesOpen = true; dr.files = t.checked ? [...dr.files, t.dataset.file] : dr.files.filter((x) => x !== t.dataset.file); this.render(); }
+      if (t.matches("[data-local]") && dr){ dr.filesOpen = true; dr.local = [...(dr.local || []), ...[...t.files].map((f) => ({ name:f.name, bytes:f.size }))]; this.render(); }
+      if (t.dataset.a === "why"){ this.desk.reason = t.value; this.render(); }
+      if (t.dataset.tick){ s.ticks[t.dataset.tick] = t.checked; }
+      if (t.dataset.fact !== undefined && t.value.trim()){ s.facts[t.dataset.fact] = t.value.trim(); this.render(); }
+      if (t.closest("details[data-fold]") && t.tagName === "DETAILS"){ if (dr) dr.filesOpen = t.open; }
+    }
+    download(){
+      const dr = this.activeDraft(), d = this.deal();
+      const names = [...dr.files.map((id) => LIB.find((f) => f.id === id).name), ...(dr.local || []).map((f) => f.name)];
+      const eml = [`To: ${dr.to}`, dr.cc ? "Cc: Danielle Stansberry" : null, `Subject: ${dr.subject}`, "X-Unsent: 1", "Content-Type: text/plain; charset=utf-8", "", dr.body, ...(names.length ? ["", "Attached:", ...names.map((n) => "· " + n)] : [])].filter((x) => x !== null).join("\r\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([eml], { type:"message/rfc822" }));
+      a.download = `${(dr.subject || "Draft").replace(/[\\/:*?"<>|]/g, "")}.eml`;
+      document.body.appendChild(a); a.click(); a.remove();
+      if (dr.kind === "seat"){
+        const b = SEAT_BATCHES[this.desk.batch % SEAT_BATCHES.length];
+        this.desk.count -= b.accounts.length; this.desk.days = 0; this.desk.batch += 1; this.desk.draft = null;
+        this.desk.lastReceipt = `SAVED ON ${b.accounts.length} ACCOUNTS · 11/18 · DOWNLOADED`;
+      } else {
+        const owner = dr.kind === "anyone"
+          ? (DEALS.find((x) => x.people.some((p) => dr.to.toLowerCase().includes(p.e.split("@")[0])))?.name)
+          : dr.kind === "russ" || dr.kind === "judi" || dr.kind === "write" || dr.kind === "files" ? d.name : null;
+        dr.receipt = owner ? `SAVED TO ${owner.toUpperCase()}'S RECORD · 11/18 · DOWNLOADED` : "DOWNLOADED · NO DEAL YET";
+        if (dr.kind === "judi") this.s().ticks.send = true;
+      }
+      this.render();
+      if (this.desk.lastReceipt && this.desk.tab === "seats"){ const p = document.createElement("p"); p.className = "receipt"; p.textContent = this.desk.lastReceipt; this.el.querySelector(".desk .acts, .desk .move")?.after(p); this.desk.lastReceipt = null; }
+    }
+  }
+
+  document.querySelectorAll("[data-room]").forEach((el) => new Room(el, el.dataset.room));
+  document.querySelectorAll("[data-w]").forEach((b) => b.addEventListener("click", () => {
+    document.documentElement.style.setProperty("--fw", b.dataset.w + "px");
+    document.querySelectorAll("[data-w]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    store.set("onedeal:width", b.dataset.w);
+  }));
+  const w = store.get("onedeal:width", "1440");
+  document.querySelector(`[data-w="${w}"]`)?.click();
+})();
+</script>
+</body>
+</html>
