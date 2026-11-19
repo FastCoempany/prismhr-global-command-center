@@ -11369,9 +11369,18 @@ body.rc-over #rc-lp,body.rc-over #rc-rp{position:fixed;top:var(--rcPanelTop,var(
 body.rc-over #rc-lp{left:var(--rcRail);width:var(--rcLP)}
 body.rc-over #rc-rp{right:0;width:var(--rcRP)}
 body.rc-with.rc-push.rc-ropen .room__edge{right:var(--rcRP)}
-#rc-main{min-width:0}
-.rc-panel{margin:0!important;border:0!important;border-radius:0!important;padding:16px 18px 28px!important}
-.rc-panel .ev-pHead{position:sticky;top:-16px;background:#fff;padding:4px 0 8px;margin:-4px 0 10px;z-index:1;border-bottom:1px solid rgba(10,28,64,.07)}
+#rc-main{min-width:0;grid-column:3;grid-row:1}
+#rc-left{grid-column:1;grid-row:1}
+#rc-lp{grid-column:2;grid-row:1}
+#rc-rp{grid-column:4;grid-row:1}
+.rc-panel{margin:0!important;border:0!important;border-radius:0!important;padding:0 18px 28px!important}
+.rc-panel .ev-pHead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:baseline;position:sticky;top:0;background:#fff;padding:16px 0 10px;margin:0 0 12px;z-index:2;border-bottom:1px solid rgba(10,28,64,.07)}
+.rc-panel .ev-pHead b{grid-column:1;grid-row:1}
+.rc-panel .ev-pHead .fold-soft{grid-column:1/-1;grid-row:2;font-size:13px}
+.rc-panel .ev-pHead .ev-close{grid-column:2;grid-row:1;margin:0}
+.rc-panel .fold-ch{margin-left:4px}
+.rc-panel .fold-ch li{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:8px}
+.rc-panel .fold-pt{white-space:nowrap;margin:0}
 .rc-small{height:32px!important;min-width:0!important;font-size:13.5px!important}
 .rc-gap{margin-top:14px!important}
 .rc-door{display:inline;border:0;background:none;padding:0 2px;margin-left:4px;color:#2563eb;font:500 12px/1 "Public Sans",sans-serif;cursor:pointer;text-decoration:underline dotted rgba(37,99,235,.5);text-underline-offset:3px;vertical-align:middle}
