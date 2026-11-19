@@ -953,6 +953,16 @@ founder-decreed 2026-09-15.
 
 ## Other standing decrees
 
+- **Everything is archived for later** (founder-decreed 2026-11-19: "always
+  always keep our conversations, content, everything 'for later' — always
+  keep everything somewhere archived"). Every session writes a record of what
+  was asked, decided, built, found and left open to
+  `docs/archive/sessions/<dates>.md`, keeps every plan and idea explored,
+  even one the founder chose not to build, under `docs/plans/`, keeps every
+  mockup under `docs/mockups/`, and commits and pushes all of it to the
+  session's branch before the session ends. Nothing worked on is left only
+  in the chat or the container. Secrets are never written into the archive.
+
 - **IT is never asked** (founder-decreed 2026-10-19): no plan, setup or
   automation may depend on asking PrismHR or Vensure IT for anything: no
   license, no app registration, no admin consent, no policy exception. A
