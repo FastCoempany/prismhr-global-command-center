@@ -3872,7 +3872,8 @@ var addr = (a) => !a ? "" : a.name ? `${a.name} <${a.address}>` : a.address || "
 var list = (xs) => (xs || []).map(addr).filter(Boolean).join(", ");
 var b64 = (u8) => {
   let s = "";
-  for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode(...u8.subarray(i, i + 32768));
+  for (let i = 0; i < u8.length; i += 32768)
+    s += String.fromCharCode(...u8.subarray(i, i + 32768));
   return btoa(s);
 };
 async function toPost(raw) {
@@ -3882,7 +3883,11 @@ async function toPost(raw) {
   ).slice(0, 60).map((a) => ({
     Name: a.filename || (/outlook/i.test(a.mimeType) ? "attached.msg" : "attached.eml"),
     ContentType: a.mimeType || "message/rfc822",
-    Content: b64(new Uint8Array(typeof a.content === "string" ? new TextEncoder().encode(a.content) : a.content))
+    Content: b64(
+      new Uint8Array(
+        typeof a.content === "string" ? new TextEncoder().encode(a.content) : a.content
+      )
+    )
   }));
   return {
     From: addr(m.from),
@@ -3895,25 +3900,44 @@ async function toPost(raw) {
     Attachments: attachments
   };
 }
-var worker_default = {
+async function postOnce(env, body) {
+  try {
+    const r = await fetch(env.GEM_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${env.GEM_SECRET}`
+      },
+      body
+    });
+    const text = (await r.text()).slice(0, 200);
+    return { ok: r.ok, retry: r.status >= 500, why: `GEM answered ${r.status} ${text}` };
+  } catch (err) {
+    return {
+      ok: false,
+      retry: true,
+      why: `Could not reach GEM: ${String(err).slice(0, 200)}`
+    };
+  }
+}
+var BOUNCE = "GEM could not take this email. Drop it into the deal's Chute, or forward it again later.";
+var worker = {
   async email(message, env) {
     const raw = await new Response(message.raw).arrayBuffer();
     const body = JSON.stringify(await toPost(raw));
+    let last = null;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const r = await fetch(env.GEM_URL, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${env.GEM_SECRET}` },
-        body
-      });
-      if (r.ok || r.status < 500) {
-        console.log("GEM answered", r.status, (await r.text()).slice(0, 200));
-        return;
-      }
-      await new Promise((res) => setTimeout(res, 2e3 * (attempt + 1)));
+      last = await postOnce(env, body);
+      console.log(last.why);
+      if (last.ok) return;
+      if (!last.retry) break;
+      if (attempt < 2) await new Promise((res) => setTimeout(res, 2e3 * (attempt + 1)));
     }
-    console.log("GEM did not take the email after three tries");
+    console.log("Bouncing to the sender:", last && last.why);
+    message.setReject(BOUNCE);
   }
 };
+var worker_default = worker;
 export {
   worker_default as default,
   toPost
