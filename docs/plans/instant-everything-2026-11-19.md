@@ -96,6 +96,7 @@ browser; country facts open and quotes compute locally in milliseconds.
 ## What could break, and the guards
 
 ### 1. Rules about what never reaches the browser (most serious)
+
 - **The routing roster** never ships to the browser (CLAUDE.md, the Chute).
   Guard: routing, filing, duplicate checks and take-backs stay on the server;
   only results sync.
@@ -109,6 +110,7 @@ browser; country facts open and quotes compute locally in milliseconds.
   mirror. Guard: per-store sync rules with tests.
 
 ### 2. Stale or conflicting data on screen
+
 - A dropped push connection (sleep, Wi-Fi) leaves an hour-old copy. Guard: a
   visible "up to date / reconnecting" state, resync on wake, no actions against
   a known-stale copy.
@@ -120,6 +122,7 @@ browser; country facts open and quotes compute locally in milliseconds.
   the server uses.
 
 ### 3. Answers written ahead with Opus
+
 - **Cost** rises with rewrites per filing and predicted questions. Guard:
   rewrite only what a filing touched, a daily spend cap, a visible count.
 - **A stored answer behind the record.** Guard: each answer carries the time of
@@ -131,6 +134,7 @@ browser; country facts open and quotes compute locally in milliseconds.
   spreads the rewrites.
 
 ### 4. The existing suite and the rebuild itself
+
 - About 2,900 tests assume server-side derivation. Guard: keep the server path,
   switch one surface at a time behind a switch, keep the suite green at each
   stage.
@@ -140,16 +144,19 @@ browser; country facts open and quotes compute locally in milliseconds.
   the old path.
 
 ### 5. The browser and the device
+
 - Browser storage can be cleared; rebuild cleanly from the server.
 - The first sync on a new browser takes seconds; afterwards only changes travel.
 - The record sits on the laptop; wipe on sign-out, keep the sign-in.
 
 ### 6. The search index
+
 - Without exempting embeddings, word-matching misses differently-phrased
   questions ("Who's stalling?" vs "Tom hasn't replied"); structured lookups
   over the fact store cover most of the gap.
 
 ### The three most likely to bite
+
 1. A money or staged-body leak through an overly broad sync.
 2. A stale screen after the laptop sleeps.
 3. Opus costs climbing faster than expected.
