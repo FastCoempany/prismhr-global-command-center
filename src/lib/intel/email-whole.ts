@@ -23,6 +23,8 @@ import { USER_TZ, chicagoDay } from "@/lib/tz";
 export type EmailMessage = {
   from: string;
   to: string;
+  /** The Cc line, so the names it pairs with addresses count too. */
+  cc?: string;
   subject: string;
   sent: string;
   body: string;
@@ -140,6 +142,7 @@ function blocksOf(raw: string): { messages: EmailMessage[]; leads: boolean } {
     messages: blocks.map((b, k) => ({
       from: b.head.from ?? "",
       to: b.head.to ?? "",
+      cc: b.head.cc ?? "",
       subject: b.head.subject ?? "",
       sent: b.head.sent ?? "",
       body: lines.slice(b.bodyAt, blocks[k + 1]?.start ?? lines.length).join("\n"),
@@ -195,7 +198,7 @@ function aliasesOf(msgs: readonly EmailMessage[]): Map<string, string> {
   const out = new Map<string, string>();
   const pair = /([^<>;]*)<([^<>]+)>/g;
   for (const m of msgs)
-    for (const field of [m.from, m.to])
+    for (const field of [m.from, m.to, m.cc ?? ""])
       for (const [, shown, addr] of field.matchAll(pair)) {
         const display = shown.replace(/^[\s,;]+/, "");
         if (/@/.test(display)) continue;
@@ -218,8 +221,35 @@ function sameSender(
   aliases: ReadonlyMap<string, string>,
 ): boolean {
   const mineEntry = MINE_RE.test(entryFrom) || /^(you|me)$/i.test(entryFrom.trim());
-  if (mineEntry !== isOurs(msgFrom)) return false;
-  if (mineEntry) return true;
+  if (mineEntry) return isOurs(msgFrom);
+  // The operator's own message never pairs with someone else's entry. A
+  // colleague's message (our domain, not the operator) pairs by name like
+  // anyone's: a colleague's email to an account's people with the operator
+  // on it is the operator's exchange (founder, 2026-11-18), and its words are
+  // kept like any other email's.
+  if (MINE_RE.test(msgFrom)) return false;
+  // Never across sides. A colleague's message pairs only with an entry that
+  // is surely the colleague: an address on our side that is the message's
+  // own, or a full name no one outside our side on the thread carries. An
+  // outside address, a short name ("Dana"), or a name the thread also gives
+  // an outside address is the account's person, and a colleague who shares
+  // it is not them.
+  if (isOurs(msgFrom)) {
+    const ent = senderOf(entryFrom);
+    if (ent.address)
+      return isOurs(ent.address) && ent.address === senderOf(msgFrom).address;
+    const named = words(ent.name);
+    if (named.length < 2) return false;
+    const outside = [...aliases].some(([addr, nm]) => {
+      if (isOurs(addr)) return false;
+      const have = words(nm);
+      return (
+        have.length > 0 &&
+        (named.every((w) => have.includes(w)) || have.every((w) => named.includes(w)))
+      );
+    });
+    if (outside) return false;
+  }
   const { name, address } = senderOf(msgFrom);
   const from = senderOf(entryFrom);
   if (from.address && from.address === address) return true;

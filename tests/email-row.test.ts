@@ -114,6 +114,79 @@ describe("the whole email: the capture's messages and their own words", () => {
     assert.equal(older, "Hi Dana,\n\nHere is the order I'd suggest.\n\nBest,\nAntaeus");
   });
 
+  test("a colleague's own email keeps its words: our domain pairs by name, never as the operator", () => {
+    const COPY = `OUTLOOK THREAD — inbox copy
+From: lesha.cyphers@prismhr.com
+To: dana@regis.example;antaeus.coe@prismhr.com
+Sent: 2026-11-17T19:28:11Z
+Subject: Re: Meeting today
+
+Thanks so much for the call, Dana.
+
+From: Dana Reyes <dana@regis.example>
+Sent: Thursday, November 12, 2026 9:18 AM
+To: Lesha Cyphers <lesha.cyphers@prismhr.com>
+Subject: Re: Meeting today
+
+I am wide open on Tuesday!
+`;
+    const lesha = {
+      kind: "email",
+      from: "Lesha Cyphers",
+      subject: "Re: Meeting today",
+      dayIso: "2026-11-17",
+      timeLabel: "1:28 PM",
+    };
+    assert.deepEqual(wholeEmails(COPY, [lesha]), ["Thanks so much for the call, Dana."]);
+    // The operator's entry never takes a colleague's message by name, nor a
+    // colleague's entry the operator's.
+    const mine = COPY.replace(
+      "lesha.cyphers@prismhr.com\nTo:",
+      "antaeus.coe@prismhr.com\nTo:",
+    );
+    assert.deepEqual(wholeEmails(mine, [lesha]), [null]);
+    // An outside person named by address or by a short name is never a
+    // colleague who shares the name (the Codex review on PR 438).
+    const twin = `OUTLOOK THREAD — inbox copy
+From: Dana Reyes <dana.reyes@prismhr.com>
+To: Dana Reyes <dreyes@regis.example>
+Sent: 2026-11-17T19:28:11Z
+Subject: Re: Meeting today
+
+A note from our Dana.
+`;
+    for (const from of ["dreyes@regis.example", "Dana", "Dana Reyes"])
+      assert.deepEqual(
+        wholeEmails(twin, [{ kind: "email", from, subject: "Re: Meeting today" }]),
+        [null],
+        from,
+      );
+    // The outside namesake only on the Cc line counts the same.
+    const onCc = `OUTLOOK THREAD — inbox copy
+From: Dana Reyes <dana.reyes@prismhr.com>
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Cc: Dana Reyes <dreyes@regis.example>
+Sent: 2026-11-17T19:28:11Z
+Subject: Re: Meeting today
+
+A note from our Dana.
+`;
+    assert.deepEqual(
+      wholeEmails(onCc, [
+        { kind: "email", from: "Dana Reyes", subject: "Re: Meeting today" },
+      ]),
+      [null],
+      "an outside namesake on Cc",
+    );
+    assert.deepEqual(
+      wholeEmails(twin, [
+        { kind: "email", from: "dana.reyes@prismhr.com", subject: "Re: Meeting today" },
+      ]),
+      ["A note from our Dana."],
+      "our own address is the colleague",
+    );
+  });
+
   test("no sure message keeps no whole text, and a call or task entry never does", () => {
     const r = wholeEmails(RELAY, [
       { kind: "email", from: "Somebody Else", subject: "Something else entirely" },
