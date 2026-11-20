@@ -608,6 +608,32 @@ describe("the row's latest email", () => {
     assert.equal(latest([toLesha, support, chat, IN])?.id, "e6");
   });
 
+  test("a colleague's email to their people with you on it is the latest email; among our side alone it is not", () => {
+    const judi = note({
+      id: "j1",
+      createdAt: "2026-10-21T12:00:00.000Z",
+      body: "✉ OL Oct 21 1:28 PM — Re: Intro to your Global Business Consultant · Lesha Cyphers → Dana Reyes +2\nSent a link to the country guides.",
+      actors: "Lesha Cyphers → Dana Reyes +2",
+      recipients: "Dana Reyes, Elise Munoz, Antaeus Coe",
+    });
+    const l = latest([judi, IN]);
+    assert.equal(l?.id, "j1");
+    assert.equal(l?.from, "Lesha Cyphers");
+    assert.equal(l?.to, "Dana Reyes");
+    // Not copied on it: a colleague's thread with their people is not yours.
+    const notMe = note({ ...judi, id: "j2", recipients: "Dana Reyes, Elise Munoz" });
+    assert.equal(latest([notMe, IN])?.id, "e6");
+    // Among our own side alone it is coordination.
+    const internal = note({
+      ...judi,
+      id: "j3",
+      body: "✉ OL Oct 21 1:28 PM — Regis · Lesha Cyphers → Antaeus Coe\nQuick update.",
+      actors: "Lesha Cyphers → Antaeus Coe",
+      recipients: "Antaeus Coe",
+    });
+    assert.equal(latest([internal, IN])?.id, "e6");
+  });
+
   test("an afternoon SF email outranks a morning Outlook one of the same day", () => {
     const sf = note({
       id: "s1",

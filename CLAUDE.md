@@ -578,6 +578,14 @@ stays Mark it done.
   gives way to the relay's filed copy of the same email, to the same
   person, sent in its minute or within half an hour after), or
   nothing when the store could not be read.
+- **A colleague's email with the operator on it is the operator's
+  (founder, 2026-11-18; shipped 2026-11-20).** An email a colleague sent to
+  an account's people with the operator on its To or Cc line files on the
+  operator's own lane, shows in EARLIER, and counts as the latest email. A
+  colleague's mail among our own side alone, or a thread that never named
+  the operator, is still read past. An inbox copy whose sender is ours routes
+  by its recipients, as a sent copy does. Twenty entries filed before the
+  change were corrected by hand (docs/archive/lane-correction-2026-11-20.md).
 - **EARLIER is rebuilt.** Each line reads the day and the clock from the note
   itself, who wrote to whom ("you" for the operator), and the subject with the
   format code, the frozen "Today", the reply prefixes, the external tags and

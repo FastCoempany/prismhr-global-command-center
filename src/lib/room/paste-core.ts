@@ -642,7 +642,7 @@ async function fileClaimed({
           4000,
         ),
         door,
-        lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`),
+        lane: laneFor(actors, `${e.subject ?? ""}\n${e.body ?? ""}`, recipients),
         actors,
         recipients,
         source: SOURCE_OF(liveDialect, sniffedHead, how),

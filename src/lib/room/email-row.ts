@@ -55,7 +55,8 @@ export type RowNote = {
   lane?: string;
 };
 
-type Doc = Pick<RecordDoc, "noteId" | "direction" | "closer" | "machinery">;
+type Doc = Pick<RecordDoc, "noteId" | "direction" | "closer" | "machinery"> &
+  Partial<Pick<RecordDoc, "senderIsHome">>;
 
 type Todo = {
   id: string;
@@ -602,10 +603,18 @@ function pickLatest(
   for (const n of notes) {
     const d = docById.get(n.id);
     if (!d || !MAIL_HEAD.test(n.body) || d.closer || d.machinery) continue;
+    // A colleague's email to the account's people with the operator on it
+    // is the operator's exchange (founder, 2026-11-18): it counts as the
+    // latest email. A colleague's mail among our own side alone, or one that
+    // never named the operator, is still coordination and is read past.
     const ok =
       d.direction === "out"
         ? reachesAccount(n, homeSide, clientFirsts)
-        : d.direction === "in" && reachedMe(n);
+        : d.direction === "in"
+          ? reachedMe(n)
+          : !!d.senderIsHome &&
+            targetsOf(n).names.some(isMe) &&
+            reachesAccount(n, homeSide, clientFirsts);
     if (!ok) continue;
     const w = whens.get(n.id);
     const at = w?.at ?? NaN;
