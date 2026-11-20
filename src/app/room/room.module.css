@@ -3107,6 +3107,14 @@ button.sdRadio:hover {
   color: var(--soft);
   font-weight: 600;
 }
+/* The founder's order (2026-11-20): the subject line says it is the subject.
+   The label is drawn by CSS, so the row's arrival budget and the subject's
+   own text are unchanged. */
+.subjLabel::before {
+  content: "Subject: ";
+  font-weight: 400;
+  color: var(--soft);
+}
 .mailSubj {
   margin: 6px 0 0;
   font-size: 15px;
