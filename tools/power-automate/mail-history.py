@@ -123,7 +123,7 @@ tadd("NextUrl", var("NextUrl", "string", URL))
 tadd("Read", var("Read", "integer", 0))
 tadd("Sent", var("Sent", "integer", 0))
 tadd("Stopped", var("Stopped", "string", ""))
-tadd("Resume", var("Resume", "string", f"@{{trim({TB}['text'])}}"))
+tadd("Resume", var("Resume", "string", "@" + CHI("text")))
 tadd("Until_every_page_is_read", {"type": "Until", "expression": "@or(equals(variables('NextUrl'),''),not(equals(variables('Stopped'),'')))",
     "limit": {"count": 5000, "timeout": "P7D"}, "actions": inner})
 tadd("Summary", {"type": "Compose", "inputs": "@concat('Read ',string(variables('Read')),' emails in ',variables('Folder'),'. Sent ',string(variables('Sent')),' to GEM.')"})
@@ -134,7 +134,7 @@ top["Summary"]["runAfter"] = {"Until_every_page_is_read": ["Succeeded", "Failed"
 # a rerun from that day files nothing twice.
 tadd("If_it_stopped", {"type": "If", "expression": {"and": [{"not": {"equals": ["@variables('Stopped')", ""]}}]},
     "actions": {"Fail_the_run": {"runAfter": {}, "type": "Terminate", "inputs": {"runStatus": "Failed",
-        "runError": {"code": "Stopped", "message": "@{variables('Stopped')} Run again with First day @{substring(variables('Resume'),0,10)} and the same Stop before day."}}}},
+        "runError": {"code": "Stopped", "message": "@{variables('Stopped')} Run again with First day @{convertFromUtc(variables('Resume'),'Central Standard Time','yyyy-MM-dd')} and the same Stop before day."}}}},
     "else": {"actions": {}}})
 
 trigger = {"manual": {"type": "Request", "kind": "Button", "inputs": {"schema": {"type": "object", "properties": {
