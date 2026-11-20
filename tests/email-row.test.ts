@@ -161,6 +161,23 @@ A note from our Dana.
         [null],
         from,
       );
+    // The outside namesake only on the Cc line counts the same.
+    const onCc = `OUTLOOK THREAD — inbox copy
+From: Dana Reyes <dana.reyes@prismhr.com>
+To: Antaeus Coe <antaeus.coe@prismhr.com>
+Cc: Dana Reyes <dreyes@regis.example>
+Sent: 2026-11-17T19:28:11Z
+Subject: Re: Meeting today
+
+A note from our Dana.
+`;
+    assert.deepEqual(
+      wholeEmails(onCc, [
+        { kind: "email", from: "Dana Reyes", subject: "Re: Meeting today" },
+      ]),
+      [null],
+      "an outside namesake on Cc",
+    );
     assert.deepEqual(
       wholeEmails(twin, [
         { kind: "email", from: "dana.reyes@prismhr.com", subject: "Re: Meeting today" },

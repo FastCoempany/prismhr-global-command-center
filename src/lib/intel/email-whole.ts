@@ -23,6 +23,8 @@ import { USER_TZ, chicagoDay } from "@/lib/tz";
 export type EmailMessage = {
   from: string;
   to: string;
+  /** The Cc line, so the names it pairs with addresses count too. */
+  cc?: string;
   subject: string;
   sent: string;
   body: string;
@@ -140,6 +142,7 @@ function blocksOf(raw: string): { messages: EmailMessage[]; leads: boolean } {
     messages: blocks.map((b, k) => ({
       from: b.head.from ?? "",
       to: b.head.to ?? "",
+      cc: b.head.cc ?? "",
       subject: b.head.subject ?? "",
       sent: b.head.sent ?? "",
       body: lines.slice(b.bodyAt, blocks[k + 1]?.start ?? lines.length).join("\n"),
@@ -195,7 +198,7 @@ function aliasesOf(msgs: readonly EmailMessage[]): Map<string, string> {
   const out = new Map<string, string>();
   const pair = /([^<>;]*)<([^<>]+)>/g;
   for (const m of msgs)
-    for (const field of [m.from, m.to])
+    for (const field of [m.from, m.to, m.cc ?? ""])
       for (const [, shown, addr] of field.matchAll(pair)) {
         const display = shown.replace(/^[\s,;]+/, "");
         if (/@/.test(display)) continue;
