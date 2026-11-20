@@ -1,6 +1,7 @@
 // Module hooks for the suite: a CSS module resolves to what a bundler hands
 // the component — a map of the stylesheet's own class names, and undefined
-// for any class the sheet does not define — and next/font/google resolves to
+// for any class the sheet does not define — and next/font/google and
+// next/font/local resolve to
 // a stub of what the compiler hands a page. Registered by tests/helpers/
 // room-render.ts so a client component can be imported and rendered under
 // node:test.
@@ -11,7 +12,7 @@ import { fileURLToPath } from "node:url";
 export async function resolve(specifier, context, next) {
   // A font loader resolves to the stub the compiler's output stands in for
   // (next-font-stub.mjs), so a page module can be imported whole.
-  if (specifier === "next/font/google") {
+  if (specifier === "next/font/google" || specifier === "next/font/local") {
     return {
       url: new URL("./next-font-stub.mjs", import.meta.url).href,
       shortCircuit: true,

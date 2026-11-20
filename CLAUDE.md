@@ -985,6 +985,10 @@ founder-decreed 2026-09-15.
   path that needs IT is not a path. Build on what the operator's own
   accounts already allow: Power Automate's standard connectors, the inbound
   relay, the app's own routes.
+- **The fonts ship with the code** (founder, 2026-11-20). The three
+  typefaces live in src/app/fonts/ (Fontsource's Latin files, SIL Open Font
+  License) and load through next/font/local in src/app/fonts.ts, so no build
+  downloads from Google Fonts; next/font/google failed two deploys that day.
 - The word "steps" never appears in operator-facing copy.
 - **The wallet is not a product** (founder-decreed 2026-11-03): the wallet is
   a feature of the global payroll product. The app may name the wallet when it

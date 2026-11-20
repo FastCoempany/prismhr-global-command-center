@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DM_Serif_Display, JetBrains_Mono, Public_Sans } from "next/font/google";
+import { roomMono as mono, roomSans as sans, roomSerif as serif } from "../fonts";
 import { AppWayfinder } from "@/components/app-wayfinder";
 import { loadDashboard, type DashCardRow } from "@/lib/dashboard/data";
 import { csms, peos } from "@/lib/book";
@@ -108,14 +108,6 @@ export const dynamic = "force-dynamic";
 // A distillation pass (activityRun via the Chute) runs to a 220s deadline —
 // the platform's default window would kill it mid-account.
 export const maxDuration = 300;
-
-const serif = DM_Serif_Display({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--f-serif",
-});
-const sans = Public_Sans({ subsets: ["latin"], variable: "--f-sans" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--f-mono" });
 
 const HEALTH_ORDER = { red: 0, amber: 1, green: 2, quiet: 3 } as const;
 
