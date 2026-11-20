@@ -31,9 +31,10 @@ connection's identity), so a rebuild needs that export in `<work>/in/Inbox`.
 
 ## Known limits
 
-- An inbox email files by its sender alone, the same as the Inbox copy relay.
-  A colleague's email to an account with the operator only copied files
-  nothing until GEM routes inbox copies by every party (open question).
+- An inbox email files by its sender. When the sender is a colleague, it files
+  by its recipients instead, the way a sent copy does (founder's ruling of
+  2026-11-18, shipped 2026-11-20 after the test run showed Judi Owen's email to
+  Marvel HR filing nothing).
 - The relays' raw header format is not stored anywhere readable. The flow
   writes the format the Inbox copy step's own fields produce; if Outlook's
   trigger spells the recipients differently, up to about 62 emails the relays

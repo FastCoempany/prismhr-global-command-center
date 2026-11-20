@@ -227,6 +227,11 @@ export function routeInboxCopy(
 ): RouteHit | null {
   const from = addressesIn(c.from)[0];
   if (!from || ROLE_SENDER.test(from.split("@")[0] ?? "")) return null;
+  // A colleague's email to an account's people, with the operator on it,
+  // counts as an exchange (founder, 2026-11-18): it routes by its recipients
+  // the way a sent copy does, so two accounts tie and a note among our own
+  // side alone still routes nothing.
+  if (ours(from)) return routeSentCopy(c, roster);
   return routeAddress(from, roster);
 }
 
