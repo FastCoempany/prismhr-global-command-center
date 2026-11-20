@@ -218,8 +218,27 @@ function sameSender(
   aliases: ReadonlyMap<string, string>,
 ): boolean {
   const mineEntry = MINE_RE.test(entryFrom) || /^(you|me)$/i.test(entryFrom.trim());
-  if (mineEntry !== isOurs(msgFrom)) return false;
-  if (mineEntry) return true;
+  if (mineEntry) return isOurs(msgFrom);
+  // The operator's own message never pairs with someone else's entry. A
+  // colleague's message (our domain, not the operator) pairs by name like
+  // anyone's: a colleague's email to an account's people with the operator
+  // on it is the operator's exchange (founder, 2026-11-18), and its words are
+  // kept like any other email's.
+  if (MINE_RE.test(msgFrom)) return false;
+  // Never across sides: when the capture pairs the entry's name with an
+  // address outside our side, the entry is that person, and a colleague who
+  // shares the name is not them.
+  if (isOurs(msgFrom)) {
+    const named = words(senderOf(entryFrom).name);
+    const outside = [...aliases].some(
+      ([addr, nm]) =>
+        !isOurs(addr) &&
+        named.length > 0 &&
+        words(nm).length === named.length &&
+        named.every((w) => words(nm).includes(w)),
+    );
+    if (outside) return false;
+  }
   const { name, address } = senderOf(msgFrom);
   const from = senderOf(entryFrom);
   if (from.address && from.address === address) return true;

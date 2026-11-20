@@ -581,7 +581,10 @@ stays Mark it done.
 - **A colleague's email with the operator on it is the operator's
   (founder, 2026-11-18; shipped 2026-11-20).** An email a colleague sent to
   an account's people with the operator on its To or Cc line files on the
-  operator's own lane, shows in EARLIER, and counts as the latest email. A
+  operator's own lane, shows in EARLIER, counts as the latest email, and
+  keeps its own words like any email (shipped 2026-11-20: a colleague's
+  message pairs by name, never as the operator, and never when the thread
+  pairs that name with an address outside our side). A
   colleague's mail among our own side alone, or a thread that never named
   the operator, is still read past. An inbox copy whose sender is ours routes
   by its recipients, as a sent copy does. Twenty entries filed before the
