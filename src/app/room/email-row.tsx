@@ -140,7 +140,7 @@ export function LatestEmailPane({ email }: { email: RowLatestEmail }) {
           <WhoLine from={email.from} to={email.to} others={email.others} />
         </span>
       </div>
-      <p className={styles.mailSubj}>{email.subject}</p>
+      <p className={`${styles.mailSubj} ${styles.subjLabel}`}>{email.subject}</p>
       {!email.whole && (
         <p className={styles.mailGist}>
           <b>{email.read ? "WHAT THE READ KEPT" : "WHAT WAS FILED"}</b>{" "}
@@ -268,7 +268,7 @@ export function EarlierLine({
           </span>
           <button
             type="button"
-            className={styles.entSubj}
+            className={`${styles.entSubj} ${e && !e.closer ? styles.subjLabel : ""}`}
             aria-expanded={open}
             onClick={onToggle}
             title={open ? "Fold it back" : "Open it"}

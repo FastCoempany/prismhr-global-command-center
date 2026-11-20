@@ -586,6 +586,11 @@ stays Mark it done.
   the operator, is still read past. An inbox copy whose sender is ours routes
   by its recipients, as a sent copy does. Twenty entries filed before the
   change were corrected by hand (docs/archive/lane-correction-2026-11-20.md).
+- **The subject says it is one (founder, 2026-11-20).** The latest email's
+  subject and each email line in EARLIER read "Subject:" in quiet ink before
+  the subject itself. The label is drawn by the stylesheet, so the row's
+  arrival budget and the subject's own text are unchanged; a sign-off, a
+  note and a call line carry no label.
 - **EARLIER is rebuilt.** Each line reads the day and the clock from the note
   itself, who wrote to whom ("you" for the operator), and the subject with the
   format code, the frozen "Today", the reply prefixes, the external tags and
