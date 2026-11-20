@@ -225,18 +225,26 @@ function sameSender(
   // on it is the operator's exchange (founder, 2026-11-18), and its words are
   // kept like any other email's.
   if (MINE_RE.test(msgFrom)) return false;
-  // Never across sides: when the capture pairs the entry's name with an
-  // address outside our side, the entry is that person, and a colleague who
-  // shares the name is not them.
+  // Never across sides. A colleague's message pairs only with an entry that
+  // is surely the colleague: an address on our side that is the message's
+  // own, or a full name no one outside our side on the thread carries. An
+  // outside address, a short name ("Dana"), or a name the thread also gives
+  // an outside address is the account's person, and a colleague who shares
+  // it is not them.
   if (isOurs(msgFrom)) {
-    const named = words(senderOf(entryFrom).name);
-    const outside = [...aliases].some(
-      ([addr, nm]) =>
-        !isOurs(addr) &&
-        named.length > 0 &&
-        words(nm).length === named.length &&
-        named.every((w) => words(nm).includes(w)),
-    );
+    const ent = senderOf(entryFrom);
+    if (ent.address)
+      return isOurs(ent.address) && ent.address === senderOf(msgFrom).address;
+    const named = words(ent.name);
+    if (named.length < 2) return false;
+    const outside = [...aliases].some(([addr, nm]) => {
+      if (isOurs(addr)) return false;
+      const have = words(nm);
+      return (
+        have.length > 0 &&
+        (named.every((w) => have.includes(w)) || have.every((w) => named.includes(w)))
+      );
+    });
     if (outside) return false;
   }
   const { name, address } = senderOf(msgFrom);

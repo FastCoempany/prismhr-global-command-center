@@ -145,6 +145,29 @@ I am wide open on Tuesday!
       "antaeus.coe@prismhr.com\nTo:",
     );
     assert.deepEqual(wholeEmails(mine, [lesha]), [null]);
+    // An outside person named by address or by a short name is never a
+    // colleague who shares the name (the Codex review on PR 438).
+    const twin = `OUTLOOK THREAD — inbox copy
+From: Dana Reyes <dana.reyes@prismhr.com>
+To: Dana Reyes <dreyes@regis.example>
+Sent: 2026-11-17T19:28:11Z
+Subject: Re: Meeting today
+
+A note from our Dana.
+`;
+    for (const from of ["dreyes@regis.example", "Dana", "Dana Reyes"])
+      assert.deepEqual(
+        wholeEmails(twin, [{ kind: "email", from, subject: "Re: Meeting today" }]),
+        [null],
+        from,
+      );
+    assert.deepEqual(
+      wholeEmails(twin, [
+        { kind: "email", from: "dana.reyes@prismhr.com", subject: "Re: Meeting today" },
+      ]),
+      ["A note from our Dana."],
+      "our own address is the colleague",
+    );
   });
 
   test("no sure message keeps no whole text, and a call or task entry never does", () => {
