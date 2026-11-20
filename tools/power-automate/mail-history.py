@@ -73,7 +73,7 @@ for i, e in enumerate(names, 1):
 add("Kept", {"type": "Compose", "inputs": "@union(" + ",".join(f"body('{p}')" for p in picks) + ")"})
 add("Count_read", {"type": "IncrementVariable", "inputs": {"name": "Read", "value": "@length(coalesce(body('Get_page')?['value'],json('[]')))"}})
 # Where to start again if this page fails: the day of its first email.
-add("Resume_day", {"type": "SetVariable", "inputs": {"name": "Resume", "value": "@{coalesce(first(coalesce(body('Get_page')?['value'],json('[]')))?['receivedDateTime'],variables('Resume'))}"}})
+add("Resume_day", {"type": "SetVariable", "inputs": {"name": "Resume", "value": "@{coalesce(first(coalesce(body('Get_page')?['value'],json('[]')))?['receivedDateTime'],RESUME_FALLBACK)}"}})
 BODY = ("<p class=\"editor-paragraph\">From: @{items('For_each_kept_email')?['fromLine']}<br>Sent: @{items('For_each_kept_email')?['at']}<br>"
         "To: @{items('For_each_kept_email')?['toLine']}<br>Cc: @{items('For_each_kept_email')?['ccLine']}<br>"
         "Subject: @{items('For_each_kept_email')?['subject']}</p><br><p class=\"editor-paragraph\">@{items('For_each_kept_email')?['html']}</p>")
@@ -124,6 +124,9 @@ tadd("Read", var("Read", "integer", 0))
 tadd("Sent", var("Sent", "integer", 0))
 tadd("Stopped", var("Stopped", "string", ""))
 tadd("Resume", var("Resume", "string", "@" + CHI("text")))
+# Power Automate refuses a SetVariable that reads its own variable, so an empty
+# page falls back to the first day's Chicago midnight, not to Resume itself.
+inner["Resume_day"]["inputs"]["value"] = inner["Resume_day"]["inputs"]["value"].replace("RESUME_FALLBACK", CHI("text"))
 tadd("Until_every_page_is_read", {"type": "Until", "expression": "@or(equals(variables('NextUrl'),''),not(equals(variables('Stopped'),'')))",
     "limit": {"count": 5000, "timeout": "P7D"}, "actions": inner})
 tadd("Summary", {"type": "Compose", "inputs": "@concat('Read ',string(variables('Read')),' emails in ',variables('Folder'),'. Sent ',string(variables('Sent')),' to GEM.')"})
