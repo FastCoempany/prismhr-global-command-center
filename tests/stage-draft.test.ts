@@ -469,7 +469,7 @@ describe("the sent copy", () => {
     );
   });
 
-  test("an inbox copy routes by its sender alone, never a role sender, never our side", () => {
+  test("an inbox copy routes by its sender, never a role sender; a colleague's by its recipients", () => {
     const route = (from: string, to = "antaeus.coe@vensure.com") =>
       routeInboxCopy({ from, to, cc: "", subject: "", sent: "", body: "" }, ROSTER)?.id ??
       null;
@@ -485,8 +485,29 @@ describe("the sent copy", () => {
       assert.equal(route(bulk), null, bulk);
     assert.equal(route("pat@vensure.com"), null);
     assert.equal(route("someone@gmail.com"), null);
-    // A colleague forwarding an account's mail routes by the colleague: nothing.
-    assert.equal(route("pat@prismhr.com", "cristina@engage.example"), null);
+    // A colleague's email to an account's people, with the operator on it,
+    // routes by its recipients (founder, 2026-11-18).
+    assert.equal(route("pat@prismhr.com", "cristina@engage.example"), "ENG");
+    assert.equal(
+      routeInboxCopy(
+        {
+          from: "pat@prismhr.com",
+          to: "cristina@engage.example",
+          cc: "antaeus.coe@prismhr.com",
+          subject: "",
+          sent: "",
+          body: "",
+        },
+        ROSTER,
+      )?.id,
+      "ENG",
+    );
+    // A note among our own side alone, or to two accounts at once, routes nothing.
+    assert.equal(route("pat@prismhr.com", "antaeus.coe@prismhr.com"), null);
+    assert.equal(
+      route("pat@prismhr.com", "cristina@engage.example; dana@armhr.example"),
+      null,
+    );
   });
 
   test("a post with no sent message in it is not one", () => {
