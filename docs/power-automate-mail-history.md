@@ -22,7 +22,14 @@ mailbox's history back to 2026-06-15 and sends GEM the account mail in it.
   own format: bare addresses joined by semicolons, the received time, the
   HTML body. GEM files it at the email's own date through the inbound route,
   and the duplicate check refuses a copy already on file.
+- Days are Chicago days, summer and winter: each boundary is that day's
+  midnight in Chicago, converted to UTC.
 - It ends with a Summary step: how many emails it read and how many it sent.
+  Only a send that went through is counted.
+- If a page of mail cannot be read, or a send to GEM fails after its retries,
+  the crawl stops after that page and the run ends as Failed with a message
+  naming the day to start again from. A rerun from that day files nothing
+  twice. (Both found by the Codex review on PR 435.)
 
 The builder is `tools/power-automate/mail-history.py`. It reads the three
 lists from `docs/power-automate-account-filter-lists.md` and clones the Inbox

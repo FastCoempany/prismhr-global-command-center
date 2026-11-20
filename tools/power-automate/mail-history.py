@@ -72,7 +72,8 @@ for i, e in enumerate(names, 1):
     add(n, {"type": "Query", "inputs": {"from": "@body('Not_relay_copies')", "where": f"@and({ppl[0]},{e})"}})
 add("Kept", {"type": "Compose", "inputs": "@union(" + ",".join(f"body('{p}')" for p in picks) + ")"})
 add("Count_read", {"type": "IncrementVariable", "inputs": {"name": "Read", "value": "@length(coalesce(body('Get_page')?['value'],json('[]')))"}})
-add("Count_sent", {"type": "IncrementVariable", "inputs": {"name": "Sent", "value": "@length(outputs('Kept'))"}})
+# Where to start again if this page fails: the day of its first email.
+add("Resume_day", {"type": "SetVariable", "inputs": {"name": "Resume", "value": "@{coalesce(first(coalesce(body('Get_page')?['value'],json('[]')))?['receivedDateTime'],variables('Resume'))}"}})
 BODY = ("<p class=\"editor-paragraph\">From: @{items('For_each_kept_email')?['fromLine']}<br>Sent: @{items('For_each_kept_email')?['at']}<br>"
         "To: @{items('For_each_kept_email')?['toLine']}<br>Cc: @{items('For_each_kept_email')?['ccLine']}<br>"
         "Subject: @{items('For_each_kept_email')?['subject']}</p><br><p class=\"editor-paragraph\">@{items('For_each_kept_email')?['html']}</p>")
@@ -86,16 +87,26 @@ add("For_each_kept_email", {"type": "Foreach", "foreach": "@outputs('Kept')",
                     "emailMessage/Subject": "@{variables('Tag')} @{items('For_each_kept_email')?['subject']}",
                     "emailMessage/Body": BODY, "emailMessage/Importance": "Normal"},
                 "authentication": "@parameters('$authentication')"}},
+        "Count_one_sent": {"runAfter": {"Send_to_GEM": ["Succeeded"]}, "type": "IncrementVariable",
+            "inputs": {"name": "Sent", "value": 1}},
+        "Stop_after_this_page": {"runAfter": {"Send_to_GEM": ["Failed", "TimedOut"]}, "type": "SetVariable",
+            "inputs": {"name": "Stopped", "value": "A send to GEM failed."}},
         # Exchange takes about 30 sends a minute from one mailbox; one every few
         # seconds stays well inside it.
         "Pause": {"runAfter": {"Send_to_GEM": ["Succeeded", "Failed", "Skipped", "TimedOut"]}, "type": "Wait",
             "inputs": {"interval": {"count": 3, "unit": "Second"}}},
     }})
 add("Next_page", {"type": "SetVariable", "inputs": {"name": "NextUrl", "value": "@{coalesce(body('Get_page')?['@odata.nextLink'],'')}"}})
-inner["Next_page"]["runAfter"] = {"For_each_kept_email": ["Succeeded", "Failed", "Skipped", "TimedOut"]}
+# A page whose sends all went moves on; a failed send stops the loop after the
+# page instead (Stopped), so nothing past an undelivered email is skipped.
+inner["Next_page"]["runAfter"] = {"For_each_kept_email": ["Succeeded", "Failed"]}
+# A page that could not be read stops the loop; it never counts as the end.
+inner["Stop_on_unread_page"] = {"runAfter": {"Get_page": ["Failed", "TimedOut"]}, "type": "SetVariable",
+    "inputs": {"name": "Stopped", "value": "A page of mail could not be read."}}
 
 TB = "triggerBody()?"
-FILTER = (f"concat('receivedDateTime ge ',trim({TB}['text']),'T05:00:00Z and receivedDateTime lt ',trim({TB}['text_1']),'T05:00:00Z')")
+CHI = lambda k: f"convertToUtc(concat(trim({TB}['{k}']),'T00:00:00'),'Central Standard Time','yyyy-MM-ddTHH:mm:ssZ')"
+FILTER = f"concat('receivedDateTime ge ',{CHI('text')},' and receivedDateTime lt ',{CHI('text_1')})"
 URL = ("@concat('https://graph.microsoft.com/v1.0/me/mailFolders/',variables('Folder'),'/messages?$filter=',"
        f"encodeUriComponent({FILTER}),"
        "'&$orderby=receivedDateTime%20asc&$top=50&$select=subject,from,toRecipients,ccRecipients,receivedDateTime,body')")
@@ -111,9 +122,20 @@ tadd("Tag", var("Tag", "string", "@if(equals(variables('Folder'),'sentitems'),'[
 tadd("NextUrl", var("NextUrl", "string", URL))
 tadd("Read", var("Read", "integer", 0))
 tadd("Sent", var("Sent", "integer", 0))
-tadd("Until_every_page_is_read", {"type": "Until", "expression": "@equals(variables('NextUrl'),'')",
+tadd("Stopped", var("Stopped", "string", ""))
+tadd("Resume", var("Resume", "string", f"@{{trim({TB}['text'])}}"))
+tadd("Until_every_page_is_read", {"type": "Until", "expression": "@or(equals(variables('NextUrl'),''),not(equals(variables('Stopped'),'')))",
     "limit": {"count": 5000, "timeout": "P7D"}, "actions": inner})
 tadd("Summary", {"type": "Compose", "inputs": "@concat('Read ',string(variables('Read')),' emails in ',variables('Folder'),'. Sent ',string(variables('Sent')),' to GEM.')"})
+# The loop reads as Failed when a step inside it failed; the summary and the
+# stop check run either way.
+top["Summary"]["runAfter"] = {"Until_every_page_is_read": ["Succeeded", "Failed", "TimedOut"]}
+# A stopped crawl ends the run as Failed and says where to start again;
+# a rerun from that day files nothing twice.
+tadd("If_it_stopped", {"type": "If", "expression": {"and": [{"not": {"equals": ["@variables('Stopped')", ""]}}]},
+    "actions": {"Fail_the_run": {"runAfter": {}, "type": "Terminate", "inputs": {"runStatus": "Failed",
+        "runError": {"code": "Stopped", "message": "@{variables('Stopped')} Run again with First day @{substring(variables('Resume'),0,10)} and the same Stop before day."}}}},
+    "else": {"actions": {}}})
 
 trigger = {"manual": {"type": "Request", "kind": "Button", "inputs": {"schema": {"type": "object", "properties": {
     "text": {"title": "First day", "type": "string", "x-ms-dynamically-added": True, "description": "Year-month-day, like 2026-06-15", "x-ms-content-hint": "TEXT"},
