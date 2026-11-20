@@ -172,8 +172,12 @@ const GLOBAL_SCENT_RE =
   /prism\s*(hr)?\s*global|global\s+payroll|employer\s+of\s+record|\beor\b|international\s+(payroll|employee|hiring)/i;
 export { GLOBAL_SCENT_RE };
 
-export function laneFor(actors: string, text: string): Lane {
+export function laneFor(actors: string, text: string, recipients = ""): Lane {
   if (MINE_RE.test(actors) || MINE_RE.test(text)) return "mine";
+  // An email with the operator on its To or Cc line reached the operator: a
+  // colleague's email to an account's people that copies the operator is the
+  // operator's exchange (founder, 2026-11-18), never background traffic.
+  if (MINE_RE.test(recipients)) return "mine";
   if (GLOBAL_SCENT_RE.test(text)) return "mine";
   return "background";
 }

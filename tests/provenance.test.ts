@@ -14,6 +14,24 @@ describe("laneFor", () => {
     assert.equal(laneFor("Antaeus Coe → Kim Bartolotti", "hello"), "mine");
     assert.equal(laneFor("Kim → Lesha", "cc antaeus.coe@prismhr.com on this"), "mine");
   });
+  test("an email with me on its To or Cc line → mine, a colleague's email included", () => {
+    assert.equal(
+      laneFor(
+        "Judi Owen → Kinsey Diegan +2",
+        "Thanks for the call.",
+        "Kinsey Diegan, Collin Elder, Antaeus Coe",
+      ),
+      "mine",
+    );
+    assert.equal(
+      laneFor(
+        "Judi Owen → Kinsey Diegan +1",
+        "Thanks for the call.",
+        "Kinsey Diegan, Collin Elder",
+      ),
+      "background",
+    );
+  });
   test("case traffic with no trace of me → background", () => {
     assert.equal(
       laneFor(
