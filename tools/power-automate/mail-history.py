@@ -96,7 +96,11 @@ add("For_each_kept_email", {"type": "Foreach", "foreach": "@outputs('Kept')",
         "Pause": {"runAfter": {"Send_to_GEM": ["Succeeded", "Failed", "Skipped", "TimedOut"]}, "type": "Wait",
             "inputs": {"interval": {"count": 3, "unit": "Second"}}},
     }})
-add("Next_page", {"type": "SetVariable", "inputs": {"name": "NextUrl", "value": "@{coalesce(body('Get_page')?['@odata.nextLink'],'')}"}})
+# The connector refuses Graph's own next link (it writes mailFolders('inbox')),
+# so the flow builds the next page itself: the first page's address with the
+# count of emails already read skipped. Graph's next link only says whether
+# there is another page.
+add("Next_page", {"type": "SetVariable", "inputs": {"name": "NextUrl", "value": "@{if(equals(coalesce(body('Get_page')?['@odata.nextLink'],''),''),'',concat(variables('BaseUrl'),'&$skip=',string(variables('Read'))))}"}})
 # A page whose sends all went moves on; a failed send stops the loop after the
 # page instead (Stopped), so nothing past an undelivered email is skipped.
 inner["Next_page"]["runAfter"] = {"For_each_kept_email": ["Succeeded", "Failed"]}
@@ -119,7 +123,8 @@ def tadd(name, action):
 var = lambda n, t, v: {"type": "InitializeVariable", "inputs": {"variables": [{"name": n, "type": t, "value": v}]}}
 tadd("Folder", var("Folder", "string", f"@if(startsWith(toLower(trim({TB}['text_2'])),'sent'),'sentitems','inbox')"))
 tadd("Tag", var("Tag", "string", "@if(equals(variables('Folder'),'sentitems'),'[GW-SENT]','[GW-IN]')"))
-tadd("NextUrl", var("NextUrl", "string", URL))
+tadd("BaseUrl", var("BaseUrl", "string", URL))
+tadd("NextUrl", var("NextUrl", "string", "@variables('BaseUrl')"))
 tadd("Read", var("Read", "integer", 0))
 tadd("Sent", var("Sent", "integer", 0))
 tadd("Stopped", var("Stopped", "string", ""))

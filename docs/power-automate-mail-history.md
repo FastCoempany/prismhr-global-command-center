@@ -22,6 +22,10 @@ mailbox's history back to 2026-06-15 and sends GEM the account mail in it.
   own format: bare addresses joined by semicolons, the received time, the
   HTML body. GEM files it at the email's own date through the inbound route,
   and the duplicate check refuses a copy already on file.
+- Pages are counted by the flow itself: each next page is the first page's
+  address with the emails already read skipped. Graph's own next link is
+  written in a form the Outlook connector refuses (found on the first full
+  run, 2026-11-20, which stopped after one page).
 - Days are Chicago days, summer and winter: each boundary is that day's
   midnight in Chicago, converted to UTC.
 - It ends with a Summary step: how many emails it read and how many it sent.
